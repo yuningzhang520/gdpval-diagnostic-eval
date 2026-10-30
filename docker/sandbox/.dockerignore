@@ -1,0 +1,4 @@
+# Only the Dockerfile and the pinned requirements enter the build context.
+*
+!Dockerfile
+!requirements.txt

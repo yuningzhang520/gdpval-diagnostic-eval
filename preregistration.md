@@ -63,6 +63,20 @@ Dataset revision for every task: `openai/gdpval` @ `11e7900cdcac61bc4daf59e65feb
 calls and self-checks, no scorer feedback, no resubmission. Transport retries follow the
 approved policy and are logged.
 
+Execution budgets (Inspect `time_limit`, `working_limit`, `message_limit`,
+`token_limit`; values set in `config.json`, identical for both models): exhausting one
+ends the attempt and is recorded as `execution.status=limited` with the limit type and
+the Inspect event evidence. Such an attempt is graded when its final collection is
+`complete` or `no_files_confirmed` and no provider, harness or collection failure was
+recorded: collected deliverables are graded against the rubric, requirements whose
+deliverable is missing fail as not delivered, and the attempt stays in the k=1 results
+and in every sample denominator. Grading eligibility is not task completion. A provider
+request that finally failed, a transport fault, a container or harness exception, or an
+unrecovered collection fault is a run error (section 1.2), kept in the run inventory
+with `grading_eligible=false`. A single tool call that timed out while the trajectory
+continued is not a run error. Attribution uses the recorded exception type and the
+Inspect events, never the word "timeout" alone.
+
 ### 1.4 Blinding
 Judge inputs and human-review materials hide model identity wherever feasible
 (candidate labels A/B assigned per task, file metadata stripped from excerpts).
@@ -873,3 +887,19 @@ Requirement layers (APPROVED 2026-10-30):
 2. 2.2 per-item precision list: review the entries (the rules are approved).
 3. 2.1 C3 and 2.10 resource form: settled by the toolchain stage, then recorded here.
 4. Confirm 1.13 (substitutes and fallbacks; pre-declared, human-triggered).
+5. 3.7 (`7d7fc9a7…`), rounding policy at the rubric and critical level (registered
+   2026-10-30, PENDING; decided by the human before `freeze-v1`, not in the toolchain
+   stage): how a deliverable that rounds each invoice's monthly charge to cents before
+   accumulating is treated. Task requirements checked: the prompt says "Use the GL
+   balances below to ensure your schedules reconcile to the end of month balances" and
+   "confirm that all figures reconcile accurately", and states no rounding rule; rubric
+   items 23–26 and 41–44 require each monthly ending balance to equal the GL balance
+   "(rounded to the nearest cent)"; items 30 and 48 require the variance to equal $0.00
+   "(rounded to the nearest cent)"; items 21/39 require the per-line identity and items
+   22/40 require the totals to equal the sum of the lines. The recalculation shows that
+   per-line cents rounding ends −0.01 to −0.05 from the GL in every month on both
+   accounts. Open: whether such a deliverable fails items 23–26, 30, 41–44 and 48 as
+   written (variance not 0.00), and whether the critical status under C2–C4 follows from
+   that or treats the method as a documented policy difference. The alternative figures
+   that `scripts/recalc/task_7d7fc9a7_prepaid.py` lists for that variant document the
+   drift; they are not allowed values.

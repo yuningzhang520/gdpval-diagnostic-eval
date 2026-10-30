@@ -19,3 +19,7 @@ Field-Engineer-Take-Home-Project.pdf
 Paper.pdf
 # Prompt texts are rebuilt from the parquet by scripts/download_materials.py (see README)
 data/prompts/
+# Generated smoke-test fixtures (rebuilt by harness/fixtures/make_fixtures.py)
+harness/fixtures/*
+!harness/fixtures/make_fixtures.py
+!harness/fixtures/pivot_uno.py

@@ -1,0 +1,16 @@
+# Sandbox for the model under test. Used by Inspect's docker sandbox provider; one project per sample.
+# No volumes: task files enter through Sample.files, outputs leave through the harness collector.
+services:
+  default:
+    image: gdpval-sandbox:stage2
+    command: tail -f /dev/null
+    init: true
+    network_mode: none
+    stop_grace_period: 1s
+    cpus: 2.0
+    mem_limit: 3gb
+    pids_limit: 512
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    environment:
+      HOME: /root

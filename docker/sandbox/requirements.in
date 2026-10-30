@@ -1,0 +1,14 @@
+# Packages available to the model under test inside the sandbox. Pinned by uv pip compile
+# into requirements.txt (linux/aarch64, Python 3.11). No evaluation or grading code.
+openpyxl
+python-docx
+python-pptx
+pymupdf>=1.26,<2
+pandas
+numpy
+matplotlib
+Pillow
+xlsxwriter
+reportlab
+cairosvg
+lxml

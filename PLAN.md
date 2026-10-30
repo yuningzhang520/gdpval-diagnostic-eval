@@ -82,7 +82,10 @@ Both models run under one shared agent scaffold built on Inspect AI:
   task-specific hints and no rubric information.
 - **One attempt.** `attempts=1`. A run is one complete agent trajectory with as many
   tool calls as the model chooses; there is no scorer feedback and no resubmission.
-  Transport-level retries follow a documented policy and are logged.
+  Transport-level retries follow a documented policy and are logged. Execution budgets
+  (time, working time, message and token limits) are fixed in `config.json` and
+  identical for both models; exhausting one ends the attempt, which is then graded on
+  what was delivered (section 4, "Execution budgets").
 - **Tools.** Bash and Python in a sandbox, plus a `view` tool that returns an image of a
   PDF page, attachment, or rendered deliverable so the model can inspect its own output.
   Provider server-side tools (web search, code interpreter) are off.
@@ -107,6 +110,48 @@ Both models run under one shared agent scaffold built on Inspect AI:
 Grading combines three layers. None of them is tuned to make a model pass; any change
 to a grading rule after freeze is recorded with the old rule, the evidence it was wrong,
 the new rule, and both models are re-graded.
+
+**Execution and collection gate.** Before any capability grading, the grading entry
+point must load and validate the final `run_outcome.json` using
+`harness.collect.load_run_outcome(..., for_grading=True)`. Its expected identity must
+come from the completed Inspect log: execution UUID, actual model, Inspect task ID and
+eval ID, sample ID (the GDPval task UUID), and epoch. Validate `run.json`, the final
+collection record, history, and original artifact hashes as well. A launcher label is
+not execution identity. Only Task cleanup publishes the authoritative outcome; the
+collector's historical ScoreEvent is provisional and unscored (`Score.unscored()`, no
+metrics), never an accuracy or capability score. Cleanup recovery can change a partial
+collection into a complete one while retaining the first pass's failures.
+
+Missing, corrupt, non-final or identity-mismatched outcomes fail closed. Persistent
+`listing_failed` and unrecovered `partial` outcomes are harness collection errors;
+they must not be converted into model non-delivery. An execution error (a provider
+request that finally failed, a transport fault, a container or harness exception) or an
+unknown execution state keeps `grading_eligible=false` and requires run review even when
+files were collected; such runs stay in the run inventory as run errors under the
+approved error and retry policy. Only confirmed empty collection after completed or
+budget-limited execution establishes that no final files were produced; applying
+criterion-level failures remains the grader's job.
+
+**Execution budgets.** The sample limits configured in `config.json` (Inspect
+`time_limit`, `working_limit`, `message_limit`, `token_limit`) are identical for both
+models. Exhausting one is a result of the model under fixed resources, not a harness
+error: the outcome records `execution.status=limited` with the limit type and the
+Inspect event evidence, and the run is `grading_eligible` when its final collection is
+`complete` or `no_files_confirmed` and no provider, harness or collection failure was
+recorded. Collected deliverables are graded against the rubric; requirements whose
+deliverable is missing fail as not delivered; the attempt stays in the k=1 results and
+in every sample denominator. `grading_eligible` states only that the run may enter
+grading, never that a task was completed or any criterion passed. A single tool call
+that timed out while the sample continued is a tool error inside a completed execution,
+not a run error. Attribution uses the recorded exception type and Inspect events, not
+the presence of the word "timeout" in a log. Limit types outside this budget set
+(operator, custom) require review.
+
+The grading entry point must also cross-check the terminal Inspect log for errors
+after cleanup. Integration tests of this consumer are a Stage 3 pre-pilot requirement,
+not a completed Stage 2 result. Cumulative file/byte limits across collection passes
+and a hard overall read deadline are also pre-pilot requirements; current limits are
+per-pass admission checks.
 
 **Deterministic checks.** File presence and type; required sheets, columns, sections;
 formulas versus hard-coded values, with LibreOffice recalculation on a copy to separate
