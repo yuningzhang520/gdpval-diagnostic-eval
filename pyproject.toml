@@ -5,10 +5,14 @@ description = "Small diagnostic evaluation of two frontier models on 10 GDPval t
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
+    "anthropic>=2.3.0",
     "beautifulsoup4>=4.15.0",
+    "google-genai>=2.34.0",
     "huggingface-hub>=2.4.0",
     "inspect-ai>=0.3.286",
+    "openai>=3.41.0",
     "openpyxl>=3.1.5",
+    "pillow>=13.0.0",
     "pyarrow>=26.0.0",
     "pymupdf>=1.26,<2",
     "python-docx>=1.2.0",

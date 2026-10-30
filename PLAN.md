@@ -149,9 +149,14 @@ the presence of the word "timeout" in a log. Limit types outside this budget set
 
 The grading entry point must also cross-check the terminal Inspect log for errors
 after cleanup. Integration tests of this consumer are a Stage 3 pre-pilot requirement,
-not a completed Stage 2 result. Cumulative file/byte limits across collection passes
-and a hard overall read deadline are also pre-pilot requirements; current limits are
-per-pass admission checks.
+not a completed Stage 2 result. Collection limits are cumulative per sample across the
+scorer and cleanup passes (file count and total bytes over the merged set; an idempotent
+re-collection is not counted twice) with a hard per-pass deadline enforced on in-flight
+reads; limit hits are recorded per file and leave collected originals untouched. Before a
+sample starts, every staged input and pre-staged resource is verified against the hashes
+in `config.json` (source path real and inside the task's own directory, no symlink, no
+traversal, no duplicate target); any mismatch stops the sample. Images returned by the
+`view` tools are decoded and bounded on the host before they reach a provider.
 
 **Deterministic checks.** File presence and type; required sheets, columns, sections;
 formulas versus hard-coded values, with LibreOffice recalculation on a copy to separate

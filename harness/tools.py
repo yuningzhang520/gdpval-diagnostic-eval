@@ -4,15 +4,55 @@ import base64
 import json
 import posixpath
 import shlex
+from io import BytesIO
 
+from PIL import Image, UnidentifiedImageError
 from inspect_ai.model import ContentImage, ContentText
 from inspect_ai.tool import ToolError, tool
 from inspect_ai.util import sandbox
 
 MAX_IMAGE_BYTES = 8_000_000
+MAX_IMAGE_SIDE = 8000  # pixels; providers reject larger images
+MAX_IMAGE_PIXELS = 20_000_000  # total pixels; decompression-bomb guard well below Pillow's default
 MIME = {".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".gif": "image/gif", ".webp": "image/webp"}
+FORMAT_BY_EXT = {".png": "PNG", ".jpg": "JPEG", ".jpeg": "JPEG", ".gif": "GIF", ".webp": "WEBP"}
+MIME_BY_FORMAT = {"PNG": "image/png", "JPEG": "image/jpeg", "GIF": "image/gif", "WEBP": "image/webp"}
 PNG_SIGNATURE = b"\x89PNG\r\n\x1a\n"
 RENDER_TMP_PREFIX = "/tmp/render_"
+Image.MAX_IMAGE_PIXELS = MAX_IMAGE_PIXELS  # Pillow raises DecompressionBombError above 2x this value
+
+
+def validate_image_bytes(data: bytes, ext: str) -> dict:
+    """Host-side validation before any image is sent to a provider (I2): non-empty, within the
+    byte limit, decodable by Pillow, actual format consistent with the file extension, and
+    within the pixel limits. Returns {"format", "mime", "width", "height", "bytes"}; raises
+    ToolError with a specific reason otherwise."""
+    if not data:
+        raise ToolError("image is empty")
+    if len(data) > MAX_IMAGE_BYTES:
+        raise ToolError(f"image is {len(data)} bytes; limit is {MAX_IMAGE_BYTES}")
+    expected = FORMAT_BY_EXT.get(ext.lower())
+    if expected is None:
+        raise ToolError(f"unsupported image type {ext!r}; use png, jpg, gif or webp")
+    try:
+        with Image.open(BytesIO(data)) as im:
+            fmt, (w, h) = im.format, im.size
+            if fmt not in MIME_BY_FORMAT:
+                raise ToolError(f"unsupported image format {fmt!r}")
+            if fmt != expected:
+                raise ToolError(f"file extension {ext!r} does not match the actual image format {fmt}")
+            if w > MAX_IMAGE_SIDE or h > MAX_IMAGE_SIDE or w * h > MAX_IMAGE_PIXELS:
+                raise ToolError(f"image is {w}x{h} pixels; limits are {MAX_IMAGE_SIDE} per side and {MAX_IMAGE_PIXELS} pixels in total")
+            im.verify()
+        with Image.open(BytesIO(data)) as im2:
+            im2.load()  # full decode; truncated or corrupt data raises here
+    except ToolError:
+        raise
+    except Image.DecompressionBombError:
+        raise ToolError(f"image declares more pixels than allowed; limits are {MAX_IMAGE_SIDE} per side and {MAX_IMAGE_PIXELS} pixels in total")
+    except (UnidentifiedImageError, OSError, ValueError, SyntaxError, EOFError) as ex:
+        raise ToolError(f"image could not be decoded ({type(ex).__name__}); the file is corrupt or not a supported image")
+    return {"format": fmt, "mime": MIME_BY_FORMAT[fmt], "width": w, "height": h, "bytes": len(data)}
 
 # Runs inside the sandbox. Each call converts into its own fresh temporary directory, checks the
 # converter's exit status, requires a new non-empty PDF that opens and has at least one page, and
@@ -97,8 +137,10 @@ def view_image():
         if size > MAX_IMAGE_BYTES:
             raise ToolError(f"image is {size} bytes; limit is {MAX_IMAGE_BYTES}")
         data = await sandbox().read_file(p, text=False)
+        info = validate_image_bytes(data, ext)
         b64 = base64.b64encode(data).decode("ascii")
-        return [ContentText(text=f"{p} ({len(data)} bytes)"), ContentImage(image=f"data:{MIME[ext]};base64,{b64}")]
+        return [ContentText(text=f"{p} ({info['bytes']} bytes, {info['format']} {info['width']}x{info['height']})"),
+                ContentImage(image=f"data:{info['mime']};base64,{b64}")]
     return execute
 
 
@@ -141,8 +183,10 @@ def render_document():
                 raise ToolError(f"render failed: rendered image could not be read ({type(ex).__name__})")
             if not data or not data.startswith(PNG_SIGNATURE):
                 raise ToolError("render failed: rendered image is empty or not a PNG")
-            if len(data) > MAX_IMAGE_BYTES:
-                raise ToolError(f"render failed: rendered image is {len(data)} bytes; limit is {MAX_IMAGE_BYTES}")
+            try:
+                validate_image_bytes(data, ".png")
+            except ToolError as ex:
+                raise ToolError(f"render failed: {ex}")
             b64 = base64.b64encode(data).decode("ascii")
             return [ContentText(text=f"{p}: page {page} of {info['pages']}"), ContentImage(image=f"data:image/png;base64,{b64}")]
         finally:

@@ -1,7 +1,9 @@
 # Status
 
-Current stage: **Stage 3a approvals recorded; `config.json` DRAFT; Stage 3b
-infrastructure items authorized (2026-10-30).** Stage 2 is committed as
+Current stage: **Stage 3b infrastructure items 8, 7, 3, 4, 5 done and mock-verified; hard
+stop; awaiting the human's A/B model decision and approval of the remaining Stage 3b work
+(2026-10-30).** Stage 3a is committed as `395d1da626c12fe5b5b0443c0737a8c02b2b614b`;
+the Stage 3b work is uncommitted. Stage 2 is committed as
 `1941d4ac69566fdbc0a6dff821de57664e84f284` on `main` (pushed). Stage 3a made no model,
 judge or paid call (the `.env` file does not exist, so the permitted models-list calls were
 skipped); nothing is frozen; the pilot has not started. Second-round approvals of
@@ -702,10 +704,12 @@ rubric change occurred.
    overall read/collection deadline. Current `max_files`/`max_total_bytes` reset per
    pass; `time_budget_s` is checked before reads, not an in-flight read timeout.
    Preserve already collected originals on any limit. These are not described as
-   completed sample-wide controls.
+   completed sample-wide controls. *[Implemented and mock-verified 2026-10-30, Stage 3b
+   item 5; see that section.]*
 3. **I1:** staging allowlist realpath/symlink checks and hashes of every model-visible
    input. **I2:** decode `view_image` bytes and bound image dimensions. Both are hard
    preconditions to the first real candidate-model call, not optional hardening.
+   *[Implemented and mock-verified 2026-10-30, Stage 3b items 3 and 4.]*
 
 **Other unchanged nodes:** I3's wrong-formula/missing-cache/recalculation-failure
 counterexamples are due before the first full pilot grading; I5's model/budget/
@@ -1065,13 +1069,202 @@ digest) is fixed at freeze.
 
 ### Decisions still open after the second round
 
-1. 1137e2bb C2: accept the proposed revision (drill-down out of the critical core) or
-   keep the current text.
+1. ~~1137e2bb C2~~ — APPROVED 2026-10-30 with the revised text (drill-down out of the
+   critical core, graded under rubric 14); every critical criterion is now APPROVED and
+   `preregistration.md` section 4 item 1 is closed.
 2. Final A/B model ids and reasoning settings (from the two recorded strategies) after the
    provider list queries; `token_limit` and per-request `max_tokens`; judge freeze.
 3. Formal concurrency 2 (after memory and stability evidence; reservation atomicity).
 4. Stage 3b work after the infrastructure items (grading chain, fixtures, grading entry
    point, cost accounting: former items 1, 6, 2, 9) — not started without approval.
+
+## Stage 3b — infrastructure items (2026-10-30)
+
+Authorized scope: items 8 (provider SDKs and model lists), 7 (pilot launcher with budget
+ledger), 3 (I1 staging integrity), 4 (I2 image validation), 5 (cumulative collection limits
+and deadline), in that order, each verified with mocks; then a hard stop. No grading chain,
+judge prompt, grading entry point, real generation, pilot or freeze. Stage 3a is committed as
+`395d1da626c12fe5b5b0443c0737a8c02b2b614b` (pushed).
+
+### Item 8 — provider SDKs and model lists
+
+- Added with `uv add anthropic openai google-genai`: anthropic 2.3.0, openai 3.41.0,
+  google-genai 2.34.0 (Inspect 0.3.286's own dev pins are anthropic>=2.0.0, openai>=3.4.0,
+  google-genai>=2.14.0; all satisfied; Inspect itself unchanged). Side effect recorded by
+  uv: tenacity 9.2.1 → 9.1.4 (Inspect requires tenacity without a version bound; the
+  provider modules `anthropic`, `openai`, `google` import, and the 44 collector unit tests
+  still pass). `pyproject.toml` and `uv.lock` updated (uncommitted).
+- Retry plumbing verified without network (dummy key, `INSPECT_DISABLE_MODEL_API=1`,
+  client construction only): `get_model("anthropic/claude-opus-5-5")` builds an
+  `AsyncAnthropic` client with `max_retries=2` by default and `max_retries=0` when
+  `max_retries=0` is passed as a model arg; `get_model("openai/gpt-6.1-sol")` builds an
+  `AsyncOpenAI` client with 2 → 0 the same way; both SDK request timeouts are 600 s by
+  default. The `model_args` route therefore works for layer 2. The Google provider exposes
+  `should_retry` and `retry_wait` only (no SDK retry count to set).
+- Models-list calls: **not made**. `.env` does not exist and no provider key variable is
+  present in the environment (checked by name only), so the permitted Anthropic, OpenAI and
+  Google list queries were skipped for lack of credentials. Consequences: no API-returned
+  model ids, no pagination record, and no visibility confirmation for the candidates
+  `claude-opus-5-5`, `claude-sonnet-5-5`, `gpt-6.1-sol`, `gemini-3.1-pro-preview`; their ids
+  rest on the official documentation pages queried 2026-10-30 (section "Stage 3a"). A list
+  call, when made, confirms visibility for that key only, not generation, tool use, image
+  input or reasoning-parameter availability.
+
+### Item 7 — pilot launcher and budget ledger
+
+- `harness/budget.py` (new): persistent JSON ledger with append-only entries
+  (`reservation`, `settlement`, `void`); totals are always derived from the entries, so a
+  restart loses nothing and never double-counts; atomic writes (temporary file, rename,
+  fsync) under an advisory `flock`. `reserve()` refuses when ceiling − settled − open
+  reservations cannot cover the estimate (`BudgetExhausted`), is idempotent for an open
+  reservation of the same unit, and refuses settled or voided units. `settle()` prices
+  actual usage per model and category (input, output, cache read, cache write; judge units
+  are the same four under `kind=judge`) with Decimal arithmetic, releases the reservation
+  exactly once (a second settlement returns the first and changes nothing), charges each
+  recorded retry conservatively as one more uncached input cost of that unit and flags
+  the result as an estimate, settles units with no usable usage at the reserved amount
+  (flagged, never silently zero), and refuses a settlement with no usage unless that
+  fallback is requested. `void()` releases only a unit that never started.
+  `stop_reasons()` returns the approved conditions that apply: ceiling reached, next
+  reservation not covered, per-task cost above 2× the estimate, same engineering failure
+  class twice. A ledger reopened with a different ceiling is refused.
+- `harness/launcher.py` (new): `.env` loaded into the trusted process only (names returned,
+  values never printed, existing variables not overwritten); required key checked by name;
+  `INSPECT_DISABLE_MODEL_API` refused in real mode; `runs_root` must be absolute,
+  normalised and real at every component (macOS `/tmp`, `/var` refused); Docker image
+  pre-flight by `docker image inspect` with a bounded number of attempts (3 by default,
+  10 maximum, never unbounded) and a per-attempt record; `eval_kwargs()` builds the fixed
+  settings from `config.json` — `inspect_ai.eval()` as the entry point, `max_retries=3`,
+  `timeout=1800`, `model_args={"max_retries": 0}`, `retry_on_error=0`,
+  `fail_on_error=False`, `task_retry_attempts=0`, `time_limit=3600`, `working_limit=3600`,
+  `message_limit=200`, `token_limit` from the CLI until A/B are chosen, pilot concurrency
+  1/1/1/1, `epochs=1`, and refuses `attempts`/`epochs` other than 1. `PilotLauncher`
+  runs one unit at a time: stop check → reserve → `eval()` → settle from the eval log's
+  `model_usage` and `ModelEvent.retries` → stop check; an eval failure settles the unit
+  conservatively at its reservation (estimated) and counts the failure class; a judge
+  batch follows the same contract through `run_judge_batch()`; open reservations found
+  after a restart stay reserved until a human settles or voids them. Real mode is not
+  enabled in this stage (`main()` refuses after the checks); `--dry-run` performs every
+  check and the reserve/void cycle without calling `eval()`. No per-request interception
+  in the agent loop and no provider monkeypatch.
+- Mock verification (`harness.tests.test_budget_unit`, 25 tests, exit 0, no Docker, no
+  model): (1) insufficient budget → `eval()` never called, refusal recorded, no reservation
+  left open; judge batches gated the same way; (2) simulated usage settles by category
+  (example: 1M input + 100k output + 2M cache read + 500k cache write on Opus 5.5 prices =
+  8.90 USD, plus 2 retries estimated at 8.00 USD, flagged); (3) a sample whose actual cost
+  exceeds the ceiling leaves remaining −2.00 USD and the next sample is refused before
+  start (one `eval()` call in total; the ceiling is not a hard cap); (4) restart from the
+  persisted ledger recovers settled 2.00 / reserved 5.00 / remaining 3.00, keeps the
+  interrupted unit reserved, applies the stop condition, and a different ceiling is
+  refused; (5) duplicate settlement does not double-charge, duplicate reservation is not
+  additive, a settled unit cannot be re-reserved or voided, a failed `eval()` settles at the
+  reservation and the second failure of the same class stops the run; (6) reservation
+  atomicity under concurrency is **not verified** (formal-run gate). Pre-flight tests:
+  `.env` parsing returns names only, bounded image retry (2 attempts then success; 3
+  failures raise; 50 attempts refused), real-path refusal for a symlinked `runs_root` and
+  for `/tmp`, `INSPECT_DISABLE_MODEL_API` refusal, the four retry layers read from
+  `config.json`.
+- Inspect 0.3.286 supplement available but not wired: `eval(cost_limit=…,
+  model_cost_config=…)` (per-sample dollar limit with `ModelCost` prices). Decision for the
+  human: whether to add it as a second guard once A/B prices are fixed.
+
+### Item 3 — I1, staged-file integrity
+
+- `harness/samples.py`: `task_files()` refuses a destination listed twice with different
+  sources (`StagingError`); `expected_staged_from_config()` reads the per-task file lists
+  from `config.json`; `verify_staged_files()` checks, for every staged entry, that the
+  destination is a normalised path under `/workspace/inputs` or `/workspace/resources`
+  (no empty, `.` or `..` segment), that the source is an absolute normalised path, a regular
+  file, not a symlink and not behind a symlinked component (real path compared with the
+  real repository root), inside `data/inputs/<task id>/` or `data/resources/<task id>/` and
+  naming no other task, and that its size and SHA-256 equal the recorded values; the staged
+  set must equal the recorded set (nothing missing, nothing extra). Every problem is
+  collected and reported in one `StagingError`; any problem fails closed.
+  `build_samples(verify_config=…)` runs it per task and stores the report in the sample
+  metadata; the launcher always verifies (`--dry-run` included).
+- Regressions (`harness.tests.test_staging_unit`, 11 tests, exit 0): synthetic root with
+  two tasks — clean set passes; tampered file (size, and same-size byte change) fails;
+  symlinked source and symlinked directory component fail; traversal in the destination or
+  the source and a destination outside the mounts fail; a source under another task's
+  directory fails; missing and extra files fail; a duplicate destination with a different
+  source is refused when the map is built; several problems are reported together. Real
+  data: all 10 tasks, 43 staged files (27 for the GCP task) verify against `config.json`;
+  a hash mismatch for the pilot task fails closed.
+
+### Item 4 — I2, image validation before provider delivery
+
+- `harness/tools.py`: `validate_image_bytes()` (host side, Pillow 13.0.0, now an explicit
+  dependency) requires non-empty data within 8,000,000 bytes, a Pillow-decodable image
+  whose actual format (PNG, JPEG, GIF, WEBP) matches the file extension, dimensions at
+  most 8000 px per side and 20,000,000 pixels in total (Pillow's decompression-bomb guard
+  is set to this limit as well), and a full decode (`load()`) that succeeds; the MIME type
+  sent to the provider is derived from the actual format. `view_image` and
+  `render_document` both apply it; failures return a specific `ToolError` and no
+  `ContentImage` is produced.
+- Regressions: host-side (`harness.tests.test_image_unit`, 5 tests, exit 0) — PNG, JPEG,
+  GIF and WEBP pass with their real MIME; random bytes, a truncated PNG and an empty file
+  are refused; JPEG bytes named `.png`, PNG named `.jpg`, BMP named `.png` and an
+  unsupported extension are refused; a 9000×9000 1-bit PNG (a few kB) and an 8001×1 PNG
+  are refused by the pixel guard before decoding while a 4000×4000 image passes; data
+  over the byte limit is refused. Inspect chain (`harness.tests.regress_tools`, mockllm,
+  real sandbox, images created inside the sandbox): 8/8 checks pass (results in
+  `logs/stage3b-20261030T220004Z/tools_run3/`): the valid PNG returns an image with
+  decoded dimensions; random bytes, JPEG-named-PNG, 9000×9000, truncated and 8.5 MB files
+  each return the specific error with no image; `render_document` still returns a
+  validated PNG. The first two runs of this script failed on the script's own assertions
+  (expected 9 events instead of 8; expected one wording for the pixel guard) and are kept
+  under `tools/` and `tools_run2/`.
+
+### Item 5 — cumulative collection limits and read deadline
+
+- `harness/collect.py`: `max_files` and `max_total_bytes` now apply to the merged set of
+  a sample across scorer and cleanup passes: files and bytes collected in earlier passes
+  count first, an idempotent re-collection of a known path is not counted again, new
+  admissions are limited to the remaining budget, and repeated passes cannot bypass the
+  caps. `time_budget_s` is a hard per-pass deadline: checked before each read and enforced
+  on the in-flight read with `anyio.fail_after`; a read cut off at the deadline is recorded
+  as `read_deadline_exceeded`, later files as `time_budget_exceeded` without being
+  attempted, and the pass records `deadline_hit` and the cumulative counts. Collected
+  originals are never touched by a later pass (exclusive creation and hash comparison are
+  unchanged). A limited collection stays `partial` → `harness_error=true`,
+  `grading_eligible=false`, `outcome_class=harness_collection_error`; per-file reasons are
+  preserved for the Stage 3 attribution policy.
+- Regressions (`harness.tests.test_collect_limits_unit`, 6 tests, exit 0): with a cap of 3,
+  pass 1 collects 2 files and pass 2 admits exactly one of three new files (the other two
+  `file_limit`; only the new file is read); four passes over five files never exceed two
+  files with a cap of 2; byte cap 150 with 100 bytes already collected admits a 40-byte
+  file and refuses the next (`total_limit`), with 140 bytes recorded; a 5 s read against a
+  0.4 s deadline is interrupted (whole pass under 3 s), the fast file is intact, the slow
+  file is `read_deadline_exceeded`, the untried file `time_budget_exceeded`; a later pass
+  that hits limits leaves the first pass's bytes, inode and mtime unchanged; the outcome
+  contract records such a collection as a harness error that the grading gate refuses.
+  All 91 unit tests across the seven modules pass after these changes. Inspect-chain
+  reruns after the change (mockllm, prebuilt image, isolated launcher, new log directories
+  under `logs/stage3b-20261030T220004Z/`): `regress_closeout` 92/92 (`closeout_rerun/`),
+  `regress_limits` scenarios a–h 74 PASS / 0 FAIL / 0 UNVERIFIED (`limits_rerun/`; the
+  image pre-flight did not misfire this time), `regress_inspect` 62/62 (summary
+  `logs/stage2_fix/regress_summary_20261030T220655Z.json`), `regress_tools` 8/8.
+
+### Hard stop after item 5
+
+Not started, by instruction: the grading chain for `1137e2bb…`, the judge prompt, the
+grading entry point that consumes `run_outcome.json`, any real provider generation, the
+pilot, and the freeze. Stage 3b files are uncommitted (see the chat report for the list).
+
+Remaining before the first real-model pilot (gates, unchanged in substance):
+
+- **Blocking.** Human approval of the final A/B model ids and effort settings and of the
+  judge; `token_limit` and per-request `max_tokens` set and approved; the provider
+  models-list queries once `.env` exists; the grading entry point consuming
+  `run_outcome.json` with identity from the completed Inspect log and the terminal-log
+  join, with its integration tests; the 1137e2bb grading chain and its positive/negative
+  fixtures (former Stage 3b items 1, 6, 2, 9); separate authorization for every paid call.
+- **Important.** 1137e2bb C2 final wording; reservation atomicity before any concurrency
+  above one; the Docker image pre-flight behaviour observed twice (bounded retry now in
+  the launcher, not yet exercised against a real misfire); whether to add Inspect's
+  per-sample `cost_limit` as a second guard; the `tenacity` downgrade pulled in by the SDK
+  dependencies (imports and all suites pass, no further evidence); the image digest to be
+  recorded at freeze; the non-root sandbox limitation.
 
 ## Known issues and findings (material check)
 
@@ -1120,6 +1313,18 @@ Nothing. Waiting for the human's decisions listed under "Next stage".
 
 ## Decisions taken (date · what · commit)
 
+- 2026-10-30 · Stage 3a second-round approvals (17 critical criteria, f841ddcf precision
+  table with rubric-text basis, 7d7fc9a7 reconciliation and rounding rule, system prompt
+  additions, run parameters, model-candidate strategies, 25 USD pilot ceiling) recorded
+  and committed as `395d1da626c12fe5b5b0443c0737a8c02b2b614b`; 1137e2bb C2 PENDING with a
+  proposed revision · (Stage 3a commit)
+- 2026-10-30 · Stage 3b infrastructure: provider SDKs added (anthropic 2.3.0, openai
+  3.41.0, google-genai 2.34.0, pillow declared); model_args `max_retries=0` verified to
+  reach both SDK clients; models-list calls skipped (no `.env`); launcher and budget
+  ledger implemented and mock-verified (25 tests); I1 staging verification (11 tests);
+  I2 image validation (5 unit tests, 8/8 Inspect-chain); cumulative collection caps and
+  in-flight read deadline (6 tests); all Inspect-chain suites re-run green (92/92, 74/74,
+  62/62). Hard stop before the grading chain · uncommitted
 - 2026-10-30 · Stage 3a rulings approved by the human: 1.13 as written; `b5d2e6f1…` C3 /
   rubric 12 graded by PivotTable structure (Excel open/refresh is a limitation, not a
   basis); GCP resources staged as HTML + text + zips with the 27-file SHA-256 list in

@@ -507,11 +507,16 @@ equality, so float noise is not a mismatch; counts exact.
 - C1 Line flags (APPROVED 2026-10-30). Requirement: price mismatch and case-pack flags correct on all
   41 lines, totals 15 / 10 / 25 (rubric 5–8, 18–20, 31–55). Check: D. Not compensable:
   the audit's purpose is to find these lines.
-- C2 SKU summary (PENDING; proposed revision below awaits the human's decision).
-  Current text: summary tab with the three measures per SKU, reconciling to the line
-  flags, drill-down to PO (rubric 12–17, 56–62). Check: D (values) + D on pivot XML or
-  table structure for drill-down. Not compensable: management acts on the SKU view.
-  Drill-down check of 2026-10-30: the prompt asks for "a summary table or pivot table
+- C2 SKU summary (APPROVED 2026-10-30, revised text). Requirement: a separate summary
+  tab with the three measures per SKU (rubric 12, 13), each SKU's totals equal to the
+  recomputed values (rubric 56–62), and the summary totals reconciling to the detail-sheet
+  flags (rubric 15–17). Check: D. Not compensable: management acts on the SKU view; a
+  wrong SKU count misdirects the follow-up. Drill-down to PO (rubric 14) is graded as
+  written in the ordinary rubric pass (a PO Number field, or a pivot or table that opens
+  detail) and is not part of the critical criterion.
+  Record of the revision. Superseded text: summary tab with the three measures per SKU,
+  reconciling to the line flags, drill-down to PO (rubric 12–17, 56–62); check D (values)
+  + D on pivot XML or table structure for drill-down. Drill-down check of 2026-10-30: the prompt asks for "a summary table or pivot table
   that aggregates errors at the SKU level, with the ability to drill down to the PO
   level"; rubric 14 (weight 2 of 80) is the only item that requires it: "The Summary
   worksheet allows drill-down to the PO level (e.g., includes PO Number as a field or
@@ -521,15 +526,9 @@ equality, so float noise is not a mismatch; counts exact.
   detail managers need to act on is already present in the flagged line sheet (C1), and
   a summary with correct SKU counts that lacks a drill-down field does not misstate the
   audit's findings or misdirect the follow-up; the drill-down is a navigational
-  convenience whose absence other satisfied items can compensate. Proposed revision:
-  "C2 SKU summary. Requirement: a separate summary tab with the three measures per SKU
-  (rubric 12, 13), each SKU's totals equal to the recomputed values (rubric 56–62), and
-  the summary totals reconciling to the detail-sheet flags (rubric 15–17). Check: D.
-  Not compensable: management acts on the SKU view; a wrong SKU count misdirects the
-  follow-up. Drill-down to PO (rubric 14) is graded as written in the ordinary rubric
-  pass (a PO Number field, or a pivot or table that opens detail) and is not part of the
-  critical criterion." The requirement stays in the item-by-item rubric grading either
-  way.
+  convenience whose absence other satisfied items can compensate. The revision above was
+  approved by the human on 2026-10-30; the drill-down requirement stays in the
+  item-by-item rubric grading.
 - C3 Word summary (APPROVED 2026-10-30). Requirement: .docx present, defines the two checks, states
   counts consistent with the workbook, names SKUs with the highest frequency (0103, 0107,
   0108, 0112 each have >= 4 errors), gives a starting recommendation (rubric 2, 23–30).
@@ -942,11 +941,12 @@ Requirement layers (APPROVED 2026-10-30):
 
 ## 4. Decisions still needed from the human before freeze
 
-1. Critical criteria: 17 of the 18 criteria listed as PENDING were APPROVED on
+1. Critical criteria: closed. 17 of the 18 criteria listed as PENDING were APPROVED on
    2026-10-30 as written (f841ddcf C3–C5; 47ef842d C1, C4; 1137e2bb C1, C3; c3525d4d
-   C3; 7b08cd4d C1–C3; 2ea2e5b5 C1–C3; c357f0e2 C3; a45bc83b C1, C3). Still PENDING:
-   1137e2bb C2 (proposed revision in section 2.4: drill-down to PO leaves the critical
-   core and stays a rubric-14 item).
+   C3; 7b08cd4d C1–C3; 2ea2e5b5 C1–C3; c357f0e2 C3; a45bc83b C1, C3); 1137e2bb C2 was
+   APPROVED on 2026-10-30 with the revised text in section 2.4 (drill-down to PO leaves
+   the critical core and stays a rubric-14 item). Every critical criterion now carries
+   APPROVED status.
 2. 2.2 per-item precision list: reviewed 2026-10-30 against the rubric text; the general
    principles and all listed entries are APPROVED with their basis recorded in the table.
 3. 2.1 C3 and 2.10 resource form: APPROVED 2026-10-30 and recorded in sections 2.1 and

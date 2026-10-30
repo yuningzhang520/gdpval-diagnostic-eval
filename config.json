@@ -496,7 +496,8 @@
       "message_limit=200",
       "mem_limit=3gb"
     ],
-    "comparability_rule": "Comparable A and B runs must use the same system prompt, the same tool schema and the same execution environment, recorded by identical system_prompt_sha256, tool list, image id/digest and config hash. If the prompt or tool configuration changes after pilot A, that A run is labelled a technical trial or intervention and A is rerun under the new version before any comparison with B; results from different configurations are never presented as a fair comparison."
+    "comparability_rule": "Comparable A and B runs must use the same system prompt, the same tool schema and the same execution environment, recorded by identical system_prompt_sha256, tool list, image id/digest and config hash. If the prompt or tool configuration changes after pilot A, that A run is labelled a technical trial or intervention and A is rerun under the new version before any comparison with B; results from different configurations are never presented as a fair comparison.",
+    "image_tool_validation": "implemented 2026-10-30 (Stage 3b item 4, I2): view_image and render_document decode the bytes on the host with Pillow, require the actual format to match the extension, and bound bytes (8,000,000), side (8000 px) and total pixels (20,000,000); invalid images return a ToolError and are never sent to the provider"
   },
   "sandbox": {
     "compose_file": "harness/compose.yaml",
@@ -524,7 +525,7 @@
     "max_total_bytes": 536870912,
     "time_budget_s": 600,
     "listing_timeout_s": 120,
-    "note": "per-pass admission limits from harness/collect.py LIMITS; cumulative sample caps and a hard overall deadline are Stage 3b pre-pilot requirements",
+    "note": "limits from harness/collect.py LIMITS; max_files and max_total_bytes are cumulative per sample across scorer and cleanup passes (merged set; idempotent re-collection not counted twice; repeated passes cannot bypass them); time_budget_s is a hard per-pass deadline enforced on in-flight reads (implemented 2026-10-30, Stage 3b item 5, mock-verified; not yet exercised with a real model)",
     "runs_root_policy": "runs_root must be a real path (no symlinked component; macOS /tmp and /var are symlinks). The launcher resolves it with realpath, compares with the given path, and refuses to start on mismatch (APPROVED 2026-10-30; enforcement implemented in the Stage 3b launcher)."
   },
   "concurrency": {
@@ -752,7 +753,7 @@
         "sha256": "b398ccee57678b997fb0b6baf2ccb6d12618b77557809d74c6c2a616b0a4db20"
       }
     ],
-    "runtime_verification": "automatic hash verification at staging is Stage 3b item I1",
+    "runtime_verification": "implemented 2026-10-30 (Stage 3b item 3, I1): harness.samples.verify_staged_files checks every staged file against this list (real path, no symlink, task directory, no traversal, no duplicate target, size and SHA-256) and fails closed; the launcher runs it before building the sample",
     "composition": "2 task inputs + 11 HTML pages + 11 extracted text files + 3 icon zips"
   }
 }

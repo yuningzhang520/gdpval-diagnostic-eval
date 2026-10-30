@@ -45,8 +45,12 @@ word "timeout" in a log. Limits outside the budget set (``operator``, ``custom``
 ``cost``) are not pre-declared budgets here and require review.
 
 Stage 3 must integrate this gate into the actual grader and cross-check the completed Inspect log
-(cleanup precedes log close). Per-pass caps below are not cumulative sample caps or a hard read
-deadline; both are pilot gates.
+(cleanup precedes log close). The caps below are cumulative per sample across the scorer and
+cleanup passes (files and bytes already collected count; an idempotent re-collection of the same
+path does not count twice; repeated passes cannot bypass them), and ``time_budget_s`` is a hard
+per-pass deadline enforced on the in-flight read (``anyio.fail_after``); a read cut off at the
+deadline is recorded as ``read_deadline_exceeded``, files not attempted as
+``time_budget_exceeded``, and the pass records ``deadline_hit`` and the cumulative counts.
 """
 from contextlib import contextmanager
 import datetime as dt
@@ -59,6 +63,7 @@ import secrets
 import stat
 import time
 
+import anyio
 from inspect_ai.scorer import Score, Target, scorer
 from inspect_ai.solver import TaskState
 from inspect_ai.util import sandbox
@@ -66,10 +71,10 @@ from inspect_ai.log import transcript
 
 FINAL_DIR = "/output/final"
 LIMITS = {
-    "max_files": 200,  # per pass; cumulative sample cap is a Stage 3 pre-pilot requirement
+    "max_files": 200,  # cumulative per sample across scorer and cleanup passes (merged set; idempotent re-collection not counted twice)
     "max_file_bytes": 64 * 1024 ** 2,  # below Inspect's 100 MiB read_file limit so oversized is our own, clear status
-    "max_total_bytes": 512 * 1024 ** 2,
-    "time_budget_s": 600,  # checked BEFORE reads, not a hard deadline for an in-flight read
+    "max_total_bytes": 512 * 1024 ** 2,  # cumulative per sample across passes
+    "time_budget_s": 600,  # hard deadline per pass: checked before each read AND enforced on the in-flight read (anyio.fail_after)
     "listing_timeout_s": 120,
 }
 STATUSES = ("no_files_confirmed", "complete", "partial", "listing_failed")
@@ -439,8 +444,17 @@ async def collect_final_outputs(host_dir: str, note: str, run_binding: dict, sb=
         return finish()
 
     entries = sorted(parsed["entries"], key=lambda e: e["path"])
-    total = 0
-    for i, e in enumerate(entries):
+    # Cumulative limits across passes of the same sample: files and bytes already collected in
+    # earlier passes count toward the caps; an idempotent re-collection of the same path does not
+    # count twice; new admissions are limited to what remains of the cumulative budget.
+    prior_ok = {f["sandbox_path"]: f for f in prior_files if f.get("status") in ("collected", "already_collected")}
+    total = sum(int(f.get("size", 0) or 0) for f in prior_ok.values())
+    new_admitted = 0
+    new_budget = max(LIMITS["max_files"] - len(prior_ok), 0)
+    deadline = t0 + LIMITS["time_budget_s"]
+    deadline_hit = False
+    this_pass["cumulative"] = {"prior_files": len(prior_ok), "prior_bytes": total, "max_files": LIMITS["max_files"], "max_total_bytes": LIMITS["max_total_bytes"]}
+    for e in entries:
         raw = e.get("path")
         segs, why = validate_sandbox_path(raw)
         if why:
@@ -451,16 +465,17 @@ async def collect_final_outputs(host_dir: str, note: str, run_binding: dict, sb=
         if not isinstance(size, int) or size < 0 or (sha is not None and not (isinstance(sha, str) and len(sha) == 64)):
             rejected.append({"path": raw, "reason": "listing_fields_invalid"})
             continue
-        if i >= LIMITS["max_files"]:
+        is_new = raw not in prior_ok
+        if is_new and new_admitted >= new_budget:
             files.append({**rec, "status": "error", "reason": "file_limit"})
             continue
         if size > LIMITS["max_file_bytes"] or sha is None:
             files.append({**rec, "status": "error", "reason": "oversized"})
             continue
-        if total + size > LIMITS["max_total_bytes"]:
+        if is_new and total + size > LIMITS["max_total_bytes"]:
             files.append({**rec, "status": "error", "reason": "total_limit"})
             continue
-        if time.monotonic() - t0 > LIMITS["time_budget_s"]:
+        if deadline_hit or time.monotonic() >= deadline:
             files.append({**rec, "status": "error", "reason": "time_budget_exceeded"})
             continue
         try:
@@ -486,14 +501,24 @@ async def collect_final_outputs(host_dir: str, note: str, run_binding: dict, sb=
                 continue
             if existing == sha and est.st_size == size:
                 files.append({**rec, "status": "already_collected", "sha256_collected": existing})
-                total += size
+                if is_new:  # a host file from a pass whose record was lost still counts once
+                    total += size
+                    new_admitted += 1
             else:
                 files.append({**rec, "status": "error", "reason": "conflict_existing_differs", "sha256_existing": existing})
             continue
         try:
             if _simulate_read_failure and raw in _simulate_read_failure:
                 raise RuntimeError("simulated read failure")
-            data = await sb.read_file(raw, text=False)
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                raise TimeoutError("collection deadline reached before the read started")
+            with anyio.fail_after(remaining):
+                data = await sb.read_file(raw, text=False)
+        except TimeoutError:
+            deadline_hit = True
+            files.append({**rec, "status": "error", "reason": "read_deadline_exceeded"})
+            continue
         except Exception as ex:
             files.append({**rec, "status": "error", "reason": f"read_failed:{type(ex).__name__}"})
             continue
@@ -517,7 +542,10 @@ async def collect_final_outputs(host_dir: str, note: str, run_binding: dict, sb=
             files.append({**rec, "status": "error", "reason": f"host_write_failed:{type(ex).__name__}"})
             continue
         total += size
+        new_admitted += 1
         files.append({**rec, "status": "collected", "size_collected": len(data), "sha256_collected": host_sha})
+    this_pass["deadline_hit"] = deadline_hit
+    this_pass["cumulative"].update({"files_after_pass": len(prior_ok) + new_admitted, "bytes_after_pass": total})
     return finish()
 
 
