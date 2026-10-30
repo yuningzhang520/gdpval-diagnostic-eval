@@ -1,6 +1,16 @@
 # Status
 
-Current stage: **Stage 2 closeout accepted in substance; execution-budget attribution
+Current stage: **Stage 3a approvals recorded; `config.json` DRAFT; Stage 3b
+infrastructure items authorized (2026-10-30).** Stage 2 is committed as
+`1941d4ac69566fdbc0a6dff821de57664e84f284` on `main` (pushed). Stage 3a made no model,
+judge or paid call (the `.env` file does not exist, so the permitted models-list calls were
+skipped); nothing is frozen; the pilot has not started. Second-round approvals of
+2026-10-30 (17 critical criteria, f841ddcf precision table, 7d7fc9a7 reconciliation rule,
+system prompt additions, run parameters, model-candidate strategies, 25 USD pilot ceiling)
+are recorded in section "Stage 3a"; 1137e2bb C2 and the final A/B ids stay PENDING.
+Details in section "Stage 3a".
+
+Earlier header, kept for the record: **Stage 2 closeout accepted in substance; execution-budget attribution
 policy corrected; pre-commit check done, committed to main as the Stage 2 commit (2026-10-30; hash reported in chat).**
 The second narrow review kept B4 and I4 closed but found B1–B3 only partially closed;
 the closeout fixed them (section "Stage 2 closeout after the second narrow review").
@@ -848,6 +858,221 @@ are the probe's grep pattern and the dummy sentinel text), no Chinese text, no
 reference to internal plan contents. See the chat report for the file list, the
 proposed commit message, and the `git status` at the time of the check.
 
+## Stage 3a — model, budget and pilot configuration (2026-10-30)
+
+Scope: approved rulings recorded, `config.json` drafted (DRAFT, not frozen), public prices
+recorded, Stage 3b work list estimated. No candidate-model, judge or other paid call; no
+generation; no freeze; no pilot. The permitted one-per-provider models-list calls were
+not made because `.env` does not exist (checked; no key was read, printed or logged).
+
+### Rulings approved by the human on 2026-10-30 (written into `preregistration.md`)
+
+- 1.13 substitutes and single-model fallback: APPROVED as written.
+- `b5d2e6f1…` C3 / rubric 12: the real PivotTable object requirement stands; graded by
+  structure (pivotTable and pivotCache parts present, cache source referencing the Data
+  range, row/column/data fields matching the task); "can Excel open or refresh it" is a
+  recorded toolchain limitation, not a basis for pass or fail (section 2.1).
+- GCP pre-staged resources: HTML snapshot + extracted text + icon zips, identical for both
+  models; the per-file SHA-256 list of all 27 staged files (2 inputs, 11 HTML, 11 text, 3
+  zips; 11 text files are not in `data/manifest.json` and were hashed now) is in
+  `config.json` (`pre_staged_resources.files`); runtime verification at staging is Stage
+  3b item I1 (section 2.10).
+- Hardening: no non-root sandbox user (known limitation, recorded in `config.json`
+  `sandbox.user`); image pinned by digest at freeze (a local build has no repository
+  digest until pushed or exported; the image id `sha256:18cde712…` is recorded now).
+- Run directory: `runs_root` must be a real path (macOS `/tmp` and `/var` are symlinks);
+  the launcher resolves it, compares, and refuses to start on mismatch. Recorded in
+  `config.json` (`collection.runs_root_policy`); the launcher that enforces it is Stage
+  3b work. The test launcher already resolves `TMPDIR` the same way.
+
+### Approvals of 2026-10-30, second round (after the verbatim review in chat)
+
+- **Critical criteria.** 17 of the 18 PENDING criteria APPROVED as written (f841ddcf
+  C3–C5; 47ef842d C1, C4; 1137e2bb C1, C3; c3525d4d C3; 7b08cd4d C1–C3; 2ea2e5b5
+  C1–C3; c357f0e2 C3; a45bc83b C1, C3). **1137e2bb C2 stays PENDING.** Check made: the
+  prompt asks for a SKU summary "with the ability to drill down to the PO level"; rubric
+  14 (weight 2 of 80) is the only item requiring drill-down ("includes PO Number as a
+  field or enables double-click into detail that shows PO Number"); rubric 56–62 require
+  per-SKU totals only. Non-compensability: the PO-level detail is already in the flagged
+  line sheet (C1), and a correct SKU summary without a drill-down field does not misstate
+  the audit or misdirect the follow-up, so the drill-down fails the critical standard.
+  Proposed revision recorded in `preregistration.md` 2.4: C2 = separate summary tab,
+  three measures per SKU, per-SKU totals equal to the recomputed values, summary totals
+  reconciling to the detail flags; rubric 14 graded as written in the ordinary pass.
+  Awaits the human's decision.
+- **f841ddcf precision table.** General numeric and rounding principles APPROVED. Items
+  48–54 checked against the rubric text: each states the short-shipped amount in whole
+  dollars ("$ Short Shipped equals $198", "$773", "$2,263", "$1,533", "$109", "$12",
+  "$323") and the percentage as a range or "equal to 97.0%"; the HALF_UP whole-dollar
+  value therefore passes, a cents value equal to the exact figure at cents passes, a
+  truncated whole dollar fails; the basis is the rubric's own wording, not the expert
+  deliverable's formatting. Items 27, 28, 35, 36 (equalities of amounts: cents under the
+  general rule), 37 (agreement with table totals at the precision shown) and 55–57
+  (explicit tolerances and exact whole dollars in the rubric) recorded with their basis.
+  All entries APPROVED; a basis column was added to the table. Conditional items 47–54
+  are graded per their own "if present" condition when no account summary exists.
+- **7d7fc9a7 reconciliation and rounding rule** APPROVED (recorded in 2.7, closes
+  section 4 item 5): balances equal to the given GL to the cent pass; a difference passes
+  only with an explicit, quantified, re-performable reconciliation bridge that closes it
+  to the GL; a textual rounding note alone fails; an undisclosed difference fails; rubric
+  23–26, 30, 41–44, 48 graded on their own text after any quantified bridge; the expert
+  gold is never the sole evidence; the independent recalculation is the reference.
+- **System prompt.** Three additions approved and made in
+  `harness/system_prompt_draft.txt`: LibreOffice "with python3-uno bindings"; "Tools to
+  view images and render document pages are provided."; "No one is available to answer
+  questions; make reasonable assumptions and state them in the deliverable." Everything
+  else unchanged. `config.json` carries the new text and SHA-256. Comparability rule
+  recorded in `config.json`: A and B must run under the same prompt, tool schema and
+  environment with identical recorded hashes; a prompt or tool change after pilot A turns
+  that A into a technical trial or intervention, and A is rerun before any comparison.
+- **Run parameters approved as pilot candidates** (`config.json`, `approved_2026_10_30`):
+  `time_limit` 3,600 s, `working_limit` 3,600 s, `message_limit` 200, tool timeout 600 s,
+  3 GiB per sandbox, `attempts=1`, `epochs=1`, pilot concurrency 1/1/1/1; formal
+  concurrency 2 stays a PENDING candidate. Four retry layers fixed: Inspect
+  `max_retries=3`; provider SDK `max_retries=0` through `model_args` (effect to be
+  verified when the SDKs are installed, Stage 3b item 8); `retry_on_error` off and
+  `fail_on_error=false`; `eval()` is the entry point (if `eval_set()` were used,
+  `retry_attempts=0` is mandatory since its default is 10 in 0.3.286). No unapproved
+  whole-sample or whole-task rerun. `token_limit` and per-request `max_tokens` are set
+  after A/B selection and approved before the first real pilot run.
+- **Model candidates recorded, not decided.** Capability-first (preferred):
+  `claude-opus-5-5` and `gpt-6.1-sol`; same-price general alternative: `claude-sonnet-5-5`
+  and `gpt-6.1-sol`. Basis: each provider's current representative general-purpose model.
+  Recorded limitations: 2x price asymmetry in the capability-first pairing (4/20 vs 2/10
+  USD per MTok), different reasoning controls (adaptive thinking with effort levels vs
+  `reasoning_effort` low–max; Opus 5.5 default effort medium, Sonnet 5.5 high, gpt-6.1-sol
+  default not stated), non-comparable tokenizers. Actual ids and callability await the
+  provider list queries and the pilot; the human approves A/B. Judge candidate
+  `gemini-3.1-pro-preview` (2/12 USD per MTok up to 200k; ai.google.dev pricing, queried
+  2026-10-30) with the preview-withdrawal risk recorded; not frozen.
+- **Pilot budget.** Cumulative ceiling 25 USD for A, B, judge, cache charges and billable
+  retries; each paid call still needs separate authorization. The launcher must
+  implement reservation before each sample and judge batch, settlement from actual usage
+  by category, a persistent ledger with distinct reservation and settlement records,
+  conservative handling of unknown retry usage, and the stop conditions (no start without
+  budget cover; no new sample after the ceiling; 2x per-task estimate; second engineering
+  failure of a class; ceiling reached). It is not an absolute billing hard cap. Inspect
+  0.3.286 offers `eval(cost_limit=…, model_cost_config=…)` (per-sample dollars with
+  `ModelCost` prices) as a supplement only. Mock verification of the ledger is Stage 3b
+  item 7.
+
+### `config.json` (DRAFT)
+
+Written at the repository root (tracked candidate, not yet committed). Content: dataset
+revision and parquet hash; the ten tasks with prompt SHA-256, rubric item count computed
+from the rubric files (580 in total), and every staged file (43 entries, sandbox path,
+source path, bytes, SHA-256); pilot task `1137e2bb…` with the sequence A → review
+checkpoint → B; model ids as placeholders; generation: `attempts=1`, `epochs=1`, tool
+timeout 600 s, `time_limit` 3,600 s, `message_limit` 200, no token or working limit,
+budget-limit types that keep grading eligibility, the four tools, the draft system
+prompt (text and SHA-256), server-side tools off; sandbox: compose file hash, image tag
+and id, digest placeholder, `network_mode: none`, 3 GiB, 2 CPUs, 512 pids, `cap_drop`
+ALL, root-user limitation; collection limits from `harness/collect.py` plus the
+`runs_root` real-path policy; concurrency: pilot 1/1/1/1 (`max_samples`, `max_tasks`,
+`max_sandboxes`, `max_connections`), formal 2 as a PENDING candidate; retries in three
+fixed layers (below); budget: pilot ceiling 15 USD PENDING, no estimate claimed, three
+stop conditions.
+
+Retry layers, as checked in installed inspect_ai 0.3.286 and the official SDK docs
+(queried 2026-10-30):
+
+1. Inspect model request: `GenerateConfig.max_retries` defaults to **unlimited** when
+   unset (`_generate_config.py`), with tenacity `wait_exponential_jitter(initial=3,
+   max=1800, jitter=3)` (`model/_retry.py`); retried errors are those the provider's
+   `should_retry` classifies (Anthropic: 429 as rate limit, 5xx, connection; OpenAI:
+   `openai_classify_retry`, quota-exceeded never retried). Draft: `max_retries=3`,
+   `timeout=1800` (whole request including retries), `attempt_timeout=600`.
+2. Provider SDK: Inspect constructs `AsyncAnthropic(... **model_args)` and
+   `AsyncOpenAI(... **model_args)` without setting `max_retries`, so the SDK default
+   applies: 2 retries with short exponential backoff on connection errors, 408, 409, 429
+   and >= 500; default request timeout 10 minutes (Anthropic Python SDK docs; openai-python
+   README). Neither SDK is installed in the project environment yet (Inspect imports them
+   lazily; adding them changes `uv.lock` and needs approval). Proposed (PENDING): pass
+   `max_retries=0` as a model arg so layer 1 is the only retry layer; otherwise up to
+   4 × 3 = 12 HTTP attempts per request.
+3. Whole-sample reruns: `retry_on_error` off (0), `fail_on_error=false` so one errored
+   sample does not abort the eval and its outcome records `execution.status=error`.
+   Retry cost counts against the budget.
+
+### Public prices (official pages, queried 2026-10-30; recorded apart from any list call)
+
+Prices in USD per million tokens. Server-side tools are off in this evaluation, so their
+prices are not reproduced. All current Claude models and all latest OpenAI models accept
+image input and tool/function calls per their pages; image input is billed as tokens.
+
+| Provider / model id | Input | Cached input | Output | Notes |
+|---|---|---|---|---|
+| Anthropic `claude-fable-5-1` | 10 | 0.25 (read); 12.50 / 20 (5 min / 1 h write) | 50 | 1M context, 128K max output, adaptive thinking always on, default effort high |
+| Anthropic `claude-opus-5-5` | 4 | 0.20; 5 / 8 | 20 | 1M context, 128K out; fast mode 8 / 40 |
+| Anthropic `claude-sonnet-5-5` | 2 | 0.10; 2.50 / 4 | 10 | 1M context, 128K out |
+| Anthropic `claude-haiku-5-5` | 0.10 (prompt ≤ 100k) / 0.50 (> 100k) | 0.01 / 0.05 | 0.50 / 2.50 | priced by prompt length |
+| OpenAI `gpt-6-astra` | 10 | 1.00 | 50 | 1.05M context, 128K out, efforts low–max, cutoff Apr 30 2026; page calls it the flagship |
+| OpenAI `gpt-6.1-sol` | 2 | 0.10 | 10 | 1.05M / 128K |
+| OpenAI `gpt-6.1-terra` | 1 | 0.05 | 5 | 1.05M / 128K |
+| OpenAI `gpt-6-luna` | 0.10 | 0.01 | 0.50 | 1.05M / 128K |
+| OpenAI `gpt-5.6-sol` | 4 | 0.40 | 20 | — |
+| OpenAI `gpt-5.5` | 5 (10 above 272K input) | 0.50 | 30 (45 above 272K) | — |
+| Google `gemini-3.1-pro-preview` (judge candidate) | 2 (≤ 200k) / 4 | 0.20 / 0.40 | 12 / 18 | — |
+| Google `gemini-2.5-pro` (judge candidate) | 1.25 / 2.50 | 0.125 / 0.25 | 10 / 15 | — |
+| Google `gemini-4-argon` | 2 (4 from 2026-12-01) | 0.10 | 10 (20 from 2026-12-01) | announced price step |
+
+Sources: platform.claude.com pricing and models overview; developers.openai.com pricing
+and models pages; ai.google.dev Gemini pricing. Caveats: the OpenAI models page is
+truncated ("View more"; a full catalog exists) and its pricing page shows layout gaps, so
+these rows are not a complete list of available models; Anthropic Batch API is 50 % off
+and its Mythos models are limited-availability; a successful list call (not made) would
+not establish generation or tool compatibility either. Prices are a planning input, not a
+billing basis.
+
+**Budget.** The pilot ceiling of 15 USD is pending approval. No estimate is claimed:
+models are not selected and no run exists. For orientation only (not an estimate), one
+agentic task that accumulates 1.5M input tokens (mostly cache reads) and 40k output
+tokens would cost about 1–2 USD on `claude-opus-5-5` or `gpt-5.5` with caching and
+7–9 USD without; two models on the pilot task therefore range from a few dollars to above
+the ceiling depending on caching, retries and judge calls, which is why the pilot
+measures cost before any formal run. The estimate written at model selection will state
+whether judge and retry costs are included.
+
+### Engineering notes from this stage
+
+- Docker Desktop (server 29.6.1) twice answered `docker image inspect gdpval-sandbox:stage2`
+  with "No such image" while `docker images` listed the image (once as the first call of
+  the `regress_limits` process, once during this stage's checks); seconds later the same
+  call succeeded. Inspect's `sandbox_prebuilt` check uses exactly this command. The
+  Stage 3b launcher should pre-flight the image with a bounded retry and record the
+  response; this is a daemon behaviour, not a harness defect, and it is tracked here.
+- `anthropic` and `openai` SDKs are not in `pyproject.toml`; the first real call needs
+  them (approval for the dependency change) and the `.env` file.
+
+### Stage 3b work list (not started; estimates are working time, not calendar time)
+
+| # | Item | Estimate |
+|---|---|---|
+| 1 | `1137e2bb…` grading chain: extraction (xlsx formulas and cached values, docx text), LibreOffice recalculation on copies, deterministic checks per section 2.4, judge input assembly and judge prompt, human-review material generator (deliverable and criterion first; judge verdict in a separate file) | 2–3 days |
+| 2 | Grading entry point consuming `run_outcome.json` with identity from the completed Inspect log and the terminal-log join; integration tests: no score on missing, invalid, mismatched, non-final, `listing_failed`, unrecovered `partial`, `execution_error`; `limited` handled per the budget policy | 1 day |
+| 3 | I1: staging allowlist real-path and symlink checks; SHA-256 verification of every model-visible file against `config.json` at staging | 0.5 day |
+| 4 | I2: `view_image` decodes the bytes and bounds pixel dimensions | 0.25 day |
+| 5 | Cumulative file-count and byte caps across passes; hard overall read deadline; originals preserved on any limit | 0.5 day |
+| 6 | Deterministic-check fixtures for `1137e2bb…`: positive fixture built from the original inputs with independently verified expected values; negative fixtures with explicit planted errors; expert gold used as reference only, known gold/rubric conflicts marked separately | 1 day |
+| 7 | Pilot launcher: loads `.env` in the trusted process only, resolves and validates `runs_root` (real path), pre-flights the image with bounded retry, refuses `INSPECT_DISABLE_MODEL_API`, checks key presence by name only, snapshots `config.json` and commit into the run directory | 0.5 day |
+| 8 | Dependencies and access: add the provider SDKs (lock change, approval), one models-list call per provider, record pagination handling | 0.25 day |
+| 9 | Cost and time accounting for the pilot report (generation, grading, human review) | 0.25 day |
+
+Total about 6–7 working days before the first paid call; human review time is extra and
+is measured in the pilot. I3 (synthetic counter-examples for the recalculation three-way
+split) stays due before the first full pilot grading; I5 (model, concurrency, image
+digest) is fixed at freeze.
+
+### Decisions still open after the second round
+
+1. 1137e2bb C2: accept the proposed revision (drill-down out of the critical core) or
+   keep the current text.
+2. Final A/B model ids and reasoning settings (from the two recorded strategies) after the
+   provider list queries; `token_limit` and per-request `max_tokens`; judge freeze.
+3. Formal concurrency 2 (after memory and stability evidence; reservation atomicity).
+4. Stage 3b work after the infrastructure items (grading chain, fixtures, grading entry
+   point, cost accounting: former items 1, 6, 2, 9) — not started without approval.
+
 ## Known issues and findings (material check)
 
 - `rubric_json.form_content`: 8,036 items hold `null`, 2,417 items lack the key, zero
@@ -895,6 +1120,15 @@ Nothing. Waiting for the human's decisions listed under "Next stage".
 
 ## Decisions taken (date · what · commit)
 
+- 2026-10-30 · Stage 3a rulings approved by the human: 1.13 as written; `b5d2e6f1…` C3 /
+  rubric 12 graded by PivotTable structure (Excel open/refresh is a limitation, not a
+  basis); GCP resources staged as HTML + text + zips with the 27-file SHA-256 list in
+  `config.json`, runtime verification in Stage 3b (I1); no non-root sandbox user (known
+  limitation), image digest pinned at freeze; `runs_root` must be a real path, enforced
+  by the launcher. `config.json` DRAFT written (placeholders for model ids; tool timeout
+  600 s, `time_limit` 3,600 s, `message_limit` 200, 3 GiB, collector limits, `attempts=1`,
+  pilot concurrency 1, three fixed retry layers, pilot ceiling 15 USD PENDING). No model,
+  judge or paid call; `.env` absent so list calls skipped · uncommitted
 - 2026-10-30 · Execution-budget attribution policy: exhausting a pre-configured budget
   identical for both models (time / working / message / token limit) keeps
   `execution.status=limited` with Inspect evidence and is grading-eligible when the final
@@ -989,9 +1223,11 @@ Nothing. Waiting for the human's decisions listed under "Next stage".
 
 ## Next stage (not started)
 
-Stage 3, model / budget / pilot configuration (`config.json` draft), then the pilot on
-`1137e2bb…` (model A end-to-end through grading and human review, then model B). Decisions
-needed from the human before Stage 3 work starts:
+Stage 3b (grading chain for the pilot task, pre-pilot gates, launcher, dependencies), then
+the pilot on `1137e2bb…` (model A end-to-end through grading and human review, then model
+B). The current decision list is in section "Stage 3a"; the list below is the earlier
+Stage 3 list, kept for the record (items 1 and 4 are partly settled by the rulings of
+2026-10-30 recorded above):
 
 1. `preregistration.md` section 4: pending critical criteria; the PO-log per-item precision
    entries; 1.13 substitutes and fallback; item 5 (`7d7fc9a7…` rounding policy, due before

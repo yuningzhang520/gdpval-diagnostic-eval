@@ -1,0 +1,758 @@
+{
+  "_status": "DRAFT. Not frozen: freeze-v1 has not been tagged. Parameters marked approved_2026_10_30 are approved candidate values for the pilot; model ids, token_limit, max_tokens, judge and formal concurrency remain PENDING. Placeholders are literal strings beginning with PLACEHOLDER.",
+  "drafted_at_utc": "2026-10-30T21:48:09+00:00",
+  "code_commit_at_draft": "1941d4ac69566fdbc0a6dff821de57664e84f284",
+  "code_commit_note": "The commit actually used by a run is recorded in that run's metadata, not here.",
+  "dataset": {
+    "repo": "openai/gdpval",
+    "revision": "11e7900cdcac61bc4daf59e65feb238acda98fbf",
+    "parquet_sha256": "f8422fab9b21d90c0ee5f0659842ab666d418cb8940842918f9f4b0df7ae0202",
+    "rubric_version": "GDPval v2 rubric_json at the same revision",
+    "rubric_total_items_computed": 580
+  },
+  "tasks": [
+    {
+      "task_id": "b5d2e6f1-62a2-433a-bcdd-95b260cdd860",
+      "group": "deep",
+      "occupation": "Order Clerks",
+      "prompt_file": "data/prompts/b5d2e6f1-62a2-433a-bcdd-95b260cdd860.txt",
+      "prompt_sha256": "8d5b8aea3ec5bc0ee8d70debc31998beb4a22b280978b6d59228cf67cdde7651",
+      "rubric_item_count_computed": 32,
+      "staged_files": [
+        {
+          "sandbox_path": "/workspace/inputs/Weekly Sales Data.xlsx",
+          "source": "data/inputs/b5d2e6f1-62a2-433a-bcdd-95b260cdd860/Weekly Sales Data.xlsx",
+          "bytes": 83029,
+          "sha256": "60e80dd2cb7d73c3e4845c5399fb95ce5560628f16e2b18a29ec16b84ab3bb53"
+        }
+      ]
+    },
+    {
+      "task_id": "f841ddcf-2a28-4f6d-bac3-61b607219d3e",
+      "group": "deep",
+      "occupation": "Order Clerks",
+      "prompt_file": "data/prompts/f841ddcf-2a28-4f6d-bac3-61b607219d3e.txt",
+      "prompt_sha256": "69a8efb123161b5e21ea56f808e1a7e50930191836507f1f2761d26679192eac",
+      "rubric_item_count_computed": 59,
+      "staged_files": [
+        {
+          "sandbox_path": "/workspace/inputs/PO Log.xlsx",
+          "source": "data/inputs/f841ddcf-2a28-4f6d-bac3-61b607219d3e/PO Log.xlsx",
+          "bytes": 17433,
+          "sha256": "796e2d0246ecf2a79db200568fd5a6760b376a186b052897b009cb6c149e7b0b"
+        }
+      ]
+    },
+    {
+      "task_id": "47ef842d-8eac-4b90-bda8-dd934c228c96",
+      "group": "deep",
+      "occupation": "Order Clerks",
+      "prompt_file": "data/prompts/47ef842d-8eac-4b90-bda8-dd934c228c96.txt",
+      "prompt_sha256": "3e98480ce7de25720378e78da90e0b6620c234da18401e89cd6131c02ab325af",
+      "rubric_item_count_computed": 58,
+      "staged_files": [
+        {
+          "sandbox_path": "/workspace/inputs/Reference Inventory.xlsx",
+          "source": "data/inputs/47ef842d-8eac-4b90-bda8-dd934c228c96/Reference Inventory.xlsx",
+          "bytes": 376229,
+          "sha256": "fd88d7344a7839b37e5a0bbe5abb5b9e60d972d7e39f27fc741427e84f575fd0"
+        }
+      ]
+    },
+    {
+      "task_id": "1137e2bb-bdf9-4876-b572-f29b7de5e595",
+      "group": "deep",
+      "occupation": "Order Clerks",
+      "prompt_file": "data/prompts/1137e2bb-bdf9-4876-b572-f29b7de5e595.txt",
+      "prompt_sha256": "0c5324071ed144193b13ada0820ea1b82624af092961749a25e72d02e8f8a094",
+      "rubric_item_count_computed": 62,
+      "staged_files": [
+        {
+          "sandbox_path": "/workspace/inputs/Reference_PO Data.xlsx",
+          "source": "data/inputs/1137e2bb-bdf9-4876-b572-f29b7de5e595/Reference_PO Data.xlsx",
+          "bytes": 7201,
+          "sha256": "ce8f43c8d80b536f0b12e1b7ed0285b1313055f836815bac4586a2cc7343726e"
+        }
+      ]
+    },
+    {
+      "task_id": "c3525d4d-2012-45df-853e-2d2a0e902991",
+      "group": "deep",
+      "occupation": "Order Clerks",
+      "prompt_file": "data/prompts/c3525d4d-2012-45df-853e-2d2a0e902991.txt",
+      "prompt_sha256": "f9e6cc445580b5cf30fd8edbbef311ab123a163ae23ef6356498817c7a9cb3ca",
+      "rubric_item_count_computed": 52,
+      "staged_files": [
+        {
+          "sandbox_path": "/workspace/inputs/Email Trail Floorstands.docx",
+          "source": "data/inputs/c3525d4d-2012-45df-853e-2d2a0e902991/Email Trail Floorstands.docx",
+          "bytes": 11381,
+          "sha256": "0d79e0cdd2e811609e73dcadc34d682f6d27c38b712de4824385e98f52e3b347"
+        },
+        {
+          "sandbox_path": "/workspace/inputs/Holiday Floorstand Store List Original.xlsx",
+          "source": "data/inputs/c3525d4d-2012-45df-853e-2d2a0e902991/Holiday Floorstand Store List Original.xlsx",
+          "bytes": 20651,
+          "sha256": "123c0b1cf9e9b6ecfccc06501a205384c58366059d70c74b82fc476d2b6d21cf"
+        },
+        {
+          "sandbox_path": "/workspace/inputs/Holiday Matrix final count.xlsx",
+          "source": "data/inputs/c3525d4d-2012-45df-853e-2d2a0e902991/Holiday Matrix final count.xlsx",
+          "bytes": 21536,
+          "sha256": "8548106161db37c37ff079eb0eec6ff98625da4ce565d96ccfb0403d7703be1d"
+        }
+      ]
+    },
+    {
+      "task_id": "7b08cd4d-df60-41ae-9102-8aaa49306ba2",
+      "group": "supplementary",
+      "occupation": "Accountants and Auditors",
+      "prompt_file": "data/prompts/7b08cd4d-df60-41ae-9102-8aaa49306ba2.txt",
+      "prompt_sha256": "71bdc1610cf1299ab014086b6ec4f17362a2da2dc6fba792a6fb672bf1e8e301",
+      "rubric_item_count_computed": 59,
+      "staged_files": [
+        {
+          "sandbox_path": "/workspace/inputs/Fall Music Tour Ref File.xlsx",
+          "source": "data/inputs/7b08cd4d-df60-41ae-9102-8aaa49306ba2/Fall Music Tour Ref File.xlsx",
+          "bytes": 15961,
+          "sha256": "3d0ebb819537dc8be6a584e938dbae2b646058403798a4130528d71f982886fb"
+        }
+      ]
+    },
+    {
+      "task_id": "7d7fc9a7-21a7-4b83-906f-416dea5ad04f",
+      "group": "supplementary",
+      "occupation": "Accountants and Auditors",
+      "prompt_file": "data/prompts/7d7fc9a7-21a7-4b83-906f-416dea5ad04f.txt",
+      "prompt_sha256": "6495bff3041b48c19dd608020fc9a293ffdcb0f5571564db3f462202952814a9",
+      "rubric_item_count_computed": 56,
+      "staged_files": [
+        {
+          "sandbox_path": "/workspace/inputs/Aurisic_Prepaid_Expenses_Apr25.pdf",
+          "source": "data/inputs/7d7fc9a7-21a7-4b83-906f-416dea5ad04f/Aurisic_Prepaid_Expenses_Apr25.pdf",
+          "bytes": 6833,
+          "sha256": "97bc326172d029a043b82a9091aae5aa5ff2cc926824159688c5092f6f9f4cfb"
+        },
+        {
+          "sandbox_path": "/workspace/inputs/Aurisic_Prepaid_Expenses_Feb25.pdf",
+          "source": "data/inputs/7d7fc9a7-21a7-4b83-906f-416dea5ad04f/Aurisic_Prepaid_Expenses_Feb25.pdf",
+          "bytes": 2779,
+          "sha256": "ca54cb87100f534e2339369a6a8798b6f1be07f32fe23b9d29d7115ca61f8787"
+        },
+        {
+          "sandbox_path": "/workspace/inputs/Aurisic_Prepaid_Expenses_Jan25.pdf",
+          "source": "data/inputs/7d7fc9a7-21a7-4b83-906f-416dea5ad04f/Aurisic_Prepaid_Expenses_Jan25.pdf",
+          "bytes": 17640,
+          "sha256": "c00c4b44a0b5ba1453c155e54e963076c50a5809960089afc5f27e1679a4c5b1"
+        },
+        {
+          "sandbox_path": "/workspace/inputs/Aurisic_Prepaid_Expenses_Mar25.pdf",
+          "source": "data/inputs/7d7fc9a7-21a7-4b83-906f-416dea5ad04f/Aurisic_Prepaid_Expenses_Mar25.pdf",
+          "bytes": 6133,
+          "sha256": "10a2082e4dc87fc396641841351606d33f801090a876208fe14d512fd1c09e96"
+        },
+        {
+          "sandbox_path": "/workspace/inputs/Aurisic_Prepaid_Insurance.pdf",
+          "source": "data/inputs/7d7fc9a7-21a7-4b83-906f-416dea5ad04f/Aurisic_Prepaid_Insurance.pdf",
+          "bytes": 347944,
+          "sha256": "da0efd444c9be29c459a52b1f85a753f91ad3667c3bb43bf7cc0d9d862400099"
+        },
+        {
+          "sandbox_path": "/workspace/inputs/COA.xlsx",
+          "source": "data/inputs/7d7fc9a7-21a7-4b83-906f-416dea5ad04f/COA.xlsx",
+          "bytes": 10643,
+          "sha256": "7018fed4750a883d8407e6eaa876c582aa721328ea32a21fefb94e7981673cc8"
+        }
+      ]
+    },
+    {
+      "task_id": "2ea2e5b5-257f-42e6-a7dc-93763f28b19d",
+      "group": "supplementary",
+      "occupation": "Computer and Information Systems Managers",
+      "prompt_file": "data/prompts/2ea2e5b5-257f-42e6-a7dc-93763f28b19d.txt",
+      "prompt_sha256": "93c975a12dba13dc194d410225bf41da3aa58e45bf9cbc963d0426b0edd2ec14",
+      "rubric_item_count_computed": 60,
+      "staged_files": [
+        {
+          "sandbox_path": "/workspace/inputs/Work Time Study - Source.xlsx",
+          "source": "data/inputs/2ea2e5b5-257f-42e6-a7dc-93763f28b19d/Work Time Study - Source.xlsx",
+          "bytes": 329418,
+          "sha256": "bb09ca2a9999b404d7fced9202b42949cd9f142f39554e254bac77b3686dae9e"
+        }
+      ]
+    },
+    {
+      "task_id": "c357f0e2-963d-4eb7-a6fa-3078fe55b3ba",
+      "group": "supplementary",
+      "occupation": "Computer and Information Systems Managers",
+      "prompt_file": "data/prompts/c357f0e2-963d-4eb7-a6fa-3078fe55b3ba.txt",
+      "prompt_sha256": "9902b39e2dfb58fb163d5e48576609a8609ba90c35d3c139104fb2bd93fa6e67",
+      "rubric_item_count_computed": 70,
+      "staged_files": [
+        {
+          "sandbox_path": "/workspace/inputs/UAT Plan - Template.xlsx",
+          "source": "data/inputs/c357f0e2-963d-4eb7-a6fa-3078fe55b3ba/UAT Plan - Template.xlsx",
+          "bytes": 8454,
+          "sha256": "834f529b7fc225ceec030a6f59475f18a3319a8d21886b6ed0dff67455f52b26"
+        }
+      ]
+    },
+    {
+      "task_id": "a45bc83b-22f9-4def-8d89-9c5661b2b86f",
+      "group": "supplementary",
+      "occupation": "Computer and Information Systems Managers",
+      "prompt_file": "data/prompts/a45bc83b-22f9-4def-8d89-9c5661b2b86f.txt",
+      "prompt_sha256": "0b7c75e49b8fbbf431c12d28b66bb7f7d4ee0f7e2fe6faa96c7384aa7a0b4331",
+      "rubric_item_count_computed": 72,
+      "staged_files": [
+        {
+          "sandbox_path": "/workspace/inputs/Current_Architecture.pdf",
+          "source": "data/inputs/a45bc83b-22f9-4def-8d89-9c5661b2b86f/Current_Architecture.pdf",
+          "bytes": 51194,
+          "sha256": "024b4aef0c191aa73a42ba213cfa7c79d5361397f88162240949da00d13d751a"
+        },
+        {
+          "sandbox_path": "/workspace/inputs/Current_Architecture_Summary.docx",
+          "source": "data/inputs/a45bc83b-22f9-4def-8d89-9c5661b2b86f/Current_Architecture_Summary.docx",
+          "bytes": 11647,
+          "sha256": "9b8edc7cc58c7c301316b8cf8adca302c84ac8f6c16c6d7f985facfa66ae0adf"
+        },
+        {
+          "sandbox_path": "/workspace/resources/icons/category-icons.zip",
+          "source": "data/resources/a45bc83b-22f9-4def-8d89-9c5661b2b86f/icons/category-icons.zip",
+          "bytes": 795968,
+          "sha256": "e5bc3abd3527dc2500e9bff7f15870783e2c764129c49b7cd4c1b4e105345002"
+        },
+        {
+          "sandbox_path": "/workspace/resources/icons/core-products-icons.zip",
+          "source": "data/resources/a45bc83b-22f9-4def-8d89-9c5661b2b86f/icons/core-products-icons.zip",
+          "bytes": 318678,
+          "sha256": "6531a10f58bc599c24d9a455d81dd757c1a03c3c43da9cddf639b859c1c1eece"
+        },
+        {
+          "sandbox_path": "/workspace/resources/icons/google-cloud-legacy-icons.zip",
+          "source": "data/resources/a45bc83b-22f9-4def-8d89-9c5661b2b86f/icons/google-cloud-legacy-icons.zip",
+          "bytes": 2268104,
+          "sha256": "a6d9d7921758042538b462f03cf64614c2cebd96743b3ed63580a769fc7de3e9"
+        },
+        {
+          "sandbox_path": "/workspace/resources/pages/01_cloud_google_com_icons.html",
+          "source": "data/resources/a45bc83b-22f9-4def-8d89-9c5661b2b86f/pages/01_cloud_google_com_icons.html",
+          "bytes": 1994419,
+          "sha256": "fafcc0dce4c9b8ba1b0c32baf04b2e76c98b5391c20b079e8be15bcd02236807"
+        },
+        {
+          "sandbox_path": "/workspace/resources/pages/01_cloud_google_com_icons.txt",
+          "source": "data/resources/a45bc83b-22f9-4def-8d89-9c5661b2b86f/pages/01_cloud_google_com_icons.txt",
+          "bytes": 34854,
+          "sha256": "307cbefd7a51d88ada5b5a3e6dac69efc5da820ab8181d00123f0d9f934e72ef"
+        },
+        {
+          "sandbox_path": "/workspace/resources/pages/02_cloud_google_com_docs.html",
+          "source": "data/resources/a45bc83b-22f9-4def-8d89-9c5661b2b86f/pages/02_cloud_google_com_docs.html",
+          "bytes": 290142,
+          "sha256": "e22f380c9e320eabf1f4f234d85b17e8193bc383587fcd5b311115f6f79f63ed"
+        },
+        {
+          "sandbox_path": "/workspace/resources/pages/02_cloud_google_com_docs.txt",
+          "source": "data/resources/a45bc83b-22f9-4def-8d89-9c5661b2b86f/pages/02_cloud_google_com_docs.txt",
+          "bytes": 4654,
+          "sha256": "6cdf75c7401e1138996d26b4ff9f66e976da3c18a71bcc9838fdee76ed1d68e7"
+        },
+        {
+          "sandbox_path": "/workspace/resources/pages/03_cloud_google_com_solutions_web-hosting.html",
+          "source": "data/resources/a45bc83b-22f9-4def-8d89-9c5661b2b86f/pages/03_cloud_google_com_solutions_web-hosting.html",
+          "bytes": 2081653,
+          "sha256": "f12f344aa1a388791962e98ef88dd76e3b959c8f46360d2618cad025e88cb798"
+        },
+        {
+          "sandbox_path": "/workspace/resources/pages/03_cloud_google_com_solutions_web-hosting.txt",
+          "source": "data/resources/a45bc83b-22f9-4def-8d89-9c5661b2b86f/pages/03_cloud_google_com_solutions_web-hosting.txt",
+          "bytes": 39355,
+          "sha256": "9b6b053de12c61bd2537568d3b5d870b3efbb72b5713a2a21d9c5ef88275099c"
+        },
+        {
+          "sandbox_path": "/workspace/resources/pages/04_cloud_google_com_load-balancing.html",
+          "source": "data/resources/a45bc83b-22f9-4def-8d89-9c5661b2b86f/pages/04_cloud_google_com_load-balancing.html",
+          "bytes": 2115141,
+          "sha256": "9a59e98cbd5b1a968439cdae68fbddb6bf431fbb8a88f387c326a0c1fb67f6b6"
+        },
+        {
+          "sandbox_path": "/workspace/resources/pages/04_cloud_google_com_load-balancing.txt",
+          "source": "data/resources/a45bc83b-22f9-4def-8d89-9c5661b2b86f/pages/04_cloud_google_com_load-balancing.txt",
+          "bytes": 44777,
+          "sha256": "37df7a9737005ac8e3aaa8063fada8d50044ed7cdf47e03bb261f38867260fd8"
+        },
+        {
+          "sandbox_path": "/workspace/resources/pages/05_cloud_google_com_dns.html",
+          "source": "data/resources/a45bc83b-22f9-4def-8d89-9c5661b2b86f/pages/05_cloud_google_com_dns.html",
+          "bytes": 2076284,
+          "sha256": "e4c86c0f043e6ba89eeb66dcbcf401cf2690f9ad151fb9dce3174a7301c3f2ca"
+        },
+        {
+          "sandbox_path": "/workspace/resources/pages/05_cloud_google_com_dns.txt",
+          "source": "data/resources/a45bc83b-22f9-4def-8d89-9c5661b2b86f/pages/05_cloud_google_com_dns.txt",
+          "bytes": 41403,
+          "sha256": "f595ac08b4f973f5918d5d77e8236457e3f9b26385abdfce1c74066db514d6a4"
+        },
+        {
+          "sandbox_path": "/workspace/resources/pages/06_cloud_google_com_cdn.html",
+          "source": "data/resources/a45bc83b-22f9-4def-8d89-9c5661b2b86f/pages/06_cloud_google_com_cdn.html",
+          "bytes": 2171010,
+          "sha256": "24af5bbc639ebebbccd409af831f1ea0dce792bc7b27241158577147e49f0fd7"
+        },
+        {
+          "sandbox_path": "/workspace/resources/pages/06_cloud_google_com_cdn.txt",
+          "source": "data/resources/a45bc83b-22f9-4def-8d89-9c5661b2b86f/pages/06_cloud_google_com_cdn.txt",
+          "bytes": 44243,
+          "sha256": "d7d52470edefa3ed6265dbbc7a1cfd63d0081a65c2e54ddd9f06f348cb40373e"
+        },
+        {
+          "sandbox_path": "/workspace/resources/pages/07_cloud_google_com_security_products_armor.html",
+          "source": "data/resources/a45bc83b-22f9-4def-8d89-9c5661b2b86f/pages/07_cloud_google_com_security_products_armor.html",
+          "bytes": 2106429,
+          "sha256": "cc70beac6c2b36411513b66d1636547b98151c8c2d40bf5d7ce71924af2c0d2b"
+        },
+        {
+          "sandbox_path": "/workspace/resources/pages/07_cloud_google_com_security_products_armor.txt",
+          "source": "data/resources/a45bc83b-22f9-4def-8d89-9c5661b2b86f/pages/07_cloud_google_com_security_products_armor.txt",
+          "bytes": 42040,
+          "sha256": "59e0338994965fea8f6e2112d0608288f3358ccaf15272b37bf9fe45a1065ed2"
+        },
+        {
+          "sandbox_path": "/workspace/resources/pages/08_cloud_google_com_storage.html",
+          "source": "data/resources/a45bc83b-22f9-4def-8d89-9c5661b2b86f/pages/08_cloud_google_com_storage.html",
+          "bytes": 2267091,
+          "sha256": "ef5de090f372a4c875ed5e014adc510c410dea0bdf9e106f2ce7168d26cb6c22"
+        },
+        {
+          "sandbox_path": "/workspace/resources/pages/08_cloud_google_com_storage.txt",
+          "source": "data/resources/a45bc83b-22f9-4def-8d89-9c5661b2b86f/pages/08_cloud_google_com_storage.txt",
+          "bytes": 56897,
+          "sha256": "235229ac4d56585e581eb95a7535be4239674e8bcc484207925125feaa80156d"
+        },
+        {
+          "sandbox_path": "/workspace/resources/pages/09_cloud_google_com_products_firestore.html",
+          "source": "data/resources/a45bc83b-22f9-4def-8d89-9c5661b2b86f/pages/09_cloud_google_com_products_firestore.html",
+          "bytes": 2157921,
+          "sha256": "0edc2d711ba415d5e0c161eb94e855a5d31522ce9b2888bf8f5e4ebcf3bafc37"
+        },
+        {
+          "sandbox_path": "/workspace/resources/pages/09_cloud_google_com_products_firestore.txt",
+          "source": "data/resources/a45bc83b-22f9-4def-8d89-9c5661b2b86f/pages/09_cloud_google_com_products_firestore.txt",
+          "bytes": 49714,
+          "sha256": "60c221e394d659849adff5b501c0c62e0a381f32c11668d91b172b430ad89eb0"
+        },
+        {
+          "sandbox_path": "/workspace/resources/pages/10_cloud_google_com_sql.html",
+          "source": "data/resources/a45bc83b-22f9-4def-8d89-9c5661b2b86f/pages/10_cloud_google_com_sql.html",
+          "bytes": 2308754,
+          "sha256": "eb38ca78c768652a3f80bd80fec5a751e3f62588d4b9fc1b2474f070a736b2f8"
+        },
+        {
+          "sandbox_path": "/workspace/resources/pages/10_cloud_google_com_sql.txt",
+          "source": "data/resources/a45bc83b-22f9-4def-8d89-9c5661b2b86f/pages/10_cloud_google_com_sql.txt",
+          "bytes": 59934,
+          "sha256": "b9f32c2a908f75748f998c3b0adad109c00a41dc7baa663dc5cea3920b586759"
+        },
+        {
+          "sandbox_path": "/workspace/resources/pages/11_cloud_google_com_blog_products_application-development_13-popular-application-ar.html",
+          "source": "data/resources/a45bc83b-22f9-4def-8d89-9c5661b2b86f/pages/11_cloud_google_com_blog_products_application-development_13-popular-application-ar.html",
+          "bytes": 301478,
+          "sha256": "9764e74b2f4380ef7eeac89d27fc0cc70788d85ae866ec65864d65c77c19bfe0"
+        },
+        {
+          "sandbox_path": "/workspace/resources/pages/11_cloud_google_com_blog_products_application-development_13-popular-application-ar.txt",
+          "source": "data/resources/a45bc83b-22f9-4def-8d89-9c5661b2b86f/pages/11_cloud_google_com_blog_products_application-development_13-popular-application-ar.txt",
+          "bytes": 13711,
+          "sha256": "b398ccee57678b997fb0b6baf2ccb6d12618b77557809d74c6c2a616b0a4db20"
+        }
+      ]
+    }
+  ],
+  "pilot": {
+    "task_id": "1137e2bb-bdf9-4876-b572-f29b7de5e595",
+    "sequence": [
+      "model_a end-to-end through grading and human review",
+      "human-review checkpoint",
+      "model_b on the same task"
+    ],
+    "budget_ceiling_usd": 25,
+    "budget_status": "cumulative pilot ceiling 25 USD approved 2026-10-30 (covers A, B, judge, cache-related charges and billable retries); every paid call still needs separate authorization; the ceiling is enforced by the launcher ledger below and is not an absolute billing hard cap",
+    "stop_conditions": [
+      "no new sample or judge batch starts when the remaining budget cannot cover its reservation",
+      "after the ceiling is reached no further sample starts (no per-request interception)",
+      "per-task cost exceeds 2x the pre-run estimate",
+      "the same engineering failure class occurs a second time",
+      "cumulative budget ceiling reached"
+    ],
+    "budget_protection": {
+      "to_be_implemented": "Stage 3b item 7 (launcher), verified with mocks before any paid call",
+      "reservation": "before each sample and before each independent judge batch, check the remaining budget and reserve that unit's estimated cost; a unit does not start when the remaining budget cannot cover its reservation",
+      "in_sample_controls": "token_limit, working_limit and per-request max_tokens (token_limit and max_tokens set after A/B selection and approved before the first real pilot run)",
+      "settlement": "after a sample or judge batch ends, update the persistent ledger from actual usage x applicable unit prices, split into input, output, cache read, cache write, judge and billable retries; release the reservation exactly once",
+      "unknowns": "when usage or billing for some retries cannot be isolated, record them as estimated or unknown and treat them conservatively; never fabricate precise cost",
+      "ledger": "persistent JSON ledger; survives restarts with accumulated cost and open reservations; reservations and settlements are distinct records; idempotent settlement per execution uuid; atomic writes",
+      "inspect_supplement": "inspect_ai 0.3.286 eval() accepts cost_limit (per-sample dollars, requires model cost data via set_model_cost() or model_cost_config) and model_cost_config (dict of model -> ModelCost); usable as a per-sample supplement, not a replacement for the pilot-wide ledger",
+      "not_a_hard_cap": "a sample already running can push the cumulative actual cost above the ceiling; no per-request interception inside the agent loop and no monkeypatching of providers",
+      "atomicity": "reservation atomicity under concurrency is verified before any formal run with concurrency above 1"
+    }
+  },
+  "models": {
+    "selection_status": "candidates recorded; final A/B ids and callability await provider models-list queries (Stage 3b item 8) and pilot verification; the human approves A/B",
+    "strategy_capability_first_preferred": {
+      "anthropic": "claude-opus-5-5",
+      "openai": "gpt-6.1-sol"
+    },
+    "strategy_same_price_general_alternative": {
+      "anthropic": "claude-sonnet-5-5",
+      "openai": "gpt-6.1-sol"
+    },
+    "selection_basis": "each provider's current representative general-purpose model, not a pairing by name or price alone",
+    "candidate_facts_queried_2026_10_30": {
+      "claude-opus-5-5": {
+        "input_per_mtok_usd": 4,
+        "output_per_mtok_usd": 20,
+        "cache_read_per_mtok_usd": 0.2,
+        "cache_write_5m_per_mtok_usd": 5,
+        "context": "1M",
+        "max_output": "128K",
+        "thinking": "adaptive, always on",
+        "default_effort": "medium",
+        "source": "platform.claude.com pricing and models overview"
+      },
+      "claude-sonnet-5-5": {
+        "input_per_mtok_usd": 2,
+        "output_per_mtok_usd": 10,
+        "cache_read_per_mtok_usd": 0.1,
+        "cache_write_5m_per_mtok_usd": 2.5,
+        "context": "1M",
+        "max_output": "128K",
+        "thinking": "adaptive",
+        "default_effort": "high",
+        "source": "platform.claude.com pricing and models overview"
+      },
+      "gpt-6.1-sol": {
+        "input_per_mtok_usd": 2,
+        "cached_input_per_mtok_usd": 0.1,
+        "output_per_mtok_usd": 10,
+        "context": "1.05M",
+        "max_output": "128K",
+        "reasoning_efforts": "low, medium, high, xhigh, max",
+        "default_effort": "not stated on the models page",
+        "knowledge_cutoff": "2026-04-30",
+        "source": "developers.openai.com pricing and models pages"
+      }
+    },
+    "asymmetry_limitations": [
+      "capability-first pairing has a 2x price asymmetry (4/20 vs 2/10 USD per MTok) and different reasoning controls (adaptive thinking with effort vs reasoning_effort levels); the same-price pairing removes the price asymmetry but not the reasoning-control asymmetry",
+      "default effort settings differ by model and are recorded here; the values actually used are fixed at freeze and identical across tasks for each model",
+      "provider token counts are not comparable across tokenizers; cost and tokens are reported per model, never as a single scale"
+    ],
+    "judge_candidate": {
+      "model_id": "gemini-3.1-pro-preview",
+      "provider": "google",
+      "input_per_mtok_usd": "2.00 (prompts <= 200k), 4.00 above",
+      "output_per_mtok_usd": "12.00 (<= 200k), 18.00 above",
+      "cache_read_per_mtok_usd": "0.20 / 0.40",
+      "price_source": "ai.google.dev/gemini-api/docs/pricing, queried 2026-10-30",
+      "risk": "a preview model may be withdrawn or change version without notice; the exact id and version are fixed at freeze and a fallback judge is named then",
+      "status": "candidate, not frozen"
+    },
+    "provider_server_side_tools": "off (web search, code interpreter, file search disabled)",
+    "price_reference": "docs/status.md, section 'Stage 3a', table 'Public prices' (official pricing pages, queried 2026-10-30); not a billing basis"
+  },
+  "generation": {
+    "attempts": 1,
+    "epochs": 1,
+    "tool_timeout_s": 600,
+    "time_limit_s": 3600,
+    "message_limit": 200,
+    "token_limit": "PLACEHOLDER (set after A/B selection; must be approved before the first real pilot run)",
+    "working_limit_s": 3600,
+    "budget_limit_types_grading_eligible": [
+      "time",
+      "working",
+      "message",
+      "token"
+    ],
+    "tools": [
+      "bash",
+      "python",
+      "view_image",
+      "render_document"
+    ],
+    "system_prompt_file": "harness/system_prompt_draft.txt",
+    "system_prompt_sha256": "6b539cf9171a0f303a5afd3fe64d68536e3db00f9ba767478d8415331cd558e9",
+    "system_prompt_text": "You are completing a professional work task. Read the task description and the files under /workspace/inputs (and /workspace/resources when present). Produce every requested deliverable as a file under /output/final/ using the requested file formats and clear file names. The sandbox has no network access; Python with openpyxl, python-docx, python-pptx, pandas, matplotlib, reportlab and pymupdf, and LibreOffice (soffice, with python3-uno bindings) are available. Tools to view images and render document pages are provided. No one is available to answer questions; make reasonable assumptions and state them in the deliverable. Before finishing, open your deliverables again and check that the numbers, labels and formatting are correct and consistent with each other. Finish by stating which files you produced.",
+    "system_prompt_status": "DRAFT with the three additions approved 2026-10-30 (python3-uno bindings; image/render tools; no one to answer questions); identical for both models; frozen at freeze-v1",
+    "max_tokens_per_request": "PLACEHOLDER (set after A/B selection; must be approved before the first real pilot run)",
+    "approved_2026_10_30": [
+      "attempts=1",
+      "epochs=1",
+      "tool_timeout_s=600",
+      "time_limit_s=3600",
+      "working_limit_s=3600",
+      "message_limit=200",
+      "mem_limit=3gb"
+    ],
+    "comparability_rule": "Comparable A and B runs must use the same system prompt, the same tool schema and the same execution environment, recorded by identical system_prompt_sha256, tool list, image id/digest and config hash. If the prompt or tool configuration changes after pilot A, that A run is labelled a technical trial or intervention and A is rerun under the new version before any comparison with B; results from different configurations are never presented as a fair comparison."
+  },
+  "sandbox": {
+    "compose_file": "harness/compose.yaml",
+    "compose_sha256": "92a674896b48b32dd6408e700eab41b4a2242969b78bc0ba6e479aa70f0f745a",
+    "image": "gdpval-sandbox:stage2",
+    "image_id": "sha256:18cde712cde1867c94b8f23ae1f4066b0aa3146fdbd8deac70d1b4aa043ea9ee",
+    "image_digest": "PLACEHOLDER (pinned at freeze; a local build has no repository digest until pushed or exported)",
+    "dockerfile": "docker/sandbox/Dockerfile",
+    "requirements": "docker/sandbox/requirements.txt",
+    "network_mode": "none",
+    "mem_limit": "3gb",
+    "cpus": 2.0,
+    "pids_limit": 512,
+    "cap_drop": [
+      "ALL"
+    ],
+    "security_opt": [
+      "no-new-privileges"
+    ],
+    "user": "root with all capabilities dropped (known limitation; non-root user not configured)"
+  },
+  "collection": {
+    "max_files": 200,
+    "max_file_bytes": 67108864,
+    "max_total_bytes": 536870912,
+    "time_budget_s": 600,
+    "listing_timeout_s": 120,
+    "note": "per-pass admission limits from harness/collect.py LIMITS; cumulative sample caps and a hard overall deadline are Stage 3b pre-pilot requirements",
+    "runs_root_policy": "runs_root must be a real path (no symlinked component; macOS /tmp and /var are symlinks). The launcher resolves it with realpath, compares with the given path, and refuses to start on mismatch (APPROVED 2026-10-30; enforcement implemented in the Stage 3b launcher)."
+  },
+  "concurrency": {
+    "pilot": {
+      "max_samples": 1,
+      "max_tasks": 1,
+      "max_sandboxes": 1,
+      "max_connections": 1,
+      "approved_2026_10_30": true
+    },
+    "formal_candidate": {
+      "max_samples": 2,
+      "max_tasks": 1,
+      "max_sandboxes": 2,
+      "max_connections": 2,
+      "status": "PENDING; requires memory and stability evidence (Docker VM 7.75 GiB, 3 GiB per sandbox)"
+    }
+  },
+  "retries": {
+    "layer_1_inspect_model_request": {
+      "max_retries": 3,
+      "approved_2026_10_30": true,
+      "backoff": "Inspect tenacity wait_exponential_jitter(initial=3 s, max=1800 s, jitter=3 s) (inspect_ai 0.3.286 model/_retry.py)",
+      "retried": "transport-class errors as classified by the provider's should_retry (rate limit 429, 5xx, connection errors); OpenAI quota-exceeded never retried",
+      "timeout_s": 1800,
+      "attempt_timeout_s": 600,
+      "logged": true,
+      "default_if_unset": "unlimited retries (GenerateConfig.max_retries docstring: 'defaults to unlimited'); never leave unset"
+    },
+    "layer_2_provider_sdk": {
+      "max_retries": 0,
+      "approved_2026_10_30": true,
+      "mechanism": "passed as a model creation arg (eval(model_args={'max_retries': 0})); Inspect forwards unknown model_args to AsyncAnthropic(**model_args) / AsyncOpenAI(**model_args) (anthropic.py l. 629-633, openai.py l. 331-338)",
+      "verification": "PENDING Stage 3b item 8: instantiate the provider with the SDK installed and read client.max_retries",
+      "sdk_default_if_unset": "2 retries with short exponential backoff on connection errors, 408, 409, 429, >=500; default request timeout 600 s (Anthropic Python SDK docs and openai-python README, queried 2026-10-30)",
+      "worst_case_if_default_kept": "4 Inspect attempts x 3 SDK attempts = 12 HTTP attempts per request"
+    },
+    "layer_3_sample_rerun": {
+      "retry_on_error": 0,
+      "fail_on_error": false,
+      "continue_on_fail": null,
+      "approved_2026_10_30": true,
+      "note": "whole-sample reruns off; an errored sample stays in the log and its run_outcome records execution.status=error; no unapproved whole-sample or whole-task rerun"
+    },
+    "layer_4_eval_set_task_retry": {
+      "entry_point": "inspect_ai.eval() (not eval_set)",
+      "retry_attempts": "not applicable to eval(); if eval_set() were ever used, retry_attempts=0 is mandatory",
+      "evidence": "inspect_ai 0.3.286 _eval/evalset.py l. 487: num_retry_attempts = 10 if retry_attempts is None; eval() path has task_retry_attempts, set to 0 in all harness tests and in the launcher",
+      "approved_2026_10_30": true
+    },
+    "retry_cost": "billable retries are counted in the budget ledger; when their usage cannot be isolated they are recorded as estimated or unknown and treated conservatively"
+  },
+  "grading": {
+    "preregistration": "preregistration.md (draft; frozen at freeze-v1)",
+    "grader_version": "PLACEHOLDER",
+    "judge_input_manifest": "PLACEHOLDER (Stage 3b)",
+    "outcome_gate": "harness.collect.load_run_outcome(for_grading=True); grading entry point integration is a Stage 3b pre-pilot requirement"
+  },
+  "pre_staged_resources": {
+    "task_id": "a45bc83b-22f9-4def-8d89-9c5661b2b86f",
+    "form": "HTML snapshot + extracted text + icon zips, identical for both models (APPROVED 2026-10-30)",
+    "snapshot_date": "2026-10-29",
+    "file_count": 27,
+    "files": [
+      {
+        "sandbox_path": "/workspace/inputs/Current_Architecture.pdf",
+        "source": "data/inputs/a45bc83b-22f9-4def-8d89-9c5661b2b86f/Current_Architecture.pdf",
+        "bytes": 51194,
+        "sha256": "024b4aef0c191aa73a42ba213cfa7c79d5361397f88162240949da00d13d751a"
+      },
+      {
+        "sandbox_path": "/workspace/inputs/Current_Architecture_Summary.docx",
+        "source": "data/inputs/a45bc83b-22f9-4def-8d89-9c5661b2b86f/Current_Architecture_Summary.docx",
+        "bytes": 11647,
+        "sha256": "9b8edc7cc58c7c301316b8cf8adca302c84ac8f6c16c6d7f985facfa66ae0adf"
+      },
+      {
+        "sandbox_path": "/workspace/resources/icons/category-icons.zip",
+        "source": "data/resources/a45bc83b-22f9-4def-8d89-9c5661b2b86f/icons/category-icons.zip",
+        "bytes": 795968,
+        "sha256": "e5bc3abd3527dc2500e9bff7f15870783e2c764129c49b7cd4c1b4e105345002"
+      },
+      {
+        "sandbox_path": "/workspace/resources/icons/core-products-icons.zip",
+        "source": "data/resources/a45bc83b-22f9-4def-8d89-9c5661b2b86f/icons/core-products-icons.zip",
+        "bytes": 318678,
+        "sha256": "6531a10f58bc599c24d9a455d81dd757c1a03c3c43da9cddf639b859c1c1eece"
+      },
+      {
+        "sandbox_path": "/workspace/resources/icons/google-cloud-legacy-icons.zip",
+        "source": "data/resources/a45bc83b-22f9-4def-8d89-9c5661b2b86f/icons/google-cloud-legacy-icons.zip",
+        "bytes": 2268104,
+        "sha256": "a6d9d7921758042538b462f03cf64614c2cebd96743b3ed63580a769fc7de3e9"
+      },
+      {
+        "sandbox_path": "/workspace/resources/pages/01_cloud_google_com_icons.html",
+        "source": "data/resources/a45bc83b-22f9-4def-8d89-9c5661b2b86f/pages/01_cloud_google_com_icons.html",
+        "bytes": 1994419,
+        "sha256": "fafcc0dce4c9b8ba1b0c32baf04b2e76c98b5391c20b079e8be15bcd02236807"
+      },
+      {
+        "sandbox_path": "/workspace/resources/pages/01_cloud_google_com_icons.txt",
+        "source": "data/resources/a45bc83b-22f9-4def-8d89-9c5661b2b86f/pages/01_cloud_google_com_icons.txt",
+        "bytes": 34854,
+        "sha256": "307cbefd7a51d88ada5b5a3e6dac69efc5da820ab8181d00123f0d9f934e72ef"
+      },
+      {
+        "sandbox_path": "/workspace/resources/pages/02_cloud_google_com_docs.html",
+        "source": "data/resources/a45bc83b-22f9-4def-8d89-9c5661b2b86f/pages/02_cloud_google_com_docs.html",
+        "bytes": 290142,
+        "sha256": "e22f380c9e320eabf1f4f234d85b17e8193bc383587fcd5b311115f6f79f63ed"
+      },
+      {
+        "sandbox_path": "/workspace/resources/pages/02_cloud_google_com_docs.txt",
+        "source": "data/resources/a45bc83b-22f9-4def-8d89-9c5661b2b86f/pages/02_cloud_google_com_docs.txt",
+        "bytes": 4654,
+        "sha256": "6cdf75c7401e1138996d26b4ff9f66e976da3c18a71bcc9838fdee76ed1d68e7"
+      },
+      {
+        "sandbox_path": "/workspace/resources/pages/03_cloud_google_com_solutions_web-hosting.html",
+        "source": "data/resources/a45bc83b-22f9-4def-8d89-9c5661b2b86f/pages/03_cloud_google_com_solutions_web-hosting.html",
+        "bytes": 2081653,
+        "sha256": "f12f344aa1a388791962e98ef88dd76e3b959c8f46360d2618cad025e88cb798"
+      },
+      {
+        "sandbox_path": "/workspace/resources/pages/03_cloud_google_com_solutions_web-hosting.txt",
+        "source": "data/resources/a45bc83b-22f9-4def-8d89-9c5661b2b86f/pages/03_cloud_google_com_solutions_web-hosting.txt",
+        "bytes": 39355,
+        "sha256": "9b6b053de12c61bd2537568d3b5d870b3efbb72b5713a2a21d9c5ef88275099c"
+      },
+      {
+        "sandbox_path": "/workspace/resources/pages/04_cloud_google_com_load-balancing.html",
+        "source": "data/resources/a45bc83b-22f9-4def-8d89-9c5661b2b86f/pages/04_cloud_google_com_load-balancing.html",
+        "bytes": 2115141,
+        "sha256": "9a59e98cbd5b1a968439cdae68fbddb6bf431fbb8a88f387c326a0c1fb67f6b6"
+      },
+      {
+        "sandbox_path": "/workspace/resources/pages/04_cloud_google_com_load-balancing.txt",
+        "source": "data/resources/a45bc83b-22f9-4def-8d89-9c5661b2b86f/pages/04_cloud_google_com_load-balancing.txt",
+        "bytes": 44777,
+        "sha256": "37df7a9737005ac8e3aaa8063fada8d50044ed7cdf47e03bb261f38867260fd8"
+      },
+      {
+        "sandbox_path": "/workspace/resources/pages/05_cloud_google_com_dns.html",
+        "source": "data/resources/a45bc83b-22f9-4def-8d89-9c5661b2b86f/pages/05_cloud_google_com_dns.html",
+        "bytes": 2076284,
+        "sha256": "e4c86c0f043e6ba89eeb66dcbcf401cf2690f9ad151fb9dce3174a7301c3f2ca"
+      },
+      {
+        "sandbox_path": "/workspace/resources/pages/05_cloud_google_com_dns.txt",
+        "source": "data/resources/a45bc83b-22f9-4def-8d89-9c5661b2b86f/pages/05_cloud_google_com_dns.txt",
+        "bytes": 41403,
+        "sha256": "f595ac08b4f973f5918d5d77e8236457e3f9b26385abdfce1c74066db514d6a4"
+      },
+      {
+        "sandbox_path": "/workspace/resources/pages/06_cloud_google_com_cdn.html",
+        "source": "data/resources/a45bc83b-22f9-4def-8d89-9c5661b2b86f/pages/06_cloud_google_com_cdn.html",
+        "bytes": 2171010,
+        "sha256": "24af5bbc639ebebbccd409af831f1ea0dce792bc7b27241158577147e49f0fd7"
+      },
+      {
+        "sandbox_path": "/workspace/resources/pages/06_cloud_google_com_cdn.txt",
+        "source": "data/resources/a45bc83b-22f9-4def-8d89-9c5661b2b86f/pages/06_cloud_google_com_cdn.txt",
+        "bytes": 44243,
+        "sha256": "d7d52470edefa3ed6265dbbc7a1cfd63d0081a65c2e54ddd9f06f348cb40373e"
+      },
+      {
+        "sandbox_path": "/workspace/resources/pages/07_cloud_google_com_security_products_armor.html",
+        "source": "data/resources/a45bc83b-22f9-4def-8d89-9c5661b2b86f/pages/07_cloud_google_com_security_products_armor.html",
+        "bytes": 2106429,
+        "sha256": "cc70beac6c2b36411513b66d1636547b98151c8c2d40bf5d7ce71924af2c0d2b"
+      },
+      {
+        "sandbox_path": "/workspace/resources/pages/07_cloud_google_com_security_products_armor.txt",
+        "source": "data/resources/a45bc83b-22f9-4def-8d89-9c5661b2b86f/pages/07_cloud_google_com_security_products_armor.txt",
+        "bytes": 42040,
+        "sha256": "59e0338994965fea8f6e2112d0608288f3358ccaf15272b37bf9fe45a1065ed2"
+      },
+      {
+        "sandbox_path": "/workspace/resources/pages/08_cloud_google_com_storage.html",
+        "source": "data/resources/a45bc83b-22f9-4def-8d89-9c5661b2b86f/pages/08_cloud_google_com_storage.html",
+        "bytes": 2267091,
+        "sha256": "ef5de090f372a4c875ed5e014adc510c410dea0bdf9e106f2ce7168d26cb6c22"
+      },
+      {
+        "sandbox_path": "/workspace/resources/pages/08_cloud_google_com_storage.txt",
+        "source": "data/resources/a45bc83b-22f9-4def-8d89-9c5661b2b86f/pages/08_cloud_google_com_storage.txt",
+        "bytes": 56897,
+        "sha256": "235229ac4d56585e581eb95a7535be4239674e8bcc484207925125feaa80156d"
+      },
+      {
+        "sandbox_path": "/workspace/resources/pages/09_cloud_google_com_products_firestore.html",
+        "source": "data/resources/a45bc83b-22f9-4def-8d89-9c5661b2b86f/pages/09_cloud_google_com_products_firestore.html",
+        "bytes": 2157921,
+        "sha256": "0edc2d711ba415d5e0c161eb94e855a5d31522ce9b2888bf8f5e4ebcf3bafc37"
+      },
+      {
+        "sandbox_path": "/workspace/resources/pages/09_cloud_google_com_products_firestore.txt",
+        "source": "data/resources/a45bc83b-22f9-4def-8d89-9c5661b2b86f/pages/09_cloud_google_com_products_firestore.txt",
+        "bytes": 49714,
+        "sha256": "60c221e394d659849adff5b501c0c62e0a381f32c11668d91b172b430ad89eb0"
+      },
+      {
+        "sandbox_path": "/workspace/resources/pages/10_cloud_google_com_sql.html",
+        "source": "data/resources/a45bc83b-22f9-4def-8d89-9c5661b2b86f/pages/10_cloud_google_com_sql.html",
+        "bytes": 2308754,
+        "sha256": "eb38ca78c768652a3f80bd80fec5a751e3f62588d4b9fc1b2474f070a736b2f8"
+      },
+      {
+        "sandbox_path": "/workspace/resources/pages/10_cloud_google_com_sql.txt",
+        "source": "data/resources/a45bc83b-22f9-4def-8d89-9c5661b2b86f/pages/10_cloud_google_com_sql.txt",
+        "bytes": 59934,
+        "sha256": "b9f32c2a908f75748f998c3b0adad109c00a41dc7baa663dc5cea3920b586759"
+      },
+      {
+        "sandbox_path": "/workspace/resources/pages/11_cloud_google_com_blog_products_application-development_13-popular-application-ar.html",
+        "source": "data/resources/a45bc83b-22f9-4def-8d89-9c5661b2b86f/pages/11_cloud_google_com_blog_products_application-development_13-popular-application-ar.html",
+        "bytes": 301478,
+        "sha256": "9764e74b2f4380ef7eeac89d27fc0cc70788d85ae866ec65864d65c77c19bfe0"
+      },
+      {
+        "sandbox_path": "/workspace/resources/pages/11_cloud_google_com_blog_products_application-development_13-popular-application-ar.txt",
+        "source": "data/resources/a45bc83b-22f9-4def-8d89-9c5661b2b86f/pages/11_cloud_google_com_blog_products_application-development_13-popular-application-ar.txt",
+        "bytes": 13711,
+        "sha256": "b398ccee57678b997fb0b6baf2ccb6d12618b77557809d74c6c2a616b0a4db20"
+      }
+    ],
+    "runtime_verification": "automatic hash verification at staging is Stage 3b item I1",
+    "composition": "2 task inputs + 11 HTML pages + 11 extracted text files + 3 icon zips"
+  }
+}

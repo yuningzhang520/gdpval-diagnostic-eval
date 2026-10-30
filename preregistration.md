@@ -142,7 +142,7 @@ tasks for both models if needed. Grader bug with deliverables intact: re-grade b
 no rerun. Amendments record old rule, evidence, new rule, and re-grading of both models.
 Runs are labelled `pilot`, `formal`, or `intervention`.
 
-### 1.13 Pre-declared substitutes and fallbacks (human approval required; PENDING confirmation)
+### 1.13 Pre-declared substitutes and fallbacks (APPROVED 2026-10-30, as written)
 - GCP task `a45bc83b…`: if pre-staged resources or visual verification cannot be
   completed before freeze, substitute `bf68f2ad…` (First-Line Supervisors of Production
   and Operating Workers) or `b7a5912e…` (Counter and Rental Clerks). Triggered only
@@ -158,7 +158,14 @@ grading rule, environment, model. If no critical failure is observed, that is re
 as such; tasks are not swapped to manufacture failures.
 
 ### 1.15 Budget, concurrency, timeouts
-To be set in `config.json` at the configuration stage after the pilot cost report.
+Draft values are in `config.json` (DRAFT, 2026-10-30; PENDING approval): tool timeout
+600 s, sample `time_limit` 3,600 s, `message_limit` 200, 3 GiB per sandbox, collector
+limits from `harness/collect.py`, `attempts=1`; pilot concurrency 1 on every axis, formal
+concurrency 2 as a candidate pending memory and stability evidence; three fixed retry
+layers (Inspect `max_retries=3` with exponential backoff for transport-class errors only,
+provider SDK retries recorded and proposed at 0, whole-sample reruns off); pilot ceiling
+15 USD pending approval, estimate to follow model selection. Final values are fixed at
+`freeze-v1` after the pilot cost report. Budget exhaustion is graded under section 1.3.
 
 ---
 
@@ -251,12 +258,18 @@ item states otherwise.
   weekly sales data sheet"), not from the deliverable's own "Data" tab. Rubric 6, 16, 17
   (internal consistency with the deliverable's Data tab) are graded as written in
   addition. Not compensable: wrong totals defeat the purpose of the analysis.
-- C3 PivotTable (TOOLCHAIN). Requirement: "Sales by Store" is a PivotTable object sourced
-  from "Data", store as outer group, brand inner, store subtotals, grand total (rubric 12,
-  14–17, 25, 26). Check: D on pivot XML (pivotTable/pivotCache parts, source range) plus
-  value checks against recomputed pair sums. Not compensable: the prompt explicitly
-  requires a pivot table. Whether a PivotTable object can be created inside the sandbox
-  is tested in the toolchain stage; no `environment_unsupported` ruling is made now.
+- C3 PivotTable (APPROVED 2026-10-30). Requirement: "Sales by Store" is a PivotTable
+  object sourced from "Data", store as outer group, brand inner, store subtotals, grand
+  total (rubric 12, 14–17, 25, 26). Check: D on the package structure — a
+  `xl/pivotTables/pivotTable*.xml` part and its `xl/pivotCache/` definition and records
+  exist, the cache's worksheet source references the Data sheet's data range, and the
+  row, column and data fields match the task's grouping and measures (store outer, brand
+  inner, SUM of the required measures) — plus value checks against recomputed pair sums.
+  The toolchain stage showed that such an object can be created inside the sandbox
+  (LibreOffice UNO), so the requirement stands and no `environment_unsupported` ruling
+  applies. Whether Excel can open or refresh a given pivot is recorded as a limitation of
+  this evaluation's toolchain (no Excel available), not used as a basis for pass or fail.
+  Not compensable: the prompt explicitly requires a pivot table.
 - C4 ST% logic (APPROVED). Requirement: ST% = Sales Quantity / Stock On Hand computed as a
   ratio of sums on both tabs for all three horizons, no division errors (rubric 7–9,
   18–20, 21). Check: D. Not compensable: the only derived metric in the task. The gold's
@@ -302,7 +315,9 @@ ship in July): 5 POs (8452724, 8794337, 7147904, 7348247, 7969527), PO value at 
 unconstrained) gives 16 POs / 43,634.40; the rubric (item 24) uses the strict rule.
 
 Numeric rules for this task (rules APPROVED; the per-item entries below were declared on
-2026-10-30 and are PENDING review):
+2026-10-30 and reviewed the same day against the rubric text — see the basis column;
+entries marked APPROVED follow from the rubric wording, none is based on the expert
+deliverable's own formatting):
 - Table amounts are compared at cents: the reference is the exact figure from the log
   quantized HALF_UP to cents, and the deliverable's stored cell value is quantized the
   same way; the two must be equal. A truncated value that differs from the HALF_UP
@@ -321,25 +336,29 @@ Numeric rules for this task (rules APPROVED; the per-item entries below were dec
   stored value is compared with the exact row ratio with |difference| <= 0.0005.
 
 Per-item precision list (rubric item · output location · correct amount, exact →
-reference · allowed precision · rounding rule):
+reference · allowed precision · rounding rule · rubric-text basis and status):
 
-| Item | Location | Correct amount (exact → reference) | Precision | Rounding |
-|---|---|---|---|---|
-| 27 | June table, each row, % shipped | row shipped / row ordered | ratio, ±0.0005 | none (exact ratio) |
-| 28 | June table, each row, short-shipped $ | max(ordered − shipped, 0) per row (log values carry up to 3 decimals) | cents | HALF_UP |
-| 35 | June table, labelled total | 140,008.204 → 140,008.20 | cents | HALF_UP; must also equal the sum of the table's own column |
-| 36 | Slipped table, labelled total | 13,300 → 13,300.00 | cents | HALF_UP |
-| 37 | Narrative, both totals | 140,008.20 and 13,300.00; whole dollars allowed: 140,008 and 13,300 | cents, or whole dollars | HALF_UP |
-| 48 | Account summary, Marchand | % 99.2699 (rubric range 99.0–99.6); short 197.712 → 197.71 (cents) / 198 (whole $) | range; cents or whole $ | HALF_UP |
-| 49 | Account summary, Five O Fore | % 97.0000 (rubric: equal to 97.0 %); short 772.98 → 772.98 / 773 | 1 dp of %; cents or whole $ | HALF_UP |
-| 50 | Account summary, Thread Up | % 90.7869 (90.6–91.0); short 2,263.046 → 2,263.05 / 2,263 | range; cents or whole $ | HALF_UP |
-| 51 | Account summary, Sigma | % 93.2417 (93.0–93.4); short 1,533.306 → 1,533.31 / 1,533 | range; cents or whole $ | HALF_UP |
-| 52 | Account summary, Pronto | % 99.4257 (99.0–99.8); short 108.56 → 108.56 / 109 | range; cents or whole $ | HALF_UP |
-| 53 | Account summary, Hunt's | % 99.9223 (99.8–100.0); short 12.000 → 12.00 / 12 | range; cents or whole $ | HALF_UP |
-| 54 | Account summary, Dolce | % 97.0000 (rubric: equal to 97.0 %); short 322.992 → 322.99 / 323 | 1 dp of %; cents or whole $ | HALF_UP |
-| 55 | Narrative sentence, June shipped | 140,008.204 → 140,008 | whole dollars, ±1 (this item only) | HALF_UP |
-| 56 | Narrative, June completion % | 96.4119 % → 96 % (rubric: ±0.5) | per rubric | HALF_UP to whole percent |
-| 57 | Narrative, June shortfall | 5,210.596 → 5,211 | whole dollars (exact) | HALF_UP (5,210 fails) |
+| Item | Location | Correct amount (exact → reference) | Precision | Rounding | Rubric-text basis · status |
+|---|---|---|---|---|---|
+| 27 | June table, each row, % shipped | row shipped / row ordered | ratio, ±0.0005 | none (exact ratio) | "Percent of Order Shipped equals (PO Actual Shipped Value at Cost) divided by (PO Value at Cost)": an equality with no stated precision; the tolerance is the approved general rule for ratios · APPROVED |
+| 28 | June table, each row, short-shipped $ | max(ordered − shipped, 0) per row (log values carry up to 3 decimals) | cents | HALF_UP | "Short-Shipped Dollars equals max((PO Value at Cost) − (PO Actual Shipped Value at Cost), 0)": an equality of dollar amounts; the general rule compares table amounts at cents · APPROVED |
+| 35 | June table, labelled total | 140,008.204 → 140,008.20 | cents | HALF_UP; must also equal the sum of the table's own column | "a clearly labeled total for June shipped that equals the sum of the PO Actual Shipped Value at Cost column": table amount, cents under the general rule · APPROVED |
+| 36 | Slipped table, labelled total | 13,300 → 13,300.00 | cents | HALF_UP | "a clearly labeled total ... that equals the sum of the PO Value at Cost column": table amount · APPROVED |
+| 37 | Narrative, both totals | 140,008.20 and 13,300.00; whole dollars allowed: 140,008 and 13,300 | cents, or whole dollars | HALF_UP | "states the June shipped total dollar amount and the slipped-to-July total dollar amount, and both numbers exactly match the respective table totals": the item demands agreement with the table totals, not a precision; a whole-dollar narrative figure equal to the table total rounded HALF_UP to whole dollars matches it at the precision shown, a figure that differs at the precision shown fails · APPROVED |
+| 48 | Account summary, Marchand | % 99.2699 (rubric range 99.0–99.6); short 197.712 → 197.71 (cents) / 198 (whole $) | range; cents or whole $ | HALF_UP | "percent shipped between 99.0% and 99.6% inclusive and $ Short Shipped equals $198": the rubric itself states the amount in whole dollars, so the HALF_UP whole-dollar value passes; a cents value equal to the exact figure at cents also passes (197.71 → 198); 197 fails · APPROVED |
+| 49 | Account summary, Five O Fore | % 97.0000 (rubric: equal to 97.0 %); short 772.98 → 772.98 / 773 | 1 dp of %; cents or whole $ | HALF_UP | "percent shipped equal to 97.0% and $ Short Shipped equals $773": whole dollars stated by the rubric; percent at one decimal · APPROVED |
+| 50 | Account summary, Thread Up | % 90.7869 (90.6–91.0); short 2,263.046 → 2,263.05 / 2,263 | range; cents or whole $ | HALF_UP | "between 90.6% and 91.0% inclusive and $ Short Shipped equals $2,263": whole dollars stated by the rubric · APPROVED |
+| 51 | Account summary, Sigma | % 93.2417 (93.0–93.4); short 1,533.306 → 1,533.31 / 1,533 | range; cents or whole $ | HALF_UP | "between 93.0% and 93.4% inclusive and $ Short Shipped equals $1,533": whole dollars stated by the rubric · APPROVED |
+| 52 | Account summary, Pronto | % 99.4257 (99.0–99.8); short 108.56 → 108.56 / 109 | range; cents or whole $ | HALF_UP | "between 99.0% and 99.8% inclusive and $ Short Shipped equals $109": whole dollars stated by the rubric (108.56 → 109; 108 fails) · APPROVED |
+| 53 | Account summary, Hunt's | % 99.9223 (99.8–100.0); short 12.000 → 12.00 / 12 | range; cents or whole $ | HALF_UP | "between 99.8% and 100.0% inclusive and $ Short Shipped equals $12": whole dollars stated by the rubric · APPROVED |
+| 54 | Account summary, Dolce | % 97.0000 (rubric: equal to 97.0 %); short 322.992 → 322.99 / 323 | 1 dp of %; cents or whole $ | HALF_UP | "percent shipped equal to 97.0% and $ Short Shipped equals $323": whole dollars stated by the rubric; percent at one decimal · APPROVED |
+| 55 | Narrative sentence, June shipped | 140,008.204 → 140,008 | whole dollars, ±1 (this item only) | HALF_UP | "'Shipped a total of $140,008 for the month.' (numeric value present must be $140,008 +/- $1)": explicit whole dollars and explicit tolerance · APPROVED |
+| 56 | Narrative, June completion % | 96.4119 % → 96 % (rubric: ±0.5) | per rubric | HALF_UP to whole percent | "shipped at 96% complete (numeric value present must be 96% +/- 0.5%)": explicit · APPROVED |
+| 57 | Narrative, June shortfall | 5,210.596 → 5,211 | whole dollars (exact) | HALF_UP (5,210 fails) | "short by $5,211 (numeric value present must be $5,211)": explicit exact whole dollars · APPROVED |
+
+Items 47–54 are conditional ("If an account-level summary is present"); when no
+account-level summary exists they are graded per the rubric's own condition, not as
+precision failures.
 
 Items 22, 24, 26, 39, 40 concern PO-set membership, not amounts; items 29–31 are edge
 cases that do not arise in this log (no zero-value PO, no over-shipment).
@@ -362,14 +381,14 @@ Three matters are recorded and graded separately; none offsets another (APPROVED
   audited against the log (rubric 7–15, 22). Check: D (PO numbers present and matched to
   the log). Not compensable: an account-level summary cannot be audited by the account
   managers; missing PO-level evidence is a critical fail.
-- C3 Slipped cohort (PENDING). Requirement: exactly the 5 POs under the strict window rule,
+- C3 Slipped cohort (APPROVED 2026-10-30). Requirement: exactly the 5 POs under the strict window rule,
   PO value at cost 13,300 (rubric 24, 36). Check: D. Not compensable: the second explicit
   ask.
-- C4 Row or account arithmetic (PENDING). Requirement: % shipped = shipped / ordered and
+- C4 Row or account arithmetic (APPROVED 2026-10-30). Requirement: % shipped = shipped / ordered and
   short = max(ordered − shipped, 0) wherever reported (rubric 27, 28 for PO-level; 47–54
   for account-level). Check: D. Not compensable: wrong derived columns mislead account
   managers.
-- C5 Narrative consistency (PENDING). Requirement: the narrative states the June shipped
+- C5 Narrative consistency (APPROVED 2026-10-30). Requirement: the narrative states the June shipped
   total and the slipped total and both match the tables (rubric 37). Check: D on
   extracted text including drawing text boxes, J for phrasing. Each narrative figure is
   graded by the metric it names (K2). Not compensable: the cross-file consistency
@@ -435,7 +454,7 @@ rubric item states (ranges or nearest integer); where an item states none, the v
 compared unrounded with |difference| < 0.005 for rates and WOS and < 0.05 percentage
 points for percentages.
 
-- C1 Scope (PENDING). Requirement: exactly the five UPCs, each once, full 12-digit display
+- C1 Scope (APPROVED 2026-10-30). Requirement: exactly the five UPCs, each once, full 12-digit display
   (rubric 2, 3, 21). Check: D. Not compensable: wrong products.
 - C2 Rate and WOS (APPROVED). Requirement: weekly rate and WOS per the definitions above,
   within rubric tolerances for all five (rubric 7, 8, 22, 23, 29, 30, 36, 37, 43, 44, 50,
@@ -446,7 +465,7 @@ points for percentages.
   uses another interpretation is handled under section 1.8: recorded, checked against
   the prompt; accepted only with explicit support in the task materials; `cannot_assess`
   only for the specific items the materials cannot decide.
-- C4 Chart (PENDING). Requirement: a chart of % OOS by UPC with exactly the five
+- C4 Chart (APPROVED 2026-10-30). Requirement: a chart of % OOS by UPC with exactly the five
   categories and values matching the table (rubric 13, 14). Check: D on chart XML + V.
 - D: 1–14, 17–57 (values, formulas present per item 12, formats). J: none beyond
   label wording in 57. V: 15, 16, 58.
@@ -485,14 +504,33 @@ lines listed in `private/checks/recalc/1137e2bb-….json`.
 Numeric rule for this task: prices compared at two decimals (half-up) before testing
 equality, so float noise is not a mismatch; counts exact.
 
-- C1 Line flags (PENDING). Requirement: price mismatch and case-pack flags correct on all
+- C1 Line flags (APPROVED 2026-10-30). Requirement: price mismatch and case-pack flags correct on all
   41 lines, totals 15 / 10 / 25 (rubric 5–8, 18–20, 31–55). Check: D. Not compensable:
   the audit's purpose is to find these lines.
-- C2 SKU summary (PENDING). Requirement: summary tab with the three measures per SKU,
-  reconciling to the line flags, drill-down to PO (rubric 12–17, 56–62). Check: D
-  (values) + D on pivot XML or table structure for drill-down. Not compensable:
-  management acts on the SKU view.
-- C3 Word summary (PENDING). Requirement: .docx present, defines the two checks, states
+- C2 SKU summary (PENDING; proposed revision below awaits the human's decision).
+  Current text: summary tab with the three measures per SKU, reconciling to the line
+  flags, drill-down to PO (rubric 12–17, 56–62). Check: D (values) + D on pivot XML or
+  table structure for drill-down. Not compensable: management acts on the SKU view.
+  Drill-down check of 2026-10-30: the prompt asks for "a summary table or pivot table
+  that aggregates errors at the SKU level, with the ability to drill down to the PO
+  level"; rubric 14 (weight 2 of 80) is the only item that requires it: "The Summary
+  worksheet allows drill-down to the PO level (e.g., includes PO Number as a field or
+  enables double-click into detail that shows PO Number)"; rubric 56–62 require only the
+  per-SKU totals (SKU-0103 5, 0104 1, 0107 6, 0108 4, 0111 2, 0112 5, 0118 2) and say
+  nothing about PO-level detail or drill-down. Non-compensability test: the PO-level
+  detail managers need to act on is already present in the flagged line sheet (C1), and
+  a summary with correct SKU counts that lacks a drill-down field does not misstate the
+  audit's findings or misdirect the follow-up; the drill-down is a navigational
+  convenience whose absence other satisfied items can compensate. Proposed revision:
+  "C2 SKU summary. Requirement: a separate summary tab with the three measures per SKU
+  (rubric 12, 13), each SKU's totals equal to the recomputed values (rubric 56–62), and
+  the summary totals reconciling to the detail-sheet flags (rubric 15–17). Check: D.
+  Not compensable: management acts on the SKU view; a wrong SKU count misdirects the
+  follow-up. Drill-down to PO (rubric 14) is graded as written in the ordinary rubric
+  pass (a PO Number field, or a pivot or table that opens detail) and is not part of the
+  critical criterion." The requirement stays in the item-by-item rubric grading either
+  way.
+- C3 Word summary (APPROVED 2026-10-30). Requirement: .docx present, defines the two checks, states
   counts consistent with the workbook, names SKUs with the highest frequency (0103, 0107,
   0108, 0112 each have >= 4 errors), gives a starting recommendation (rubric 2, 23–30).
   Check: D for presence and numbers, J for content. Not compensable: cross-file
@@ -552,7 +590,7 @@ applies.
 - C2 Budget arithmetic (APPROVED). Requirement: unit costs 17.69 / 18.69, units 1,289 /
   1,320, totals 22,802.41 / 24,670.80, change 1,868.39 within rubric tolerances (rubric
   15–20, 24–31, 49). Check: D. Not compensable: the budget is the deliverable.
-- C3 Email consistency (PENDING). Requirement: email states 1,320 units, the change and
+- C3 Email consistency (APPROVED 2026-10-30). Requirement: email states 1,320 units, the change and
   the new total, both drivers, and the numbers match the workbook (rubric 37–42). Check:
   D for numbers, J for content. Not compensable: cross-file consistency.
 - D: 1, 3–36, 42–47, 49; J: 2, 40, 48, 50, 51; V: 52.
@@ -597,11 +635,11 @@ recomputed value after both are quantized half-up to the precision the deliverab
 displays (whole dollars or cents). Rounded figures need not add up (852,428 − 732,006 =
 120,422 while the rubric's 120,423 is the correctly rounded net income).
 
-- C1 Withholding and net revenue (PENDING). Requirement: rates applied per country, net
+- C1 Withholding and net revenue (APPROVED 2026-10-30). Requirement: rates applied per country, net
   revenue 852,428.44 (rubric 15–24). Check: D. Not compensable: the stated rule.
-- C2 Expenses (PENDING). Requirement: combined 732,005.50, TM 549,612.50, PC 182,393
+- C2 Expenses (APPROVED 2026-10-30). Requirement: combined 732,005.50, TM 549,612.50, PC 182,393
   (rubric 49–51). Check: D. Not compensable: the P&L's other half.
-- C3 Net income (PENDING). Requirement: 120,422.94 combined, 302,815.94 TM, −182,393 PC,
+- C3 Net income (APPROVED 2026-10-30). Requirement: 120,422.94 combined, 302,815.94 TM, −182,393 PC,
   and the identity net income = net revenue − expenses on unrounded values (rubric
   52–58). Check: D. Not compensable: the headline figure.
 - D: 1, 3, 6–24, 29–51, 53–58 (values, structure); J: 2, 4 (USD; passes when all
@@ -684,6 +722,26 @@ also 929,354.31 (A-10).
   the two April balances (559,377.61 / 369,976.70), the total prepaid balance 929,354.31,
   and YTD amortization per account (rubric 7–11). Check: D (formula references + values
   at cents, HALF_UP). Not compensable: the snapshot is what management reads.
+- Reconciliation and rounding rule (APPROVED 2026-10-30; closes section 4 item 5; the
+  human's approval names it the C4 rule, and it governs the balances under C2, C3 and
+  C4). The prompt requires the schedules to "reconcile to the end of month balances" and
+  to "confirm that all figures reconcile accurately"; the given GL balances agree with
+  the independently computed exact values after HALF_UP to cents. Rule: (a) an account
+  whose monthly ending balances equal the given GL balances to the cent passes; (b) when
+  a balance differs from the GL, the deliverable passes only if it provides an explicit,
+  quantified reconciliation bridge or adjustment detail (for example a labelled rounding
+  adjustment line with its amount) that closes the difference to the given GL balance and
+  can be re-performed by the grader; (c) a textual statement that differences are due to
+  rounding, without a quantified and checkable adjustment, fails; (d) an undisclosed
+  difference between a schedule balance and the GL fails. Rubric items 23–26, 30, 41–44
+  and 48 ("equals $… (rounded to the nearest cent), matching the GL balance provided";
+  "Variance equals $0.00 (rounded to the nearest cent)") are graded item by item on their
+  own text: the balance or variance the schedule actually shows, after any quantified
+  bridge, is quantized HALF_UP to cents and compared with the GL figure or with 0.00. The
+  expert deliverable is a reference only and never the sole evidence of correctness; the
+  independent recalculation (`scripts/recalc/task_7d7fc9a7_prepaid.py`) is the reference.
+  The per-line-rounding variant figures listed by that script document the drift and are
+  not allowed values.
 - D: 1–11, 13, 14, 19–30, 33, 34, 36–44, 47–50, 53, 55 (structure and values);
   J: 12, 15–18, 31, 32, 35, 45, 46, 51, 52, 54 (period documentation, organisation, COA
   mapping); V: 56.
@@ -728,14 +786,14 @@ Numeric rule for this task (APPROVED): percentages compared within the tolerance
 rubric item states (±0.20 or ±1.0 percentage points); totals of percentages checked
 with the rubric's own tolerance; hours compared at two decimals (half-up).
 
-- C1 Deck structure (PENDING). Requirement: exactly five slides with the required titles;
+- C1 Deck structure (APPROVED 2026-10-30). Requirement: exactly five slides with the required titles;
   each analysis slide has a table and a pie chart (rubric 1–7, 57–60). Check: D on the
   package (slide count, chart parts — `pieChart` or `pie3DChart` both count — table
   shapes). Not compensable: the deliverable form.
-- C2 Activity shares (PENDING). Requirement: all twelve shares within rubric tolerance,
+- C2 Activity shares (APPROVED 2026-10-30). Requirement: all twelve shares within rubric tolerance,
   summing to 100 within tolerance (rubric 8–26). Check: D on table text and chart XML
   values. Not compensable: the source-to-summary step.
-- C3 Classification (PENDING). Requirement: segment membership exactly as the prompt
+- C3 Classification (APPROVED 2026-10-30). Requirement: segment membership exactly as the prompt
   defines and segment shares as recomputed (rubric 27–56). Check: D. Not compensable:
   the prompt states the classification rule explicitly.
 - D: 1–56 (tables and chart XML); J: 57–60 if titles need semantic matching; V: slide
@@ -783,7 +841,7 @@ compliance and permission correctness.
   Super Admin cross-organisation allowed (rubric 12, 49–58). Check: J with the prompt's
   permission outline as source, by meaning (above). Not compensable: the explicit
   business rule set.
-- C3 Module and negative coverage (PENDING). Requirement: cases for Idea, Proposal (incl.
+- C3 Module and negative coverage (APPROVED 2026-10-30). Requirement: cases for Idea, Proposal (incl.
   Business Case sub-fields), Project (both types), Programs, System Administration,
   IRAD, each with at least one mandatory-input-missing case where the rubric asks
   (rubric 13, 15–21, 31, 35–37, 45–48, 59–63). Check: J. Not compensable: coverage is the
@@ -834,7 +892,7 @@ Requirement layers (APPROVED 2026-10-30):
   Manager, VPC design, IAM, logging); treatment of the NGFW and Redis components;
   organisation and ordering of the documents; migration sequencing.
 
-- C1 Deliverable set (PENDING). Requirement: the three files in the required formats,
+- C1 Deliverable set (APPROVED 2026-10-30). Requirement: the three files in the required formats,
   summary in bullets, POC with ordered steps (rubric 1–3, 5). Check: D. Not compensable:
   the customer review needs all three.
 - C2 Hard requirements met as an architecture, consistently (APPROVED).
@@ -857,7 +915,7 @@ Requirement layers (APPROVED 2026-10-30):
   not used, and it is not denied automatically either. Not compensable: Layer 1 is the
   customer's stated business requirement set; Layer 2 is the rubric's concrete service
   requirement set.
-- C3 Diagram (PENDING). Requirement: official GCP icons; depicts Armor at ingress, CDN at
+- C3 Diagram (APPROVED 2026-10-30). Requirement: official GCP icons; depicts Armor at ingress, CDN at
   the load balancer, the app platform, the database, Storage as static origin (rubric 4,
   26–30). Check: V against the pre-staged icon packs; D for page count and text labels.
   Not compensable: the diagram is one of the three deliverables.
@@ -873,24 +931,35 @@ Requirement layers (APPROVED 2026-10-30):
   26–30, 70, 72.
 - K1: open-ended task; organisation different from the gold is not an error.
 - K2: the gold diagram uses a non-GCP icon for "Users / Website"; irrelevant to grading.
-- DECISION (TOOLCHAIN): form in which the pre-staged resources enter the sandbox (raw
-  HTML, extracted text, or both; icon packs extracted). To be settled in the toolchain
-  stage and recorded in `config.json`; identical for both models.
+- DECISION (APPROVED 2026-10-30): the pre-staged resources enter the sandbox as the HTML
+  snapshot plus the extracted text of each page plus the icon-pack zips (not pre-extracted),
+  identical for both models: 2 task inputs + 11 HTML + 11 text + 3 zips = 27 files under
+  `/workspace/inputs` and `/workspace/resources/{pages,icons}`. The per-file SHA-256 list
+  of all 27 staged files is recorded in `config.json` (`pre_staged_resources.files`);
+  automatic verification at staging time is Stage 3b item I1.
 
 ---
 
 ## 4. Decisions still needed from the human before freeze
 
-1. Critical criteria marked PENDING in section 3 (b5d2e6f1 none; f841ddcf C3–C5;
-   47ef842d C1, C4; 1137e2bb C1–C3; c3525d4d C3; 7b08cd4d C1–C3; 2ea2e5b5 C1–C3;
-   c357f0e2 C3; a45bc83b C1, C3): approve or amend.
-2. 2.2 per-item precision list: review the entries (the rules are approved).
-3. 2.1 C3 and 2.10 resource form: settled by the toolchain stage, then recorded here.
-4. Confirm 1.13 (substitutes and fallbacks; pre-declared, human-triggered).
+1. Critical criteria: 17 of the 18 criteria listed as PENDING were APPROVED on
+   2026-10-30 as written (f841ddcf C3–C5; 47ef842d C1, C4; 1137e2bb C1, C3; c3525d4d
+   C3; 7b08cd4d C1–C3; 2ea2e5b5 C1–C3; c357f0e2 C3; a45bc83b C1, C3). Still PENDING:
+   1137e2bb C2 (proposed revision in section 2.4: drill-down to PO leaves the critical
+   core and stays a rubric-14 item).
+2. 2.2 per-item precision list: reviewed 2026-10-30 against the rubric text; the general
+   principles and all listed entries are APPROVED with their basis recorded in the table.
+3. 2.1 C3 and 2.10 resource form: APPROVED 2026-10-30 and recorded in sections 2.1 and
+   2.10 (structural PivotTable determination; HTML + text + zip snapshot with per-file
+   hashes in `config.json`).
+4. 1.13 (substitutes and fallbacks): APPROVED 2026-10-30 as written.
 5. 3.7 (`7d7fc9a7…`), rounding policy at the rubric and critical level (registered
-   2026-10-30, PENDING; decided by the human before `freeze-v1`, not in the toolchain
-   stage): how a deliverable that rounds each invoice's monthly charge to cents before
-   accumulating is treated. Task requirements checked: the prompt says "Use the GL
+   2026-10-30; APPROVED 2026-10-30 as the "Reconciliation and rounding rule" recorded in
+   section 2.7: reconcile to the cent passes; a quantified, re-performable bridge that
+   closes a difference to the GL passes; a textual rounding note alone fails; an
+   undisclosed difference fails; items 23–26, 30, 41–44, 48 graded on their own text).
+   The question as registered: how a deliverable that rounds each invoice's monthly
+   charge to cents before accumulating is treated. Task requirements checked: the prompt says "Use the GL
    balances below to ensure your schedules reconcile to the end of month balances" and
    "confirm that all figures reconcile accurately", and states no rounding rule; rubric
    items 23–26 and 41–44 require each monthly ending balance to equal the GL balance
