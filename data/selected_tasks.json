@@ -1,0 +1,91 @@
+{
+  "parquet_sha256": "f8422fab9b21d90c0ee5f0659842ab666d418cb8940842918f9f4b0df7ae0202",
+  "groups": {
+    "deep": {
+      "description": "one occupation, complete block of 5 tasks",
+      "occupations": [
+        "Order Clerks"
+      ],
+      "is_complete_occupation_block": true
+    },
+    "supplementary": {
+      "description": "tasks from other occupations chosen to supplement the two research-question requirements",
+      "occupations": [
+        "Accountants and Auditors",
+        "Computer and Information Systems Managers"
+      ]
+    }
+  },
+  "tasks": [
+    {
+      "task_id": "b5d2e6f1-62a2-433a-bcdd-95b260cdd860",
+      "prefix": "b5d2e6f1",
+      "group": "deep",
+      "occupation": "Order Clerks",
+      "sector": "Wholesale Trade"
+    },
+    {
+      "task_id": "f841ddcf-2a28-4f6d-bac3-61b607219d3e",
+      "prefix": "f841ddcf",
+      "group": "deep",
+      "occupation": "Order Clerks",
+      "sector": "Wholesale Trade"
+    },
+    {
+      "task_id": "47ef842d-8eac-4b90-bda8-dd934c228c96",
+      "prefix": "47ef842d",
+      "group": "deep",
+      "occupation": "Order Clerks",
+      "sector": "Wholesale Trade"
+    },
+    {
+      "task_id": "1137e2bb-bdf9-4876-b572-f29b7de5e595",
+      "prefix": "1137e2bb",
+      "group": "deep",
+      "occupation": "Order Clerks",
+      "sector": "Wholesale Trade"
+    },
+    {
+      "task_id": "c3525d4d-2012-45df-853e-2d2a0e902991",
+      "prefix": "c3525d4d",
+      "group": "deep",
+      "occupation": "Order Clerks",
+      "sector": "Wholesale Trade"
+    },
+    {
+      "task_id": "7b08cd4d-df60-41ae-9102-8aaa49306ba2",
+      "prefix": "7b08cd4d",
+      "group": "supplementary",
+      "occupation": "Accountants and Auditors",
+      "sector": "Professional, Scientific, and Technical Services"
+    },
+    {
+      "task_id": "7d7fc9a7-21a7-4b83-906f-416dea5ad04f",
+      "prefix": "7d7fc9a7",
+      "group": "supplementary",
+      "occupation": "Accountants and Auditors",
+      "sector": "Professional, Scientific, and Technical Services"
+    },
+    {
+      "task_id": "2ea2e5b5-257f-42e6-a7dc-93763f28b19d",
+      "prefix": "2ea2e5b5",
+      "group": "supplementary",
+      "occupation": "Computer and Information Systems Managers",
+      "sector": "Professional, Scientific, and Technical Services"
+    },
+    {
+      "task_id": "c357f0e2-963d-4eb7-a6fa-3078fe55b3ba",
+      "prefix": "c357f0e2",
+      "group": "supplementary",
+      "occupation": "Computer and Information Systems Managers",
+      "sector": "Professional, Scientific, and Technical Services"
+    },
+    {
+      "task_id": "a45bc83b-22f9-4def-8d89-9c5661b2b86f",
+      "prefix": "a45bc83b",
+      "group": "supplementary",
+      "occupation": "Computer and Information Systems Managers",
+      "sector": "Professional, Scientific, and Technical Services"
+    }
+  ]
+}

@@ -1,0 +1,177 @@
+{
+  "repo_id": "openai/gdpval",
+  "repo_type": "dataset",
+  "checked_at_utc": "2026-10-29T23:40:23+00:00",
+  "local_parquet": {
+    "path": "data/gdpval.parquet",
+    "size": 1913489,
+    "sha256": "f8422fab9b21d90c0ee5f0659842ab666d418cb8940842918f9f4b0df7ae0202"
+  },
+  "parquet_paths_at_main": [
+    "data/train-00000-of-00001.parquet"
+  ],
+  "commits": [
+    {
+      "commit_id": "11e7900cdcac61bc4daf59e65feb238acda98fbf",
+      "created_at": "2026-02-10T19:31:04+00:00",
+      "title": "Release GDPval v2 (rubrics + deliverables)",
+      "files": [
+        {
+          "path": "data/train-00000-of-00001.parquet",
+          "sha256": "f8422fab9b21d90c0ee5f0659842ab666d418cb8940842918f9f4b0df7ae0202",
+          "size": 1913489,
+          "is_lfs": true,
+          "matches_local": true
+        }
+      ],
+      "matches_local": true
+    },
+    {
+      "commit_id": "a3848a2a812d5d4d0f08003fac3c8eac40805962",
+      "created_at": "2025-09-25T16:21:20+00:00",
+      "title": "Update README.md",
+      "files": [
+        {
+          "path": "data/train-00000-of-00001.parquet",
+          "sha256": "e26aeea5542ece91356d51cfb4d2f46cdb0ac86ab311b825b8d67bc06cbe4d9f",
+          "size": 342719,
+          "is_lfs": true,
+          "matches_local": false
+        }
+      ],
+      "matches_local": false
+    },
+    {
+      "commit_id": "ebf9bac843aec61cc3da7847dd67aceae5b0b390",
+      "created_at": "2025-09-25T16:08:12+00:00",
+      "title": "Update README.md",
+      "files": [
+        {
+          "path": "data/train-00000-of-00001.parquet",
+          "sha256": "e26aeea5542ece91356d51cfb4d2f46cdb0ac86ab311b825b8d67bc06cbe4d9f",
+          "size": 342719,
+          "is_lfs": true,
+          "matches_local": false
+        }
+      ],
+      "matches_local": false
+    },
+    {
+      "commit_id": "69763877ec58e1958758b32153475185c5be469e",
+      "created_at": "2025-09-25T15:57:27+00:00",
+      "title": "Update README.md",
+      "files": [
+        {
+          "path": "data/train-00000-of-00001.parquet",
+          "sha256": "e26aeea5542ece91356d51cfb4d2f46cdb0ac86ab311b825b8d67bc06cbe4d9f",
+          "size": 342719,
+          "is_lfs": true,
+          "matches_local": false
+        }
+      ],
+      "matches_local": false
+    },
+    {
+      "commit_id": "cd4b6bdb2ea68a3a6190745e5d9e070823b744f9",
+      "created_at": "2025-09-25T14:49:02+00:00",
+      "title": "Update README.md",
+      "files": [
+        {
+          "path": "data/train-00000-of-00001.parquet",
+          "sha256": "e26aeea5542ece91356d51cfb4d2f46cdb0ac86ab311b825b8d67bc06cbe4d9f",
+          "size": 342719,
+          "is_lfs": true,
+          "matches_local": false
+        }
+      ],
+      "matches_local": false
+    },
+    {
+      "commit_id": "4eba03385d625b9b747dc4cf029c638c2ed1c0e6",
+      "created_at": "2025-09-25T13:16:16+00:00",
+      "title": "Update README.md",
+      "files": [
+        {
+          "path": "data/train-00000-of-00001.parquet",
+          "sha256": "e26aeea5542ece91356d51cfb4d2f46cdb0ac86ab311b825b8d67bc06cbe4d9f",
+          "size": 342719,
+          "is_lfs": true,
+          "matches_local": false
+        }
+      ],
+      "matches_local": false
+    },
+    {
+      "commit_id": "c7cb63b746e49b778eced2fcb33831f8b99ed50d",
+      "created_at": "2025-09-25T10:46:48+00:00",
+      "title": "Update README.md",
+      "files": [
+        {
+          "path": "data/train-00000-of-00001.parquet",
+          "sha256": "e26aeea5542ece91356d51cfb4d2f46cdb0ac86ab311b825b8d67bc06cbe4d9f",
+          "size": 342719,
+          "is_lfs": true,
+          "matches_local": false
+        }
+      ],
+      "matches_local": false
+    },
+    {
+      "commit_id": "4bf642692ef091918ef20797ecca070924815ec1",
+      "created_at": "2025-09-25T09:43:44+00:00",
+      "title": "Upload dataset",
+      "files": [
+        {
+          "path": "data/train-00000-of-00001.parquet",
+          "sha256": "e26aeea5542ece91356d51cfb4d2f46cdb0ac86ab311b825b8d67bc06cbe4d9f",
+          "size": 342719,
+          "is_lfs": true,
+          "matches_local": false
+        }
+      ],
+      "matches_local": false
+    },
+    {
+      "commit_id": "fcb22075a92c3c169b3f2d863c83fc0af9b471b7",
+      "created_at": "2025-09-25T09:42:52+00:00",
+      "title": "Upload folder using huggingface_hub",
+      "files": [
+        {
+          "path": "data/train-00000-of-00001.parquet",
+          "sha256": "2d2d564bc3993cf9dd22f286eceaec253aa3c707e4c8a34af954385d222147d1",
+          "size": 131,
+          "is_lfs": true,
+          "matches_local": false
+        }
+      ],
+      "matches_local": false
+    },
+    {
+      "commit_id": "f670d15181fb46dcc5f701dfc72142d334dc6855",
+      "created_at": "2025-09-25T09:34:30+00:00",
+      "title": "Upload dataset",
+      "files": [
+        {
+          "path": "data/train-00000-of-00001.parquet",
+          "sha256": "e26aeea5542ece91356d51cfb4d2f46cdb0ac86ab311b825b8d67bc06cbe4d9f",
+          "size": 342719,
+          "is_lfs": true,
+          "matches_local": false
+        }
+      ],
+      "matches_local": false
+    },
+    {
+      "commit_id": "7a999d88c9de6c1ea09ff71d35342d78d8db6b57",
+      "created_at": "2025-09-25T09:33:23+00:00",
+      "title": "initial commit",
+      "files": [],
+      "matches_local": false
+    }
+  ],
+  "matching_commit_count": 1,
+  "chosen_revision": "11e7900cdcac61bc4daf59e65feb238acda98fbf",
+  "chosen_revision_created_at": "2026-02-10T19:31:04+00:00",
+  "earliest_matching_revision": "11e7900cdcac61bc4daf59e65feb238acda98fbf",
+  "earliest_matching_created_at": "2026-02-10T19:31:04+00:00"
+}
