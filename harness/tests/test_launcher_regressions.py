@@ -561,6 +561,105 @@ class PriceTierTests(_Base):
 
 
 # ------------------------------------------------------------------------------------------ Docker image pinned by ID
+class JudgeBatchSettlementTests(_Base):
+    """U3: run_judge_batch with a ProviderJudge-style dict result. Incomplete usage is never priced as if complete:
+    the settlement is the larger of the priced known part and the reservation, flagged estimated."""
+
+    def test_incomplete_usage_settles_at_the_reservation_floor_or_the_larger_priced_part(self):
+        launcher, ledger = self.make(100, None)
+        small = {"usage": {"anthropic/claude-opus-5-5": {"input_tokens": 1000, "output_tokens": 0, "cache_read_tokens": 0, "cache_write_tokens": 0}}, "retries": {}, "usage_incomplete": True, "note": "1 call uncertain"}
+        r1 = launcher.run_judge_batch(unit_id="j1", estimate_usd=Decimal("0.50"), batch_fn=lambda: small)
+        self.assertEqual((r1["settlement"]["cost_usd"], r1["settlement"]["estimated"], r1["usage_incomplete"]), ("0.500000", True, True)); self.assertIn("1000", r1["settlement"]["note"])
+        complete = {**small, "usage_incomplete": False}
+        r3 = launcher.run_judge_batch(unit_id="j3", estimate_usd=Decimal("0.50"), batch_fn=lambda: complete)
+        self.assertEqual((r3["settlement"]["cost_usd"], r3["settlement"]["estimated"]), ("0.004000", False))
+        r4 = launcher.run_judge_batch(unit_id="j4", estimate_usd=Decimal("0.50"), batch_fn=lambda: ({}, {}))  # legacy tuple, no usage -> reservation
+        self.assertEqual((r4["settlement"]["cost_usd"], r4["settlement"]["estimated"]), ("0.500000", True))
+        big = {**small, "usage": {"anthropic/claude-opus-5-5": {"input_tokens": 1_000_000, "output_tokens": 0, "cache_read_tokens": 0, "cache_write_tokens": 0}}}
+        r2 = launcher.run_judge_batch(unit_id="j2", estimate_usd=Decimal("0.50"), batch_fn=lambda: big)
+        self.assertEqual((r2["settlement"]["cost_usd"], r2["settlement"]["estimated"]), ("4.000000", True))  # priced known part above the reservation wins ...
+        self.assertTrue(r2["post_run"]["stop_recorded"])  # ... and exceeds 2x the estimate: a stop is recorded
+        with self.assertRaisesRegex(b.BudgetExhausted, "2x its estimate"):
+            launcher.run_judge_batch(unit_id="j5", estimate_usd=Decimal("0.50"), batch_fn=lambda: complete)  # refused before any call
+        self.assertEqual([e["type"] for e in self.entries(ledger)], ["reservation", "settlement"] * 4 + ["stop"])
+
+
+class RealRunCliTests(_Base):
+    """Pilot A wiring U1: the CLI's --real-run path through main() with an injected eval_fn, an isolated environment
+    dict, a temporary env file with a synthetic key and a fake docker runner. No provider is ever contacted."""
+    TASK = "1137e2bb-bdf9-4876-b572-f29b7de5e595"
+    MODEL = "anthropic/claude-opus-5-5"
+
+    def setUp(self):
+        super().setUp()
+        self.runs = os.path.join(self.root, "runs"); os.makedirs(self.runs)
+        self.env_file = os.path.join(self.root, "env.test")
+        Path(self.env_file).write_text("ANTHROPIC_API_KEY=dummy-test-key-not-real-0003\n")
+        self.image_id = self.cfg["sandbox"]["image_id"]
+        self.docker = lambda cmd, **kw: SimpleNamespace(returncode=0, stdout=f"{self.image_id}|arm64|linux|[]\n", stderr="")
+
+    def argv(self, *extra, model=None, estimate="5", config=None):
+        return ["--config", config or CONFIG, "--runs-root", self.runs, "--ledger", os.path.join(self.root, "ledger.json"), "--task-id", self.TASK,
+                "--model", model or self.MODEL, "--estimate-usd", estimate, "--env-file", self.env_file, *extra]
+
+    def real(self, *extra, config=None, model=None, estimate="5"):
+        return self.argv("--real-run", "--confirm", f"{self.TASK}|{model or self.MODEL}|{estimate}", "--authorized-by", "test-operator", "--authorization-ref", "unit-test", *extra, config=config, model=model, estimate=estimate)
+
+    def test_mode_must_be_explicit_and_real_run_needs_scope_and_metadata(self):
+        with self.assertRaises(SystemExit):  # neither --dry-run nor --real-run
+            L.main(self.argv(), eval_fn=lambda *a, **k: self.fail("eval called"), environ={}, docker_runner=self.docker)
+        for extra, msg in ((["--real-run"], "--confirm"), (["--real-run", "--confirm", f"{self.TASK}|{self.MODEL}|4"], "does not restate"),
+                           (["--real-run", "--confirm", f"{self.TASK}|{self.MODEL}|5"], "--authorized-by")):
+            with self.assertRaisesRegex(L.LauncherError, msg):
+                L.main(self.argv(*extra), eval_fn=lambda *a, **k: self.fail("eval called"), environ={}, docker_runner=self.docker)
+        with self.assertRaisesRegex(L.LauncherError, "INSPECT_DISABLE_MODEL_API"):
+            L.main(self.real(), eval_fn=lambda *a, **k: self.fail("eval called"), environ={"INSPECT_DISABLE_MODEL_API": "1"}, docker_runner=self.docker)
+        with self.assertRaisesRegex(L.LauncherError, "missing credential"):
+            L.main(self.real("--env-file", os.path.join(self.root, "absent.env")), eval_fn=lambda *a, **k: self.fail("eval called"), environ={}, docker_runner=self.docker)
+        self.assertEqual(os.listdir(self.runs), [])  # nothing created before the refusals
+
+    def test_prompt_hash_mismatch_refuses_before_any_call(self):
+        cfg = json.loads(Path(CONFIG).read_text()); cfg["generation"]["system_prompt_sha256"] = "0" * 64
+        bad = os.path.join(self.root, "config_bad_prompt.json"); Path(bad).write_text(json.dumps(cfg))
+        calls = []
+        with self.assertRaisesRegex(L.LauncherError, "system prompt file"):
+            L.main(self.real(config=bad), eval_fn=lambda *a, **k: calls.append(1), environ={}, docker_runner=self.docker)
+        self.assertEqual(calls, []); self.assertFalse(os.path.exists(os.path.join(self.root, "ledger.json")) and json.loads(Path(os.path.join(self.root, "ledger.json")).read_text())["entries"])
+        self.assertEqual(L.verify_system_prompt(self.cfg)["matched_form"], "stripped_text")
+
+    def test_real_run_path_calls_the_injected_eval_once_with_the_built_task_and_records_provenance(self):
+        seen = []
+        def fake_eval(task, **kw):
+            seen.append((task, kw)); return usage_log(kw["model"], ModelUsage(input_tokens=1000, output_tokens=200))
+        env = {}
+        rc = L.main(self.real(), eval_fn=fake_eval, environ=env, docker_runner=self.docker)
+        self.assertEqual(rc, 0); self.assertEqual(len(seen), 1)
+        task, kw = seen[0]
+        self.assertEqual((task.name, kw["model"], kw["max_tokens"], kw["token_limit"], kw["time_limit"], kw["retry_on_error"], kw["fail_on_error"], kw["task_retry_attempts"]),
+                         ("pilot_1137e2bb", self.MODEL, self.cfg["generation"]["max_tokens_per_request"], self.cfg["generation"]["token_limit"], self.cfg["generation"]["time_limit_s"], 0, False, 0))
+        self.assertEqual(kw["log_dir"], os.path.join(self.runs, "inspect_logs")); self.assertEqual(env.get("ANTHROPIC_API_KEY"), "dummy-test-key-not-real-0003")
+        records = {f: json.loads(Path(self.runs, "launcher_records", f).read_text()) for f in os.listdir(os.path.join(self.runs, "launcher_records"))}
+        prov = next(v for k, v in records.items() if "_real_run_provenance_" in k)
+        self.assertEqual((prov["task_id"], prov["model"], prov["sample_ids"], prov["prompt"]["matched_form"], prov["image_id"], prov["authorization"]["by"], prov["authorization"]["ref"]),
+                         (self.TASK, self.MODEL, [self.TASK], "stripped_text", self.image_id, "test-operator", "unit-test"))
+        self.assertTrue(prov["config_sha256"] and prov["code"]["commit"] and prov["staging_verified"]); self.assertIn("not verify", prov["authorization"]["note"])
+        sample = next(v for k, v in records.items() if "_sample_" in k and "_sample_error_" not in k and "_sample_cardinality_" not in k)
+        self.assertEqual((sample["settlement"]["cost_usd"], sample["settlement"]["estimated"]), ("0.008000", False))  # 1000 x 4 + 200 x 20 per MTok
+        ledger = json.loads(Path(self.root, "ledger.json").read_text())
+        self.assertEqual([e["type"] for e in ledger["entries"]], ["reservation", "settlement"])
+        for f in Path(self.runs).rglob("*"):
+            if f.is_file():
+                self.assertNotIn("dummy-test-key-not-real-0003", f.read_text(errors="replace"), f)
+        self.assertNotIn("dummy-test-key-not-real-0003", Path(self.root, "ledger.json").read_text())
+
+    def test_dry_run_shares_the_unit_construction_and_never_calls_eval(self):
+        rc = L.main(self.argv("--dry-run"), eval_fn=lambda *a, **k: self.fail("eval called"), environ={"INSPECT_DISABLE_MODEL_API": "1"}, docker_runner=self.docker)
+        self.assertEqual(rc, 0)
+        ledger = json.loads(Path(self.root, "ledger.json").read_text())
+        self.assertEqual([e["type"] for e in ledger["entries"]], ["reservation", "void"])
+        self.assertTrue(any("_dry_run_" in f for f in os.listdir(os.path.join(self.runs, "launcher_records"))))
+
+
 class SandboxPreflightTests(_Base):
     """Codex final review (docker probes): the daemon answered tag lookups with 'No such image' while the ID
     resolved. The pre-flight pins by full image ID and never queries the tag."""

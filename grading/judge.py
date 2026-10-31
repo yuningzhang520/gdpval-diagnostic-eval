@@ -8,10 +8,15 @@ evidence and verdict. Deliverable text is untrusted data: the prompt instructs t
 any instruction found inside it. The stub judge is for testing the assembly and the parser only;
 real judge calls need the pilot authorization. Criteria exercised with the stub are recorded in
 grading/debug_set.json and are excluded from judge validation (agreement) later."""
+import asyncio
 import datetime as dt
+import hashlib
 import json
 import os
 import re
+import time
+
+from harness.redact import redact
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DEBUG_SET = os.path.join(ROOT, "grading", "debug_set.json")
@@ -227,17 +232,119 @@ class StubBatchJudge:
         return json.dumps(items)
 
 
+JUDGE_ERROR_CLASSES = ("judge_parse_error", "provider_error")
+USAGE_STATUSES = ("ok", "missing", "uncertain", "not_reported")
+
+
+def usage_dict(usage) -> dict | None:
+    """Inspect ModelUsage -> the ledger's usage dict (uncached input, output, cache read, cache write)."""
+    if usage is None:
+        return None
+    return {"input_tokens": int(getattr(usage, "input_tokens", 0) or 0), "output_tokens": int(getattr(usage, "output_tokens", 0) or 0),
+            "cache_read_tokens": int(getattr(usage, "input_tokens_cache_read", 0) or 0), "cache_write_tokens": int(getattr(usage, "input_tokens_cache_write", 0) or 0)}
+
+
+class ProviderJudge:
+    """Real judge adapter over Inspect's model layer (host side; the credential is loaded into the host
+    process by the launcher, names only logged). One provider call per unit. Returns a structured call
+    record, never a sentinel string: ``status`` ok (raw response + usage) or provider_error (error class
+    and redacted message; the request may or may not have executed, so its usage is ``uncertain``).
+    A successful response without usage is ``usage_status`` missing. Any missing or uncertain usage
+    makes ``usage_incomplete`` true, which the ledger settles conservatively. Every call is kept in
+    ``calls`` (unit id, item, request hash, status, raw response, usage, error, seconds) for the call
+    log. ``generate`` is an injection point for tests (a callable taking the messages and returning a
+    ModelOutput, or raising); the default resolves the model through inspect_ai.get_model, so the
+    INSPECT_DISABLE_MODEL_API guard applies to every provider except mockllm."""
+    is_stub = False
+
+    def __init__(self, model_name: str, *, temperature: float = 0.0, max_tokens: int = 1024, max_retries: int | None = None, timeout: int | None = None,
+                 generate=None, judge_id: str | None = None, **model_args):
+        self.model_name = model_name
+        self.judge_id = judge_id or f"{model_name}@{dt.datetime.now(dt.timezone.utc).strftime('%Y-%m-%d')}"
+        self.generate_params = {"temperature": temperature, "max_tokens": max_tokens, "max_retries": max_retries, "timeout": timeout}
+        self._generate = generate
+        self._model_args = model_args
+        self._model = None
+        self.calls: list[dict] = []
+        self.usage_by_model: dict[str, dict] = {}
+        self.retries_by_model: dict[str, int] = {}  # Inspect retries inside generate are not observable at this layer
+        self.usage_incomplete = False
+
+    def _call(self, messages):
+        if self._generate is not None:
+            return self._generate(messages)
+        from inspect_ai.model import GenerateConfig, get_model
+        if self._model is None:
+            cfg = GenerateConfig(**{k: v for k, v in self.generate_params.items() if v is not None})
+            self._model = get_model(self.model_name, config=cfg, **self._model_args)
+        return asyncio.run(self._model.generate(messages))
+
+    def __call__(self, unit: dict) -> dict:
+        from inspect_ai.model import ChatMessageSystem, ChatMessageUser
+        user = render_unit(unit)
+        messages = [ChatMessageSystem(content=JUDGE_SYSTEM_PROMPT), ChatMessageUser(content=user)]
+        rec = {"unit_id": unit["unit_id"], "item": unit["item"], "model": self.model_name, "judge_id": self.judge_id, "started_at": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
+               "request_sha256": hashlib.sha256((JUDGE_SYSTEM_PROMPT + "\n" + user).encode("utf-8")).hexdigest(), "request_chars": len(JUDGE_SYSTEM_PROMPT) + len(user)}
+        t0 = time.monotonic()
+        try:
+            out = self._call(messages)
+        except Exception as ex:
+            rec.update({"status": "provider_error", "error": {"class": type(ex).__name__, "message": redact(str(ex))}, "raw_response": None, "usage": None, "usage_status": "uncertain",
+                        "seconds": round(time.monotonic() - t0, 3)})
+            self.usage_incomplete = True
+            self.calls.append(rec)
+            return rec
+        raw = getattr(out, "completion", None)
+        usage = usage_dict(getattr(out, "usage", None))
+        err = getattr(out, "error", None)
+        if err:
+            rec.update({"status": "provider_error", "error": {"class": "ModelOutputError", "message": redact(str(err))}, "raw_response": raw, "usage": usage, "usage_status": "ok" if usage else "uncertain"})
+        else:
+            rec.update({"status": "ok", "error": None, "raw_response": raw, "usage": usage, "usage_status": "ok" if usage else "missing"})
+        if usage:
+            acc = self.usage_by_model.setdefault(self.model_name, {"input_tokens": 0, "output_tokens": 0, "cache_read_tokens": 0, "cache_write_tokens": 0})
+            for k in acc:
+                acc[k] += usage[k]
+        else:
+            self.usage_incomplete = True
+        rec["seconds"] = round(time.monotonic() - t0, 3)
+        self.calls.append(rec)
+        return rec
+
+    def batch_result(self) -> dict:
+        """What run_judge_batch settles: accumulated usage, retries (unobservable: empty), and whether any
+        call's usage is missing or uncertain (then the ledger never prices the known part alone)."""
+        statuses = [c["status"] for c in self.calls]
+        return {"usage": self.usage_by_model, "retries": self.retries_by_model, "usage_incomplete": self.usage_incomplete, "calls": len(self.calls),
+                "calls_ok": statuses.count("ok"), "calls_provider_error": statuses.count("provider_error"),
+                "calls_usage_missing_or_uncertain": sum(1 for c in self.calls if c.get("usage_status") in ("missing", "uncertain")),
+                "note": f"{len(self.calls)} judge call(s): {statuses.count('ok')} ok, {statuses.count('provider_error')} provider_error, "
+                        f"{sum(1 for c in self.calls if c.get('usage_status') in ('missing', 'uncertain'))} with missing/uncertain usage"}
+
+
 def judge_units(units: list[dict], judge, *, judge_id: str | None = None) -> list[dict]:
+    """One verdict record per unit. ``judge(unit)`` returns either a str (stub judges: the raw response)
+    or a structured call record (ProviderJudge). Error classes are kept apart: ``provider_error`` (the
+    request failed or the provider returned an error: cannot_assess, no parse attempted),
+    ``judge_parse_error`` (the provider answered but not in the protocol: cannot_assess with the
+    parse message); ``usage_status`` missing / uncertain is a cost flag and never changes a verdict.
+    A unit is never scored pass/fail without a protocol-conformant response."""
     out = []
     for u in units:
         raw = judge(u)
-        try:
-            parsed = parse_judge_response(raw)
-            rec = {**parsed, "parse_error": None}
-        except JudgeParseError as ex:
-            rec = {"verdict": "cannot_assess", "evidence": [], "rationale": "", "parse_error": str(ex)}
-        out.append({"unit_id": u["unit_id"], "item": u["item"], "weight": u["weight"], "judge_id": judge_id or getattr(judge, "judge_id", "unknown"),
-                    "raw_response": raw, **rec, "judged_at": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"), "source": "J"})
+        call = raw if isinstance(raw, dict) else {"status": "ok", "raw_response": raw, "usage": None, "usage_status": "not_reported", "error": None}
+        base = {"unit_id": u["unit_id"], "item": u["item"], "weight": u["weight"], "judge_id": judge_id or getattr(judge, "judge_id", "unknown"),
+                "raw_response": call.get("raw_response"), "call_status": call.get("status"), "usage": call.get("usage"), "usage_status": call.get("usage_status"),
+                "request_sha256": call.get("request_sha256"), "judged_at": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"), "source": "J"}
+        if call.get("status") != "ok":
+            rec = {"verdict": "cannot_assess", "evidence": [], "rationale": "", "parse_error": None, "error_class": "provider_error", "error": call.get("error")}
+        else:
+            try:
+                rec = {**parse_judge_response(call.get("raw_response") or ""), "parse_error": None, "error_class": None, "error": None}
+            except JudgeParseError as ex:
+                rec = {"verdict": "cannot_assess", "evidence": [], "rationale": "", "parse_error": str(ex), "error_class": "judge_parse_error", "error": None}
+        rec["usage_uncertain"] = call.get("usage_status") in ("missing", "uncertain")
+        out.append({**base, **rec})
     return out
 
 

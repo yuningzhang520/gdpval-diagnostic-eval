@@ -72,6 +72,37 @@ def join_log(loaded: dict, log, sample) -> dict:
             "mismatches": [redact(m) for m in mismatches]}
 
 
+def grading_passes(out_dir: str, run_uuid: str | None = None) -> list[dict]:
+    """Every grading pass recorded in out_dir/results.jsonl (grade_run appends one results record per
+    pass and never overwrites), oldest first, optionally for one run uuid. A pass is identified by
+    ``grading_pass``; ``pass_kind`` is deterministic_only / deterministic_plus_judge / stub_test;
+    ``supersedes_pass`` names the previous pass of the same run in the same out_dir. Any report or
+    statistic groups by run uuid and takes exactly one pass per run (see select_pass); two passes of
+    one run are never two samples."""
+    path = os.path.join(out_dir, "results.jsonl")
+    if not os.path.exists(path):
+        return []
+    out = []
+    with open(path, encoding="utf-8") as f:
+        for line in f:
+            if line.strip():
+                rec = json.loads(line)
+                if run_uuid is None or (rec.get("run") or {}).get("uuid") == run_uuid:
+                    out.append(rec)
+    return out
+
+
+def select_pass(passes: list[dict], prefer: str = "latest_with_judge") -> dict | None:
+    """The one pass of a run that a report uses: ``latest_with_judge`` = the latest graded pass whose judge
+    was real and produced verdicts, else the latest graded pass; ``latest`` = the latest graded pass."""
+    graded = [p for p in passes if p.get("graded")]
+    if prefer == "latest_with_judge":
+        judged = [p for p in graded if p.get("judge_mode") == "real" and p.get("judge_verdicts")]
+        if judged:
+            return judged[-1]
+    return graded[-1] if graded else None
+
+
 def _score(grades: list[dict], critical_spec: dict) -> dict:
     W = sum(g["weight"] for g in grades)
     graded = [g for g in grades if g["verdict"] in ("pass", "fail")]
@@ -103,8 +134,14 @@ def grade_run(host_dir: str, log, sample_uuid: str, *, task_id: str, rubric: lis
     if sample is None:
         raise ValueError(f"sample {sample_uuid} not in the log")
     binding = binding_from_log(log, sample)
-    rec = {"run": binding, "task_id": task_id, "graded_at": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"), "grader_version": grader_version,
-           "log_file": redact_path(getattr(log, "location", None)), "graded": False, "judge_mode": ("stub-test-mode" if getattr(judge, "is_stub", False) else "real" if judge is not None else "none")}
+    judge_mode = "stub-test-mode" if getattr(judge, "is_stub", False) else "real" if judge is not None else "none"
+    previous = grading_passes(out_dir, binding["uuid"])
+    graded_at = dt.datetime.now(dt.timezone.utc)
+    rec = {"run": binding, "task_id": task_id, "graded_at": graded_at.isoformat(timespec="seconds"), "grader_version": grader_version,
+           "grading_pass": f"pass-{graded_at.strftime('%Y%m%dT%H%M%S%fZ')}-{os.urandom(2).hex()}",
+           "pass_kind": {"none": "deterministic_only", "real": "deterministic_plus_judge", "stub-test-mode": "stub_test"}[judge_mode],
+           "supersedes_pass": previous[-1].get("grading_pass") if previous else None, "pass_index": len(previous) + 1,
+           "log_file": redact_path(getattr(log, "location", None)), "graded": False, "judge_mode": judge_mode}
     try:
         loaded = C.load_run_outcome(host_dir, binding, for_grading=False)
     except C.OutcomeValidationError as ex:
@@ -142,13 +179,14 @@ def grade_run(host_dir: str, log, sample_uuid: str, *, task_id: str, rubric: lis
     for i, r in checks["items"].items():
         grades.append({"run_uuid": binding["uuid"], "task_id": task_id, "item": i, "weight": r["weight"], "criterion": r["criterion"], "source": "D", "verdict": r["verdict"],
                        "evidence": r["evidence"], "deliverable_value": r["deliverable_value"], "reference_value": r["reference_value"], "note": r["note"],
-                       "attribution": r.get("attribution"), "grader_version": grader_version})
+                       "attribution": r.get("attribution"), "grader_version": grader_version, "grading_pass": rec["grading_pass"]})
     vb = {v["item"]: v for v in verdicts}
     for i in mod["judge_items"]:
         v = vb.get(i)
         grades.append({"run_uuid": binding["uuid"], "task_id": task_id, "item": i, "weight": rubric[i - 1]["score"], "criterion": rubric[i - 1]["criterion"], "source": "J",
                        "verdict": v["verdict"] if v else "pending_judge", "evidence": v["evidence"] if v else [], "rationale": v["rationale"] if v else "", "judge_id": v["judge_id"] if v else None,
-                       "parse_error": v["parse_error"] if v else None, "grader_version": grader_version})
+                       "parse_error": v["parse_error"] if v else None, "error_class": v.get("error_class") if v else None, "call_status": v.get("call_status") if v else None,
+                       "usage_status": v.get("usage_status") if v else None, "grader_version": grader_version, "grading_pass": rec["grading_pass"]})
     grades.sort(key=lambda g: g["item"])
     with open(os.path.join(out_dir, "grades.jsonl"), "a", encoding="utf-8") as f:
         for g in grades:
@@ -159,7 +197,10 @@ def grade_run(host_dir: str, log, sample_uuid: str, *, task_id: str, rubric: lis
                 "transfer_integrity": integrity, "originals_unchanged": extraction.get("originals_unchanged"), "working_copies": provenance, "extraction_status": checks.get("extraction_status"),
                 "recalc": {k: v.get("recalc", {}).get("status") for k, v in extraction["xlsx"].items()},
                 "recalc_comparison": {k: {kk: vv for kk, vv in v.get("recalc_comparison", {}).items() if kk != "details"} for k, v in extraction["xlsx"].items()},
-                "score": score, "judge_units": len(units), "judge_verdicts": len(verdicts), "review_materials": review})
+                "score": score, "judge_units": len(units), "judge_verdicts": len(verdicts),
+                "judge_call_summary": {"ok": sum(1 for v in verdicts if v.get("call_status") == "ok"), "provider_error": sum(1 for v in verdicts if v.get("error_class") == "provider_error"),
+                                       "judge_parse_error": sum(1 for v in verdicts if v.get("error_class") == "judge_parse_error"), "usage_uncertain": sum(1 for v in verdicts if v.get("usage_uncertain"))} if verdicts else None,
+                "review_materials": review})
     return _append(out_dir, rec)
 
 

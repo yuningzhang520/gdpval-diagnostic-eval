@@ -18,7 +18,7 @@ from harness.tests.test_collect_unit import RUN, FakeSandbox
 from harness.tests.test_collect_limits_unit import SlowSandbox
 from grading import checks_1137e2bb as CK, extract as X, judge as J, costs as CO
 from grading.fixtures_1137e2bb import NEGATIVES, TASK, build_fixture
-from grading.grade import grade_run
+from grading.grade import grade_run, grading_passes, select_pass
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 RUBRIC = json.load(open(os.path.join(ROOT, "private", "rubric", f"{TASK}.json"), encoding="utf-8"))
@@ -80,6 +80,35 @@ class GradingChainTests(unittest.TestCase):
     def grade(self, host, b, log, *, judge=J.StubJudge(), out=None, **kw):
         out = out or os.path.join(host, "grading")
         return grade_run(host, log, b["uuid"], task_id=TASK, rubric=RUBRIC, task_prompt=PROMPT, reference=REFERENCE, out_dir=out, judge=judge, recalc=False, allow_stub=True, **kw)
+
+    def test_second_grading_pass_with_a_judge_is_a_distinct_traceable_pass(self):
+        """U3: a deterministic-only pass followed by a judged pass of the same run: both results records are kept with
+        distinct pass ids, the second supersedes the first, grade rows carry the pass id, J rows carry the error class,
+        select_pass picks the judged pass, and the two passes are one run (same uuid), never two samples."""
+        host, b = self.make_run("passes", "positive", EXEC_OK)
+        out = os.path.join(host, "grading")
+        rec1 = grade_run(host, fake_log(b), b["uuid"], task_id=TASK, rubric=RUBRIC, task_prompt=PROMPT, reference=REFERENCE, out_dir=out, judge=None, recalc=False)
+        good = json.dumps({"verdict": "pass", "evidence": [{"file": "PO_Audit_Summary.docx", "location": "p1", "quote": "q"}], "rationale": "ok"})
+        from inspect_ai.model import ModelOutput, ModelUsage
+        def generate(messages):
+            o = ModelOutput.from_content("google/judge-test", good); o.usage = ModelUsage(input_tokens=500, output_tokens=50); return o
+        judge = J.ProviderJudge("google/judge-test", generate=generate)
+        rec2 = grade_run(host, fake_log(b), b["uuid"], task_id=TASK, rubric=RUBRIC, task_prompt=PROMPT, reference=REFERENCE, out_dir=out, judge=judge, recalc=False)
+        self.assertEqual((rec1["pass_kind"], rec2["pass_kind"], rec1["pass_index"], rec2["pass_index"]), ("deterministic_only", "deterministic_plus_judge", 1, 2))
+        self.assertNotEqual(rec1["grading_pass"], rec2["grading_pass"]); self.assertEqual(rec2["supersedes_pass"], rec1["grading_pass"]); self.assertIsNone(rec1["supersedes_pass"])
+        passes = grading_passes(out, b["uuid"])
+        self.assertEqual([p["grading_pass"] for p in passes], [rec1["grading_pass"], rec2["grading_pass"]]); self.assertEqual(select_pass(passes)["grading_pass"], rec2["grading_pass"])
+        self.assertEqual(select_pass(passes[:1])["grading_pass"], rec1["grading_pass"])  # with only a D-only pass, that pass is selected
+        rows = [json.loads(l) for l in open(os.path.join(out, "grades.jsonl"))]
+        self.assertEqual({r["grading_pass"] for r in rows}, {rec1["grading_pass"], rec2["grading_pass"]}); self.assertEqual(len(rows), 2 * len(RUBRIC))
+        d1 = {r["item"]: r["verdict"] for r in rows if r["grading_pass"] == rec1["grading_pass"] and r["source"] == "D"}
+        d2 = {r["item"]: r["verdict"] for r in rows if r["grading_pass"] == rec2["grading_pass"] and r["source"] == "D"}
+        self.assertEqual(d1, d2)  # the deterministic verdicts are unchanged by the judge pass
+        j2 = [r for r in rows if r["grading_pass"] == rec2["grading_pass"] and r["source"] == "J"]
+        self.assertEqual({r["verdict"] for r in j2}, {"pass"}); self.assertTrue(all(r["error_class"] is None and r["call_status"] == "ok" and r["usage_status"] == "ok" for r in j2))
+        self.assertEqual(rec2["judge_call_summary"], {"ok": 7, "provider_error": 0, "judge_parse_error": 0, "usage_uncertain": 0}); self.assertEqual(rec2["score"]["E"], rec2["score"]["W"])
+        self.assertEqual(len({p["run"]["uuid"] for p in passes}), 1)
+        self.assertNotEqual(rec1["review_materials"]["judge_verdicts"], rec2["review_materials"]["judge_verdicts"]); self.assertEqual(rec1["review_materials"]["independent_template"], rec2["review_materials"]["independent_template"])
 
     # ---------------------------------------------------------------- deterministic discrimination
     def test_positive_passes_all_deterministic_items_and_negatives_are_each_detected(self):
@@ -344,3 +373,47 @@ class GradingChainTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class JudgeAdapterTests(unittest.TestCase):
+    """U3: ProviderJudge call records and judge_units error classes (no provider: generate is injected)."""
+
+    def unit(self, item=23):
+        return {"unit_id": f"t:item{item:02d}", "item": item, "weight": 1, "task_requirement": "req", "criterion": "crit", "source_material": "ref", "deliverable_excerpt": "excerpt", "excerpt_kind": "docx"}
+
+    def out(self, text, usage=True, error=None):
+        from inspect_ai.model import ModelOutput, ModelUsage
+        o = ModelOutput.from_content("google/judge-test", text)
+        o.usage = ModelUsage(input_tokens=1000, output_tokens=100, input_tokens_cache_read=50) if usage else None
+        if error:
+            o.error = error
+        return o
+
+    def test_call_records_and_error_classes(self):
+        good = json.dumps({"verdict": "fail", "evidence": [{"file": "x.docx", "location": "p3", "quote": "q"}], "rationale": "r"})
+        scripted = [self.out(good), self.out("Sure! The deliverable looks fine."), RuntimeError("synthetic connection reset"), self.out(good, usage=False), self.out(good, error="synthetic provider refusal")]
+        def generate(messages):
+            nxt = scripted.pop(0)
+            if isinstance(nxt, Exception):
+                raise nxt
+            return nxt
+        judge = J.ProviderJudge("google/judge-test", generate=generate, judge_id="test-judge")
+        verdicts = J.judge_units([self.unit(i) for i in (23, 24, 27, 28, 29)], judge)
+        by = {v["item"]: v for v in verdicts}
+        self.assertEqual((by[23]["verdict"], by[23]["call_status"], by[23]["error_class"], by[23]["usage_status"], by[23]["usage_uncertain"]), ("fail", "ok", None, "ok", False))
+        self.assertEqual((by[24]["verdict"], by[24]["error_class"], by[24]["usage_status"]), ("cannot_assess", "judge_parse_error", "ok")); self.assertIn("JSON", by[24]["parse_error"] or "parse")
+        self.assertEqual((by[27]["verdict"], by[27]["error_class"], by[27]["call_status"], by[27]["usage_status"], by[27]["usage_uncertain"]), ("cannot_assess", "provider_error", "provider_error", "uncertain", True))
+        self.assertEqual((by[27]["error"]["class"], by[27]["raw_response"]), ("RuntimeError", None))
+        self.assertEqual((by[28]["verdict"], by[28]["error_class"], by[28]["usage_status"], by[28]["usage_uncertain"]), ("fail", None, "missing", True))  # verdict stands; cost uncertain
+        self.assertEqual((by[29]["verdict"], by[29]["error_class"], by[29]["error"]["class"]), ("cannot_assess", "provider_error", "ModelOutputError"))
+        self.assertTrue(all(v["verdict"] != "pass" for v in verdicts if v["error_class"]))
+        batch = judge.batch_result()
+        self.assertEqual((batch["calls"], batch["calls_ok"], batch["calls_provider_error"], batch["calls_usage_missing_or_uncertain"], batch["usage_incomplete"]), (5, 3, 2, 2, True))
+        self.assertEqual(batch["usage"], {"google/judge-test": {"input_tokens": 3000, "output_tokens": 300, "cache_read_tokens": 150, "cache_write_tokens": 0}})  # 3 responses carried usage (calls 1, 2, 5); the exception and the usage-less response carry none
+        self.assertEqual(len(judge.calls), 5); self.assertTrue(all(c["request_sha256"] and c["unit_id"] for c in judge.calls))
+        self.assertNotIn("synthetic connection reset", json.dumps(judge.calls).replace("synthetic connection reset", "")) ; self.assertEqual(judge.calls[2]["error"]["message"], "synthetic connection reset")
+        self.assertFalse(getattr(judge, "is_stub", False))
+
+    def test_stub_string_responses_still_work_and_are_not_reported_usage(self):
+        v = J.judge_units([self.unit(23)], J.StubJudge())
+        self.assertEqual((v[0]["call_status"], v[0]["usage_status"], v[0]["usage_uncertain"]), ("ok", "not_reported", False))

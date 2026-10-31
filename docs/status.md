@@ -1,9 +1,13 @@
 # Status
 
-Current stage: **Stage 3b deterministic grader CLOSED by the independent final review
-(2026-10-31; 57/57 layout, 21/21 grading chain; no known Pilot-blocking scoring defect); Git
-checkpoint prepared, commit awaiting authorization; hard stop before the pilot.** See section
-"Stage 3b grader close-out and checkpoint". Earlier header, kept for the record: last located
+Current stage: **Pilot A wiring U1–U3 implemented and mock-verified (2026-10-31): real-generation
+CLI path, offline grading CLI, judge adapter with gated judged pass; no provider call; config
+`judge` block, judge id, reservations, missing-usage hold and paid authorization PENDING; hard
+stop before any paid run.** See sections "Pilot A wiring U1/U2" and "Pilot A wiring U3".
+Earlier header, kept for the record: U1 + U2 implemented and mock-verified (2026-10-31). Baseline commit
+`6761f0d52d145a7aa103cdef01171cddda956cd2`. Earlier header, kept for the record: Stage 3b
+deterministic grader CLOSED by the independent final review (2026-10-31; 57/57 layout, 21/21
+grading chain; no known Pilot-blocking scoring defect). Earlier header, kept for the record: last located
 blocking fix applied (no FAIL inferred from the two extreme overlap scopes) and the Pilot A
 request wording corrected (2026-10-31). Earlier header, kept for the record: two
 review misjudgements fixed (item 7 applicability, split-table overlap) and the Pilot A request
@@ -2391,6 +2395,124 @@ Docker, LibreOffice, compose regressions.
   failures, lands in separate commits, and preserves the existing scoring semantics.
 - Approved rubrics, grading implementations and tests are unchanged by this entry.
 
+## Pilot A wiring U1/U2 (2026-10-31; mock-verified; no model, judge or paid call; logs under `logs/pilot-wiring-20261031T214901Z/`)
+
+### U1 — real generation wiring (`harness/launcher.py`, CLI section only)
+
+- `build_unit` (shared by `--dry-run` and `--real-run`): `build_samples(verify_config)` (I1 allowlist and
+  hashes), `verify_system_prompt` (the prompt file must hash to `generation.system_prompt_sha256`;
+  the config records the stripped text that `make_task` sends; mismatch refuses), `make_task` with the
+  config tool timeout, one sample enforced, unit id.
+- `main(argv, *, eval_fn=None, environ=None, docker_runner=subprocess.run)`: `--dry-run` or
+  `--real-run` is mandatory (mutually exclusive). `--real-run` additionally requires an environment
+  not in mock mode (`refuse_disabled_model_api`), `--confirm '<task_id>|<model>|<estimate_usd>'`
+  restating the paid scope exactly, `--authorized-by` and `--authorization-ref` (audit metadata
+  recorded verbatim; the launcher does not verify an approval), a known provider with its credential
+  name present (names only), the image pre-flight by ID and the prompt hash check. `inspect_ai.eval`
+  is imported only inside the real branch; `eval_fn`/`environ`/`docker_runner` are test seams.
+- A `real_run_provenance` record (commit, dirty flag, config sha256 and status, prompt file/sha/form,
+  image id and platform, task id, model, sample ids, staging verification, env variable names,
+  authorization metadata) is written before `run_sample`; `run_sample`, its single Task/EvalLog/
+  sample contract, the ledger and every stop rule are unchanged.
+- Preflight coverage check: file isolation (allowlist + hashes), image (ID, platform), credentials
+  (name presence, never values), budget and stop state (`run_sample` → `_refuse_if_stopped`,
+  `reserve`), prompt hash (new). Not added: a check that `runs_root` is outside the repository
+  (policy text only; not a provider-call risk).
+
+### U2 — offline deterministic grading CLI (`grading/run_grading.py`, new)
+
+- Inputs: `--host-dir runs_root/<uuid>`, `--eval-log`, `--task-id`, `--out-dir`, optional
+  `--ledger --unit-id`, `--no-recalc`. `resolve_run`: run.json binding, directory name, the log's
+  sample uuid, sample id (= task id), eval id, model and epoch must agree, else refused.
+  `load_materials`: rubric, independent reference and task prompt from host paths (`private/`,
+  `data/prompts`; prompt hashed against `config.tasks`), never from a sandbox.
+- Grades with `grade_run(judge=None)`: the 7 judge-only items are `pending_judge`, excluded from E,
+  `judge_mode: none`; human-review materials written by `grade_run`; a
+  `grading_run_<uuid>_<ts>.json` provenance record links run binding, eval-log sha256, code commit,
+  config sha256, material hashes, grader version, pending judge items and the launcher settlement
+  (cost source "launcher ledger settlement" when given, otherwise "not linked").
+
+### Verification (first execution captured unless a test defect required a rerun)
+
+| Command (`run_isolated.sh`, `/usr/bin/time -p`) | Wall clock | Exit | Result |
+|---|---|---|---|
+| `unittest harness.tests.test_launcher_regressions` (+4 `RealRunCliTests`: explicit mode and scope, prompt-hash refusal, real path with injected eval incl. provenance and no key leakage, dry-run via the shared unit) | 6.04 s / 6.09 s | 1 / 0 | 32/33 then 33/33 (first run: a test helper dropped the `config` argument; fixed) |
+| `harness.tests.regress_pilot_cli` — `main --real-run` with real Inspect eval, docker sandbox, mockllm scripted tool call (`pilot-cli`, `-2`, `-3`) | 8.62 s / 6.71 s / 7.49 s | 1 / 1 / 0 | 10/10 on the third run; first: the scripted tool call used `cmd` instead of `command` (no file written, still a valid no-files run); second: the leak scan counted the test's own env file |
+| `grading.tests.regress_grading_cli` on the saved mock run of `pilot-cli-2` (real `.eval`, run_outcome.json, note.txt) | 1.29 s / see log | 1 / 0 | 14/15 then 15/15 (first: expectation written for the no-files run; the graded run has one collected file → `complete`) |
+
+Not run (unchanged): grading layout/chain, harness unit suites, Inspect/limits/closeout/tools/compose/
+recalc regressions.
+
+### Still unverified / pending
+
+Real provider compatibility (Anthropic usage fields, cache tokens, stop reasons, `.eval` content for
+a paid run) remains unverified by design. Pending human decisions: Model A final approval,
+reservation amount, missing-usage hold, judge model id, real-run authorization and its reference.
+Pilot A request wording of the enabling steps still says `main()` is not wired (now wired behind
+`--real-run`; a paid run still cannot start without the pending approvals and U3) — to be updated
+with the next documentation pass.
+
+## Pilot A wiring U3 (2026-10-31; judge adapter and judged grading pass; mock-verified; no provider call; logs under `logs/pilot-wiring-20261031T214901Z/`)
+
+### Call chain
+`grading.run_grading.main --judge` → `judge_gate` (scope restatement `--confirm-judge '<run_uuid>|<judge_model>|<estimate>'`,
+`--authorized-by`/`--authorization-ref` recorded verbatim and never verified, `--ledger`, non-mock environment and
+credential name for a real provider, refusal when a judged pass already exists unless `--rejudge`) →
+`PilotLauncher.record("judge_authorization")` → `PilotLauncher.run_judge_batch(unit_id="<uuid>:judge:<ts>", estimate, batch_fn)`
+→ `batch_fn` = `grade_run(judge=ProviderJudge)` (deterministic checks re-run unchanged; `judge_units` calls the adapter once per
+judge-only item; review materials written with the judge verdicts sealed in a new versioned file) → `ProviderJudge.batch_result()`
+→ `ledger.settle` → `judge_calls_<uuid>_<ts>.json` (every call: unit id, item, request sha256, status, raw response, usage,
+error, seconds) → provenance `grading_run_<uuid>_<pass>.json` with the selected pass. Without `--judge` the CLI is byte-for-byte
+the U2 behaviour (no provider import, no ledger write).
+
+### Files
+- `grading/judge.py`: `ProviderJudge` (Inspect `get_model` + `generate`, injectable `generate`; structured call record, never a
+  sentinel string), `usage_dict`, `judge_units` accepting str (stubs) or call records; error classes `provider_error`
+  (request failed or provider-reported error: cannot_assess, no parse) and `judge_parse_error` (answer outside the protocol:
+  cannot_assess); `usage_status` ok / missing / uncertain / not_reported is a cost flag that never changes a verdict.
+- `grading/grade.py`: pass identity on every results record and grade row (`grading_pass`, `pass_kind`
+  deterministic_only / deterministic_plus_judge / stub_test, `supersedes_pass`, `pass_index`), J rows carry `error_class`,
+  `call_status`, `usage_status`; `judge_call_summary` in results; `grading_passes(out_dir, run_uuid)` and
+  `select_pass(passes, prefer="latest_with_judge")` define how a report picks exactly one pass per run (two passes of one
+  run are never two samples). Additive schema fields only; deterministic verdicts and rubric unchanged.
+- `harness/launcher.py` `run_judge_batch`: accepts the adapter's dict result; incomplete usage (any call missing/uncertain)
+  is settled at the larger of the priced known part and the reservation, flagged `estimated`, the known usage kept in the
+  note and the call log (never priced as if complete, never zero); tuple results keep the old behaviour; `BudgetExhausted`
+  from a recorded stop or hold surfaces in the CLI as a clean refusal before any call.
+- `grading/run_grading.py`: `--judge`, `--judge-model`, `--judge-estimate-usd`, `--confirm-judge`, `--authorized-by`,
+  `--authorization-ref`, `--rejudge`, `--env-file`; `judge_factory` / `environ` injection points; cost record gains
+  `grading` (judge settlement, priced-from-calls, calls log).
+
+### Partial failure and repeats
+A provider exception or provider-reported error on one call leaves the other calls' usage and verdicts intact; that unit is
+cannot_assess (`provider_error`) and the batch is `usage_incomplete` → conservative settlement. A second `--judge` on a run
+that already has a judged pass is refused with no reservation unless `--rejudge` (a new paid pass, new pass id). After a
+restart the ledger's stops/holds persist and refuse the judge pass before any call (shown with the mock run's unpriced
+generation hold, cleared by `clear_review` in the regression as a human would).
+
+### Verification (first execution captured unless a test defect required a rerun)
+
+| Command (`run_isolated.sh`, `/usr/bin/time -p`) | Wall clock | Exit | Result |
+|---|---|---|---|
+| `unittest grading.tests.test_grading_chain` (+ `JudgeAdapterTests` ×2, pass-identity test) | 2.62 → 2.49 → 2.59 s | 1, 1, 0 | 24/24 (fixture defects: synthetic unit lacked two render keys; usage sum expectation counted 4 instead of 3 responses) |
+| `unittest harness.tests.test_launcher_regressions` (+ `JudgeBatchSettlementTests`) | 5.59 → 5.40 → 5.55 s | 1, 1, 0 | 34/34 (string estimate; the 2× stop case had to come last) |
+| `grading.tests.regress_grading_cli` on the saved mock run (D-only pass, gate refusals, hold refusal, cleared review, judged pass via real `get_model("mockllm/model")`, ledger, call log, review isolation, repeat refusal) | 0.98 → 1.00 → 1.36 → 1.70 → 1.68 s | 1, 1, 1, 1, 0 | 33/33 (code fixes: mock-mode refusal surfaced as `GradingCliError`; ledger refusal surfaced cleanly; provenance file named by pass id after a same-second collision; test fixes: ledger copy with cleared hold; mockllm attaches its own usage, so the missing-usage branch is covered by the unit test) |
+
+Not run (unchanged): layout suite, harness unit suites, Inspect/limits/closeout/tools/compose/recalc, `regress_pilot_cli`.
+
+### Pending (not approved, not changed)
+config `judge` block (model id, temperature, max_tokens, max_retries, timeout: the adapter reads `cfg["judge"]` when present,
+defaults temperature 0 / max_tokens 1024 otherwise); judge model id (candidate `google/gemini-3.1-pro-preview`); judge
+reservation per run; missing-usage hold policy (an incomplete judge batch is settled conservatively but not held — pending);
+Model A approval; real-run and judge paid authorizations. Real Gemini response format, refusal behaviour and usage fields
+are unverified until the first authorized call.
+
+### To review before Architecture Cleanup
+`grade_run` re-runs extraction and deterministic checks for a judged pass (correct and cheap, but a judge-only pass is not
+possible without refactoring); `run_judge_batch` prices the incomplete-usage case in the launcher rather than in
+`budget.settle`; `usage_from_eval_sample`/`usage_dict` are two ModelUsage mappings; the review file versioning and the pass
+identity are linked only by timestamps in the results record.
+
 ## Known issues and findings (material check)
 
 - `rubric_json.form_content`: 8,036 items hold `null`, 2,417 items lack the key, zero
@@ -2637,6 +2759,18 @@ Nothing. Waiting for the human's decisions listed under "Next stage".
   DEFER REFACTOR of the declaration/loop split recorded as maintenance; CLAUDE.md gains the
   scoring proof-obligation rule; Git checkpoint prepared, commit awaiting authorization ·
   (uncommitted)
+
+- 2026-10-31 · Pilot A wiring U1 (real-run CLI path: shared `build_unit`, prompt-hash check,
+  explicit `--real-run --confirm --authorized-by --authorization-ref`, provenance record, injected
+  eval for tests) and U2 (`grading/run_grading.py`: run identity binding, host-only materials,
+  judge pending, provenance/cost link) implemented and mock-verified; no provider call ·
+  (uncommitted)
+
+- 2026-10-31 · Pilot A wiring U3: `ProviderJudge` adapter (structured call records, error classes
+  provider_error / judge_parse_error, usage status as a cost flag), gated `--judge` pass in
+  `run_grading.py` through `run_judge_batch` (conservative settlement of incomplete usage), grading
+  pass identity and `select_pass` rule; mock-verified; config `judge` block and all paid decisions
+  PENDING · (uncommitted)
 
 ## Next stage (not started)
 

@@ -433,18 +433,38 @@ class PilotLauncher:
             raise
 
     def run_judge_batch(self, *, unit_id: str, estimate_usd, batch_fn, dry_run: bool = False) -> dict:
-        """One independent judge batch: same reserve → run → settle contract. ``batch_fn`` returns
-        ({model: usage}, {model: retries}); the judge implementation itself is Stage 3b work."""
+        """One independent judge batch (the judge calls of one grading pass): same reserve → run → settle
+        contract. ``batch_fn`` returns ({model: usage}, {model: retries}) or a dict from
+        ProviderJudge.batch_result() carrying ``usage_incomplete``; an exception inside batch_fn is
+        recorded as an engineering failure and settled at the reservation (estimated)."""
         self._refuse_if_stopped(unit_id=unit_id, model=None, estimate_usd=estimate_usd, kind="judge")
         reservation = self.ledger.reserve(unit_id, "judge", estimate_usd, {"kind": "judge"})
         if dry_run:
             self.ledger.void(unit_id, "dry run: judge batch not called")
             return {"unit_id": unit_id, "dry_run": True, "reservation": reservation}
         try:
-            usage, retries = batch_fn()
-            settlement = self.ledger.settle(unit_id, usage, retries_by_model=retries, note="judge batch", fallback_to_reservation=not usage)
+            result = batch_fn()
+            if isinstance(result, dict):  # ProviderJudge.batch_result(): usage, retries, usage_incomplete, note
+                usage, retries, incomplete, note = result.get("usage") or {}, result.get("retries") or {}, bool(result.get("usage_incomplete")), str(result.get("note") or "")
+            else:
+                usage, retries = result
+                incomplete, note = False, ""
+            if incomplete:
+                # At least one call's usage is missing or uncertain: the known part is never priced as if it were the whole.
+                # Settle at the larger of the priced known part and the reservation (estimated); the known usage stays in the note
+                # and in the judge call log. Whether such a settlement must also hold further starts is a pending policy decision.
+                from .budget import usage_cost
+                priced = sum((Decimal(str(usage_cost(u, self.ledger.prices[m])["total"])) for m, u in usage.items() if m in self.ledger.prices), Decimal(0))
+                if priced > Decimal(str(estimate_usd)):
+                    settlement = self.ledger.settle(unit_id, usage, retries_by_model=retries, estimated=True,
+                                                    note=f"judge batch: usage incomplete ({note}); priced known part {priced} USD exceeds the reservation and is settled as an estimate")
+                else:
+                    settlement = self.ledger.settle(unit_id, {}, estimated=True, fallback_to_reservation=True,
+                                                    note=f"judge batch: usage incomplete ({note}); known usage {json.dumps(usage, sort_keys=True)} priced {priced} USD kept here and in the judge call log; settled at the reservation (conservative)")
+            else:
+                settlement = self.ledger.settle(unit_id, usage, retries_by_model=retries, note=f"judge batch {note}".strip(), fallback_to_reservation=not usage)
             post = self._after_unit(unit_id=unit_id, settlement=settlement, estimate_usd=estimate_usd)
-            return {"unit_id": unit_id, "settlement": settlement, "post_run": post, "ledger_after": self.ledger.snapshot()}
+            return {"unit_id": unit_id, "settlement": settlement, "post_run": post, "ledger_after": self.ledger.snapshot(), "usage_incomplete": incomplete, "batch_note": note}
         except Exception as ex:
             cls = type(ex).__name__
             self.ledger.record_engineering_failure(cls, unit_id, redact(ex))
@@ -459,7 +479,73 @@ class PilotLauncher:
 
 
 # ----------------------------------------------------------------------------- CLI
-def main(argv=None) -> int:
+def git_provenance(root: str = ROOT) -> dict:
+    """Commit and working-tree state of the code that runs (read-only git calls; never fails the run)."""
+    try:
+        head = subprocess.run(["git", "rev-parse", "HEAD"], cwd=root, capture_output=True, text=True, timeout=10)
+        porcelain = subprocess.run(["git", "status", "--porcelain"], cwd=root, capture_output=True, text=True, timeout=10)
+        changed = [l for l in porcelain.stdout.splitlines() if l.strip()]
+        return {"commit": head.stdout.strip() or None, "dirty": bool(changed), "changed_paths": len(changed)}
+    except Exception as ex:  # git absent or not a repository: recorded, not fatal
+        return {"commit": None, "dirty": None, "changed_paths": None, "error": type(ex).__name__}
+
+
+def verify_system_prompt(cfg: dict, root: str = ROOT) -> dict:
+    """The system prompt file actually used by make_task must hash to the value recorded in the
+    config (the file bytes, or the stripped text that make_task sends; the matching form is recorded).
+    A mismatch refuses the run: the prompt is frozen and identical for both models."""
+    g = cfg["generation"]
+    path = os.path.join(root, g["system_prompt_file"])
+    with open(path, "rb") as f:
+        raw = f.read()
+    text = raw.decode("utf-8").strip()
+    forms = {"file_bytes": hashlib.sha256(raw).hexdigest(), "stripped_text": hashlib.sha256(text.encode("utf-8")).hexdigest()}
+    expected = g["system_prompt_sha256"]
+    matched = next((k for k, v in forms.items() if v == expected), None)
+    if matched is None:
+        raise LauncherError(f"system prompt file {g['system_prompt_file']} does not match generation.system_prompt_sha256 in the config (file {forms['file_bytes'][:12]}..., stripped {forms['stripped_text'][:12]}..., config {expected[:12]}...); refusing to start")
+    return {"file": g["system_prompt_file"], "sha256": expected, "matched_form": matched, "text": text}
+
+
+def build_unit(cfg: dict, *, task_id: str, model: str, runs_root: str, config_path: str) -> dict:
+    """Samples, Task and unit id shared by --dry-run and --real-run: staged-file allowlist and hashes
+    verified against the config (I1), the system prompt verified against its recorded hash, the
+    tool timeout taken from the config. Nothing here calls a model."""
+    from .samples import build_samples
+    from .task import make_task
+    prompt = verify_system_prompt(cfg)
+    samples = build_samples([task_id], verify_config=config_path)  # fail closed on any staged-file mismatch
+    if not samples:
+        raise LauncherError(f"task {task_id} is not in data/selected_tasks.json")
+    if len(samples) != 1:
+        raise LauncherError(f"task {task_id} built {len(samples)} samples; a pilot unit is exactly one sample")
+    task, _ = make_task(samples, runs_root, name=f"pilot_{task_id[:8]}", tool_timeout=cfg["generation"]["tool_timeout_s"], system_prompt=prompt["text"])
+    unit_id = f"{task_id}:{model}:{dt.datetime.now(dt.timezone.utc).strftime('%Y%m%dT%H%M%SZ')}"
+    return {"task": task, "unit_id": unit_id, "sample_ids": [s.id for s in samples], "staging_verified": samples[0].metadata.get("staging_verified"),
+            "prompt": {k: prompt[k] for k in ("file", "sha256", "matched_form")}, "tool_timeout_s": cfg["generation"]["tool_timeout_s"]}
+
+
+def confirm_scope(confirm: str | None, *, task_id: str, model: str, estimate_usd) -> None:
+    """--real-run needs an explicit restatement of the paid scope: '<task_id>|<model>|<estimate_usd>'."""
+    parts = (confirm or "").split("|")
+    if len(parts) != 3:
+        raise LauncherError("--real-run requires --confirm '<task_id>|<model>|<estimate_usd>' restating the paid scope")
+    try:
+        same_estimate = Decimal(parts[2].strip()) == Decimal(str(estimate_usd))
+    except Exception:
+        same_estimate = False
+    if parts[0].strip() != task_id or parts[1].strip() != model or not same_estimate:
+        raise LauncherError("--confirm does not restate the requested task, model and estimate; refusing to start")
+
+
+def main(argv=None, *, eval_fn=None, environ: dict | None = None, docker_runner=subprocess.run) -> int:
+    """Trusted host entry point. ``--dry-run`` runs every check and the reservation logic without
+    calling eval(). ``--real-run`` is the only path that calls a provider: it needs the explicit scope
+    restatement (--confirm), operator audit metadata (--authorized-by, --authorization-ref; recorded,
+    not verified by the launcher), an environment that is not in mock mode, the provider credential
+    name present, the image pre-flight and the prompt hash check. ``eval_fn``, ``environ`` and
+    ``docker_runner`` are injection points for tests; the defaults are inspect_ai.eval, os.environ
+    and subprocess.run. Importing this module or running tests never contacts a provider."""
     p = argparse.ArgumentParser(description="GDPval pilot launcher (trusted host process)")
     p.add_argument("--config", default=os.path.join(ROOT, "config.json"))
     p.add_argument("--runs-root", required=True, help="absolute real path for collected outputs and records")
@@ -469,36 +555,57 @@ def main(argv=None) -> int:
     p.add_argument("--estimate-usd", required=True, type=Decimal, help="pre-run cost estimate for this unit (no estimate, no start)")
     p.add_argument("--token-limit", type=int, default=None)
     p.add_argument("--env-file", default=os.path.join(ROOT, ".env"))
-    p.add_argument("--dry-run", action="store_true", help="run every check and the reservation logic; do not call eval()")
+    mode = p.add_mutually_exclusive_group(required=True)
+    mode.add_argument("--dry-run", action="store_true", help="run every check and the reservation logic; do not call eval()")
+    mode.add_argument("--real-run", action="store_true", help="call the provider for exactly one sample (paid); requires --confirm, --authorized-by, --authorization-ref")
+    p.add_argument("--confirm", default=None, help="restate the paid scope as '<task_id>|<model>|<estimate_usd>' (required with --real-run)")
+    p.add_argument("--authorized-by", default=None, help="who approved this paid run (audit metadata, recorded verbatim)")
+    p.add_argument("--authorization-ref", default=None, help="where the approval is recorded, e.g. a docs/status.md decision entry (audit metadata)")
     args = p.parse_args(argv)
+    env = os.environ if environ is None else environ
 
     cfg = load_config(args.config)
-    if not args.dry_run:
-        refuse_disabled_model_api()
-    runs_root = resolve_runs_root(args.runs_root)
     provider = args.model.split("/", 1)[0]
-    loaded = load_env_file(args.env_file)
-    missing = missing_keys([provider])
-    if missing and not args.dry_run:
+    if args.real_run:
+        refuse_disabled_model_api(env)
+        confirm_scope(args.confirm, task_id=args.task_id, model=args.model, estimate_usd=args.estimate_usd)
+        if not (args.authorized_by and args.authorization_ref):
+            raise LauncherError("--real-run requires --authorized-by and --authorization-ref (audit metadata for the run record)")
+        if provider not in KEY_ENV_BY_PROVIDER and provider != "mockllm":
+            raise LauncherError(f"unknown provider {provider!r}: no credential requirement is defined for it; refusing to start")
+    runs_root = resolve_runs_root(args.runs_root)
+    loaded = load_env_file(args.env_file, env)
+    missing = missing_keys([provider], env) if provider in KEY_ENV_BY_PROVIDER else []
+    if missing and args.real_run:
         raise LauncherError(f"missing credential variable(s): {missing} (names only; nothing printed)")
-    image = preflight_sandbox(cfg)  # by full image ID; compose and config must agree
+    image = preflight_sandbox(cfg, runner=docker_runner)  # by full image ID; compose and config must agree
     ledger = BudgetLedger(args.ledger, cfg["pilot"]["budget_ceiling_usd"], prices_from_config(cfg))
-    print(json.dumps({"config_sha256": config_sha256(args.config), "config_status": cfg["_status"][:5], "runs_root": runs_root,
-                      "env_names_loaded": loaded, "missing_key_names": missing, "image_id": image.get("daemon_id"), "image_platform": (image.get("os"), image.get("architecture")),
-                      "image_tags_informational": image.get("repo_tags"), "image_attempts": len(image["attempts"]), "ledger": ledger.snapshot(), "dry_run": args.dry_run}, indent=1))
+    unit = build_unit(cfg, task_id=args.task_id, model=args.model, runs_root=runs_root, config_path=args.config)
+    provenance = {"code": git_provenance(), "config_path": args.config, "config_sha256": config_sha256(args.config), "config_status": cfg["_status"][:5],
+                  "prompt": unit["prompt"], "image_id": image.get("daemon_id"), "image_platform": (image.get("os"), image.get("architecture")),
+                  "image_tags_informational": image.get("repo_tags"), "runs_root": runs_root, "task_id": args.task_id, "model": args.model,
+                  "sample_ids": unit["sample_ids"], "staging_verified": unit["staging_verified"], "tool_timeout_s": unit["tool_timeout_s"],
+                  "env_names_loaded": loaded, "missing_key_names": missing, "credential_required": provider in KEY_ENV_BY_PROVIDER}
+    print(json.dumps({**provenance, "image_attempts": len(image["attempts"]), "ledger": ledger.snapshot(), "mode": "real-run" if args.real_run else "dry-run"}, indent=1, default=str))
     if args.dry_run:
-        from .samples import build_samples
-        from .task import make_task
-        samples = build_samples([args.task_id], verify_config=args.config)  # I1: fail closed on any staged-file mismatch
-        if not samples:
-            raise LauncherError(f"task {args.task_id} is not in data/selected_tasks.json")
-        print(json.dumps({"staging_verified": samples[0].metadata["staging_verified"]}))
-        task, _ = make_task(samples, runs_root, name=f"pilot_{args.task_id[:8]}")
         launcher = PilotLauncher(cfg, runs_root=runs_root, ledger=ledger, eval_fn=None)
-        unit_id = f"{args.task_id}:{args.model}:{dt.datetime.now(dt.timezone.utc).strftime('%Y%m%dT%H%M%SZ')}"
-        launcher.run_sample(task=task, model=args.model, unit_id=unit_id, estimate_usd=args.estimate_usd, token_limit=args.token_limit, dry_run=True)
+        launcher.run_sample(task=unit["task"], model=args.model, unit_id=unit["unit_id"], estimate_usd=args.estimate_usd, token_limit=args.token_limit, dry_run=True)
         return 0
-    raise LauncherError("real mode is not enabled in this stage: paid calls require separate authorization")
+    # --real-run: the only paid path; inspect_ai.eval is imported here and nowhere else in this module
+    if eval_fn is None:
+        from inspect_ai import eval as inspect_eval
+        eval_fn = inspect_eval
+    launcher = PilotLauncher(cfg, runs_root=runs_root, ledger=ledger, eval_fn=eval_fn)
+    authorization = {"by": args.authorized_by, "ref": args.authorization_ref, "confirm": args.confirm, "estimate_usd": str(args.estimate_usd),
+                     "note": "operator-supplied audit metadata recorded verbatim; the launcher does not verify an approval"}
+    launcher.record("real_run_provenance", {**provenance, "unit_id": unit["unit_id"], "authorization": authorization, "started_at": _now()})
+    meta = launcher.run_sample(task=unit["task"], model=args.model, unit_id=unit["unit_id"], estimate_usd=args.estimate_usd, token_limit=args.token_limit)
+    settlement = meta.get("settlement") or {}
+    print(json.dumps({"unit_id": unit["unit_id"], "inspect_status": meta.get("inspect_status"), "log_file": meta.get("log_file"),
+                      "settlement": {k: settlement.get(k) for k in ("cost_usd", "estimated", "manual_review_required", "flags")} if settlement else None,
+                      "manual_review_required": bool(meta.get("manual_review_required") or settlement.get("manual_review_required")),
+                      "stop_recorded": meta.get("stop_recorded") or (meta.get("post_run") or {}).get("stop_recorded"), "record_dir": launcher.record_dir}, indent=1, default=str))
+    return 0
 
 
 if __name__ == "__main__":
