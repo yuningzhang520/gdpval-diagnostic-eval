@@ -111,7 +111,9 @@ class CloseoutTests(unittest.TestCase):
         first = self.collect(listing, data, _simulate_read_failure={"/output/final/b"})
         a = Path(self.host) / "final/a"; st = a.stat(); before = (a.read_bytes(), st.st_ino, st.st_mtime_ns)
         partial = c.write_run_outcome(self.host, self.binding, first, self.execution)
-        self.assertTrue(partial["harness_error"])
+        # a read failure is not attributed by its name: no harness-error verdict, no model-failure verdict
+        self.assertFalse(partial["harness_error"])
+        self.assertEqual(partial["outcome_class"], "requires_adjudication")
         with self.assertRaises(c.OutcomeValidationError): c.load_run_outcome(self.host, self.binding)
         second = self.collect(listing, data)
         c.write_run_outcome(self.host, self.binding, second, self.execution)

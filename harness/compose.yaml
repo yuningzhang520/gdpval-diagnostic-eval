@@ -2,7 +2,23 @@
 # No volumes: task files enter through Sample.files, outputs leave through the harness collector.
 services:
   default:
-    image: gdpval-sandbox:stage2
+    # Pinned by the FULL LOCAL IMAGE ID (not the tag): this daemon has answered `docker image inspect
+    # gdpval-sandbox:stage2` with "No such image" while the tag was listed, whereas lookup by ID kept
+    # working. The same ID is recorded in config.json (sandbox.image_id) and used by the trusted
+    # LibreOffice conversion path; the launcher pre-flight refuses to start when they differ. The tag
+    # gdpval-sandbox:stage2 is informational. A local image ID is not a portable reference (see README).
+    image: sha256:18cde712cde1867c94b8f23ae1f4066b0aa3146fdbd8deac70d1b4aa043ea9ee
+    # Locally built image: never pulled. In Inspect 0.3.286 `x-local: true` has two effects
+    # (verified against the source and by a mock run, 2026-10-31): docker.py skips the
+    # `compose pull` step that every service without `build` and without `x-local` gets, and
+    # compose.py's `sandbox_prebuilt` verification applies to this service (it checks the image
+    # with `docker image inspect` and raises PrerequisiteError before any container starts when
+    # the image is absent; services without `x-local` are not checked there and would be pulled
+    # instead). `pull_policy: never` additionally stops Docker Compose itself from contacting a
+    # registry if the image were ever missing at `up`. Note: `docker compose config` preserves
+    # `x-local` in its YAML output (which Inspect reads) but drops it from `--format json`.
+    x-local: true
+    pull_policy: never
     command: tail -f /dev/null
     init: true
     network_mode: none

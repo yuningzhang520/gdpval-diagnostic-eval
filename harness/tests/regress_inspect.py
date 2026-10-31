@@ -117,7 +117,10 @@ def scenario_adversarial():
     check(s, "symlinked directory skipped, not descended", skipped.get("/output/final/dirlink") == "symlink_directory"
           and not any(p.startswith("/output/final/dirlink/") for p in by), skipped)
     check(s, "fifo skipped", skipped.get("/output/final/pipe") == "fifo", skipped)
-    check(s, "status partial with harness_error", rec["status"] == "partial" and rec["harness_error"] is True and rec["all_intact"] is False, rec["status"])
+    att = rec.get("attribution", {})
+    check(s, "status partial; attribution: 4 model-caused special entries, oversized file unknown, no harness fault",
+          rec["status"] == "partial" and rec["all_intact"] is False and rec["harness_error"] is False and att.get("class") == "unknown"
+          and att.get("counts") == {"model_caused": 4, "harness_caused": 0, "unknown": 1}, (rec["status"], rec.get("harness_error"), att.get("counts")))
     check(s, "small files on both sides of oversized file collected", by["/output/final/a.txt"]["status"] == "collected" and by["/output/final/z.txt"]["status"] == "collected")
     root_real = os.path.realpath(os.path.join(run_dir, "final"))
     collected_paths = [f["host_path"] for f in rec["files"] if f["status"] == "collected"]

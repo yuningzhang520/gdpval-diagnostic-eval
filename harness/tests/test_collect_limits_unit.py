@@ -119,7 +119,7 @@ class CumulativeLimitTests(unittest.TestCase):
             execution = {"status": "completed", "errors": [], "limits": [], "limit_types": [], "solver_finished": True, "collector_scorer_executed": True}
             out = c.write_run_outcome(self.host, dict(RUN), rec, execution)
             self.assertEqual((out["collection_status"], out["harness_error"], out["grading_eligible"], out["outcome_class"]),
-                             ("partial", True, False, "harness_collection_error"))
+                             ("partial", False, False, "requires_adjudication"))  # file_limit is not attributed by its name
             with self.assertRaises(c.OutcomeValidationError):
                 c.load_run_outcome(self.host, dict(RUN))
             loaded = c.load_run_outcome(self.host, dict(RUN), for_grading=False)

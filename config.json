@@ -1,6 +1,6 @@
 {
-  "_status": "DRAFT. Not frozen: freeze-v1 has not been tagged. Parameters marked approved_2026_10_30 are approved candidate values for the pilot; model ids, token_limit, max_tokens, judge and formal concurrency remain PENDING. Placeholders are literal strings beginning with PLACEHOLDER.",
-  "drafted_at_utc": "2026-10-30T21:48:09+00:00",
+  "_status": "DRAFT. Not frozen: freeze-v1 has not been tagged. Pilot A/B/judge ids, limits and the 30 USD ceiling are proposed values pending final approval; placeholders are literal strings beginning with PLACEHOLDER.",
+  "drafted_at_utc": "2026-10-30T23:12:11+00:00",
   "code_commit_at_draft": "1941d4ac69566fdbc0a6dff821de57664e84f284",
   "code_commit_note": "The commit actually used by a run is recorded in that run's metadata, not here.",
   "dataset": {
@@ -377,8 +377,8 @@
       "human-review checkpoint",
       "model_b on the same task"
     ],
-    "budget_ceiling_usd": 25,
-    "budget_status": "cumulative pilot ceiling 25 USD approved 2026-10-30 (covers A, B, judge, cache-related charges and billable retries); every paid call still needs separate authorization; the ceiling is enforced by the launcher ledger below and is not an absolute billing hard cap",
+    "budget_ceiling_usd": 30,
+    "budget_status": "cumulative pilot ceiling 30 USD proposed 2026-10-30 (covers A, B, judge, cache-related charges and billable retries), supersedes the 25 USD value of the earlier draft; pending final approval; every paid call still needs separate authorization; enforced by the launcher ledger, not an absolute billing hard cap",
     "stop_conditions": [
       "no new sample or judge batch starts when the remaining budget cannot cover its reservation",
       "after the ceiling is reached no further sample starts (no per-request interception)",
@@ -395,11 +395,23 @@
       "ledger": "persistent JSON ledger; survives restarts with accumulated cost and open reservations; reservations and settlements are distinct records; idempotent settlement per execution uuid; atomic writes",
       "inspect_supplement": "inspect_ai 0.3.286 eval() accepts cost_limit (per-sample dollars, requires model cost data via set_model_cost() or model_cost_config) and model_cost_config (dict of model -> ModelCost); usable as a per-sample supplement, not a replacement for the pilot-wide ledger",
       "not_a_hard_cap": "a sample already running can push the cumulative actual cost above the ceiling; no per-request interception inside the agent loop and no monkeypatching of providers",
-      "atomicity": "reservation atomicity under concurrency is verified before any formal run with concurrency above 1"
+      "atomicity": "reservation atomicity under concurrency is verified before any formal run with concurrency above 1",
+      "price_tiers": "each model call is priced at the standard or the long-context tier by its own prompt size (per-call usage from the Inspect log ModelEvents); cache writes are priced at the conservative longest-retention rate because the usage record does not split retention tiers; aggregated usage whose total prompt exceeds a threshold is priced entirely at the long-context tier and flagged; usage without a reliable price is settled at max(priced part, reservation), flagged estimated_unknown_cost and holds further starts until a recorded manual review",
+      "engineering_failures": "an error returned in the Inspect log (fail_on_error=false) and a launcher exception are both persisted as engineering_failure events; the second occurrence of a class is a stop condition; a settlement above 2x its reservation records a stop; stop state survives restarts; ledger events are schema-validated and an unknown event type refuses to load",
+      "inspect_cost_model_checked_2026_10_31": {
+        "source": "inspect_ai 0.3.286 model/_model.py compute_model_cost, model_usage_cost; model/_model_data/model_data.py ModelCost; _providers/anthropic.py _resolve_cache_ttl",
+        "formula": "input_tokens x input + output_tokens x output + input_tokens_cache_write x input_cache_write (x CACHE_WRITE_1H_MULTIPLIER = 2.0/1.25 when the Anthropic provider reports ttl '1h'; no multiplier for other providers) + input_tokens_cache_read x input_cache_read; summed per call into ModelUsage.total_cost and the sample total used by cost_limit",
+        "fields": "input_tokens excludes cached and cache-write tokens on all three providers; output_tokens includes reasoning tokens (reasoning_tokens is informational and not priced again); cache tokens enter only through the two cache fields",
+        "ttl": "ModelCost.input_cache_write must be the default-TTL rate (Anthropic 5m); Inspect applies the 1h multiplier itself; the Anthropic provider's default 'auto' mode starts at 5m and escalates a sample to 1h after a cached-request gap above the 5m TTL",
+        "not_modelled_by_inspect": "long-context price tiers (gpt-6.1-sol above 272K input tokens, gemini-3.1-pro-preview above 200k) and OpenAI extended cache retention: the cost_limit safety net under-prices such calls; the ledger prices per call and per tier and is the primary control",
+        "ledger_vs_inspect": "A: ledger cache write 8 (1h, conservative) vs Inspect 5 (x1.6 only when the TTL is 1h) — the ledger may overstate A's cache-write cost by up to 3 USD per million cache-write tokens and settles at Inspect's per-call total_cost when that is higher; B: both 2.50 (default retention); judge: both 2.00 (stand-in). Differences affect reservations and stop conditions only, never a capability result; per-model cost is reported with the Inspect-recorded total_cost alongside the ledger figure",
+        "safety_net_effect": "with default-retention rates in ModelCost the 10 USD per-sample limit tracks Inspect's own pricing for both candidates; it fires late (not early) for long-context calls; a difference in cost estimation between models is a billing property and is never read as a capability difference",
+        "mock_verification": "harness/tests/test_launcher_regressions.py PriceTierTests (ledger tiers, Inspect ModelCost rates, usage-source reconciliation)"
+      }
     }
   },
   "models": {
-    "selection_status": "candidates recorded; final A/B ids and callability await provider models-list queries (Stage 3b item 8) and pilot verification; the human approves A/B",
+    "selection_status": "pilot_models proposed 2026-10-30 (capability-first strategy); final approval of A/B and judge pending",
     "strategy_capability_first_preferred": {
       "anthropic": "claude-opus-5-5",
       "openai": "gpt-6.1-sol"
@@ -419,7 +431,13 @@
         "max_output": "128K",
         "thinking": "adaptive, always on",
         "default_effort": "medium",
-        "source": "platform.claude.com pricing and models overview"
+        "source": "platform.claude.com pricing and models overview",
+        "cache_write_1h_per_mtok_usd": 8,
+        "cache_write_conservative_per_mtok_usd": 8,
+        "cache_write_basis": "ledger: 1h rate (8 USD/MTok, 2x input) as the conservative figure because Inspect's Anthropic provider runs prompt caching in 'auto' TTL mode and may escalate a sample to the 1h TTL permanently once a request gap exceeds the 5m TTL (anthropic.py _resolve_cache_ttl), which ModelUsage does not report; Inspect cost limit: ModelCost.input_cache_write carries the 5m rate (5 USD/MTok) because compute_model_cost multiplies it by 1.6 itself when the provider reports ttl 1h (a pre-baked 8 would be applied twice); the ledger also takes Inspect's per-call total_cost as a floor",
+        "long_context_note": "no long-context price tier recorded in the 2026-10-30 query; verify on the pricing page before freeze-v1",
+        "usage_field_mapping": "Anthropic usage: input_tokens (uncached), cache_creation_input_tokens, cache_read_input_tokens, output_tokens (includes thinking); Inspect 0.3.286 maps them to ModelUsage.input_tokens, input_tokens_cache_write, input_tokens_cache_read, output_tokens; reasoning_tokens not populated",
+        "cache_write_ledger_per_mtok_usd": 8
       },
       "claude-sonnet-5-5": {
         "input_per_mtok_usd": 2,
@@ -430,7 +448,11 @@
         "max_output": "128K",
         "thinking": "adaptive",
         "default_effort": "high",
-        "source": "platform.claude.com pricing and models overview"
+        "source": "platform.claude.com pricing and models overview",
+        "cache_write_1h_per_mtok_usd": 4,
+        "cache_write_conservative_per_mtok_usd": 4,
+        "cache_write_basis": "ledger: 1h rate derived from the documented 2x multiplier (conservative, auto-TTL escalation possible); Inspect cost limit: the 5m rate (Inspect applies the 1h multiplier itself)",
+        "cache_write_ledger_per_mtok_usd": 4
       },
       "gpt-6.1-sol": {
         "input_per_mtok_usd": 2,
@@ -441,7 +463,50 @@
         "reasoning_efforts": "low, medium, high, xhigh, max",
         "default_effort": "not stated on the models page",
         "knowledge_cutoff": "2026-04-30",
-        "source": "developers.openai.com pricing and models pages"
+        "source": "developers.openai.com pricing and models pages",
+        "cache_write_30m_per_mtok_usd": 2.5,
+        "cache_write_12h_per_mtok_usd": 5.0,
+        "cache_write_default_per_mtok_usd": 2.5,
+        "cache_write_extended_per_mtok_usd": 5.0,
+        "cache_write_basis": "ledger and Inspect cost limit price cache writes at the 30m default-retention rate (2.50 USD/MTok, 1.25x input): the harness sets no prompt_cache_retention, so the 12h rate (5.00) applies to no request; it is recorded (cache_write_extended) but not charged; usage reports input_tokens_details.cache_write_tokens with a ttl_30m_tokens / ttl_12h_tokens split that Inspect 0.3.286 does not surface",
+        "pricing_tier": "short context: prompts <= 272K input tokens (2 / 10 / cached 0.10); long context above 272K: 4 / 15 / cached 0.20 / cache write 30m 5.00, 12h 10.00",
+        "long_context": {
+          "threshold_input_tokens": 272000,
+          "input_per_mtok_usd": 4,
+          "output_per_mtok_usd": 15,
+          "cache_read_per_mtok_usd": 0.2,
+          "cache_write_30m_per_mtok_usd": 5.0,
+          "cache_write_12h_per_mtok_usd": 10.0,
+          "cache_write_per_mtok_usd": 5.0,
+          "basis": "applies per model call whose prompt (uncached input + cache reads + cache writes) exceeds the threshold; cache_write_per_mtok_usd is the 30m default-retention long-context rate (the harness requests no extended retention)",
+          "source": "developers.openai.com pricing page, queried 2026-10-30"
+        },
+        "usage_field_mapping": "Responses API usage: input_tokens (total, includes cached and cache-write tokens), input_tokens_details.cached_tokens, input_tokens_details.cache_write_tokens (+ ttl_30m_tokens / ttl_12h_tokens), output_tokens (includes reasoning), output_tokens_details.reasoning_tokens; Inspect 0.3.286: ModelUsage.input_tokens = input_tokens - cached - cache_write, input_tokens_cache_read = cached_tokens, input_tokens_cache_write = cache_write_tokens, reasoning_tokens from output_tokens_details",
+        "cache_write_ledger_per_mtok_usd": 2.5
+      },
+      "gemini-3.1-pro-preview": {
+        "input_per_mtok_usd": 2.0,
+        "output_per_mtok_usd": 12.0,
+        "cache_read_per_mtok_usd": 0.2,
+        "cache_write_5m_per_mtok_usd": 2.0,
+        "pricing_tier": "prompts <= 200k tokens (4.00 / 18.00 above; cache read 0.40 above); context caching also bills storage per token-hour, not modelled",
+        "context": "1M",
+        "thinking": "on by default, thinking_level default high (low/medium/high)",
+        "source": "ai.google.dev/gemini-api/docs/pricing and /docs/thinking, queried 2026-10-30",
+        "note": "cache_write set to the input price as a conservative stand-in: Gemini has no per-token cache-write price",
+        "cache_write_conservative_per_mtok_usd": 2.0,
+        "cache_write_basis": "no per-token cache-write price exists; the input price is the stand-in (context-cache storage per token-hour not modelled)",
+        "long_context": {
+          "threshold_input_tokens": 200000,
+          "input_per_mtok_usd": 4.0,
+          "output_per_mtok_usd": 18.0,
+          "cache_read_per_mtok_usd": 0.4,
+          "cache_write_per_mtok_usd": 4.0,
+          "basis": "applies per model call whose prompt exceeds 200k tokens; cache write at the long-context input price as the stand-in",
+          "source": "ai.google.dev/gemini-api/docs/pricing, queried 2026-10-30"
+        },
+        "usage_field_mapping": "usage_metadata: prompt_token_count, cached_content_token_count, candidates_token_count, thoughts_token_count; Inspect 0.3.286: input_tokens = prompt - cached, input_tokens_cache_read = cached, output_tokens = candidates + thoughts, reasoning_tokens = thoughts",
+        "cache_write_ledger_per_mtok_usd": 2.0
       }
     },
     "asymmetry_limitations": [
@@ -460,7 +525,113 @@
       "status": "candidate, not frozen"
     },
     "provider_server_side_tools": "off (web search, code interpreter, file search disabled)",
-    "price_reference": "docs/status.md, section 'Stage 3a', table 'Public prices' (official pricing pages, queried 2026-10-30); not a billing basis"
+    "price_reference": "docs/status.md, section 'Stage 3a', table 'Public prices' (official pricing pages, queried 2026-10-30); not a billing basis",
+    "pilot_models": {
+      "status": "DRAFT, proposed for the pilot; approval pending; ids were visible in the respective key's models-list on 2026-10-30, generation / tool use / image input / reasoning behaviour unverified",
+      "launcher_contract": {
+        "cli_argument": "--model takes the Inspect model name provider/model_id (e.g. anthropic/claude-opus-5-5); the launcher does not add, strip or validate the prefix",
+        "provider_resolution": "provider = model.split('/', 1)[0] selects the credential variable (ANTHROPIC_API_KEY / OPENAI_API_KEY / GOOGLE_API_KEY); a bare provider id (no prefix) raises KeyError before any call rather than mis-routing",
+        "pricing_key": "prices_from_config derives provider/model_id from candidate_facts by id prefix (claude-* -> anthropic/, gpt-* -> openai/, otherwise google/); consistent with the Inspect names below for all three models",
+        "inspect_to_provider": "Inspect strips the provider prefix before the API call (anthropic: service_model_name; openai: model id as given; google: service_model_name strips 'google/', the genai SDK accepts the bare id although the list endpoint returns 'models/<id>')",
+        "checked_against": "harness/launcher.py l. 31, 66, 196-205, 326; inspect_ai 0.3.286 providers; 2026-10-30; no mismatch found; launcher not modified in this round",
+        "gaps_registered": [
+          "closed 2026-10-30 (Pilot-A pre-review B1): eval_kwargs passes max_tokens (generation.max_tokens_per_request) and attempt_timeout (retries.layer_1_inspect_model_request.attempt_timeout_s) and reads token_limit from generation; each is required and positive or the launcher refuses to start; regression harness/tests/test_launcher_regressions.py (spy on the eval() dispatch)",
+          "launcher does not validate the provider/model_id form of --model: Important before the pilot (still open)"
+        ]
+      },
+      "model_a": {
+        "role": "candidate A (Anthropic)",
+        "provider": "anthropic",
+        "provider_api_model_id": "claude-opus-5-5",
+        "inspect_model_name": "anthropic/claude-opus-5-5",
+        "models_list_visibility": "present in the Anthropic list of 2026-10-30T22:30:39Z (data/provider_model_lists/20261030T223043Z.json)",
+        "reasoning": {
+          "documented_default": "Thinking on by default and cannot be turned off on Claude Opus 5.5 (thinking: disabled rejected); adaptive thinking; default effort 'medium' (other models 'high'); omitting effort equals effort=medium. Thinking tokens are billed as output tokens and count toward max_tokens; max_tokens is a strict limit. Source: platform.claude.com/docs/en/build-with-claude/effort and /thinking, models overview; queried 2026-10-30",
+          "inspect_request_construction": "inspect_ai 0.3.286 anthropic provider (completion_config): sends model and max_tokens (config.max_tokens, else the provider default 32,000); with no reasoning_effort/effort configured it sends neither 'thinking' nor 'output_config', so the server default applies; is_using_thinking(config) is false without a configured effort; reasoning_tokens (budget_tokens) is rejected on Claude 4.7+ and would raise before the call; stop_reason mapping end_turn/stop_sequence -> stop, tool_use -> tool_calls, max_tokens -> max_tokens, refusal -> content_filter, context window exceeded -> model_length; preserved in ModelOutput.choices[].stop_reason inside the Inspect log's ModelEvents",
+          "pilot_verification_pending": [
+            "actual effort level applied by the server for this account and model",
+            "actual thinking token share of output_tokens (the API does not report thinking tokens separately; Inspect's ModelUsage.reasoning_tokens is not populated for Anthropic)",
+            "whether max_tokens 16,384 above 8,192 needs any beta header on Claude 5 (Inspect adds output-128k only on the configured-thinking path)",
+            "tool-call behaviour with the four harness tools under adaptive thinking"
+          ]
+        },
+        "pricing_usd_per_mtok": {
+          "input": 4,
+          "output": 20,
+          "cache_read": 0.2,
+          "cache_write_5m": 5,
+          "source": "platform.claude.com pricing, queried 2026-10-30",
+          "cache_write_1h": 8,
+          "ledger_cache_write_basis": "1h rate (8), conservative: Inspect auto TTL mode can escalate a sample to 1h writes and the usage record does not show it; Inspect's own cost limit uses the 5m rate (5) and applies the 1h multiplier itself when it knows the TTL"
+        }
+      },
+      "model_b": {
+        "role": "candidate B (OpenAI)",
+        "provider": "openai",
+        "provider_api_model_id": "gpt-6.1-sol",
+        "inspect_model_name": "openai/gpt-6.1-sol",
+        "models_list_visibility": "present in the OpenAI list of 2026-10-30T22:30:39Z",
+        "reasoning": {
+          "documented_default": "Reasoning effort defaults to 'medium' for GPT-6.1 Sol; 'none' and 'minimal' are not supported; reasoning tokens count toward max_output_tokens and the context window and are billed as output tokens; a response cut by max_output_tokens has status 'incomplete' with incomplete_details.reason 'max_output_tokens' (possibly before any visible output). Source: developers.openai.com/api/docs/guides/reasoning, models and pricing pages; queried 2026-10-30",
+          "inspect_request_construction": "inspect_ai 0.3.286 openai provider: Responses API selected (is_gpt_5 true for version 6.1, num_choices None); the 'reasoning' request field is sent only when reasoning_effort / reasoning_mode / reasoning_summary is configured, so the server default applies; max_output_tokens = config.max_tokens only when set (otherwise omitted); incomplete_details.reason max_output_tokens -> stop_reason max_tokens, content_filter -> content_filter, else stop; usage: input_tokens = input minus cached minus cache-write, output_tokens as reported (includes reasoning), reasoning_tokens from output_tokens_details; preserved in the log's ModelEvents",
+          "pilot_verification_pending": [
+            "actual default effort applied for this account",
+            "reasoning_tokens share and its effect on the 16,384 max_output_tokens cap in an agentic loop",
+            "Responses API tool-schema compatibility with the four harness tools",
+            "image input delivery through Responses API"
+          ]
+        },
+        "pricing_usd_per_mtok": {
+          "input": 2,
+          "cached_input": 0.1,
+          "output": 10,
+          "cache_write": "tiered: 30m 2.50 (1.25x input, default retention, applies to the pilot requests), 12h 5.00 (2.5x input; never requested by the harness, recorded only); ledger and Inspect cost limit use 2.50",
+          "source": "developers.openai.com pricing, queried 2026-10-30",
+          "cache_write_30m": 2.5,
+          "cache_write_12h": 5.0,
+          "long_context_above_272k_input_tokens": {
+            "input": 4,
+            "cached_input": 0.2,
+            "output": 15,
+            "cache_write_30m": 5.0,
+            "cache_write_12h": 10.0,
+            "ledger_cache_write": 5.0
+          }
+        }
+      },
+      "judge": {
+        "role": "judge (Google)",
+        "provider": "google",
+        "provider_api_model_id": "gemini-3.1-pro-preview",
+        "inspect_model_name": "google/gemini-3.1-pro-preview",
+        "models_list_visibility": "present as models/gemini-3.1-pro-preview in the Google list of 2026-10-30T22:30:39Z",
+        "reasoning": {
+          "documented_default": "Thinking on by default at thinking_level 'high' (levels low/medium/high; no off level listed for this model); max_output_tokens includes thought tokens; response pricing is output plus thinking tokens; when the limit is hit during reasoning the model stops with status 'incomplete' and truncated or empty output. Source: ai.google.dev/gemini-api/docs/thinking; queried 2026-10-30",
+          "inspect_request_construction": "inspect_ai 0.3.286 google provider: with no reasoning_effort/reasoning_tokens configured chat_thinking_config returns ThinkingConfig(include_thoughts=True) without a level, so the server default level applies; max_output_tokens = config.max_tokens; finish_reason MAX_TOKENS -> stop_reason max_tokens; usage: input_tokens = prompt minus cached, output_tokens = candidates plus thoughts, reasoning_tokens = thoughts_token_count; the model is treated as thinking-only (thinking cannot be disabled)",
+          "pilot_verification_pending": [
+            "judge output-schema compliance (single JSON object) under default thinking",
+            "preview availability and version stability",
+            "actual thinking token share in judge cost"
+          ]
+        },
+        "pricing_usd_per_mtok": {
+          "input": 2.0,
+          "output": 12.0,
+          "cache_read": 0.2,
+          "tier": "<= 200k prompt tokens",
+          "source": "ai.google.dev pricing, queried 2026-10-30",
+          "long_context_above_200k_prompt_tokens": {
+            "input": 4.0,
+            "output": 18.0,
+            "cache_read": 0.4
+          },
+          "cache_write": "no per-token price; input price used as the stand-in in each tier"
+        },
+        "status": "judge candidate, not frozen"
+      },
+      "compute_equivalence_note": "The two candidate models are not given equal compute: Anthropic runs adaptive thinking at effort 'medium' by default with thinking tokens billed as output at 20 USD/MTok; OpenAI runs reasoning at effort 'medium' by default with reasoning tokens billed as output at 10 USD/MTok; tokenizers differ, so token counts and the shared max_tokens cap are not equivalent budgets. Results are reported per model with their own usage and cost, never on one scale.",
+      "reasoning_effort_policy": "No reasoning effort or thinking parameter is set by the harness for A, B or the judge; provider defaults apply. 'Not set' is not 'verified default': the applied level is confirmed only by the pilot's recorded requests and usage."
+    }
   },
   "generation": {
     "attempts": 1,
@@ -468,13 +639,14 @@
     "tool_timeout_s": 600,
     "time_limit_s": 3600,
     "message_limit": 200,
-    "token_limit": "PLACEHOLDER (set after A/B selection; must be approved before the first real pilot run)",
+    "token_limit": 10000000,
     "working_limit_s": 3600,
     "budget_limit_types_grading_eligible": [
       "time",
       "working",
       "message",
-      "token"
+      "token",
+      "cost"
     ],
     "tools": [
       "bash",
@@ -486,7 +658,7 @@
     "system_prompt_sha256": "6b539cf9171a0f303a5afd3fe64d68536e3db00f9ba767478d8415331cd558e9",
     "system_prompt_text": "You are completing a professional work task. Read the task description and the files under /workspace/inputs (and /workspace/resources when present). Produce every requested deliverable as a file under /output/final/ using the requested file formats and clear file names. The sandbox has no network access; Python with openpyxl, python-docx, python-pptx, pandas, matplotlib, reportlab and pymupdf, and LibreOffice (soffice, with python3-uno bindings) are available. Tools to view images and render document pages are provided. No one is available to answer questions; make reasonable assumptions and state them in the deliverable. Before finishing, open your deliverables again and check that the numbers, labels and formatting are correct and consistent with each other. Finish by stating which files you produced.",
     "system_prompt_status": "DRAFT with the three additions approved 2026-10-30 (python3-uno bindings; image/render tools; no one to answer questions); identical for both models; frozen at freeze-v1",
-    "max_tokens_per_request": "PLACEHOLDER (set after A/B selection; must be approved before the first real pilot run)",
+    "max_tokens_per_request": 16384,
     "approved_2026_10_30": [
       "attempts=1",
       "epochs=1",
@@ -497,12 +669,32 @@
       "mem_limit=3gb"
     ],
     "comparability_rule": "Comparable A and B runs must use the same system prompt, the same tool schema and the same execution environment, recorded by identical system_prompt_sha256, tool list, image id/digest and config hash. If the prompt or tool configuration changes after pilot A, that A run is labelled a technical trial or intervention and A is rerun under the new version before any comparison with B; results from different configurations are never presented as a fair comparison.",
-    "image_tool_validation": "implemented 2026-10-30 (Stage 3b item 4, I2): view_image and render_document decode the bytes on the host with Pillow, require the actual format to match the extension, and bound bytes (8,000,000), side (8000 px) and total pixels (20,000,000); invalid images return a ToolError and are never sent to the provider"
+    "image_tool_validation": "implemented 2026-10-30 (Stage 3b item 4, I2): view_image and render_document decode the bytes on the host with Pillow, require the actual format to match the extension, and bound bytes (8,000,000), side (8000 px) and total pixels (20,000,000); invalid images return a ToolError and are never sent to the provider",
+    "cost_limit_usd": 10.0,
+    "cost_limit_policy": "Inspect per-sample cost limit at 10 USD as a safety net behind the pilot ledger; model_cost_config built from models.candidate_facts (A: 4/20, cache read 0.20, write 5; B: 2/10, cached 0.10; judge: 2/12 tier <= 200k); the launcher fails closed without complete price data. The same 10 USD cap buys different token and compute budgets on the two models and must not become the limit that decides A/B results; a hit records SampleLimitEvent type 'cost' with the limit and running value and is graded under the budget policy (mock-triggered 2026-10-30).",
+    "token_limit_type": "all",
+    "pilot_limits_status": "DRAFT safety ceilings proposed 2026-10-30, pending final approval; not frozen; identical numbers do not give the two models identical reasoning budgets",
+    "token_semantics": {
+      "token_limit": "cumulative per sample over all model calls, Inspect TokenLimit type 'all' (input + output of every call, so a long agent loop re-counts its context on each call); alternative forms 'output:N' exist (output-metered, includes reasoning on all three providers) but are not used",
+      "max_tokens": "per-request output cap passed through eval(max_tokens=...) as GenerateConfig.max_tokens -> Anthropic max_tokens, OpenAI Responses max_output_tokens, Google max_output_tokens",
+      "reasoning_in_max_tokens": {
+        "anthropic": "yes: current-turn thinking counts toward max_tokens and is billed as output (docs)",
+        "openai": "yes: reasoning tokens count toward max_output_tokens and are billed as output (docs)",
+        "google": "yes: max_output_tokens includes thought tokens; billed as output (docs)"
+      },
+      "usage_metering_in_inspect": {
+        "anthropic": "output_tokens includes thinking; reasoning_tokens not populated; cache write/read reported separately",
+        "openai": "output_tokens includes reasoning; reasoning_tokens = output_tokens_details.reasoning_tokens; input_tokens excludes cached and cache-write tokens",
+        "google": "output_tokens = candidates + thoughts; reasoning_tokens = thoughts; input_tokens = prompt minus cached"
+      },
+      "stop_reason_evidence": "truncation of a single generation is established only by the provider's stop signal as mapped by Inspect (Anthropic stop_reason 'max_tokens', OpenAI incomplete_details.reason 'max_output_tokens', Google finish_reason MAX_TOKENS -> StopReason 'max_tokens' in the ModelEvent output), never by an output length near the cap",
+      "launcher_wiring": "token_limit: CLI --token-limit (to be read from this config: Blocking); max_tokens: not yet passed by eval_kwargs (Blocking); cost_limit: eval_kwargs passes cost_limit and model_cost_config when numeric and verifies price data"
+    }
   },
   "sandbox": {
     "compose_file": "harness/compose.yaml",
-    "compose_sha256": "92a674896b48b32dd6408e700eab41b4a2242969b78bc0ba6e479aa70f0f745a",
-    "image": "gdpval-sandbox:stage2",
+    "compose_sha256": "f0ae0775947c7eb68e901e2fc4f6b3d21becbbc07c326292547f559e949b886a",
+    "image": "sha256:18cde712cde1867c94b8f23ae1f4066b0aa3146fdbd8deac70d1b4aa043ea9ee",
     "image_id": "sha256:18cde712cde1867c94b8f23ae1f4066b0aa3146fdbd8deac70d1b4aa043ea9ee",
     "image_digest": "PLACEHOLDER (pinned at freeze; a local build has no repository digest until pushed or exported)",
     "dockerfile": "docker/sandbox/Dockerfile",
@@ -517,7 +709,15 @@
     "security_opt": [
       "no-new-privileges"
     ],
-    "user": "root with all capabilities dropped (known limitation; non-root user not configured)"
+    "user": "root with all capabilities dropped (known limitation; non-root user not configured)",
+    "image_reference": "full local image ID (docker image inspect <id>); the compose file, the trusted LibreOffice conversion path (grading/extract.py) and the launcher pre-flight all use sandbox.image_id; a tag is never used to start a sandbox",
+    "image_tag_informational": "gdpval-sandbox:stage2 (the tag the local build carries; lookup by tag misfired on this daemon on 2026-10-31, see docs/status.md)",
+    "image_id_scope": "local Docker daemon only: an image ID identifies the image content but is not resolvable on another machine until the image is pushed or exported; the registry digest (image_digest) is pinned at freeze",
+    "platform": {
+      "os": "linux",
+      "architecture": "arm64"
+    },
+    "rebuild_procedure": "README.md section 'Sandbox image': rebuild, read the full image ID from the daemon, update harness/compose.yaml and config.json (image_id, compose_sha256), run the launcher pre-flight"
   },
   "collection": {
     "max_files": 200,
@@ -580,9 +780,11 @@
   },
   "grading": {
     "preregistration": "preregistration.md (draft; frozen at freeze-v1)",
-    "grader_version": "PLACEHOLDER",
-    "judge_input_manifest": "PLACEHOLDER (Stage 3b)",
-    "outcome_gate": "harness.collect.load_run_outcome(for_grading=True); grading entry point integration is a Stage 3b pre-pilot requirement"
+    "grader_version": "grading-1137e2bb-2026-10-30 (draft; fixed at freeze)",
+    "judge_input_manifest": "grading.judge.build_units_1137e2bb (task requirement, criterion, independent reference, deliverable excerpt per unit); other tasks: Stage 3 work",
+    "outcome_gate": "harness.collect.load_run_outcome(for_grading=True); grading entry point integration is a Stage 3b pre-pilot requirement",
+    "entry_point": "grading.grade.grade_run: load_run_outcome(for_grading=False) with identity from the completed Inspect log, terminal-log join, attribution routing, deterministic checks, judge units, grades.jsonl and results.jsonl",
+    "debug_set": "grading/debug_set.json (criteria used with the stub judge; excluded from judge validation)"
   },
   "pre_staged_resources": {
     "task_id": "a45bc83b-22f9-4def-8d89-9c5661b2b86f",
@@ -755,5 +957,15 @@
     ],
     "runtime_verification": "implemented 2026-10-30 (Stage 3b item 3, I1): harness.samples.verify_staged_files checks every staged file against this list (real path, no symlink, task directory, no traversal, no duplicate target, size and SHA-256) and fails closed; the launcher runs it before building the sample",
     "composition": "2 task inputs + 11 HTML pages + 11 extracted text files + 3 icon zips"
+  },
+  "reporting": {
+    "limit_labels": {
+      "cost-capped": "Inspect's per-sample cost_limit actually fired: SampleLimitEvent type 'cost' with limit and running value kept in run_outcome.json execution.limits",
+      "budget-limited": "time_limit, working_limit, message_limit or token_limit actually fired: the SampleLimitEvent (type, limit, message, event uuid) kept in execution.limits",
+      "output-capped": "a single generation was cut by max_tokens, established by the provider's stop signal (StopReason 'max_tokens' in the ModelEvent output), never by output length alone; not a sample-level budget exhaustion; detection logic is a pre-freeze TODO",
+      "multiple_limits": "when one execution triggers several limits, every event is kept and reported; no collapsing into one cause",
+      "grading": "limited attempts follow grading_decision and run_outcome.json: budget exhaustion is not a harness error; collection faults and execution errors are attributed independently",
+      "comparability": "the cost safety net is not a primary limit on A/B results; identical dollar or token caps are not identical compute budgets across providers"
+    }
   }
 }

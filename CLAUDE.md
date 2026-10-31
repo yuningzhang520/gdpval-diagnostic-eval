@@ -40,6 +40,44 @@ Public-facing narrative (`PLAN.md`, README, the site) presents the current metho
 - Human judgments used for judge agreement are made before the judge output is shown. When preparing review material, present the deliverable and the criterion first; reveal the judge verdict only on request or in a separate file.
 - Drafting rules: for each proposed critical criterion state the business requirement it maps to, where the evidence lives, how it is checked, and why a failure cannot be compensated by other points.
 
+## Execution efficiency and testing
+
+### Planning and code changes
+
+- Before implementation, briefly state the files/functions to change, affected downstream interfaces, required tests, and potentially slow operations. Proceed within the authorized scope; seek approval before expanding it.
+- Read required sources of truth, then focus on relevant code sections, nearby tests, and direct consumers. Do not repeatedly reread entire modules, historical logs, or unrelated documents without a concrete reason.
+- Prefer targeted edits over whole-file rewrites. Do not initiate major refactors or architectural redesigns without explicit human approval.
+- When changing an interface or evidence structure, inspect its direct consumers instead of relying solely on previously passing tests.
+- Before modifying a scoring criterion, explicitly state its applicable objects, sufficient evidence for PASS and FAIL, and how uncertainty propagates. A definitive FAIL must not depend on an unresolved interpretation of the evidence. When applicability or dependencies change, add at least one relevant out-of-scope perturbation regression.
+
+### Testing tiers
+
+- After an edit, run directly affected unit tests.
+- After completing a fix, run the relevant regression cases and integration tests.
+- Run the full suite for major cross-module or infrastructure changes, freeze, or explicit requests.
+- Routine commits and review handoffs require the affected test suites, not automatically every Docker/Inspect suite.
+- Do not rerun already-passing tests unless relevant code, configuration, dependencies, or environment have changed.
+- Reuse existing regression cases and validated probes. Do not recreate equivalent test environments without a concrete need.
+- Never weaken valid assertions or skip relevant safety tests to improve speed.
+
+### Execution visibility and time management
+
+- Before potentially slow Docker, Inspect, or LibreOffice operations, state the command's purpose and why it is necessary.
+- Provide concise checkpoints after planning, significant implementation steps, and test groups: completed work, next step, and elapsed time when measurable.
+- Record the command, wall-clock duration, exit code, and PASS/FAIL result for each test. Use `/usr/bin/time -p` or an equivalent mechanism.
+- Capture test output on its first execution where evidence is required; do not rerun passing tests merely to produce logs.
+- For small tasks, aim for approximately 15 minutes of implementation/unit testing, 10 minutes of relevant integration testing, and 5 minutes of reporting. These are planning targets, not guaranteed execution limits.
+- If a task significantly exceeds its expected scope or two fix attempts fail on the same issue, stop expanding the investigation and report the evidence, remaining blocker, and options. Do not independently start a major rewrite.
+- Keep progress visible in the conversation. Do not create additional handoff or context files unless explicitly requested.
+
+### Review and reporting discipline
+
+- Review the current diff and previously confirmed regressions first.
+- Do not require an arbitrary number of new adversarial scenarios. Add new probes only for concrete risks to correctness, security, attribution, or pilot readiness.
+- Distinguish requirements for a calibration pilot from stricter requirements for formal freeze.
+- Keep final reports concise: changed files, important decisions, test commands/results/durations, remaining blockers, and deferred work.
+- These efficiency rules never override isolation, credential protection, grading integrity, human approval, or other non-negotiable requirements.
+
 ## Root-cause and loop discipline
 - Fix the earliest cause, not the symptom. Do not suppress errors, fabricate success, or add attempts to improve a completed evaluation outcome. Bounded retries and backoff for documented transient API or transport failures are allowed only under the approved retry and budget policy; log them; do not replay side-effecting tool actions without checking whether they already completed. Inspect's generation-level retries and task-level `attempts` are separate settings; `attempts=1` is required, transport retries follow the approved policy.
 - Repeated-failure stopping rules apply to engineering failures in our harness, extraction, or grading pipeline: if the same engineering failure class appears a second time, or a rerun only moves the symptom, stop and repair the common cause. Valid model failures (e.g. both models misapplying the CASE/EA rule) are evaluation observations: record them and continue the approved protocol.

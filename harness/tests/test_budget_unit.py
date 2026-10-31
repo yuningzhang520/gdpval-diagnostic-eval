@@ -78,7 +78,9 @@ class LedgerTests(unittest.TestCase):
         s = lg.settle("s1", {"openai/unknown-model": {"input_tokens": 10}}, fallback_to_reservation=True)
         self.assertEqual(s["cost_usd"], "3.000000")
         self.assertTrue(s["estimated"])
-        self.assertTrue(any("no price" in f for f in s["flags"]))
+        self.assertTrue(any("estimated_unknown_cost" in f for f in s["flags"]))
+        self.assertTrue(s["manual_review_required"])
+        self.assertEqual(s["raw_usage"], {"openai/unknown-model": {"input_tokens": 10}})
 
     def test_no_usage_without_fallback_is_refused(self):
         lg = self.ledger()
@@ -229,7 +231,7 @@ class LauncherBudgetTests(unittest.TestCase):
             launcher.run_sample(task=SimpleNamespace(name="t"), model="openai/gpt-6.1-sol", unit_id="u1", estimate_usd=4)
         snap = ledger.snapshot()
         self.assertEqual((snap["settled_usd"], snap["reserved_usd"], snap["estimated_portion_usd"]), ("4.000000", "0.000000", "4.000000"))
-        self.assertEqual(launcher.engineering_failures, {"TimeoutError": 1})
+        self.assertEqual(launcher.engineering_failures, {"TimeoutError": 1})  # persisted in the ledger, not in memory
         with self.assertRaises(TimeoutError):
             launcher.run_sample(task=SimpleNamespace(name="t"), model="openai/gpt-6.1-sol", unit_id="u2", estimate_usd=4)
         with self.assertRaises(b.BudgetExhausted):  # second failure of the same class is a stop condition
@@ -308,12 +310,15 @@ class LauncherPreflightTests(unittest.TestCase):
     def test_eval_kwargs_four_retry_layers_from_config(self):
         with open(os.path.join(L.ROOT, "config.json"), encoding="utf-8") as f:
             cfg = json.load(f)
-        kw = L.eval_kwargs(cfg, log_dir="/nonexistent/logs")
+        with self.assertRaisesRegex(L.LauncherError, "model name is required"):
+            L.eval_kwargs(cfg, log_dir="/nonexistent/logs")  # cost_limit is set in the DRAFT config: the model is mandatory
+        kw = L.eval_kwargs(cfg, log_dir="/nonexistent/logs", model="anthropic/claude-opus-5-5")
         self.assertEqual(kw["max_retries"], 3)
         self.assertEqual(kw["model_args"], {"max_retries": 0})
         self.assertEqual((kw["retry_on_error"], kw["fail_on_error"], kw["task_retry_attempts"]), (0, False, 0))
-        self.assertIsNone(kw["token_limit"])  # placeholder until A/B are chosen
-        self.assertEqual(L.eval_kwargs(cfg, log_dir="/x", token_limit=400_000)["token_limit"], 400_000)
+        self.assertEqual((kw["token_limit"], kw["max_tokens"], kw["attempt_timeout"], kw["timeout"]), (10_000_000, 16384, 600, 1800))
+        self.assertEqual((kw["cost_limit"], "anthropic/claude-opus-5-5" in kw["model_cost_config"]), (10.0, True))
+        self.assertEqual(L.eval_kwargs(cfg, log_dir="/x", token_limit=400_000, model="anthropic/claude-opus-5-5")["token_limit"], 400_000)
         prices = L.prices_from_config(cfg)
         self.assertEqual(prices["anthropic/claude-opus-5-5"]["output"], 20)
         self.assertEqual(prices["openai/gpt-6.1-sol"]["cache_read"], 0.10)

@@ -1,0 +1,19 @@
+{
+ "note": "criteria used to debug the judge assembly or parser; excluded from judge validation (agreement) sets",
+ "entries": [
+  {
+   "task_id": "1137e2bb-bdf9-4876-b572-f29b7de5e595",
+   "items": [
+    11,
+    23,
+    24,
+    27,
+    28,
+    29,
+    30
+   ],
+   "purpose": "stub-judge debugging of unit assembly and response parsing on the positive and docx_missing fixtures (Stage 3b, 2026-10-30); exclude from judge validation",
+   "at": "2026-10-30T22:49:40+00:00"
+  }
+ ]
+}

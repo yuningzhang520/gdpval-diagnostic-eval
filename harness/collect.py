@@ -366,7 +366,11 @@ def _validate_listing(value) -> None:
 def _collection_failure(binding: dict, reason: str) -> dict:
     return {"record_version": 3, "run": binding, "status": "listing_failed", "harness_error": True,
             "outcome_class": "harness_collection_error", "all_intact": False, "file_count": 0,
-            "bytes_collected": 0, "error": reason, "files": [], "passes": []}
+            "bytes_collected": 0, "error": reason, "files": [], "passes": [], "listing_errors": [{"path": FINAL_DIR, "reason": reason}],
+            "skipped": [], "rejected": [],
+            "attribution": {"rule_version": ATTRIBUTION_RULE_VERSION, "class": "harness_caused", "counts": {"model_caused": 0, "harness_caused": 1, "unknown": 0},
+                            "requires_adjudication": False, "items": [{"source": "listing", "path": FINAL_DIR, "reason": reason, "class": "harness_caused",
+                                                                        "basis": "collector could not record safely", "evidence": "collection failure record"}]}}
 
 
 async def collect_final_outputs(host_dir: str, note: str, run_binding: dict, sb=None,
@@ -406,12 +410,17 @@ async def collect_final_outputs(host_dir: str, note: str, run_binding: dict, sb=
                           "elapsed_s": round(time.monotonic() - t0, 3)})
         passes.append(this_pass)
         info = {"record_version": 3, "run": run_binding, "collected_at_utc": _now(), "sandbox_dir": FINAL_DIR,
-                "status": status, "harness_error": status in ("listing_failed", "partial"),
-                "outcome_class": {"complete": "collected", "no_files_confirmed": "no_deliverable_files_confirmed"}.get(status, "harness_collection_error"),
+                "status": status,
                 "all_intact": status == "complete", "file_count": sum(1 for f in merged if f["status"] in ("collected", "already_collected")),
                 "bytes_collected": sum(f.get("size", 0) for f in merged if f["status"] in ("collected", "already_collected")),
                 "root_state": root_state, "listing_ok": listing_ok, "listing_errors": listing_errors, "skipped": skipped,
                 "rejected": rejected, "files": merged, "limits": dict(LIMITS), "passes": passes}
+        attribution = attribute_collection(info)
+        info["attribution"] = attribution
+        info["harness_error"] = harness_error_flag(info, attribution)
+        info["outcome_class"] = ({"complete": "collected", "no_files_confirmed": "no_deliverable_files_confirmed"}.get(status)
+                                 or ("harness_collection_error" if info["harness_error"] else
+                                     "requires_adjudication" if attribution["class"] in ("unknown", "none") else "collected_with_model_caused_rejections"))
         _write_record(host_dir, info)
         return info
 
@@ -552,10 +561,92 @@ async def collect_final_outputs(host_dir: str, note: str, run_binding: dict, sb=
 BINDING_KEYS = {"uuid", "model", "task_id", "eval_id", "sample_id", "epoch"}
 EXECUTION_KEY = "harness.execution"
 # Inspect sample limits that are pre-configured budgets, identical for both models (config.json).
-BUDGET_LIMIT_TYPES = ("time", "working", "message", "token")
+# "cost" is Inspect's per-sample dollar limit (eval(cost_limit=...)); it is a safety net behind the
+# pilot ledger and requires valid price data for the model (the launcher fails closed without it).
+BUDGET_LIMIT_TYPES = ("time", "working", "message", "token", "cost")
 EXECUTION_STATUSES = ("completed", "limited", "error", "unknown")
-OUTCOME_CLASSES = ("collected", "no_deliverable_files_confirmed", "harness_collection_error",
+OUTCOME_CLASSES = ("collected", "no_deliverable_files_confirmed", "collected_with_model_caused_rejections",
+                   "harness_collection_error", "requires_adjudication",
                    "execution_error", "execution_unknown", "execution_limit_requires_review")
+
+# ----------------------------------------------------------------------------- attribution
+# Per-item attribution of a non-complete collection (policy approved 2026-10-30). Only the classes
+# below are produced automatically; everything else is `unknown` and waits for a human
+# adjudication recorded in a separate file. Reason names alone never decide `unknown` items.
+ATTRIBUTION_RULE_VERSION = "2026-10-30"
+ATTRIBUTION_CLASSES = ("model_caused", "harness_caused", "unknown")
+_MODEL_CAUSED_SKIPPED = {"symlink", "symlink_broken", "symlink_directory", "fifo", "socket", "device", "unknown_type"}
+_HARNESS_CAUSED_FILE = {"read_deadline_exceeded", "time_budget_exceeded", "conflict_existing_differs", "conflict_created_concurrently"}
+
+
+def attribute_item(source: str, reason: str) -> tuple[str, str]:
+    """(class, basis) for one non-collected entry. ``source`` is skipped / rejected / file / listing."""
+    r = str(reason or "")
+    if source == "skipped":
+        if r in _MODEL_CAUSED_SKIPPED:
+            return "model_caused", "lstat classification of an entry the model created under /output/final (not a regular file)"
+        return "unknown", "unrecognised skip reason"
+    if source == "rejected":
+        if r.startswith("host_"):
+            return "harness_caused", "host-side destination problem (collector environment)"
+        return "unknown", "listing entry refused by host validation; cause (model filename vs listing defect) needs the execution log"
+    if source == "file":
+        if r in _HARNESS_CAUSED_FILE or r.startswith("host_"):
+            return "harness_caused", "collector deadline, host conflict or host write problem"
+        return "unknown", "read failure, integrity mismatch or limit hit: judge with the file, the execution log and the approved limit policy"
+    if source == "listing":
+        if r.startswith(("listing_exec_failed", "listing_failed", "listing_output_invalid")):
+            return "harness_caused", "enumeration failed in the collector"
+        return "unknown", "item-level enumeration error inside the sandbox tree"
+    return "unknown", "unrecognised source"
+
+
+def attribute_collection(collection: dict) -> dict:
+    """Derive the attribution record from the collection evidence (deterministic, re-derivable)."""
+    status = collection.get("status")
+    items = []
+    if status == "listing_failed":
+        errs = collection.get("listing_errors") or [{"path": FINAL_DIR, "reason": "listing_failed"}]
+        for i, e in enumerate(errs):
+            items.append({"source": "listing", "path": e.get("path"), "reason": e.get("reason"), "class": "harness_caused",
+                          "basis": "enumeration did not complete; nothing is known about the deliverables", "evidence": f"collection.json listing_errors[{i}]"})
+    elif status == "partial":
+        for i, e in enumerate(collection.get("skipped", [])):
+            cls, basis = attribute_item("skipped", e.get("reason"))
+            items.append({"source": "skipped", "path": e.get("path"), "reason": e.get("reason"), "target": e.get("target"), "class": cls, "basis": basis, "evidence": f"collection.json skipped[{i}]"})
+        for i, e in enumerate(collection.get("rejected", [])):
+            cls, basis = attribute_item("rejected", e.get("reason"))
+            items.append({"source": "rejected", "path": e.get("path"), "reason": e.get("reason"), "class": cls, "basis": basis, "evidence": f"collection.json rejected[{i}]"})
+        for f in collection.get("files", []):
+            if f.get("status") == "error":
+                cls, basis = attribute_item("file", f.get("reason"))
+                items.append({"source": "file", "path": f.get("sandbox_path"), "reason": f.get("reason"), "class": cls, "basis": basis,
+                              "evidence": f"collection.json files[sandbox_path={f.get('sandbox_path')}]"})
+        for i, e in enumerate(collection.get("listing_errors", [])):
+            cls, basis = attribute_item("listing", e.get("reason"))
+            items.append({"source": "listing", "path": e.get("path"), "reason": e.get("reason"), "class": cls, "basis": basis, "evidence": f"collection.json listing_errors[{i}]"})
+    counts = {k: sum(1 for it in items if it["class"] == k) for k in ATTRIBUTION_CLASSES}
+    overall = ("none" if not items else "harness_caused" if counts["harness_caused"] else "unknown" if counts["unknown"] else "model_caused")
+    return {"rule_version": ATTRIBUTION_RULE_VERSION, "class": overall, "counts": counts, "requires_adjudication": overall == "unknown", "items": items}
+
+
+def effective_attribution(attribution: dict | None, adjudication: dict | None) -> dict:
+    """Apply a human adjudication (separate record) to the `unknown` items only; harness_caused
+    items can never be adjudicated into eligibility, model_caused items are not changed."""
+    if not attribution:
+        return {"class": "unknown", "counts": {}, "requires_adjudication": True, "items": [], "adjudicated": False}
+    items = [dict(it) for it in attribution.get("items", [])]
+    decisions = (adjudication or {}).get("items", {}) if isinstance(adjudication, dict) else {}
+    applied = 0
+    for it in items:
+        key = it.get("path")
+        if it["class"] == "unknown" and key in decisions and decisions[key] in ("model_caused", "harness_caused"):
+            it["class"] = decisions[key]
+            it["adjudicated"] = True
+            applied += 1
+    counts = {k: sum(1 for it in items if it["class"] == k) for k in ATTRIBUTION_CLASSES}
+    overall = ("none" if not items else "harness_caused" if counts["harness_caused"] else "unknown" if counts["unknown"] else "model_caused")
+    return {"class": overall, "counts": counts, "requires_adjudication": overall == "unknown", "items": items, "adjudicated": applied > 0, "adjudicated_items": applied}
 
 
 class OutcomeValidationError(ValueError):
@@ -634,44 +725,65 @@ def _execution_status(errors: list, limits: list, solver_finished: bool) -> str:
     return "error" if errors else "limited" if limits else "completed" if solver_finished else "unknown"
 
 
-def grading_decision(execution: dict, collection_status: str) -> tuple[bool, str, str]:
+def grading_decision(execution: dict, collection_status: str, attribution: dict | None = None,
+                     adjudication: dict | None = None) -> tuple[bool, str, str]:
     """Single source of the attribution rule (used by the writer and re-derived by the loader).
 
-    Returns (grading_eligible, outcome_class, basis). Order: an unrecovered collection fault
-    (``partial`` / ``listing_failed``) is a harness error regardless of execution; an execution
-    error or unknown execution state blocks grading regardless of collection; a limit is eligible
-    only when every recorded limit type is a pre-configured budget (``BUDGET_LIMIT_TYPES``)."""
-    if collection_status in ("partial", "listing_failed"):
+    Returns (grading_eligible, outcome_class, basis). Order: ``listing_failed`` is a harness error;
+    a ``partial`` collection is routed by its per-item attribution — any unrecovered
+    harness/provider-caused item → harness error (run error, never model failure); any remaining
+    ``unknown`` item → ``requires_adjudication`` (no automatic verdict either way); only when every
+    non-collected item is model-caused does the attempt proceed to grading, with the unaccepted
+    files treated as not delivered. Then an execution error or unknown state blocks grading, and a
+    limit is eligible only when every recorded limit type is a pre-configured budget."""
+    if collection_status == "listing_failed":
         return False, "harness_collection_error", "unrecovered collection fault; never model non-delivery"
+    if collection_status == "partial":
+        eff = effective_attribution(attribution, adjudication)
+        if eff["class"] == "harness_caused":
+            return False, "harness_collection_error", "unrecovered harness/provider-caused collection fault; run error, never model non-delivery"
+        if eff["class"] in ("unknown", "none"):
+            return False, "requires_adjudication", "non-collected items of undetermined cause; human adjudication required (no automatic model-failure or harness-fault verdict)"
     status = execution.get("status")
     if status == "error":
         return False, "execution_error", "execution error recorded (provider, transport, container or harness); run review"
     if status == "unknown":
         return False, "execution_unknown", "no completion marker, no error, no limit; run review"
-    delivered = "collected" if collection_status == "complete" else "no_deliverable_files_confirmed"
+    delivered = {"complete": "collected", "no_files_confirmed": "no_deliverable_files_confirmed",
+                 "partial": "collected_with_model_caused_rejections"}[collection_status]
+    model_note = "; unaccepted model-created files are treated as not delivered" if collection_status == "partial" else ""
     if status == "limited":
         types = sorted({str(l.get("type")) for l in execution.get("limits", [])})
         if not types or any(t not in BUDGET_LIMIT_TYPES for t in types):
             return False, "execution_limit_requires_review", f"limit type(s) {types} are not pre-configured budgets"
         return True, delivered, (f"pre-configured budget exhausted ({', '.join(types)}); graded on the collected "
-                                 f"deliverables, missing deliverables fail, attempt kept in k=1 results")
+                                 f"deliverables, missing deliverables fail, attempt kept in k=1 results{model_note}")
     if status == "completed":
-        return True, delivered, "execution completed; graded on the collected deliverables"
+        return True, delivered, f"execution completed; graded on the collected deliverables{model_note}"
     return False, "execution_unknown", f"unrecognised execution status {status!r}"
 
 
+def harness_error_flag(collection: dict, attribution: dict) -> bool:
+    """Collection-level harness error: enumeration failed, or any harness/provider-caused item."""
+    return collection.get("status") == "listing_failed" or attribution.get("class") == "harness_caused"
+
+
 def write_run_outcome(host_dir: str, binding: dict, collection: dict, execution: dict) -> dict:
-    """Publish the cleanup result atomically; provisional ScoreEvents remain historical."""
+    """Publish the cleanup result atomically; provisional ScoreEvents remain historical. The
+    attribution is derived from the collection evidence and stored; human adjudications live in a
+    separate file (adjudication.json) and are applied only when the outcome is loaded."""
     _validate_binding(binding)
     bind_run(host_dir, binding, None, "cleanup")
     if collection.get("run") != binding:
         raise OutcomeValidationError("collection identity mismatch")
-    collection_error = collection["status"] in ("partial", "listing_failed")
-    eligible, outcome_class, basis = grading_decision(execution, collection["status"])
+    attribution = attribute_collection(collection)
+    eligible, outcome_class, basis = grading_decision(execution, collection["status"], attribution)
     outcome = {"record_version": 1, "final": True, "finalized_by": "task_cleanup",
                "finalized_at": _now(), "run": binding, "execution": execution,
                "collection_status": collection["status"], "collection": collection,
-               "harness_error": collection_error,
+               "attribution": attribution,
+               "harness_error": harness_error_flag(collection, attribution),
+               "requires_adjudication": outcome_class == "requires_adjudication",
                "grading_eligible": eligible, "outcome_class": outcome_class, "grading_basis": basis,
                "budget_limit_types": list(BUDGET_LIMIT_TYPES),
                "score_event_role": "provisional_collection_only_not_a_capability_score"}
@@ -679,13 +791,39 @@ def write_run_outcome(host_dir: str, binding: dict, collection: dict, execution:
     return outcome
 
 
-def load_run_outcome(host_dir: str, expected_binding: dict, *, for_grading: bool = True) -> dict:
+def load_adjudication(host_dir: str, expected_binding: dict) -> dict | None:
+    """Read the separate human adjudication record (never written by the harness). Must name the
+    same run; item decisions are {path: model_caused | harness_caused}."""
+    try:
+        with _directory_fd(host_dir) as directory:
+            try:
+                fd = os.open("adjudication.json", os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK, dir_fd=directory)
+            except FileNotFoundError:
+                return None
+            with os.fdopen(fd, "r", encoding="utf-8") as f:
+                adj = json.load(f)
+    except (OSError, ValueError) as ex:
+        raise OutcomeValidationError(f"invalid adjudication record: {type(ex).__name__}") from ex
+    if not isinstance(adj, dict) or adj.get("run") != expected_binding or not isinstance(adj.get("items"), dict) \
+            or not all(isinstance(k, str) and v in ("model_caused", "harness_caused") for k, v in adj["items"].items()) \
+            or not isinstance(adj.get("by"), str) or not isinstance(adj.get("at"), str) or not isinstance(adj.get("basis"), str):
+        raise OutcomeValidationError("adjudication record malformed or for another run")
+    return adj
+
+
+def load_run_outcome(host_dir: str, expected_binding: dict, *, for_grading: bool = True,
+                     apply_adjudication: bool = True) -> dict:
     """Fail-closed Stage 3 grading gate. expected_binding MUST come from the completed eval log.
 
     for_grading=False permits inspection of a VALID error outcome; it never relaxes schema,
     identity, finality, collection-record or raw-file integrity validation. The Stage 3 consumer
     must additionally join the completed Inspect log to catch teardown/logging failures after
     cleanup. It must not turn exceptions from this gate into failed model criteria.
+
+    The stored attribution is re-derived from the collection evidence and compared. When a separate
+    `adjudication.json` for this run exists and ``apply_adjudication`` is true, its decisions are
+    applied to the `unknown` items only and the effective decision is returned under
+    ``effective`` (the stored outcome is never modified).
     """
     try:
         _validate_binding(expected_binding)
@@ -724,7 +862,13 @@ def load_run_outcome(host_dir: str, expected_binding: dict, *, for_grading: bool
                       if c["listing_ok"] else "listing_failed")
         if calculated != status:
             raise OutcomeValidationError("collection status disagrees with evidence")
-        error = status in ("partial", "listing_failed")
+        derived = attribute_collection(c)
+        stored = outcome.get("attribution")
+        if not isinstance(stored, dict) or stored.get("class") != derived["class"] or stored.get("counts") != derived["counts"] \
+                or [(i["source"], i.get("path"), i.get("reason"), i["class"]) for i in stored.get("items", [])] != \
+                   [(i["source"], i.get("path"), i.get("reason"), i["class"]) for i in derived["items"]]:
+            raise OutcomeValidationError("stored attribution disagrees with the collection evidence")
+        error = harness_error_flag(c, derived)
         if c.get("harness_error") is not error or outcome.get("harness_error") is not error or c.get("all_intact") is not (status == "complete"):
             raise OutcomeValidationError("inconsistent collection flags")
         e = outcome.get("execution")
@@ -742,9 +886,10 @@ def load_run_outcome(host_dir: str, expected_binding: dict, *, for_grading: bool
             raise OutcomeValidationError("inconsistent execution state")
         if e.get("limit_types") is not None and e["limit_types"] != sorted({str(l["type"]) for l in e["limits"]}):
             raise OutcomeValidationError("inconsistent limit types")
-        eligible, expected_class, _basis = grading_decision(e, status)
+        eligible, expected_class, _basis = grading_decision(e, status, derived)
         if (outcome.get("grading_eligible") is not eligible or outcome.get("outcome_class") != expected_class
-                or expected_class not in OUTCOME_CLASSES or not isinstance(outcome.get("grading_basis"), str)):
+                or expected_class not in OUTCOME_CLASSES or not isinstance(outcome.get("grading_basis"), str)
+                or outcome.get("requires_adjudication") is not (expected_class == "requires_adjudication")):
             raise OutcomeValidationError("inconsistent attribution")
         ok = [f for f in files if isinstance(f, dict) and f.get("status") in ("collected", "already_collected")]
         if status == "complete" and (not ok or len(ok) != len(files) or any(c.get(k) for k in ("listing_errors", "skipped", "rejected"))):
@@ -762,9 +907,15 @@ def load_run_outcome(host_dir: str, expected_binding: dict, *, for_grading: bool
                 pass
             if _sha256_file(expected) != f["sha256_collected"] or os.stat(expected).st_size != f["size"]:
                 raise OutcomeValidationError("raw artifact changed")
-        if for_grading and not eligible:
-            raise OutcomeValidationError(f"run requires review: {expected_class}")
-        return outcome
+        adjudication = load_adjudication(host_dir, expected_binding) if apply_adjudication else None
+        eff_elig, eff_class, eff_basis = grading_decision(e, status, derived, adjudication)
+        result = dict(outcome)
+        result["effective"] = {"grading_eligible": eff_elig, "outcome_class": eff_class, "grading_basis": eff_basis,
+                               "attribution": effective_attribution(derived, adjudication), "adjudication_applied": adjudication is not None,
+                               "adjudication": adjudication}
+        if for_grading and not eff_elig:
+            raise OutcomeValidationError(f"run requires review: {eff_class}")
+        return result
     except OutcomeValidationError:
         raise
     except (OSError, ValueError, TypeError, KeyError, AttributeError) as ex:

@@ -122,9 +122,13 @@ collector's historical ScoreEvent is provisional and unscored (`Score.unscored()
 metrics), never an accuracy or capability score. Cleanup recovery can change a partial
 collection into a complete one while retaining the first pass's failures.
 
-Missing, corrupt, non-final or identity-mismatched outcomes fail closed. Persistent
-`listing_failed` and unrecovered `partial` outcomes are harness collection errors;
-they must not be converted into model non-delivery. An execution error (a provider
+Missing, corrupt, non-final or identity-mismatched outcomes fail closed. A persistent
+`listing_failed` outcome is a harness collection error. A `partial` collection is routed
+by the attribution of each non-collected item: model-caused items (symlinks, special
+files, oversized or deleted files the model left) are treated as not delivered and the
+run is graded; a harness-caused item (collector limit, deadline, host-side read fault)
+makes the run a harness collection error, never model non-delivery; an item of unknown
+cause requires a recorded human adjudication before any grading. An execution error (a provider
 request that finally failed, a transport fault, a container or harness exception) or an
 unknown execution state keeps `grading_eligible=false` and requires run review even when
 files were collected; such runs stay in the run inventory as run errors under the
@@ -147,9 +151,15 @@ not a run error. Attribution uses the recorded exception type and Inspect events
 the presence of the word "timeout" in a log. Limit types outside this budget set
 (operator, custom) require review.
 
-The grading entry point must also cross-check the terminal Inspect log for errors
-after cleanup. Integration tests of this consumer are a Stage 3 pre-pilot requirement,
-not a completed Stage 2 result. Collection limits are cumulative per sample across the
+The grading entry point (`grading/grade.py`) loads the final outcome with the identity
+taken from the completed Inspect log, cross-checks that log (errors or limits recorded
+after cleanup block grading), routes the run by the per-file attribution of any
+non-complete collection (harness- or provider-caused faults are run errors; undetermined
+items wait for a recorded human adjudication; only model-caused rejections let the run
+proceed, with the rejected files treated as not delivered), grades eligible runs
+including budget-limited ones, and writes `grades.jsonl` and `results.jsonl`. Its
+integration tests run on synthetic run directories built from fixtures through the real
+collector; no real model or judge has been called yet. Collection limits are cumulative per sample across the
 scorer and cleanup passes (file count and total bytes over the merged set; an idempotent
 re-collection is not counted twice) with a hard per-pass deadline enforced on in-flight
 reads; limit hits are recorded per file and leave collected originals untouched. Before a
@@ -171,7 +181,11 @@ judged pass / fail / cannot_assess with locatable evidence (file, page, sheet, c
 Every call carries the task requirement, the criterion, the source material or
 independent computation needed for that criterion, and the relevant deliverable
 excerpt. Model identity is hidden. Items used to debug the judge are never reused to
-validate it. Visual criteria are not judged from text.
+validate it. Visual criteria are not judged from text. A deterministic stub stands in for
+the judge only in tests and is refused by the grading entry point outside an explicit test
+mode; the batch form of the judge call (all units of one task in one request) is accepted
+only when every unit id comes back exactly once, otherwise the whole batch is recorded as a
+parse error and its criteria stay ungraded.
 
 **Human review.** Every deliverable is opened (rendered where needed). All critical
 criteria and pre-defined visual requirements are checked by hand. Disagreements between
@@ -226,6 +240,9 @@ agreement reported per model with numerators and denominators, debug and validat
 sets kept separate, ungraded items, cost, grader status, pre-staged resources, the
 protocol difference from the GDPval paper, unknown authorship independence across
 tasks, and the rule that models with different coverage are not compared by P/E alone.
+For the pilot task (`1137e2bb…`) every judge-only criterion was used to debug the judge
+assembly, so no held-out criterion exists on that task: judge agreement is reported from
+the other tasks, and the pilot task's judge verdicts are checked by human review only.
 
 ## 7. Workflow and controls
 

@@ -44,6 +44,31 @@ packs used by the design task (about 23 MB); live pages change, so the hashes in
 for the comparisons with expert deliverables, `private/gold/`);
 `scripts/recalc/test_7d7fc9a7_quantization.py` runs the quantization regression checks.
 
+## Sandbox image
+
+The model under test runs in a locally built Docker image (`docker/sandbox/Dockerfile`,
+`docker/sandbox/requirements.txt`). The harness refers to that image by its **full local
+image ID** (`sha256:<64 hex>`), never by tag: `harness/compose.yaml` (`image:`),
+`config.json` (`sandbox.image_id`) and the trusted LibreOffice conversion path in
+`grading/extract.py` must all carry the same ID, and the launcher pre-flight refuses to
+start when they differ, when the daemon does not know the ID, or when the image platform
+differs from `sandbox.platform`. The tag `gdpval-sandbox:stage2` is informational only
+(the local daemon has answered tag lookups with "No such image" while the tag was listed).
+
+To rebuild and re-pin:
+
+```
+docker build -f docker/sandbox/Dockerfile -t gdpval-sandbox:stage2 docker/sandbox   # on a host whose platform matches sandbox.platform
+docker image inspect gdpval-sandbox:stage2 --format '{{.Id}}'      # -> sha256:<64 hex>
+```
+
+Write that ID into `harness/compose.yaml` (`image:`) and `config.json`
+(`sandbox.image_id`, `sandbox.image`), recompute `sandbox.compose_sha256` as the SHA-256 of
+the compose file, and run the launcher `--dry-run` pre-flight. A local image ID identifies
+the image content on this daemon only; it is not resolvable on another machine until the
+image is pushed or exported, so the cross-machine reference (`sandbox.image_digest`) is
+pinned at freeze.
+
 ## How this repository was produced
 
 Research design, grading rules, adjudications, and every approval are the author's.

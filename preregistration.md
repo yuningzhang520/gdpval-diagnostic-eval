@@ -534,7 +534,10 @@ equality, so float noise is not a mismatch; counts exact.
   0108, 0112 each have >= 4 errors), gives a starting recommendation (rubric 2, 23–30).
   Check: D for presence and numbers, J for content. Not compensable: cross-file
   consistency and the business recommendation.
-- D: 1, 3–20, 22, 25, 26, 31–62. J: 11, 23, 24, 27–30. V: none (no formatting item).
+- D: 1–10, 12–22, 25, 26, 31–62 (items 2, docx present, and 21, graded as written under
+  A-21, were omitted from the earlier list and are deterministic presence/structure checks;
+  corrected 2026-10-30 when the checks were implemented). J: 11, 23, 24, 27–30. V: none (no
+  formatting item).
 - A-21. Rubric text: "Excel includes a separate indicator for missing/invalid Case Pack
   when UOM = CASE and Case Pack is blank or ≤ 0 (e.g., a 'Case Pack Missing' flag), and
   such rows are not counted as Case Pack errors". Independent result: the prompt does not
@@ -545,6 +548,107 @@ equality, so float noise is not a mismatch; counts exact.
   reported, not removed. Scoring effect: item 21 counts in W and E; critical status is
   unaffected. Status: APPROVED.
 - K1: rubric 22 (sorted or easily sortable): a pivot or Excel table counts as sortable.
+- Cell-value rule for the deterministic checks (implemented 2026-10-31 after the independent
+  extraction review; APPROVED by the human 2026-10-31, including a blank flag as a confirmed
+  invalid value; applies to every item that reads a value). A cell that is reliably read
+  but is not what the rubric requires at that place — blank, an Excel error value, NaN or
+  Infinity, text that is not a number (for Total Errors and the summary measures) or not a 0/1
+  flag (for the two flag columns) — is a confirmed invalid value: the items that need that
+  value FAIL on it (rubric 5–9, 15–20, 31–55, 56–62 as applicable), with the cell and the
+  original value recorded. Only a cell whose value cannot be read (a formula without a cached
+  value after a failed recalculation, an ambiguous or unrecognised column, a grader fault) is
+  unreliable → `cannot_assess` with grader-side attribution. No comparison is ever skipped into
+  a PASS. Note: the implementation before this review read a blank flag as 0 for rubric
+  5/6/7/18/19 (an implementation choice, never recorded here); under this rule a blank flag is
+  a confirmed invalid value for those items too, because rubric 5–7 require "0 otherwise" and
+  rubric 9 requires 0/1 on every row. Per-PO/SKU items 31–55 read only the cell of their own
+  line; an error in another row never affects them.
+- Identity rule for PO / SKU ids (2026-10-31). Ids are normalised with the rules the source
+  format supports (case, outer and inner spaces, an optional separator after the prefix,
+  leading zeros of the number) and resolved to the reference entity. A legal variant of one
+  reference id is that entity and takes part in the row-multiset comparison like any other
+  row (a lowercase duplicate is a duplicate row). Two distinct reference entities whose ids
+  normalise to one identifier are a reference collision: recorded (originals, normalised id,
+  entities, rows), the row-set items and the named lines whose ids collide are
+  `cannot_assess` (grader side), nothing is merged. The actual source has no such collision
+  (10 PO and 16 SKU originals, none shared after normalisation).
+- Several detail tables (2026-10-31). When more than one sheet has the detail-table structure
+  and the sheets hold complementary input rows, the grader does not merge them: every
+  candidate and its coverage is recorded, the row-set and reconciliation items (5–7, 15–20) are
+  `cannot_assess`, named lines are looked up in every candidate, per-row items (8, 9, 10) run
+  over every candidate, and no row is asserted missing from a single sheet. A confirmed
+  violation found in any candidate still FAILs its item.
+- APPROVED 2026-10-31 (proposed by the independent extraction review the same day; the
+  proposal below is kept verbatim as the record; the approved rule and the amendment record
+  follow it). Question: which items carry the "all 41 lines" completeness requirement of C1,
+  and what exactly fails rubric 7 and 18–20.
+  Rubric text, verbatim:
+  - 7: "When UOM is not 'CASE' (e.g., 'EA') or blank, Case Pack Error is 0 regardless of Case
+    Pack value"
+  - 18: "Overall dataset totals are correct: 15 Price Mismatch errors across all rows"
+  - 19: "Overall dataset totals are correct: 10 Case Pack errors across all rows"
+  - 20: "Overall dataset totals are correct: 25 Total Errors across all rows"
+  Necessary conditions stated by the text: 7 — on every line whose UOM is not CASE (or blank)
+  the case flag is 0; 18–20 — the sum of the respective column over all rows of the delivered
+  dataset equals 15 / 10 / 25.
+  Current implementation (in force): 7 and 18–20 FAIL on (a) a confirmed invalid or missing
+  flag/total column, (b) a reliable wrong value (7: a non-CASE line with case flag ≠ 0; 18–20:
+  a sum ≠ 15 / 10 / 25 over the identified rows of a complete row set), and (c) any confirmed
+  row-set defect: a missing input line (lower bound > 0), an extra row, a duplicated row or a
+  changed row — because C1 ("flags correct on all 41 lines, totals 15 / 10 / 25") was mapped
+  onto 5–8, 18–20 and 31–55 and the row-set rule was attached to 5, 6, 7, 18, 19, 20 alike.
+  Proposed rule: keep (a) and (b); keep (c) for 5 and 6 (the two flag-logic items are where
+  "every line" is tested, and C1 fails through them); drop (c) from 7 and from 18–20, which
+  would then fail only when their own stated condition is violated (7: a non-CASE line with a
+  non-zero case flag, or such a line absent so that its flag cannot be 0 — proposed: an absent
+  non-CASE line is a confirmed violation of 7 only when its identity is certain, i.e. U = 0;
+  18–20: the column sum over all delivered rows ≠ 15 / 10 / 25, or an invalid cell in the
+  column; extra zero-error rows and duplicated zero-error rows leave the sums unchanged and
+  do not fail 18–20).
+  The three things kept apart: row-set completeness (all 41 input lines present exactly once;
+  C1 through 5 and 6), per-line flag correctness (5, 6, 7, 31–55), aggregate correctness
+  (18–20, and 15–17 against the summary).
+  Scenario "a zero-error line is duplicated and every aggregate is still correct": current →
+  5, 6, 7, 18, 19, 20 FAIL (12 of 80 points), C1 fails. Proposed → 5 and 6 FAIL (the flag
+  logic is not "implemented" on a dataset that is not the input dataset; C1 fails), 7 PASS
+  (every non-CASE line, including the duplicate, carries 0), 18–20 PASS (the sums across all
+  rows are 15 / 10 / 25 as the text requires). The duplicate itself is reported under 5 and 6
+  with the row named.
+  Why "all rows" applies where it does: 18–20 say "across all rows" — the sum is over the rows
+  that exist, so a duplicated zero-error row or an extra zero-error row does not change it;
+  a missing flagged row does (sum < 15) and FAILs. 7 says "when UOM is not CASE" — a
+  per-line condition over the lines present. Neither text says "all 41 input lines are
+  present"; that requirement is C1's and is carried by 5 and 6 under the proposal.
+  Comparison with the approved C1 and false-PASS risk: C1 still fails on any missing, extra,
+  duplicated or changed row (through 5 and 6), so no row-set defect produces a passing C1.
+  At the item level the proposal can PASS 7 and 18–20 for a deliverable with duplicated or
+  extra zero-error rows (which the text literally allows) and for a deliverable that drops a
+  zero-error line while 5 and 6 FAIL for it; it cannot PASS 18–20 for a deliverable that
+  drops a flagged line (the sum is short) or hard-codes 15 / 10 / 25 in a cell (the sum is
+  over the column, not a reported number). Weight effect of the scenario above: 4 instead of
+  12 points lost. Possible conflict reported, not adjudicated: the current implementation
+  fails 18–20 for a duplicated zero-error row although the column sums equal 15 / 10 / 25 as
+  the item text requires; the human decides whether the C1 mapping or the item text governs.
+  Status: APPROVED 2026-10-31. Approved rule, as decided by the human: (1) a missing, extra,
+  duplicated or changed row acts on C1 through items 5 and 6 only and does not by itself fail
+  any other ordinary rubric item; (2) item 7 checks, on the reliably identified non-CASE lines
+  only, that Case Pack Error = 0; an absent line never fails item 7; (3) items 18, 19, 20
+  compare the column sums over all delivered rows with 15 (Price Mismatch), 10 (Case Pack
+  Error) and 25 (Total Errors) and are judged independently, never failed because C1 fails;
+  (4) the approved evidence priority stays: a reliably read invalid cell in the column is a
+  confirmed violation, an unreadable cell makes the item `cannot_assess`.
+  Amendment record. Old rule: the row-set violation (`row_set_violation`) was attached to
+  items 5, 6, 7, 18, 19, 20 alike, and 18–20 compared the sum over identified rows only when
+  the row set was complete. Evidence that it was wrong: a duplicated or extra zero-error row
+  and a deleted zero-error row failed 7 and 18–20 although the item texts ("when UOM is not
+  CASE", "across all rows") are satisfied by the delivered rows and the column sums equal
+  15 / 10 / 25 (extraction review, 2026-10-31). New rule: as above; in `DEPENDENCIES` of
+  `grading/checks_1137e2bb.py` items 7, 18, 19, 20 no longer require `row_set` and carry
+  `row_set_violation: False`; 18–20 sum every readable cell of the column over all delivered
+  business rows and compare directly. Re-grading: no graded model run exists yet (pre-pilot);
+  nothing to re-grade. Scoring effect on the documented scenario (duplicated zero-error row):
+  5 and 6 FAIL, 7 and 18–20 PASS, C1 fails; a deleted flagged line fails the sum items whose
+  column it affects and its own named line.
 
 ### 2.5 `c3525d4d-2012-45df-853e-2d2a0e902991` — Holiday floor-stand budget (Order Clerks)
 Inputs: `Email Trail Floorstands.docx` (base 5.65; side panels 2.24 × 2; shelf strips

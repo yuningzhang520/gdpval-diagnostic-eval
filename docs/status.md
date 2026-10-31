@@ -1,9 +1,45 @@
 # Status
 
-Current stage: **Stage 3b infrastructure items 8, 7, 3, 4, 5 done and mock-verified; hard
-stop; awaiting the human's A/B model decision and approval of the remaining Stage 3b work
-(2026-10-30).** Stage 3a is committed as `395d1da626c12fe5b5b0443c0737a8c02b2b614b`;
-the Stage 3b work is uncommitted. Stage 2 is committed as
+Current stage: **Stage 3b deterministic grader CLOSED by the independent final review
+(2026-10-31; 57/57 layout, 21/21 grading chain; no known Pilot-blocking scoring defect); Git
+checkpoint prepared, commit awaiting authorization; hard stop before the pilot.** See section
+"Stage 3b grader close-out and checkpoint". Earlier header, kept for the record: last located
+blocking fix applied (no FAIL inferred from the two extreme overlap scopes) and the Pilot A
+request wording corrected (2026-10-31). Earlier header, kept for the record: two
+review misjudgements fixed (item 7 applicability, split-table overlap) and the Pilot A request
+corrected (2026-10-31). Earlier header, kept for the record: approved adjudication
+(rubric 7, 18–20) applied and Pilot A request drafted (2026-10-31).
+Earlier header, kept for the record: extraction-review remediation done (2026-10-31); hard stop before
+the pilot, one adjudication PENDING. The independent extraction review
+(`logs/extraction-review-0r3d__40/`) closed the ten close-out counter-examples and found R1–R6,
+the XML validation-cap attribution and a rubric-scope question; R1–R3, R5, R6 and the XML cap
+are fixed, R4 exits safely, the scope question is recorded as a PENDING proposed adjudication
+in `preregistration.md` 2.4 (not in force), each with regressions (section "Extraction-review
+remediation"). No model, judge or paid call; nothing committed, frozen or started.
+Earlier header, kept for the record: close-out review remediation done (2026-10-31). The close-out review (`logs/pilot-closeout-review-wzwtf89y/`) closed B2, B4, I7
+and I8 and kept four B3 points, the coverage threshold, I6, the pre-flight boundary and the
+launcher's multi-sample case open; the extraction layer of the 1137e2bb checks was rebuilt as
+an explicit pipeline and the other items fixed, each with regressions (section "Close-out
+review remediation"). No model, judge or paid call; nothing committed, frozen or started.
+Earlier header, kept for the record: final-review remediation done (2026-10-31). The independent final review (`logs/pilot-final-review-ogcsjzyp/`) kept B1, B5
+and I1–I5 closed and found B2, B3, B4, B6 partly open and I6–I8 open, plus the Docker
+tag-lookup misfire; every item was reproduced from its probe evidence, fixed, and covered
+by in-repository regressions (section "Final-review remediation"). No model, judge or paid
+call was made; nothing is committed, frozen or started. Earlier header, kept for the
+record: Pilot-A pre-review remediation done (2026-10-31). An independent pre-review of the Pilot-A readiness found six blocking
+and eight important defects (B1–B6, I1–I8; evidence in `logs/pilot-a-review-6uxm37u9/`);
+all were reproduced from that evidence, fixed, and covered by targeted counter-example
+regressions (section "Pilot-A pre-review remediation"). No model, judge or paid call was
+made; nothing is committed, frozen or started. Earlier header, kept for the record:
+Stage 3b complete through the grading chain for the pilot task; hard
+stop before the pilot (2026-10-30). Infrastructure items (commit
+`efea742bceb304af841d0515cc48f256b2e64a24`), then: C2 approved, provider model lists
+queried, Inspect cost limit verified and wired as a safety net, partial-collection
+attribution written into the grading decision, and the 1137e2bb grading chain
+(extraction, deterministic checks, judge assembly with a stub, review materials, entry
+point, fixtures, costs) implemented and tested without any real model or judge call. The
+grading-chain work is uncommitted. Nothing is frozen; the pilot has not started.
+Stage 3a is committed as `395d1da626c12fe5b5b0443c0737a8c02b2b614b`. Stage 2 is committed as
 `1941d4ac69566fdbc0a6dff821de57664e84f284` on `main` (pushed). Stage 3a made no model,
 judge or paid call (the `.env` file does not exist, so the permitted models-list calls were
 skipped); nothing is frozen; the pilot has not started. Second-round approvals of
@@ -588,7 +624,11 @@ removing those historical records. Baseline remains
   run/collection identity, complete pass history, record consistency, and artifact
   locations/hashes. Missing/corrupt/mismatched/stale/non-final outcomes fail closed.
   Persistent listing failures and unrecovered partials cannot become model missing-
-  deliverable failures. `for_grading=False` permits inspection of valid error records,
+  deliverable failures *[superseded 2026-10-30/31: a partial collection is routed by the
+  per-item attribution — model-caused items are treated as not delivered and the run is
+  graded, harness-caused items make the run a harness error, unknown items require a
+  recorded adjudication; see "Execution-budget attribution policy" and PLAN.md section 4]*.
+  `for_grading=False` permits inspection of valid error records,
   not bypass of schema/identity/integrity validation. The actual grader consumer and
   terminal-log join have NOT been implemented or integration-tested in Stage 2.
 - **B3:** `make_task()` no longer generates execution IDs or creates a run manifest.
@@ -696,7 +736,8 @@ rubric change occurred.
 
 1. Wire the actual scoring entry point to the validated final outcome, using identity
    from the completed Inspect log; integration-test no score on missing/invalid/mismatched
-   outcome, persistent listing failure, unrecovered partial, execution error/limit,
+   outcome, persistent listing failure, unrecovered partial *[now: partial routed by the
+   three-class attribution, see the policy section of 2026-10-30]*, execution error/limit,
    and teardown/logging errors after Task.cleanup. A successful Inspect eval alone is
    NOT successful collection. The current producer/loader contract is tested; this
    consumer integration is not.
@@ -1245,7 +1286,262 @@ judge prompt, grading entry point, real generation, pilot or freeze. Stage 3a is
   image pre-flight did not misfire this time), `regress_inspect` 62/62 (summary
   `logs/stage2_fix/regress_summary_20261030T220655Z.json`), `regress_tools` 8/8.
 
-### Hard stop after item 5
+### Second Stage 3b round (2026-10-30): rulings, commit, model lists, cost limit, attribution
+
+- **1137e2bb C2** approved with the revised text (drill-down out of the critical core, graded
+  under rubric 14); `preregistration.md` 2.4 updated, section 4 item 1 closed. Every critical
+  criterion now carries APPROVED status.
+- **Commit** `efea742bceb304af841d0515cc48f256b2e64a24` "feat: add launcher with budget
+  ledger, input integrity and image checks" (16 files: PLAN.md, config.json, docs/status.md,
+  pyproject.toml, uv.lock, harness/{collect,samples,tools,budget,launcher}.py, five new test
+  modules, and `preregistration.md` added for the C2 ruling approved in the same message);
+  pushed to origin. Exclusions confirmed before the commit (no .env, private/, plan/,
+  parquet, inputs/prompts/gold/resources, PDFs, logs/, .eval files).
+- **Provider model lists** (`.env` now exists with ANTHROPIC_API_KEY, OPENAI_API_KEY,
+  GOOGLE_API_KEY; mode 0600; ignored): `scripts/list_provider_models.py` loaded the keys into
+  the trusted process (names recorded, values never printed), queried each models-list
+  endpoint with full pagination and wrote `data/provider_model_lists/20261030T223043Z.json`
+  (queried 2026-10-30T22:30:39Z). Anthropic (SDK 2.3.0): 14 ids, 1 page, 1 request, cursor
+  pagination with no further page, complete — `claude-haiku-5-5`, `claude-sonnet-5-5`,
+  `claude-opus-5-5`, `claude-fable-5-1`, `claude-opus-5`, `claude-sonnet-5`, `claude-fable-5`,
+  `claude-opus-4-8`, `claude-opus-4-7`, `claude-sonnet-4-6`, `claude-opus-4-6`,
+  `claude-opus-4-5-20251101`, `claude-haiku-4-5-20251001`, `claude-sonnet-4-5-20250929`.
+  OpenAI (SDK 3.41.0): 134 ids, 1 page, 1 request (the list endpoint returns one page; the SDK
+  reported no further page), complete; includes `gpt-6.1-sol`, `gpt-6.1-terra`, `gpt-6-astra`,
+  `gpt-6-sol`, `gpt-6-luna`, `gpt-5.6-sol`, `gpt-5.6-terra`, `gpt-5.6-luna`. Google
+  (google-genai 2.34.0): 60 ids, 1 page, 1 request, page-token pagination, complete; includes
+  `models/gemini-3.1-pro-preview` and `models/gemini-3.1-pro-preview-customtools`.
+  Candidates visible for the respective keys: `claude-opus-5-5`, `claude-sonnet-5-5`,
+  `gpt-6.1-sol`, `gemini-3.1-pro-preview`. No generation call was made; visibility does not
+  establish generation, tool use, image input or reasoning-parameter availability.
+- **Inspect cost limit** (0.3.286) verified in code and triggered with the mock model
+  (`harness/tests/regress_cost_limit.py`, 14/14 checks, results under
+  `logs/stage3b-20261030T220004Z/cost_limit_run2/`): `eval(cost_limit=X)` opens a per-sample
+  dollar limit; after every generate call Inspect prices the usage (`model_usage_cost`),
+  records it (`record_model_cost`) and checks the limit; a hit raises `LimitExceededError`
+  type `cost` and records `SampleLimitEvent(type="cost", limit=X, message="Cost limit
+  exceeded. value: $…; limit: $…")`; the sample ends `limit.type == "cost"`, scorer and
+  cleanup still run. Price data: `set_model_cost()`/`model_cost_config` accept only models in
+  Inspect's database; the mock needed `set_model_info(…, ModelInfo(cost=ModelCost(…)))`
+  (synthetic 1,000 USD per MTok). Case a (limit 2.0 USD): first tool call wrote two files,
+  the second generate tripped the limit → `limited`, `limit_types=["cost"]`, running value
+  2.395 USD in the message, `collection_status=complete`, `grading_eligible=true`. Case b
+  (limit 0.5 USD): tripped on the first generate (0.754 USD) → `no_files_confirmed`,
+  eligible. Harness: `BUDGET_LIMIT_TYPES` now includes `cost`; `config.json` carries
+  `cost_limit_usd` as a PLACEHOLDER (about 3× the expected per-task consumption after A/B
+  selection; safety net, the ledger stays primary) and the policy text; the launcher's
+  `eval_kwargs` adds `cost_limit` and `model_cost_config` only for a numeric value and
+  `verify_cost_data()` fails closed when the model has no complete price data. The first
+  cost-limit run did not start: `docker compose` reported "pull access denied for
+  gdpval-sandbox" although the image is local — the third occurrence of the daemon's
+  transient image-visibility fault (kept under `cost_limit/`; rerun passed).
+- **Partial-collection attribution** written into `grading_decision()` as the single rule
+  (`harness/collect.py`: `attribute_item`, `attribute_collection`, `effective_attribution`,
+  `load_adjudication`): model-caused = entries the model created that are not regular
+  files (symlink, broken symlink, symlinked directory, fifo, socket, device, unknown type),
+  evidenced by the collector's lstat classification; harness/provider-caused = collector
+  deadline (`read_deadline_exceeded`, `time_budget_exceeded`), host conflicts and host-side
+  destination problems, enumeration failures; unknown = `read_failed:*`,
+  `integrity_mismatch`, `oversized`, `file_limit`, `total_limit`, refused listing paths and
+  item-level enumeration errors (never attributed by the reason name). Routing: any
+  harness-caused item → `harness_collection_error`, `grading_eligible=false` (run error,
+  never model failure); otherwise any unknown → `requires_adjudication`
+  (`grading_eligible=false`, `harness_error=false`, no automatic verdict); only all-model-
+  caused → eligible with `outcome_class=collected_with_model_caused_rejections` and the
+  rejected files treated as not delivered. `no_files_confirmed` is graded as before. Each
+  item carries source, path, reason, class, basis and an evidence locator
+  (`collection.json skipped[i] / files[sandbox_path=…] / listing_errors[i]`); the collection
+  record and `run_outcome.json` both store the attribution; `harness_error` is true only for
+  enumeration failure or a harness-caused item. A human adjudication lives in a separate
+  `adjudication.json` (run binding, `{path: model_caused|harness_caused}`, by, at, basis),
+  is applied by `load_run_outcome()` to unknown items only, can never make a harness-caused
+  item eligible, and never modifies the stored outcome (`effective` block in the loaded
+  result). `load_run_outcome` re-derives the attribution from the evidence and fails closed
+  on disagreement. Regressions: `harness.tests.test_attribution_unit` (10 tests: model-caused
+  only gradable with rejections recorded; deadline → run error; read failure → adjudication;
+  harness+model mixed → run error; unknown+model mixed → adjudication; adjudication resolves
+  unknown without touching the outcome, cannot rescue harness-caused, rejected for another
+  run; tampered attribution fails closed; `no_files_confirmed` unchanged; rule table) plus
+  updated expectations in the collector, closeout, policy and limits tests; all 101 unit
+  tests pass; `regress_inspect` 62/62 with the adversarial scenario now asserting 4
+  model-caused special entries, 1 unknown (oversized), `harness_error=false`.
+
+### Grading chain for 1137e2bb (2026-10-30; no real model or judge call)
+
+New package `grading/` (trusted side, never model-visible):
+
+1. **Extraction on copies** (`grading/extract.py`): inventory with sizes and SHA-256; every
+   deliverable copied to a work directory before any read (collected originals are 0444
+   and untouched); xlsx read twice with openpyxl (formulas and cached values per cell,
+   pivot definitions with cache source and row/data fields, tables, auto-filters), docx
+   paragraphs with style names and tables; LibreOffice headless recalculation of the copy
+   inside the trusted image (`docker run --network none --cap-drop ALL`, scratch mount
+   only) recorded next to the cached values with the three-way comparison equal / differs
+   / cached_missing / recalculation_failed, and recalculated values filled into formula
+   cells that had no cached value (each such cell recorded as `recalculated`). Verified on
+   the Stage 2 formulas fixture: 4 formula cells, 0 cached → 4 recalculated, `C5 = 43.75`
+   from `=SUM(C2:C4)`.
+2. **Deterministic checks** (`grading/checks_1137e2bb.py`): D items 1–10, 12–22, 25, 26,
+   31–62 (the earlier D list omitted the presence item 2 and item 21; corrected in
+   `preregistration.md` 2.4 as a documentation fix, no semantic change). The detail sheet
+   is located by matching the 41 (PO, SKU, units) keys of the input; flag, total and
+   summary-text columns by header keywords; the summary sheet by a per-SKU block with
+   price/case/total columns, its grand-total row, auto-filter or table or pivot, and a PO
+   field anywhere on the sheet (rubric 14). Every item records pass / fail /
+   cannot_assess, an evidence locator (file, sheet, header row, rows or cells), the
+   deliverable value and the reference value from the independent recalculation (never
+   the expert deliverable); prices are compared at two decimals half-up, counts exactly;
+   missing structure yields `cannot_assess` with `extraction_failed: …`. Critical status
+   from the deterministic items (C3 stays `not_confirmed` until its judge items are in).
+3. **Judge assembly** (`grading/judge.py`): one unit per J item (11, 23, 24, 27–30) with
+   task requirement, criterion text, the independent reference the item needs (counts per
+   SKU and in total; reference flags per line for item 11; the prompt's definitions for
+   item 23) and the deliverable excerpt (indexed docx paragraphs and tables, or the detail
+   rows with flags and summary text); a fixed system prompt that demands one JSON object
+   (verdict, locatable evidence, rationale), states that deliverable text is untrusted
+   data and must never be followed as instructions, and forbids inferring the worker's
+   identity; units carry the execution uuid only. `render_batch()` sends one task's units
+   in one request with separate unit ids and evidence. `parse_judge_response()` validates
+   verdict, evidence (file, location, quote; non-empty for pass/fail) and rationale.
+   `StubJudge` (keyword rules) exercises assembly and parsing only. The items used with the
+   stub are recorded in `grading/debug_set.json` and are excluded from judge validation.
+4. **Human-review materials** (`grading/review.py`): `review_<uuid>_items.md` shows, per
+   criterion, the criterion text, the deterministic result with the compared values, the
+   reference and the deliverable excerpt — no judge verdict; `review_<uuid>_judge_verdicts.json`
+   holds the verdicts separately ("open only after the independent judgments are
+   recorded"); `review_<uuid>_independent_judgments.csv` is the record template (run,
+   item, weight, criterion, judgment, evidence, time, reviewer).
+5. **Grading entry point** (`grading/grade.py`): binding from the completed Inspect log;
+   `load_run_outcome(for_grading=False)`; terminal-log join (sample error vs recorded
+   errors, sample limit type vs recorded limit types, eval status terminal, not cancelled)
+   — any mismatch is `log_join_mismatch` and blocks grading; routing by the effective
+   outcome (adjudication applied if present): not eligible → results record with the
+   reason, no grades; eligible (complete, no_files_confirmed, model-caused partial, limited)
+   → extraction, deterministic checks, judge units (injected judge), `grades.jsonl` (one
+   line per item with source D/J, verdict, evidence, compared values or rationale) and
+   `results.jsonl` (run binding, gate, collection and execution status, limit types,
+   attribution class and items, rejected files treated as not delivered, W/E/P, P/E, E/W,
+   ungraded items with reasons, critical status per criterion, review-material paths).
+6. **Fixtures** (`grading/fixtures_1137e2bb.py`): the positive deliverable is built from
+   the original input workbook and the recalculation script's verified values (flag
+   columns, missing-case-pack indicator, totals, error summary; Summary sheet with per-SKU
+   counts sorted by total, grand total, auto-filter and a PO drill-down block; docx with
+   the two definitions, the counts, the high-frequency SKUs and recommendations for
+   SKU-0103 and SKU-0112). Six negatives plant one error each: one line flag wrong, one
+   SKU total wrong, grand total off by one, an EA line treated as CASE, summary total
+   inconsistent with the detail sheet, docx missing. The expert deliverable is not used.
+7. **Costs** (`grading/costs.py`): generation cost from usage × unit prices per model and
+   category (reusing the ledger pricing), grading cost from judge usage, a human-time CSV
+   template; unknown prices and retry estimates are flagged, never silently filled.
+
+Results (`grading.tests.test_grading_chain`, 15 tests, exit 0; harness suites 101/101
+unchanged):
+
+*[Superseded 2026-10-31 (Pilot-A pre-review, I8): the independent probes showed that this
+chain graded header synonyms as FAIL, passed swapped Word counts, graded a failed
+recalculation as FAIL, accepted a log with an eval-level error, accepted the stub judge
+without a test-mode gate, overwrote the human-review CSV, and that "harness suites 101/101
+unchanged" stopped holding once the launcher test had to change. The corrected behaviour
+and its regressions are in section "Pilot-A pre-review remediation".]*
+
+- Deterministic discrimination: positive → every D item passes, C1 pass, C2 pass, C3
+  not_confirmed (judge pending), no `cannot_assess`; `one_line_flag_wrong` → items 5, 15,
+  17, 18, 20, 32 fail (C1 fail); `one_sku_total_wrong` → 58; `grand_total_off_by_one` →
+  17; `case_ea_conversion_error` → 6, 7, 16, 17, 19, 20 (C1 fail); `detail_summary_mismatch`
+  → 15; `docx_missing` → 2, 25, 26 (C3 fail). All six negatives are detected by the items
+  that name the planted error.
+- Judge assembly: 7 units on both fixture sets; all stub responses parse; stub verdicts
+  pass on the positive and fail items 23–30 on `docx_missing`; malformed judge outputs
+  (no JSON, invalid verdict, empty evidence for pass, incomplete evidence) are rejected.
+- Entry point: complete → graded, W/E/P = 80/80/80, P/E = 1.0, E/W = 1.0, critical pass,
+  62 grade lines (55 D + 7 J), review files written with the judge verdicts apart from the
+  items file; negative → P/E < 1 and C1 fail; limited (time) + complete → graded and
+  flagged; execution error → not graded; `listing_failed` → not graded (harness error);
+  model-caused partial (a symlink the model left) → graded with the rejected path listed;
+  harness-caused partial (collector deadline) → run error, not graded; unknown partial
+  (read failure) → waits, then graded after a recorded adjudication with the undelivered
+  docx failing its presence item; missing, corrupt and identity-mismatched outcomes
+  refused at the gate; a log that records an error or a limit the outcome does not know
+  → `log_join_mismatch`; `no_files_confirmed` → graded with P = 0 and critical fail.
+- Costs: 1M input + 100k output on gpt-6.1-sol prices = 3.00 USD, one retry estimated at
+  2.00 USD, flagged as estimated; unknown-price models are reported as unknown.
+
+Not verified in this round: deterministic checks on a real model's deliverable (column
+naming and layout heuristics were exercised on the fixtures only; unrecognised layouts
+yield `cannot_assess` with `extraction_failed`, to be repaired before formal grading)
+*[retracted 2026-10-31: the pre-review showed that renamed headers yielded FAIL, not
+`cannot_assess`; the checks were rewritten, see the remediation section]*;
+any real judge call, judge agreement, and the real judge's compliance with the output
+schema; grading of the other nine tasks (checks and judge units exist for 1137e2bb only);
+the recalculation path on a real deliverable (exercised on the Stage 2 fixture).
+
+### Pilot A/B DRAFT configuration written (2026-10-30; config.json and this file only)
+
+Scope: `config.json` updated with the proposed pilot models, limits, budget and reporting
+labels for the independent re-check; `docs/status.md` records the decisions. No launcher,
+harness, test or other file changed; no model, judge or provider API call; `.env` not read;
+nothing committed, pushed or frozen.
+
+- **Proposed models** (`models.pilot_models`, DRAFT): A = `claude-opus-5-5`
+  (`anthropic/claude-opus-5-5`), B = `gpt-6.1-sol` (`openai/gpt-6.1-sol`), judge =
+  `gemini-3.1-pro-preview` (`google/gemini-3.1-pro-preview`). All three were visible in the
+  2026-10-30 models lists; generation, tool use, image input and reasoning behaviour are
+  unverified until the pilot.
+- **Identifier contract checked** (read-only, `harness/launcher.py` l. 31, 66, 196–205, 326
+  and the Inspect providers): the launcher takes the Inspect name `provider/model_id` on
+  `--model`, does not add or strip prefixes, resolves the credential variable from the
+  prefix (a bare id raises `KeyError` before any call, it is not mis-routed), and the ledger
+  price keys derived from the candidate facts (`claude-*` → `anthropic/`, `gpt-*` →
+  `openai/`, else `google/`) match the three Inspect names; Inspect strips the prefix
+  before the API call and the Google SDK accepts the bare `gemini-3.1-pro-preview` although
+  the list endpoint returns `models/…`. No mismatch found. Two launcher gaps registered:
+  **Blocking** — `eval_kwargs` does not pass `max_tokens` (and `token_limit` is still a CLI
+  argument, not read from the config); **Important** — `--model` form is not validated.
+- **Reasoning / effort**: nothing is set by the harness; provider defaults apply, and
+  "not set" is recorded as "pilot verification pending", not as a verified default.
+  Documented defaults (queried 2026-10-30): Opus 5.5 — thinking on and not disableable,
+  default effort `medium`, thinking tokens billed as output and counted toward `max_tokens`
+  (platform.claude.com effort and thinking pages); gpt-6.1-sol — default reasoning effort
+  `medium`, `none`/`minimal` unsupported, reasoning tokens count toward `max_output_tokens`
+  and are billed as output, cut-off → `status: incomplete`, `incomplete_details.reason:
+  max_output_tokens` (developers.openai.com reasoning guide); gemini-3.1-pro-preview —
+  thinking on at level `high` by default, `max_output_tokens` includes thought tokens,
+  billed as output (ai.google.dev thinking page). Inspect 0.3.286 request construction
+  (source): Anthropic sends `max_tokens` (default 32,000 if unset) and no `thinking` /
+  `output_config` unless an effort is configured; OpenAI uses the Responses API for
+  gpt-6.1 and sends `reasoning` only when configured, `max_output_tokens` only when
+  `max_tokens` is set; Google sends `ThinkingConfig(include_thoughts=True)` without a level
+  and `max_output_tokens` from `max_tokens`. Stop signals are preserved in the log
+  (`StopReason` `max_tokens` from Anthropic `stop_reason`, OpenAI `incomplete_details`,
+  Google `finish_reason MAX_TOKENS`). Metering differences recorded: Anthropic output
+  includes thinking with no separate count in Inspect; OpenAI and Google report reasoning
+  tokens separately and include them in output; input tokens exclude cached tokens on all
+  three. The two models do not get equal compute budgets (effort semantics, prices and
+  tokenizers differ); results are reported per model.
+- **Limits and budget** (`generation`, `pilot`; DRAFT, pending final approval):
+  `cost_limit_usd` 10 per sample (safety net, price data required, ledger primary),
+  `token_limit` 10,000,000 per sample (Inspect type `all`: every call's input and output
+  count), `max_tokens_per_request` 16,384 (reasoning tokens count toward it on all three
+  providers), `time_limit` 3,600 s, `working_limit` 3,600 s, `message_limit` 200; pilot
+  cumulative ceiling raised from 25 to 30 USD (A, B, judge, cache charges, billable
+  retries). Tool timeout, concurrency, retry layers and sandbox settings unchanged. The judge
+  now has numeric prices in `candidate_facts` (2 / 12 USD per MTok, ≤ 200k tier) so the
+  ledger can settle judge batches; Gemini cache-write is modelled at the input price
+  (no per-token write price exists) and OpenAI cache-write likewise.
+- **Report labels** (`reporting.limit_labels`): `cost-capped` (Inspect `cost_limit` fired,
+  event and amounts kept), `budget-limited` (time / working / message / token limit fired,
+  `SampleLimitEvent` kept), `output-capped` (one generation cut by `max_tokens`, shown by the
+  provider's stop signal only, never by length; not a sample-level exhaustion; detection
+  logic is a **pre-freeze TODO**). Several limits in one execution keep every event.
+  Limited attempts follow the approved `grading_decision` / `run_outcome.json` policy.
+
+Pilot verification pending (cannot be settled from documentation or source): the effort
+level each account actually applies; thinking/reasoning token shares and their effect on
+the 16,384 cap in an agentic loop; Anthropic beta-header needs above 8,192 output tokens on
+Claude 5; Responses API tool-schema and image delivery; judge schema compliance under
+default thinking; preview availability of the judge; real cost per task.
+
+### Hard stop (end of the second Stage 3b round)
 
 Not started, by instruction: the grading chain for `1137e2bb…`, the judge prompt, the
 grading entry point that consumes `run_outcome.json`, any real provider generation, the
@@ -1265,6 +1561,835 @@ Remaining before the first real-model pilot (gates, unchanged in substance):
   per-sample `cost_limit` as a second guard; the `tenacity` downgrade pulled in by the SDK
   dependencies (imports and all suites pass, no further evidence); the image digest to be
   recorded at freeze; the non-root sandbox limitation.
+
+## Pilot-A pre-review remediation (2026-10-31; B1–B6, I1–I8; no model, judge or paid call)
+
+Scope and boundary: the independent pre-review (evidence in `logs/pilot-a-review-6uxm37u9/`,
+read-only, kept) reported Blocking B1–B6 and Important I1–I8. Each finding was first
+reproduced from the saved probe evidence and the probe scripts (static probes, launcher
+and budget probes, extra probes, LibreOffice probe), then fixed with a targeted
+counter-example regression. Only these items were changed: no harness redesign, no rubric
+or policy change, no recalculation of another task, no real model or judge call, no commit,
+push, freeze or Pilot A. Every active Inspect regression ran through
+`harness/tests/run_isolated.sh` (`env -i`, external working directory with no `.env` on its
+path, `INSPECT_DISABLE_MODEL_API=1`, `mockllm/model`); the project `.env` was not read,
+loaded or printed; probe files live in temporary directories outside the repository; new
+logs are under `logs/pilot-a-remediation-20261031T002107Z/` and no existing log was
+overwritten (169 pre-existing `logs/stage2_fix` files: hashes unchanged, 44 files added by
+the rerun); the sandbox image `gdpval-sandbox:stage2` (`18cde712cde1`) was reused, not
+rebuilt; no container was left behind; no dependency was installed.
+
+### Fixes (file references are to the working tree of 2026-10-31)
+
+- **B1 — execution settings not dispatched.** `harness/launcher.py` `eval_kwargs` now
+  passes `max_tokens` (from `generation.max_tokens_per_request`), `attempt_timeout`
+  (`retries.layer_1_inspect_model_request.attempt_timeout_s`) and `token_limit` (from
+  `generation.token_limit` unless overridden); each must be a positive integer or the
+  launcher refuses to start. `run_sample` computes the settings *before* any ledger change,
+  so a configuration defect creates neither a reservation nor a settlement. The DRAFT
+  `config.json` gap entry is closed (`launcher_contract.gaps_registered`); the `--model`
+  form validation gap stays open.
+- **B2 — terminal eval-level error passed the gate.** `grading/grade.py` `join_log` blocks
+  grading when `EvalLog.error` is present or the eval status is `error` without a sample
+  error (the pre-review's `late_eval_error` probe). A human may exclude such an error only
+  with a complete record `{"basis", "by", "at"}` passed as `eval_error_exclusion`; it is
+  stored in `results.jsonl` (`log_join.eval_error_exclusion`). A consistent terminal error
+  (sample error recorded in the log and the outcome) is not a join mismatch and is routed
+  by the outcome policy as before.
+- **B3 — layout mistaken for model failure.** `grading/checks_1137e2bb.py` rewritten:
+  a canonical field schema with header synonyms (`SCHEMA`, `FLAG_SCHEMA`, `map_columns`;
+  exact match, then containment, then keyword rules for the four added columns); the detail
+  sheet is located by mapped PO / SKU / ordered-units headers *and* input line keys, never
+  by sheet name or position; a required source field that cannot be mapped makes every
+  dependent item `cannot_assess: extraction_failed` with attribution `grader_extraction`,
+  and the summary sheet is never guessed when the detail sheet is not located. Extraction
+  and verdict are separated per cell (`read_value`: ok / empty / formula_unrecalculated /
+  error_value): a formula without cached value whose recalculation failed or did not run is
+  `cannot_assess` with attribution `grader_caused_recalculation`, never FAIL. Before any
+  model attribution the workbook's transfer integrity is checked in `grade.py` (collector
+  `sha256_in_sandbox` == `sha256_collected` == hash of the copy on disk) and its format in
+  `extract.format_check` (zip, `[Content_Types].xml`, workbook part, openpyxl load): an
+  unreadable workbook with verified transfer is `model_caused_corrupt` (FAIL on item 1 and
+  every workbook item), with unverified transfer `unknown` (`cannot_assess`), a missing
+  workbook `model_caused_missing` (FAIL). Every grade line carries `attribution`; the
+  result record carries `transfer_integrity` and `extraction_status`.
+- **B4 — row set and narrative counts.** `row_completeness` compares the multiset of
+  business rows (PO, SKU, units, entered and expected price at two decimals, UOM, case
+  pack) with the input and names missing, extra and duplicated rows; the row-set items
+  (5–9, 18–20) fail with the named rows while per-line items (31–55) are judged on the lines
+  that are present; reordering is harmless. Items 18–20 still report the detail-sheet sum.
+  `bound_counts` / `count_verdict` bind a number to its category phrase at paragraph level
+  (number before the phrase, or phrase then a connector then a number); no bound number or
+  conflicting numbers give `cannot_assess` (attribution `unknown`, routed to judge/human),
+  never a pass.
+- **B5 — recalculation reused an earlier result.** `grading/extract.py` `recalculate_xlsx`
+  uses a fresh `mkdtemp` scratch directory per call with an empty output directory, checks
+  soffice's own exit status (`SOFFICE_RC=` echoed by the in-container script, not the exit
+  status of a later command), requires exactly one new non-empty `in.xlsx` in that
+  directory, rejects "could not be loaded", runs `format_check` on the product, and records
+  input and output SHA-256; any failure returns `status: failed` with a reason and no
+  values. `extract_all` records `format` and `sha256` per workbook and routes unreadable
+  workbooks separately.
+- **B6 — engineering counts, stop conditions, unknown cost, ledger integrity.**
+  `harness/budget.py` version 2: the event set is `reservation`, `settlement`, `void`,
+  `engineering_failure`, `stop`, `review_cleared`; every event is schema-validated and the
+  transitions are checked on every load (duplicate open reservation, settlement or void
+  without reservation, kind mismatch, clearance without pending review) — an unknown event
+  type or a malformed event raises `LedgerCorrupt` and the ledger refuses to load; the
+  first creation happens under the inter-process file lock. A repeated reservation is
+  idempotent only for the same kind, estimate and binding (model, task, sample, run),
+  otherwise `LedgerConflict`. `launcher.classify_eval_log` turns an error *returned* in the
+  Inspect log (`fail_on_error=False`) into a persisted `engineering_failure` (class from the
+  message prefix, redacted detail); the second occurrence of a class is a stop condition; a
+  settlement above twice its reservation records a `stop` event; stop state survives
+  restarts. Usage with no reliable price is settled at max(priced part, reservation),
+  flagged `estimated_unknown_cost`, kept with its raw usage, and holds every further start
+  until a `review_cleared` event (`clear_review(unit, by, basis)`); nothing is settled as
+  zero.
+- **I1 — review records overwritten.** `grading/review.py` writes the items file and the
+  judge-verdict file as new versions (`_v2`, `_v3`, …) with mode `x`, and never touches an
+  existing independent-judgments CSV (its SHA-256 and `preserved` flag are returned).
+- **I2 — stub and batch protocol.** `grade_run` refuses a judge with `is_stub` unless
+  `allow_stub=True` (test mode) and records `judge_mode` (`real` / `stub-test-mode` / `none`)
+  in `results.jsonl`. `grading/judge.py` adds the batch protocol: `parse_batch_response`
+  requires a JSON array in which every expected unit id appears exactly once (missing,
+  duplicated or extra ids fail the whole batch), `judge_batch` records a protocol violation
+  as `cannot_assess` with `batch_error` for every unit, `StubBatchJudge` produces the
+  deliberately corrupted responses for tests, and `estimate_judge_batch_usd` gives the
+  ledger reservation estimate for one batch.
+- **I3 — agreement disclosure.** All seven judge-only criteria of `1137e2bb…` (11, 23, 24,
+  27–30) were used to debug the assembly with the stub (`grading/debug_set.json`), so no
+  held-out criterion exists on the pilot task: judge agreement will be reported from the
+  other tasks, and the pilot task's judge verdicts are checked by human review only
+  (`PLAN.md` section 6).
+- **I4 — concurrent initialisation.** Ledger creation and the ceiling check run under the
+  file lock; a regression starts six processes (spawn) that each construct the ledger and
+  reserve concurrently: exactly the affordable number of reservations is recorded (1 of 6
+  at 20 USD each under a 30 USD ceiling; 2 of 6 at 12; 6 of 6 at 4), no duplicate or
+  leftover temporary file. Acceptance conditions before any run with concurrency above 1:
+  this process-level test green, plus observed reservation/settlement records from the
+  concurrency-1 pilot.
+- **I5 — compose pull behaviour.** `harness/compose.yaml` declares `x-local: true` and
+  `pull_policy: never`. Verified against Inspect 0.3.286 source and by a mock run: with
+  `x-local`, `docker.py` skips `compose pull` for the service and `compose.py`'s
+  `sandbox_prebuilt` verification *applies* to it (it checks `docker image inspect <image>`
+  and raises `PrerequisiteError` before any `compose up` when the image is absent); services
+  without `x-local` are not checked there and would be pulled. The comment written earlier
+  in this round ("x-local skips the prebuilt check") was wrong and is corrected in the file.
+- **I6 — secrets in records.** `launcher.redact` (and the same rule in
+  `scripts/list_provider_models.py`) replaces credential-like strings, `key=value` secrets,
+  any long token carrying a digit, and the user name in host paths, then truncates; it is
+  applied to every persisted error text (ledger failure details, launcher records, model
+  list errors). Only the exception type and the redacted message are stored.
+- **I7 — price tiers.** `config.json` candidate facts now carry the documented tiers and
+  the usage-field mapping per provider: gpt-6.1-sol cache write 30 m 2.50 / 12 h 5.00 USD
+  per MTok and long context above 272K input tokens (4 / 15 / cached 0.20 / cache write 5.00
+  and 10.00); Opus 5.5 cache write 1 h 8.00 (5 m 5.00); gemini-3.1-pro-preview long context
+  above 200k (4 / 18 / cached 0.40). The ledger (`prices_from_config`) prices each model
+  call at its own tier from the per-call usage in the Inspect ModelEvents
+  (`calls_from_eval_sample`), cache writes at the conservative longest-retention rate
+  (the usage record does not split retention tiers; flagged), and aggregated usage above a
+  threshold entirely at the long-context tier (flagged). The Inspect `cost_limit` safety
+  net uses the same conservative rates. *[Corrected 2026-10-31 (final review, I7): the last
+  sentence was wrong and the "longest-retention" rule was not verified against Inspect.
+  Inspect 0.3.286 bills Anthropic cache writes at `ModelCost.input_cache_write` times 1.6
+  when its provider reports a 1h TTL, so a pre-baked 1h rate would have been applied twice,
+  and it has no long-context tier. The ModelCost passed to Inspect now carries the
+  default-TTL rate (A 5, B 2.50, judge 2), the ledger uses 8 for A (auto-TTL escalation is
+  invisible in usage; conservative, flagged) and 2.50 for B (the harness requests no
+  extended retention); see section "Final-review remediation".]*
+- **I8 — records.** Earlier claims corrected (notes added next to the old text, old
+  records kept): "unrecognised layouts yield `cannot_assess`" (they yielded FAIL),
+  "terminal log errors block grading" (an eval-level error with a clean sample passed),
+  "the stub is never part of formal results" (no gate existed), "batch judge verified"
+  (only the rendering existed; the response protocol did not), "harness suites 101/101
+  unchanged" (the launcher test had to change in this round), and "all partial collections
+  are harness errors" (superseded by the attribution policy of 2026-10-30).
+
+### Regressions (2026-10-31; `run_isolated.sh`, `INSPECT_DISABLE_MODEL_API=1`, mockllm, prebuilt image; logs under `logs/pilot-a-remediation-20261031T002107Z/`)
+
+| Suite | Command (via `harness/tests/run_isolated.sh /Users/yuning/turing-th …`) | Exit | Result | Class |
+|---|---|---|---|---|
+| grading chain (B2, I1, I2, transfer integrity) | `grading.tests.test_grading_chain -v` | 0 | 19/19 OK | synthetic (fake completed logs, real collector) |
+| layout / integrity / row set / Word counts / recalc path (B3, B4, B5) | `grading.tests.test_layout_regressions -v` | 0 | 22/22 OK | synthetic fixtures, fake converter |
+| launcher and ledger (B1, B6, I4, I6, I7) | `harness.tests.test_launcher_regressions -v` | 0 | 15/15 OK | synthetic (spy eval, fake logs, spawn processes) |
+| existing harness unit suites | `unittest harness.tests.test_budget_unit … test_staging_unit -v` | 0 | 101/101 OK | synthetic |
+| compose local image (I5) | `harness.tests.regress_compose_local --output-root …/compose-local` | 0 | 15/15 PASS | real Inspect + Docker chain, mock model |
+| LibreOffice recalculation (B5) | `grading.tests.regress_recalc_docker --output-root …/recalc-docker` | 0 | 12/12 PASS | real Docker converter |
+| Stage 2 Inspect scenarios | `harness.tests.regress_inspect` | 0 | 62/62 | real Inspect + Docker chain |
+| close-out gate | `harness.tests.regress_closeout --output-root …/closeout` | 0 | 92/92 | real Inspect + Docker chain |
+| execution limits | `harness.tests.regress_limits --output-root …/limits` | 0 | 74/74, 0 unverified | real Inspect + Docker chain |
+| Inspect cost limit | `harness.tests.regress_cost_limit --output-root …/cost-limit` | 0 | 14/14 | real Inspect + Docker chain |
+| image tools | `harness.tests.regress_tools --output-root …/tools` | 0 | 8/8 | real Inspect + Docker chain |
+
+First attempts that failed and what they showed (logs kept): the grading chain's
+consistent-error case was blocked by an extra sample-event count check added during the
+fix (removed: not part of B2, and it coupled the gate to transcript details); the layout
+suite found that `Item SKU` on the summary sheet was not recognised (summary locator now
+uses the schema synonyms) and that item 10 lacked an attribution when recalculation failed
+(added); the tier test expected the standard rate for a 1M-token cache-write prompt, which
+is correctly the long-context tier (test corrected, not the code); the compose regression's
+first attempt (`compose_local_attempt1_daemon_tag_misfire.log`) hit the Docker tag-lookup
+misfire described under "Known issues" and showed that the `x-local` comment was wrong.
+
+Layout table (`layout_table.json`; items in `fail` / `cannot_assess`, attribution):
+
+| Variant | fail | cannot_assess | attribution | class |
+|---|---|---|---|---|
+| positive, sheet_names, header_row, column_order, header_aliases (review set), header_aliases_2, units_header_only, reordered_rows, formula_recalc_ok | none | none | — | graded like the positive fixture (C1 pass, C2 pass) |
+| unrecognised_headers | none | all 51 workbook items | grader_extraction | grader-side, not model |
+| formula_recalc_failed | none | 37 flag-dependent items | grader_caused_recalculation | grader-side, not model |
+| corrupt_xlsx_transfer_verified | item 1 + 51 workbook items | none | model_caused_corrupt | model |
+| corrupt_xlsx_transfer_unknown | none | item 1 + 51 workbook items | unknown | undetermined |
+| missing_xlsx | item 1 + 51 workbook items | none | model_caused_missing | model |
+| duplicate_and_missing_row | 5–9, 18–20 (missing PO1007/SKU-0101/2, duplicated PO1005/SKU-0101/60 named) | none | model_caused | model; 31–55 still pass |
+| duplicated_zero_error_row | 5–9, 18–20 (42 rows, 1 extra) | none | model_caused | model (passed everything before) |
+| swapped_word_counts | 25, 26 (10 vs 15, 15 vs 10) | none | — | model (passed before) |
+| conflicting_word_counts | none | 25 ([14, 15]) | unknown | judge/human |
+| unbound_word_counts | none | 25, 26 | unknown | judge/human |
+
+B4 result classes: pass (bound number equals the reference; complete row multiset), fail
+(bound number differs; missing, extra or duplicated business rows named), cannot_assess
+(no bound number or conflicting numbers; unmapped field; unrecalculated formula) — never a
+pass by coincidence of numbers, never a fail from layout.
+
+B5 through the real converter (`recalc-docker/results.json`): formula workbook input
+`98d53388…d30b` → output `808fe72b…a839`, `soffice_rc` 0, 123 formula cells filled, all
+deterministic items pass from recalculated values; damaged input `1a658db4…1037` →
+`status: failed`, `soffice_rc` 134 (LibreOffice aborted with a stack trace), produced only
+a lock and a temp file, no values, fresh scratch directory; valid input again → ok with the
+same recalculated values (output bytes differ between conversions, so output hashes are
+recorded, not compared); the three input files' hashes are unchanged. The pre-review's
+probe had seen LibreOffice exit 0 on a damaged input; both exits are now failures.
+
+B6 stop conditions (ledger-derived, persisted): remaining budget below the next
+reservation; ceiling reached; the same engineering failure class twice (returned error logs
+count); a settlement above 2× its reservation; per-task cost above 2× its estimate; unknown
+actual cost pending review; a recorded stop. Regression evidence: three returned error logs
+→ two starts, the third refused with the class named, ledger `[reservation, settlement,
+engineering_failure] × 2` and nothing added by the refusal, a restart still refuses and the
+six original events are byte-identical; a 5 USD settlement on a 2 USD estimate → stop
+recorded, next start and post-restart start refused; unpriced usage → settled at the 5 USD
+reservation, flagged, next start refused until `clear_review`, then a priced start
+settles at 0.002 USD; a damaged event type or a malformed/orphan event → `LedgerCorrupt`
+on load; a repeat reservation with another estimate or binding → `LedgerConflict`.
+
+### Verification classes (I8)
+
+- Real Inspect / Docker chain with the mock model: I5 (compose, 15 checks), B5 (LibreOffice
+  conversion, 12 checks), and the unchanged Stage 2 / Stage 3b scenario suites.
+- Synthetic (fake logs, fake converter, fixtures, spawned processes): B1, B2, B3, B4, B6,
+  I1, I2, I4, I6, I7 ledger arithmetic.
+- Static (values transcribed from the pages queried 2026-10-30, not re-queried): I7 price
+  tiers and usage-field mappings in `config.json`.
+- Unverified until the pilot: a real judge's compliance with the batch protocol; the real
+  providers' usage fields as Inspect populates them (cache-write split, reasoning tokens);
+  whether Opus 5.5 has a long-context price tier (not recorded in the 2026-10-30 query;
+  check before freeze); real per-task cost; output-capped detection (pre-freeze TODO).
+
+### Remaining Pilot A gates
+
+- Human approval of the final A/B ids, effort settings and judge; separate authorization for
+  every paid call (the launcher's real mode stays disabled).
+- Output-capped detection (pre-freeze TODO); `--model` form validation (Important).
+- Judge: real response-format check on the first batch before any verdict is used;
+  agreement on the pilot task is not available (I3).
+- Docker tag-lookup misfire (see Known issues): run the launcher pre-flight immediately
+  before each start; a `docker run --rm <image> true` warm-up resolved the misfire here
+  but is not implemented as a launcher step (would need approval).
+- Concurrency stays at 1 until the acceptance conditions under I4 are met.
+
+Files changed in this round: `grading/checks_1137e2bb.py` (rewritten), `grading/grade.py`,
+`grading/judge.py`, `grading/extract.py`, `grading/review.py`, `grading/tests/test_grading_chain.py`,
+new `grading/tests/test_layout_regressions.py`, new `grading/tests/regress_recalc_docker.py`,
+`harness/budget.py` (rewritten, version 2), `harness/launcher.py`, `harness/compose.yaml`,
+`harness/tests/run_isolated.sh` (passes the regression table path only),
+`harness/tests/test_budget_unit.py`, new `harness/tests/test_launcher_regressions.py`, new
+`harness/tests/regress_compose_local.py`, `scripts/list_provider_models.py`, `config.json`
+(I7 tiers, closed B1 gap, budget-protection notes), `PLAN.md`, this file. Nothing was
+committed.
+
+## Final-review remediation (2026-10-31; B2, B3, B4, B6, I6–I8, Docker image ID; no model, judge or paid call)
+
+Scope and boundary as in the previous round: every finding was first reproduced from the
+probe evidence and scripts of `logs/pilot-final-review-ogcsjzyp/` (kept unchanged, 20
+files), then fixed with a counter-example regression. Only the listed items changed; no
+rubric, policy or other-task change; no real model, judge or provider call; the project
+`.env` was not read; all Inspect regressions ran through `harness/tests/run_isolated.sh`;
+new logs are under `logs/pilot-final-remediation-20261031T032654Z/`; the 213 pre-existing
+`logs/stage2_fix` files are unchanged (44 added by the rerun); no container left behind;
+the image, its tag and the daemon were not modified. Nothing is committed.
+
+### Fixes
+
+- **B2 — no human override of a terminal eval error.** `grading/grade.py` `join_log` and
+  `grade_run` no longer take an exclusion record: `EvalLog.error`, or eval status `error`
+  without a sample error, blocks grading (`gate: log_join_mismatch`, `gate_reason`), with the
+  original error kept redacted (`log_join.eval_error_type`, `eval_error_message`). The
+  review's three-string override is rejected by the signature (`TypeError`). The block is
+  evaluated before the outcome policy, so the adjudication file for unknown collection items
+  cannot release a run with an eval-level or runtime error. A future exclusion mechanism, if
+  ever needed, is a separate approved design.
+- **B3 — unique column mapping.** `grading/checks_1137e2bb.py` `map_columns` collects every
+  candidate column per field (exact synonyms; containment and keyword rules only without an
+  exact candidate), withdraws a column exactly claimed by one field from the weak candidate
+  lists of others, and maps a field only when exactly one candidate remains that no other
+  field claims; otherwise the field is `ambiguous` with its candidates recorded. Column order
+  and agreement with the reference never decide. `locate_detail_sheet` locates by PO/SKU and
+  the input's (PO, SKU) pairs and accepts a sheet only when it carries at least half of them
+  (`MIN_MATCH_FRACTION`), so an error drill-down block is never taken for the detail sheet.
+- **B3 — explicit dependency sets.** `DEPENDENCIES` lists the inputs of every item
+  (`line_identity`, `row_set`, column names, `summary_sheet`, `docx`); `blocker()` returns
+  the first unmet dependency and `blocked()` writes a `cannot_assess` with the root field,
+  its status (ambiguous / unmapped / unrecalculated / unverifiable) and the candidates as
+  evidence, attribution `grader_extraction` or `grader_caused_recalculation`. Items 8 and 9
+  depend on both flag columns and the total: a formula failure in either column makes them
+  `cannot_assess` (the review had them FAIL on `None`), and C1 is `not_confirmed`, never FAIL,
+  for a grader-side cause. Items 8, 9, 10 and 15–17 are per-row / column-sum checks and no
+  longer depend on the row set.
+- **B3 — working-copy lifecycle.** `grading/extract.py`: `copy_originals` hashes every copy
+  against the original right after copying (`copy_verified`); `extract_all` runs the
+  structural `format_check` on the **original** (read-only), re-hashes the copy immediately
+  before parsing (`copy_verified_before_parse`), and classifies failures as
+  `original_corrupt`, `copy_fault` or `parser_fault` (exception type recorded); it records
+  `originals_unchanged` after all work. `recalculate_xlsx` records input path, output path,
+  input and output SHA-256, `converter_version` (LibreOffice 7.4.7.2 in the pinned image) and
+  the image ID. In the checks, only `original_corrupt` with verified transfer is
+  `model_caused_corrupt`; `copy_fault` / `parser_fault` give `cannot_assess` with attribution
+  `grader_caused_extraction` and item 1 passes (the original is a valid workbook);
+  `original_corrupt` with unverified transfer stays `unknown`.
+- **B4 — exact quantities.** `qty()` normalises quantities as decimals (`Decimal(str(x))`,
+  no truncation: 60 → "60", 60.5 → "60.5"); the business key uses it for quantity and case
+  pack; `row_completeness` keeps multiset counts and additionally pairs missing/extra rows
+  of the same PO and SKU as `changed` rows with the differing fields and the Excel rows.
+- **B6 — two usage sources.** `harness/budget.py` `reconcile_usage` compares the sample's
+  aggregated usage with the sum of its per-call usages per category (input excludes cached
+  tokens; output already includes reasoning tokens, which are never added again). The
+  launcher passes a `scope` (same sample, sample uuid, sources); without a confirmed scope the
+  per-call figures are not used for pricing. Equal sources → exact per-call tier pricing.
+  Conflicting sources → both raw views and the differences are stored
+  (`usage_reconciliation`, `raw_usage`, `raw_calls`), the unit is settled at the larger of the
+  per-call price and the conservative aggregated price, flagged `usage_sources_conflict`,
+  `estimated` and `manual_review_required`, which holds every further paid start until a
+  `review_cleared` event and survives restarts. Inspect's own per-call `total_cost` is taken
+  as a floor. The review's case (aggregated 1,000,000 input tokens vs one 1,000-token call,
+  Opus prices) settles at 4.000000 USD instead of 0.004000.
+- **I6 — redaction in grading records.** `harness/redact.py` now holds the one redaction
+  rule (launcher, ledger, grading, model-list script import it). `grade.py` redacts the
+  eval error message, the gate reasons and the mismatch texts, and strips the user name from
+  the log path (`/Users/<user>/…`) before writing `results.jsonl`.
+- **I7 — Inspect `ModelCost` checked against the source.** `compute_model_cost` (Inspect
+  0.3.286) = input × input + output × output + cache-write × `input_cache_write` (× 2.0/1.25
+  only when the Anthropic provider reports a 1h TTL) + cache-read × `input_cache_read`; no
+  long-context tier; no multiplier for OpenAI or Google. The Anthropic provider's default
+  `auto` mode starts at 5m and may escalate a sample to 1h writes after a cached-request gap
+  above the 5m TTL; `ModelUsage` does not show the TTL. Consequences, now implemented and
+  recorded in `config.json` (`pilot.budget_protection.inspect_cost_model_checked_2026_10_31`,
+  per-model `cache_write_basis`): the ModelCost passed to Inspect carries the default-TTL
+  rate (A 5, B 2.50, judge 2) — the previous 8 for A would have been multiplied again to
+  12.8 on a 1h sample; the ledger prices A's cache writes at 8 (conservative, flagged, with
+  Inspect's per-call `total_cost` as a floor), B's at 2.50 (the harness sets no
+  `prompt_cache_retention`, so the 30m rate matches the request; the 12h rate is recorded,
+  not charged), the judge's at the input-price stand-in. Long-context tiers remain
+  ledger-only: the 10 USD safety net under-prices such calls and never fires early; the
+  remaining ledger/Inspect difference (A's cache writes) affects reservations and stops only
+  and is never read as a capability difference. The earlier status wording "the Inspect
+  cost_limit safety net uses the same conservative rates" is corrected in place.
+- **I8 — attribution policy wording.** `PLAN.md` section 4 now states the three-class rule
+  (model-caused → not delivered and graded; harness-caused → run error; unknown → recorded
+  adjudication) in place of "unrecovered partial outcomes are harness collection errors";
+  the two Stage 2 sentences in this file that carried the old wording are marked superseded.
+  `preregistration.md` has no occurrence.
+- **Docker — image pinned by full local ID.** `harness/compose.yaml` `image:` is the full
+  ID `sha256:18cde712…ea9ee` (tag informational, `x-local: true` and `pull_policy: never`
+  kept); `config.json` `sandbox.image`/`image_id` carry the same ID, `sandbox.platform`
+  (linux/arm64), `compose_sha256`, scope notes and the rebuild procedure; `harness/image.py`
+  reads the ID for `grading/extract.py` (the LibreOffice conversion runs `docker run --rm
+  --pull=never <id>`) and the launcher; `launcher.preflight_sandbox` requires compose ==
+  config, queries the daemon by ID only (bounded retry), checks the platform and records the
+  tags; `main()` uses it. README section "Sandbox image" documents rebuild, ID lookup, the
+  files to update, and that a local ID is not a cross-machine reference (registry digest at
+  freeze). No warm-up is implemented; the tag was not modified.
+
+### Six review counter-examples, before → after
+
+| Review probe | Before (review evidence) | After (this round) |
+|---|---|---|
+| `three_strings_override` | graded, gate passed with `{"basis":"anything","by":"anyone","at":"not-a-date"}` | `TypeError` (no parameter); error log → `log_join_mismatch`, not graded |
+| `ambiguous_generic_first` / `ambiguous_alias_first` | generic-first: all pass; alias-first: 36 FAIL (`model_caused`), C1/C2 fail | both orders identical: 0 FAIL, 32 `cannot_assess` (3, 5–7, 18–20, 31–55) with `ordered_units` candidates `ordered units / units / units ordered`; 27 unrelated items graded (C2 pass) |
+| `parser_fault` / `copy_fault` | 52 FAIL, `model_caused_corrupt` | 0 FAIL; item 1 pass; 51 `cannot_assess`, `grader_caused_extraction`; error class `parser_fault` (RuntimeError) / `copy_fault`; original hash unchanged |
+| `price_formula_only_failed` / `case_formula_only_failed` | item 8 FAIL (and 9 in the case variant), C1 fail | 0 FAIL; price: `cannot_assess` 5, 8, 9, 10, 15, 18, 31–45; case: 6, 7, 8, 9, 10, 16, 19, 46–55; C1 not_confirmed |
+| `fractional_units` (60 → 60.5) | all pass (int truncation) | FAIL 5, 6, 7, 18, 19, 20; `changed` = PO1005 / SKU-0101, field `units`, "60" → "60.5", Excel row 2 |
+| `incomplete_call_usage` | 0.004000 USD, not estimated, no review, no stop | 4.000000 USD, `estimated`, `manual_review_required`, raw views and difference (999,000 input tokens) stored, next start refused, hold persists after restart |
+
+### Regressions (2026-10-31; `run_isolated.sh`, `INSPECT_DISABLE_MODEL_API=1`, mockllm, pinned image; logs under `logs/pilot-final-remediation-20261031T032654Z/`)
+
+| Suite | Module | Exit | Result |
+|---|---|---|---|
+| grading chain (B2 gate, no override, adjudication cannot release errors, I6 redaction, provenance in results) | `grading.tests.test_grading_chain` | 0 | 21/21 OK |
+| layout / provenance / row set / formulas (B3, B4, B5) | `grading.tests.test_layout_regressions` | 0 | 29/29 OK |
+| launcher and ledger (B1, B6 incl. usage conflict, I4 incl. delayed-create race, I6, I7 incl. Inspect cost model, Docker pre-flight) | `harness.tests.test_launcher_regressions` | 0 | 23/23 OK |
+| existing harness unit suites | eight `harness.tests.test_*_unit` modules | 0 | 101/101 OK |
+| compose pinned by ID (Inspect + Docker; tag lookup was failing during the run: `rc=1 No such image`, ID pre-flight succeeded) | `harness.tests.regress_compose_local` | 0 | 15/15 PASS |
+| LibreOffice conversion by image ID (valid formula workbook → graded; damaged → `soffice_rc` 134, no values; valid again → ok; hashes unchanged) | `grading.tests.regress_recalc_docker` | 0 | 14/14 PASS |
+| Stage 2 Inspect scenarios | `harness.tests.regress_inspect` | 0 | 62/62 |
+| close-out gate | `harness.tests.regress_closeout` | 0 | 92/92 |
+| execution limits | `harness.tests.regress_limits` | 0 | 74/74, 0 unverified |
+| Inspect cost limit | `harness.tests.regress_cost_limit` | 0 | 14/14 |
+| image tools | `harness.tests.regress_tools` | 0 | 8/8 |
+
+First-attempt failures during the round (fixed, logs overwritten within this round's own
+directory only): a `UnboundLocalError` in the new recalculation record; the ambiguity
+evidence was nested under `blocked_by` (the root field is now surfaced); the damaged-copy
+probe was classified as a parser fault because the copier verified before damaging (the
+copy is now re-hashed immediately before parsing); the delayed-create test asserted an
+unordered snapshot (relaxed to the final ledger state); a tier test called `settle`
+without a scope; the PO/SKU-unrecognised variant let the summary drill-down block pass as
+the detail sheet (the half-of-pairs acceptance threshold was added).
+
+### Long-term regression inventory (Codex findings → in-repository tests)
+
+| Finding | Test |
+|---|---|
+| B2 override / terminal error (rounds 2 and 3) | `test_grading_chain.test_eval_level_error_blocks_grading_and_no_override_parameter_exists`, `…cannot_release_an_eval_or_runtime_error` |
+| B3 synonym conflict, column order (round 3) | `test_layout_regressions.test_synonym_conflict_is_ambiguous_in_either_column_order`, `test_map_columns_requires_a_unique_mapping` |
+| B3 parser fault, working-copy damage (round 3) | `test_parser_exception_on_a_valid_original_is_grader_side`, `test_damaged_working_copy_is_grader_side_and_the_original_is_untouched` |
+| B3 mixed formula dependencies (round 3), all-formula failure (round 2) | `test_single_formula_column_failure_propagates_to_items_8_and_9_without_fail`, `test_formula_workbook_with_failed_recalculation_is_cannot_assess_not_fail` |
+| B4 60 → 60.5, multiset duplicates/missing (rounds 2 and 3) | `test_fractional_quantity_is_a_changed_row`, `test_quantity_normalisation_is_lossless`, `test_duplicate_plus_missing_row_fails_with_both_named`, `test_duplicated_zero_error_row_is_an_extra_row_failure`, `test_reordered_rows_are_not_a_failure` |
+| B5 stale conversion result (round 2) | `RecalculationPathTests` (3 tests) and `regress_recalc_docker` |
+| B6 usage conflict, hold, restart (round 3); returned errors, 2× stop, unknown price (round 2) | `test_launcher_regressions.test_aggregated_and_per_call_usage_conflict_settles_conservatively_and_holds`, `…outside_the_sample_scope…`, `…total_cost_is_a_floor`, `EngineeringFailureStopTests` |
+| I4 two-process first initialisation (rounds 2 and 3) | `test_delayed_first_creation_is_not_overwritten_by_a_second_process`, `test_concurrent_initialisation_and_reservation_across_processes` |
+| Docker: ID when the tag fails, missing image → no pull (round 3) | `regress_compose_local` (tag state recorded), `SandboxPreflightTests` (fake daemon), `test_repository_compose_config_and_converter_agree_on_the_image_id` |
+
+### Still unverified before Pilot A
+
+The real providers' usage fields as Inspect populates them (cache-write totals, TTL
+escalation events, reasoning tokens); whether Opus 5.5 has a long-context price tier;
+the real judge's compliance with the batch protocol; the real per-task cost; output-capped
+detection (pre-freeze TODO); `--model` form validation; Inspect's float `timeout`
+acceptance versus the launcher's integer-only validation (noted by the review, not in this
+round's scope). Gates unchanged otherwise: human approval of ids/effort/judge, separate
+paid authorization, concurrency 1, no warm-up for the tag misfire (the pin by ID removes
+the dependency on the tag).
+
+## Close-out review remediation (2026-10-31; extraction pipeline, launcher single-sample contract, status enum, YAML pre-flight; no model, judge or paid call)
+
+Scope and boundary as before: every finding was reproduced from the probes in
+`logs/pilot-closeout-review-wzwtf89y/` (22 files, unchanged) and their scripts, then fixed with
+regressions that assert specific criteria, attribution and evidence fields. No rubric or policy
+change, no other task, no real provider or judge, the project `.env` was not read, every Inspect
+regression ran through `run_isolated.sh`, new logs are under
+`logs/pilot-closeout-remediation-20261031T065912Z/`, the 257 pre-existing `logs/stage2_fix` files
+are unchanged (44 added), no container left, image and tag untouched. Nothing is committed.
+
+### Extraction layer rebuilt as a pipeline (`grading/checks_1137e2bb.py`)
+
+Stages and the intermediate result each returns (all cell reads go through `read_value`,
+statuses `ok` / `empty` / `formula_unrecalculated` / `error_value`):
+
+| Stage | Output and statuses |
+|---|---|
+| `identify_tables` | `{status: ok / not_found / ambiguous, detail: {sheet, header_row, mapping, structural_score, source_fields_present, added_fields_present, match_fraction}, candidates}`. Identity comes from the header structure (PO, SKU and at least two further source fields); `MIN_MATCH_FRACTION` only disambiguates several candidates with equal structural score; a unique candidate is accepted at any coverage. |
+| `map_columns` | `{cols, method, ambiguous: {field: [candidates]}, field_status: {field: ok / ambiguous / unmapped / confirmed_missing}, unmapped_headers}`. `confirmed_missing` only when no unrecognised header remains in the row; otherwise `unmapped`. |
+| `parse_rows` | per row `{excel_row, class: identified / unidentified / no_id, reason, ids: {po, sku: {raw, norm, status: ok / unparseable / empty, rules}}, units: {status, value (exact decimal)}, cells, identity}`, plus `collisions` (two rows whose original (PO, SKU) strings differ but whose normalised row identity coincides: originals, normalised value, rows), `id_variants` (the same id written in several forms across lines), `id_normalisation` (original → normalised, rules: strip_outer_spaces / remove_inner_spaces / uppercase / number_leading_zeros / separator). |
+| `evaluate_dependencies` | per field `{status: ok / ambiguous / unmapped / confirmed_missing / grader_error (kind unrecalculated, cells, recalc) / confirmed_invalid (error_cells) / unknown (uninterpretable values)}`; `line_identity` (ok / ambiguous / unmapped / confirmed_missing / collision); `row_set` (`status` ok / partial / collision / blocked, identified U-free multiset vs input: `missing_count` M, `unidentified_rows` U with reasons, `confirmed_missing_lower_bound` = max(0, M − U), `missing_identity_certain`, `extra`, `duplicates`, `changed`, `unidentified_grader_side`). |
+| checks | per item a `_Decision` collects every violation and every unreliable input (no first-blocker short circuit): any confirmed violation → FAIL (even with other inputs unassessable); otherwise any unreliable required input → cannot_assess with attribution from the blocking kind (`grader_extraction` for ambiguous/unmapped, `grader_caused_recalculation` for unrecalculated formulas, `unknown` for uninterpretable values, collisions and unidentified rows); otherwise PASS. Each grade line carries `dependencies`, `fail_on_own` and the evidence lists `violations` / `unassessable`. |
+
+`DEPENDENCIES` (inputs; which confirmed states fail the item on their own):
+
+| Items | Inputs | Fails on its own |
+|---|---|---|
+| 3 | the seven source columns incl. Ship-to (presence) | any confirmed_missing |
+| 4 | price_flag, case_flag, total, summary_text (presence) | any confirmed_missing |
+| 5 / 6 / 7 | line_identity, row_set, price_flag (5) or case_flag (6, 7) | flag column confirmed_missing or confirmed_invalid; a confirmed row-set defect (missing lower bound > 0, extra or changed rows); a reliable wrong flag on an identified row |
+| 8 | price_flag, case_flag, total (every row) | any of the three confirmed_missing or confirmed_invalid; a row with reliable values where total ≠ price + case |
+| 9 | price_flag, case_flag | confirmed_missing or confirmed_invalid; a reliable non-binary or blank flag |
+| 10 | the four added columns (values) | confirmed_invalid (error values); confirmed_missing is not blocking |
+| 12 / 14 / 22 / 56–62 | summary sheet | no other sheet (confirmed absent) |
+| 13 | summary sheet, its three measures | a measure confirmed missing (no unrecognised header on the summary row) |
+| 15 / 16 / 17 | summary sheet, measure, detail column sum over every row | detail column confirmed_missing / confirmed_invalid, measure confirmed missing; reliable sums that differ |
+| 18 / 19 / 20 | line_identity, row_set, column | column confirmed_missing / confirmed_invalid; confirmed row-set defect; complete reliable sum ≠ reference |
+| 21 | case_missing (presence) | confirmed_missing (A-21) |
+| 31–45 / 46–55 | line_identity, price_flag / case_flag | flag column confirmed_missing / confirmed_invalid; the line absent while no unidentified row remains; a reliable flag ≠ 1 |
+| 2, 25, 26 | docx | absent |
+
+Error attribution follows the evidence (`grading/extract.py`): `format_check` validates the
+original independently of the parser (zip integrity, `[Content_Types].xml`, `xl/workbook.xml`,
+every XML part parsed with the standard library) and classifies `error_kind` as `zip_error` /
+`missing_part` / `xml_error` (structural → `original_corrupt`: model-caused when the transfer is
+verified, unknown otherwise), `resource_error` (MemoryError, I/O → `grader_error`), `parser_error`
+(a parser failed on a structurally valid file → `parser_undetermined`, cannot_assess with the
+reason kept, attribution unknown); a structural exception raised later in `extract_xlsx` is
+still `original_corrupt`; a damaged working copy is `copy_fault` (grader).
+
+### Other fixes
+
+- `harness/launcher.py` `run_sample`: single-sample contract — a returned log with ≠ 1 samples is
+  never settled from `samples[0]`; the reservation stays open, every sample's usage is recorded
+  (`all_sample_usage`), the unit is `manual_review_required`, a stop event blocks further paid
+  starts and survives restarts (`sample_cardinality` record).
+- `grading/grade.py` `join_log`: `log.status` is validated against Inspect's `EvalStatus`
+  literal; a value outside it is recorded as `invalid_status` with a redacted repr in the
+  mismatch text and never echoed (the review's marker reached `results.jsonl` through
+  `log_status`).
+- `harness/image.py` `compose_image` parses the compose YAML (`yaml.safe_load`) instead of a
+  regular expression, so a quoted image id is accepted; `launcher.preflight_sandbox` requires
+  `sandbox.image == sandbox.image_id`, a `sandbox.platform` with non-empty `os` and
+  `architecture` strings, and the daemon's platform to match.
+- Long-term regressions corrected: `regress_recalc_docker` now overwrites the same input path
+  (same parent work directory) with damaged bytes after a valid conversion; the launcher suite
+  checks `run_outcome.json` and the collected deliverable hashes across the error, 2×-cost and
+  two-sample stop paths; the usage-conflict test uses the review's 1 USD estimate and asserts
+  that `clear_review` lifts the review hold while the 2× rule still stops; the duplicate/missing
+  tests document that items 8 and 9 are per-row checks since round 2.
+
+### Review counter-examples, before → after
+
+| Probe | Before (review evidence) | After |
+|---|---|---|
+| `missing_rows_keep_5/18/19/20` | 51 cannot_assess (coverage threshold rejected the only table) | identity ok; 36 / 23 / 22 / 21 confirmed missing; row-set items, absent named lines and (no other sheet) the summary items FAIL, missing rows listed |
+| `threshold_49/50/51` (100-line synthetic source) | 49 % → extraction_failed | identity ok at every coverage; item 5 FAIL with lower bound 51 / 50 / 49 |
+| `format_all_*` (lower, zero padding, inner spaces) / `format_one_*` | 51 cannot_assess / FAIL 5, 6, 7, 18–20 (one row lost) | all PASS; normalisation recorded per row; no collision |
+| `new_price_flag_ambiguity` (second price-flag candidate with `#VALUE!`) | item 10 pass | item 10 cannot_assess (`grader_extraction`), the candidate column is never read; 4, 5, 8, 9, 15, 18, 31–45 cannot_assess |
+| `new_formula_and_missing_column` (price formulas unrecalculated + case column deleted) | 35 cannot_assess incl. item 4 | item 4 FAIL (confirmed missing column; the price input is presence-only); 6, 7, 8, 9, 16, 19, 46–55 FAIL (confirmed_missing on its own); 5, 10, 15, 18, 31–45 cannot_assess (grader) |
+| `source_quantity_formula_failed` | FAIL 5, 6, 7, 18–20 as a changed row (model) | row unidentified for a grader-side reason: 5, 6, 7, 18, 19, 20 cannot_assess (`grader_caused_recalculation`); named lines in other rows pass |
+| `new_format_fault` (MemoryError in the structural check) | 52 FAIL `model_caused_corrupt` | 0 FAIL; item 1 pass (zip and XML parts valid); 51 cannot_assess `grader_caused_extraction` |
+| valid zip, malformed `sheet1.xml` | — (new) | `xml_error` → `original_corrupt` → 52 FAIL `model_caused_corrupt` with verified transfer; unknown without |
+| wrong but parseable PO / SKU | — (new) | extra + missing rows (bound 2): FAIL 5, 6, 7, 18–20 and the absent lines 32, 35, 48 |
+| unidentified rows U = 2, missing M = 3 / U = 1, M = 1 | — (new) | bound 1 → FAIL (model) / bound 0 → cannot_assess (unknown), unidentified rows listed with reasons |
+| identity collision (`PO1005/SKU-0101/60` also written `po1005/sku-0101`) | — (new) | collision recorded (originals, identity, rows 2 and 43); identity items cannot_assess (unknown); per-row items 8, 9 still graded |
+| `Case Packaging Validation` | — (new) | `unmapped` → cannot_assess 4, 6–10, 16, 19, 46–55 (`grader_extraction`); deleted column → `confirmed_missing` → FAIL |
+| recalculated `#VALUE!` in a flag cell | — (new) | `confirmed_invalid` → FAIL 5, 8, 9, 10, 15, 18, 31–45 (`model_caused`) |
+| `new_two_samples` | settled 0.004 USD from `samples[0]` | no settlement, reservation 3 USD kept open, both samples' usage recorded, stop + manual review, next start refused, state kept after restart |
+| `redaction_mismatch` (marker as `log.status`) | marker in `log_status` | `invalid_status`, marker count 0 |
+| `preflight_quoted_image` / `missing_platform` / `image_alias_mismatch` | LauncherError / accepted / accepted | accepted / LauncherError / LauncherError |
+| `original_conflict` 1 USD estimate (exact-old-stop) | — | after `clear_review` the 2× stop still applies (asserted) |
+
+The 29 earlier layout cases are unchanged except `parser_fault`: a parser exception on a
+structurally valid file is now `parser_undetermined` with attribution `unknown` (reason kept)
+instead of `grader_caused_extraction`, per the review's attribution semantics (a resource
+exception stays grader-caused: `format_memory_error`). Twenty-two cases were added
+(`layout_table.json`: 49 variants).
+
+### Regressions (2026-10-31; `run_isolated.sh`, `INSPECT_DISABLE_MODEL_API=1`, mockllm, pinned image; logs under `logs/pilot-closeout-remediation-20261031T065912Z/`)
+
+| Suite | Module | Exit | Result |
+|---|---|---|---|
+| layout / pipeline semantics | `grading.tests.test_layout_regressions` | 0 | 41/41 OK |
+| grading chain (gate, no override, adjudication, redaction incl. invalid status) | `grading.tests.test_grading_chain` | 0 | 21/21 OK |
+| launcher and ledger (dispatch, stops, usage conflict 1 USD, two samples, outcome hashes, concurrency, redaction, tiers, YAML pre-flight) | `harness.tests.test_launcher_regressions` | 0 | 27/27 OK |
+| existing harness unit suites | eight `harness.tests.test_*_unit` modules | 0 | 101/101 OK |
+| compose pinned by ID (tag lookup failing during the run, ID pre-flight ok) | `harness.tests.regress_compose_local` | 0 | 15/15 PASS |
+| LibreOffice conversion incl. same-path valid → damaged | `grading.tests.regress_recalc_docker` | 0 | 16/16 PASS |
+| Stage 2 Inspect scenarios / close-out / limits / cost limit / tools | `regress_inspect`, `regress_closeout`, `regress_limits`, `regress_cost_limit`, `regress_tools` | 0 | 62/62, 92/92, 74/74, 14/14, 8/8 |
+
+First-attempt failures in this round (all test-expectation updates to the new evidence shapes,
+plus one code fix: normalisation rules were recorded for ids whose value did not change) are in
+the round's `layout_regressions.log` history; no behaviour was weakened to pass a test.
+
+### Still unverified before Pilot A
+
+Unchanged from the previous section (real provider usage fields, judge protocol compliance,
+Opus 5.5 long-context tier, real cost, output-capped detection, `--model` form validation,
+Inspect float timeouts). The pipeline semantics are exercised on synthetic fixtures only; the
+first real deliverable will be graded with the human review reading every `cannot_assess`
+reason.
+
+## Extraction-review remediation (2026-10-31; R1–R6, XML validation cap, R4 safe exit, PENDING scope question; no model, judge or paid call)
+
+Evidence reviewed first: `logs/extraction-review-0r3d__40/` (70 files, hashes unchanged against
+its `final-audit.json` after this round) and the probe code outside the repository
+(`/private/tmp/extraction-review-0r3d__40/work/`). Every counter-example was reproduced on the
+unchanged code before any fix (`logs/extraction-remediation-20261031T193444Z/probe-summary.json`
+holds the after-state of 34 probes; the before-state is Codex's `independent-summary.json`,
+`additional-summary.json` and `followup-summary.json`). Boundary kept: every active test through
+`harness/tests/run_isolated.sh` (`env -i`, external cwd without an ancestor `.env`,
+`INSPECT_DISABLE_MODEL_API=1`, mockllm); the project `.env` was never read; no provider or
+judge call; probe code in the session scratch directory; the review directory untouched; own
+containers cleaned (0 running before and after); image, tags and existing containers untouched.
+
+### Fixes (file references are to the working tree of 2026-10-31)
+
+| Item | Change | Where |
+|---|---|---|
+| R1 required numeric cells | `numeric_cell` / `flag_cell` classify every read cell: ok, empty, formula_unrecalculated, error_value, non_numeric, non_finite (NaN, Infinity), non_binary. `_num` returns only finite numbers. A reliably read cell that is not what the rubric requires is a confirmed invalid value → violation of every item that needs it (cell, row, original value recorded); only unreadable cells (unrecalculated formulas) are unreliable → cannot_assess. No comparison is skipped into a PASS: every row loop registers each cell it needs. Rule recorded in `preregistration.md` 2.4 ("Cell-value rule"); it replaces the earlier unwritten "blank flag reads as 0" for items 5/6/7/18/19 | `grading/checks_1137e2bb.py` `numeric_cell` l.236, `flag_cell` l.253, `_num` l.172, `_Decision.cell` l.793, row loops in `run_checks` l.855–1220 |
+| R2 formula state of source fields and summary cells | `row_set_status` holds identified rows whose business cells (entered, expected, uom, case pack) are unrecalculated by identity against an input line: not missing, not changed, not zero; `verified_rows` / `held_rows` / `held_by_identity` reported; the row set is `partial` for a grader-side reason. `locate_summary_sheet` reads every label and measure cell through `read_value`; items 15–17 and 56–62 register the summary cell with its status (unrecalculated → grader_error unassessable; blank / NaN / error → confirmed invalid; absent SKU row → violation unless labels are unresolved formulas). Item 22 is cannot_assess when the totals are unreadable and the sheet is not sortable | `row_set_status` l.553, `locate_summary_sheet` l.698, `run_checks` items 15–17 and 56–62 |
+| R3 row-precise dependencies | `column_record` keeps BOTH lists for every mapped column: `invalid_cells` (kind, value) and `unreliable_cells`; `status` summarises but never replaces them. `_apply_column_dependencies` applies mapping-level statuses to every item and column-wide value lists only to items without a row loop (item 10, `column_values`, `invalid_kinds=("error_value",)`); items 5–9, 15–20 register every row's cell themselves; items 31–55 (`row_scoped`) read only their own row and never a column status. `_Decision` keeps `violations` and `unassessable` side by side; a confirmed violation decides FAIL and the unassessable inputs stay in the evidence | `column_record` l.625, `evaluate_dependencies` l.671, `_apply_column_dependencies` l.814, `DEPENDENCIES` l.105 (`row_scoped`, `column_values`, `invalid_kinds`) |
+| R5 id normalisation and reference entities | `reference_ids` normalises the reference ids; two distinct reference originals with one normalised id are a reference collision (originals, normalised id, entities with their lines, reference rows, reason). `parse_rows` resolves every deliverable id to its reference entity: a legal variant is that entity (never a collision, recorded under `id_variants` / `id_normalisation`); an id matching two entities is `ambiguous_entity` (row unidentified, listed under `collision_affected_rows`); an id matching none keeps its normalised form (a parsed-but-wrong id → extra row). `line_identity` = collision blocks the row set; named lines are cannot_assess only when their own PO or SKU collides. Attribution of a reference collision: grader_extraction. The real reference has no collision (Codex audit: 10 PO, 16 SKU originals) | `reference_ids` l.445, `parse_rows` l.465, `evaluate_dependencies` l.671, `_apply_column_dependencies` l.814, named lines in `run_checks` |
+| R6 single Task / EvalLog / sample | Before any call: `run_sample` refuses anything but one Task object (list, tuple, set, None, str), with a `refused` record and no stop check, reservation or eval. After the call: the returned list must be exactly one EvalLog holding exactly one sample; otherwise no settlement, every log (status, location, task, sample uuids) and every sample's usage recorded, reservation kept open, `manual_review_required`, engineering stop recorded (persists across restarts), `sample_cardinality` record | `harness/launcher.py` l.372–377 (pre-call), l.393–412 (post-call) |
+| XML validation cap | An XML part above `XML_PART_LIMIT` is `error_kind: resource_limit` (part name, bytes, limit, file bytes recorded), never `xml_error`; a genuinely malformed part still wins with the over-limit parts recorded next to it. `extract_all` maps `resource_limit` to `error_class: grader_error` (`exception_type: XmlPartLimit`); the checks give item 1 and the workbook items cannot_assess with `grader_caused_extraction` and carry `resource_limit` in the evidence | `grading/extract.py` `format_check` l.128–180, `extract_all` l.348–353; `run_checks` unreadable branch |
+| R4 complementary detail sheets (safe exit, no merge) | `identify_tables`: among equal structures a candidate covering every input pair the candidates jointly cover is preferred (a flagged-lines subset or a drill-down copy never displaces the full table); complementary candidates are a `split`: primary = largest coverage, every candidate with `coverage` (`covered_input_pairs`, `only_in_this_sheet`) and the reason recorded. `run_checks` on a split: row_set = `split_tables` → 5–7, 18–20 cannot_assess (grader_extraction); 15–17 cannot_assess (no column sum across sheets); items 8, 9, 10 run over every candidate's rows (cells prefixed `sheet!cell`); named lines are looked up in every candidate (absent everywhere with no unidentified row → confirmed absent); a confirmed error or wrong flag in any sheet still FAILs its item; the summary search excludes every detail candidate | `identify_tables` l.386, `merge_column_records` l.655, `run_checks` split branch |
+| rows without source data | A row with no source-field cell at all (notes, footers) is class `no_id` and is not read by the per-row items; a row with any source data but no resolvable identity stays `unidentified` and counts in U | `parse_rows` l.465 |
+
+### Counter-examples, before → after (Codex probe name; `logs/extraction-remediation-20261031T193444Z/<name>.json`)
+
+| Probe | Before (Codex evidence) | After | Attribution |
+|---|---|---|---|
+| new_blank_total / blank_nonzero (Total Errors blank on PO1002/SKU-0103/120) | 0 FAIL, 8/17/20 PASS, C1 and C2 pass | 8, 17, 20 FAIL (`empty` at L5, value None); C1, C2 fail | model_caused |
+| new_nonfinite_total / nan_nonzero ("NaN"), plus "Infinity" and "n/a" | 0 FAIL | 8, 17, 20 FAIL (`non_finite` / `non_numeric` at L5) | model_caused |
+| blank total on a zero-error row (L2) | — | 8, 17, 20 FAIL (`empty` at L2) | model_caused |
+| blank or text price flag on a zero-error row (I2) | 5/6/7/18/19 read blank as 0 (9 FAIL only) | 5, 8, 9, 15, 18 FAIL; 10 pass (not an error value); 31–55 pass | model_caused |
+| new_source_price_formula / new_source_case_formula (D2 or G2 `=value`, conversion failed) | 5, 6, 7, 18, 19, 20 FAIL as "changed row" | 5, 6, 7, 18, 19, 20 cannot_assess; row 2 held by identity (`held_by_identity` D2 / G2); 8, 9, 10, 15–17, 31–55 pass | grader_caused_recalculation |
+| new_summary_formulas_failed (every summary measure `=value`, conversion failed) | 56–62 FAIL "total unreadable"; 15–17 PASS with zero comparisons | 15, 16, 17, 56–62 cannot_assess, cell named (`Summary!D3` …, grand total `Summary!B18`); nothing FAILs | grader_caused_recalculation |
+| summary grand-total price cell unrecalculated + detail I5 `#VALUE!` (conjunction) | — | 15 FAIL on I5 with the summary cell kept as unassessable; 5, 8, 9, 10, 18 FAIL; 32 FAIL (its own cell I5); 31 pass | model_caused + grader side recorded |
+| new_unrelated_price_error (I2 `#VALUE!`, no named line) | 31–45 FAIL from the column status | 5, 8, 9, 10, 15, 18 FAIL; 31–45 PASS from their own rows | model_caused |
+| new_error_and_unrecalculated (I2 `#VALUE!`, I3 `=0` unrecalculated) | 10 cannot_assess (column status grader_error took precedence) | 10 FAIL (I2) with I3 recorded unassessable; column record `invalid_cells` [I2], `unreliable_cells` [I3]; 31–45 pass | model_caused + grader side recorded |
+| same_entity_variant_duplicate (row 2 duplicated with lowercase PO/SKU) | collision → 5–7, 18–20, 31–55 cannot_assess | duplicate row: 5, 6, 7, 18, 19, 20 FAIL (extra 1, duplicated 1); no collision; variants recorded; 31–55 pass | model_caused |
+| reference_collision_po (reference holds PO1005 and PO01005 as distinct entities) | 5–7, 18–20 FAIL (second entity's row treated as extra) | 5, 6, 7, 18, 19, 20 and 37, 38, 39, 50 cannot_assess; collision recorded with originals, normalised id, entities, rows; 8, 9, 10, 12–17 and the other named lines pass | grader_extraction |
+| reference_collision_sku (SKU-0101 vs SKU-00101) | 5–7, 18–20 FAIL | 5, 6, 7, 18, 19, 20 cannot_assess; 31–55 pass | grader_extraction |
+| every PO/SKU lowercase | all pass | all pass (legal variants of the same entities) | — |
+| detail_two_sheets (21 + 20 rows over two sheets) | 5–7, 15–20 and 10 named lines FAIL as missing | identify `split` with both candidates and coverage; 0 FAIL; 5, 6, 7, 15, 16, 17, 18, 19, 20 cannot_assess; 31–55 found in either sheet and pass; 8, 9, 10 over both sheets | grader_extraction |
+| split + `#VALUE!` in the second sheet | — | 5, 8, 9, 10, 15, 18 FAIL (`RawData continued!I3`) | model_caused |
+| split + wrong named flag in the second sheet | — | 5, 8, 45 FAIL | model_caused |
+| full table + flagged-lines subset sheet | — | status ok, full table chosen, all pass | — |
+| new_xml_limit (`XML_PART_LIMIT` = 10) | 52 FAIL incl. item 1, `model_caused_corrupt` | 0 FAIL; item 1 and the workbook items cannot_assess; `error_kind resource_limit`, `error_class grader_error`, parts, sizes, limit and file size recorded | grader_caused_extraction |
+| two_eval_logs (Codex `followup`, two EvalLogs with one executed sample each) | settled 0.004 USD from logs[0]; no stop; `all_sample_usage` None | no settlement; 2 logs / 2 samples recorded with 1,000 and 1,000,000 input tokens; reservation 3 USD open; stop recorded; next start refused; refusal kept after restart | — |
+| real two-task Inspect + mockllm replay (`launcher-contract/`) | Codex `real-scope.json`: settled 0.004 USD, stops [] | 11/11 checks: both `.eval` logs detected and persisted, both usages recorded, no settlement, reservation open, stop, manual review, next and post-restart starts refused, a task list refused before any call | — |
+| earlier-round probes (missing_rows_keep_5, threshold, M3_U*, format variants, price_ambiguity, formula_and_missing, quantity_formula, format_memory, case_column_missing, strange_plus_deleted, summary_drilldown, changed units, exact duplicate) | as in the close-out round | unchanged outcomes (`probe-summary.json`) | unchanged |
+
+### Test expectations changed (old → new, basis, scoring effect)
+
+| Test | Old expectation | New expectation | Basis | Scoring behaviour |
+|---|---|---|---|---|
+| `test_identity_collision_blocks_row_level_comparison` → `test_legal_id_variant_duplicate_is_a_duplicate_row_not_a_collision` | lowercase duplicate of row 2 is a collision; identity items cannot_assess | duplicate business row; 5, 6, 7, 18, 19, 20 FAIL; no collision; variants recorded; 31–55 pass | R5 (collision = two distinct reference entities); approved duplicate-row rule | cannot_assess → FAIL for this layout |
+| `test_recalculated_error_values_are_confirmed_invalid` | fails = {5, 8, 9, 10, 15, 18} ∪ 31–45 | fails = {5, 8, 9, 10, 15, 18}; 31–45 pass from their own rows | rubric 31–45 are per-PO/SKU checks (R3) | FAIL → PASS for 31–45 when the error sits in another row |
+| `test_single_formula_column_failure_propagates_to_items_8_and_9_without_fail` | `fail_on_own` = {missing, invalid, row_set} | plus `row_scoped`, `invalid_kinds` | contract fields added by R3 | none |
+| `test_more_than_one_sample_is_never_settled_from_the_first` | stop text "2 sample(s), expected exactly 1" | "1 EvalLog(s) with 2 sample(s) in total, expected exactly 1 and 1" | R6 wording (log count added) | none |
+
+New tests (expectations from the rubric text and the approved semantics, not from the output):
+layout suite `test_blank_and_non_finite_totals_are_confirmed_invalid_not_skipped`,
+`test_blank_or_text_flag_is_a_confirmed_invalid_value_for_every_item_that_reads_it`,
+`test_unrecalculated_source_price_or_case_pack_holds_the_row_by_identity`,
+`test_unrecalculated_summary_cells_are_grader_side_not_fail_and_not_pass`,
+`test_summary_cell_unassessable_plus_confirmed_detail_error_fails_with_both_recorded`,
+`test_error_value_in_an_unrelated_row_does_not_fail_the_named_lines`,
+`test_error_value_and_unrecalculated_formula_in_one_column_keep_both_records`,
+`test_reference_collision_makes_the_affected_identity_items_cannot_assess`,
+`test_whole_sheet_id_variants_resolve_to_the_reference_entities`,
+`test_detail_rows_split_over_two_sheets_are_not_reported_missing`,
+`test_full_table_plus_flagged_subset_sheet_selects_the_full_table`,
+`test_xml_part_above_the_validation_cap_is_a_grader_resource_limit`; launcher suite
+`test_two_eval_logs_are_never_settled_from_the_first`,
+`test_a_list_of_tasks_is_refused_before_any_call_or_reservation`; new module
+`harness/tests/regress_launcher_contract.py` (real Inspect eval, mockllm, two tasks).
+
+### PENDING adjudication registered (not in force) — superseded: APPROVED and applied 2026-10-31, see section "Approved adjudication applied"
+
+Question: which items carry the "all 41 lines" completeness of C1, and what exactly fails
+rubric 7 and 18–20 (text, necessary conditions, current FAIL conditions, proposed FAIL
+conditions, the duplicated-zero-error-row scenario, the C1 comparison and the false-PASS
+analysis are written under "PENDING — proposed adjudication" in `preregistration.md` 2.4).
+Items concerned: 7, 18, 19, 20 (and, as the proposed carriers of completeness, 5 and 6).
+Possible conflict reported, not adjudicated: the current implementation FAILs 18–20 for a
+duplicated zero-error row although the column sums equal 15 / 10 / 25 as the item text
+requires. Nothing in `DEPENDENCIES` or the tests was changed for this; the grader keeps the
+row-set rule on 5, 6, 7, 18, 19, 20 until the human decides. If approved, both models are
+re-graded with a new grader version.
+
+### Regressions (2026-10-31; `run_isolated.sh`, `INSPECT_DISABLE_MODEL_API=1`, mockllm, pinned image; logs under `logs/extraction-remediation-20261031T193444Z/`)
+
+| Suite | Module | Exit | Result |
+|---|---|---|---|
+| layout / pipeline semantics incl. R1–R5, R4, XML cap | `grading.tests.test_layout_regressions` | 0 | 53/53 OK (first run after the rewrite: 37/41, the four failures being the two Codex-flagged expectations and the `fail_on_own` shape; two new tests first assumed the grand-total row at B10, the fixture has 16 SKU rows → B18, assertion now reads the row) |
+| grading chain | `grading.tests.test_grading_chain` | 0 | 21/21 OK |
+| launcher and ledger incl. R6 | `harness.tests.test_launcher_regressions` | 0 | 29/29 OK (first run: 28/29, the stop-text wording) |
+| real Inspect + mockllm two-task replay | `harness.tests.regress_launcher_contract` | 0 | 11/11 PASS (`launcher-contract/results.json`, two `.eval` logs) |
+| existing harness unit suites | eight `harness.tests.test_*_unit` modules | 0 | 101/101 OK |
+| compose pinned by ID | `harness.tests.regress_compose_local` | 0 | 15/15 PASS (tag lookup resolved to the pinned ID during this run; evidence only) |
+| LibreOffice conversion incl. same-path valid → damaged | `grading.tests.regress_recalc_docker` | 0 | 16/16 PASS |
+| Stage 2 Inspect scenarios / close-out / limits / cost limit / tools | `regress_inspect`, `regress_closeout`, `regress_limits`, `regress_cost_limit`, `regress_tools` | 0 | 62/62, 92/92, 74/74, 14/14, 8/8 |
+
+`logs/stage2_fix`: 301 files before, 345 after, 0 changed, 0 removed. Review directory
+`logs/extraction-review-0r3d__40/`: 70 listed files, 0 changed. Credential-pattern scan of the
+new log directory: 0 files. Containers: 0 before and after. No weakening of any check to
+pass a test; the three code-level corrections during the round were test fixtures (openpyxl
+`cell(r, c, None)` is a no-op, replaced by `.value = None`) and the grand-total row.
+
+### Still unverified before Pilot A
+
+Unchanged from the previous section (real provider usage fields, judge protocol compliance,
+Opus 5.5 long-context tier, real cost, output-capped detection, `--model` form validation,
+Inspect float timeouts). New: the cell-value rule (blank flag = confirmed invalid for 5/6/7/
+18/19) and the PENDING scope question need the human's reading before the first real
+deliverable is graded; the split-table exit and the reference-collision path are exercised on
+synthetic fixtures only; the real-Inspect two-task replay prices mockllm with Opus data for
+the cost-limit check only (the real launcher refuses unpriced models).
+
+## Approved adjudication applied (2026-10-31; rubric 7, 18–20 scope; cell-value rule APPROVED; Pilot A request drafted; no model, judge or paid call)
+
+Plan stated before the change: two targeted edits in `grading/checks_1137e2bb.py`, test
+re-derivation, `preregistration.md`, this file, a new `docs/pilot_a_request.md`; direct consumers
+(`grade.py`, `review.py`, `judge.py`) read only verdict / evidence keys that did not change
+shape, confirmed through the grading-chain suite; no Docker, Inspect or LibreOffice operation.
+
+### Changes
+
+- `preregistration.md` 2.4: the cell-value rule (blank flag = confirmed invalid) marked
+  APPROVED 2026-10-31; the item 7 / 18–20 proposal marked APPROVED with the approved rule and
+  the amendment record (old rule, evidence, new rule, re-grading: no graded run exists).
+- `grading/checks_1137e2bb.py`, `DEPENDENCIES`: items 7, 18, 19, 20 no longer require
+  `row_set` and carry `row_set_violation: False` (7 keeps `line_identity` + `case_flag`;
+  18–20 require only their column). Items 18–20 branch of `run_checks`: the sum runs over
+  every readable cell of the column across all delivered business rows (identified and
+  unidentified, every candidate sheet), `rows_summed` recorded, compared directly with
+  15 / 10 / 25; an invalid cell is a violation, an unrecalculated cell is unassessable. The
+  row-set violation acts through items 5 and 6 only. No other function touched.
+- `grading/tests/test_layout_regressions.py`: `ROWSET_ITEMS` = {5, 6}; `IDENTITY_ITEMS` =
+  {3, 5, 6, 7} ∪ 31–55; eight assertions re-derived (duplicate+missing, duplicated zero-error
+  row, reference collision: 7 cannot_assess with the identity while 18–20 pass, held rows,
+  split tables: 18 FAILs when the price column sums to 14 across both sheets); new
+  `test_row_set_defects_act_through_items_5_and_6_only`.
+- `docs/pilot_a_request.md` created (draft request; nothing executed).
+
+### The four required regressions (`scope_*` variants; `logs/stage3b-closeout-20261031T202005Z/layout_table.json`)
+
+| Scenario | FAIL | PASS (asserted) | C1 |
+|---|---|---|---|
+| duplicated zero-error row (PO1005/SKU-0101/60) | 5, 6 | 7, 18, 19, 20 (sums 15 / 10 / 25 over 42 rows) | fail |
+| deleted price-only line (PO1001/SKU-0112/96) | 5, 6, 18, 20, plus 31 (its own named line) and 15, 17 (summary no longer reconciles with the detail column: 14 / 24) | 7, 19 | fail |
+| deleted case-only line (PO1003/SKU-0111/52) | 5, 6, 19, 20, plus 47 and 16, 17 | 7, 18 | fail |
+| deleted zero-error row (PO1005/SKU-0101/60) | 5, 6 | 7, 18, 19, 20 | fail |
+
+### Tests run (first execution captured; nothing rerun)
+
+| Command (through `harness/tests/run_isolated.sh`, `/usr/bin/time -p`) | Wall clock | Exit | Result |
+|---|---|---|---|
+| `unittest grading.tests.test_layout_regressions` | 3.76 s | 0 | 54/54 OK |
+| `unittest grading.tests.test_grading_chain` | 2.67 s | 0 | 21/21 OK |
+
+Not run, by the testing-tier rule: harness unit suites, launcher / budget suites, Inspect, Docker,
+LibreOffice and compose regressions (no change to those modules, the config, dependencies or
+the environment since their last green run in `logs/extraction-remediation-20261031T193444Z/`).
+
+### Open before Pilot A
+
+Pilot A request (`docs/pilot_a_request.md`) awaits approval: model A final approval, judge id,
+reservation amounts, real-launcher enabling (code change in `main()`), the stale
+`launcher_wiring` note in `config.json`, and `freeze-v1` before any formal run.
+
+## Stage 3b review fixes (2026-10-31; `logs/stage3b-review-js7f8gca/`; item 7 applicability, split-table overlap, Pilot A request; no model, judge or paid call)
+
+Plan stated first: two targeted edits in `grading/checks_1137e2bb.py` (the item 7 branch of the
+items 5–7 loop and the `DEPENDENCIES[7]` inputs; a `cross_sheet_overlap` helper used only in the
+split branch of items 18–20), two targeted tests, corrections to `docs/pilot_a_request.md`; no
+change to `launcher.py`, `budget.py`, `judge.py` or `config.json`; no Docker, Inspect or
+LibreOffice operation.
+
+### A. Item 7 — applicability before the flag
+
+Evidence: `review-results.json` `item7_case_blank`: J5 (case flag of the CASE line
+PO1002/SKU-0103/120) blank → item 7 FAILed. Rubric 7 covers lines whose UOM is not CASE or
+blank. Fix: in the items 5–7 loop, item 7 reads the row's own UOM cell first; a CASE line is
+skipped (items 6, 8, 9, 16, 19 still judge the invalid cell); an unreadable UOM makes the row
+unassessable; on a non-CASE line (including blank UOM) a blank, text or non-zero flag is a
+confirmed violation. `DEPENDENCIES[7]` requires `line_identity`, `uom`, `case_flag`
+(`fail_if_missing`: `case_flag` only; a missing UOM column is cannot_assess, item 3 carries it).
+Items 5 and 6 unchanged. Before → after on the Codex fixture: FAIL {6, 7, 8, 9, 16, 19} →
+FAIL {6, 8, 9, 16, 19}, item 7 PASS.
+
+### B. Items 18–20 — a repeated identity across split sheets is uncertainty, not a count
+
+Evidence: `review-results.json` `candidate_overlap`: 41 input rows over two sheets plus one
+price-error line (flags 1 / 0 / total 1) shown again in the second sheet → summed as 42 rows
+(16 / 10 / 26), items 18 and 20 FAILed as model-caused. Fix: `cross_sheet_overlap` records every
+business identity present in more than one candidate sheet (sheet, row, flag and total values;
+`extraction_status.dependencies.cross_sheet_overlap`, `detail_sheet.cross_sheet_overlap`). In the
+18–20 branch, per column: copies whose value is 0 cannot move the sum (the item stays
+reliable); otherwise both scopes are reported (all rows / one copy per repeated identity) and
+the item is cannot_assess with `split_overlap` (grader_extraction) — unless both scopes give a
+wrong total, which is a confirmed violation; a reliably invalid cell in the column is a
+violation regardless. No deduplication is presented as truth; no general merger added. Before →
+after on the Codex fixture: FAIL {18, 20} → cannot_assess {18, 20} (sums 16 / 15 recorded),
+19 PASS (10), 5, 6, 15, 16, 17 cannot_assess as before, 0 FAIL.
+
+### C. `docs/pilot_a_request.md` corrections
+
+Cost range recomputed from the stated assumptions: ≈ 2.1–11.2 USD (arithmetic shown; earlier
+≈ 1.5–11). Removed the claim that the 2× rule coincides with the 10 USD cost limit; stated that
+the 5 USD reservation, the 10 USD per-sample `cost_limit` and the 30 USD ceiling are harness
+accounting/stop controls that do not cap the provider's bill. Missing usage described as
+implemented: settled at max(priced part, reservation), flagged `estimated`, no
+`manual_review_required` and no hold (only unpriced or conflicting usage holds); a stricter
+missing-usage stop listed as a pre-pilot decision. Judge described as implemented:
+`grade_run` → `judge_units`, one call per unit (7 per run); batch helpers exist but are not
+wired; cost basis restated per call (≈ 0.08–0.14 USD per run, FORECAST); real protocol
+unverified; the 7 judge-only items are in the debug set and support no agreement claim.
+Stated that a paid pilot cannot run with the current code (`main()` not wired, no real judge
+callable). Document stays DRAFT with placeholders.
+
+### Tests (first execution captured; nothing rerun; `logs/stage3b-closeout2-20261031T203847Z/`)
+
+| Command (through `harness/tests/run_isolated.sh`, `/usr/bin/time -p`) | Wall clock | Exit | Result |
+|---|---|---|---|
+| `unittest grading.tests.test_layout_regressions` (+ `test_item_7_applies_only_to_non_case_lines_decided_from_the_row_uom`, `test_split_tables_with_a_repeated_identity_do_not_double_count_into_a_fail`) | 4.12 s | 0 | 56/56 OK |
+| `unittest grading.tests.test_grading_chain` | 2.43 s | 0 | 21/21 OK |
+
+Not run (unchanged modules, config and environment): harness unit, launcher/budget, Inspect,
+Docker, LibreOffice, compose regressions.
+
+### Open before Pilot A
+
+Model A final approval; judge id, real judge callable and protocol check; `main()` real-mode
+wiring; missing-usage stop decision; stale `launcher_wiring` note in `config.json`;
+`freeze-v1`.
+
+## Stage 3b close-out 2 fix (2026-10-31; `logs/stage3b-closeout2-review-07fvnged/`; overlap aggregation, Pilot A wording; no model, judge or paid call)
+
+Item 7 is CLOSED and untouched. One targeted edit in `grading/checks_1137e2bb.py`, items 18–20
+branch (around l.1100–1112): the inference "all-rows sum and one-copy-per-identity sum both differ
+from the reference → FAIL" is removed. With several repeated identities the two extremes do not
+bound the correct total (each repeat may need a different reading), so when a column's repeated
+rows contribute non-zero values the item is cannot_assess (`split_overlap`, grader_extraction) with
+the identities, their sheet/row occurrences, both candidate totals and the reference kept as
+evidence; when the repeated rows contribute 0 the reliable total still decides PASS/FAIL; a
+reliably invalid cell in the column still FAILs the item. `cross_sheet_overlap`, items 5, 6, 7 and
+the approved 18–20 semantics are unchanged; no merger or combinatorial solver added.
+
+New regression `test_multiple_overlaps_never_infer_a_fail_from_the_two_extreme_scopes`
+(two price-only lines repeated across the split sheets, one other price-only line deleted):
+price column 16 over all rows, 14 with one copy per identity, reference 15 → item 18 and item 20
+cannot_assess with both extremes recorded; item 19 PASS on its reliable total (10); the deleted
+line's own named item (44, PO1009/SKU-0103/120) FAILs as confirmed absent; 5, 6, 15–17
+cannot_assess under the split rule. Earlier overlap regressions kept and passing: single
+repeated price-error line → 18, 20 cannot_assess, 19 PASS; repeated zero-error line → 18–20
+PASS; overlap plus `#VALUE!` → 18 FAIL (not masked).
+
+`docs/pilot_a_request.md`: judge path stated as one call per judge-only criterion (7 per run),
+no wired batch (lines 15 and 107); returned-eval-error settlement stated per the actual
+`settle` branches (usage present → priced; no usage → max(priced, reservation) `estimated`,
+no hold; unpriced or conflicting usage → `manual_review_required` hold; raised exception →
+`estimated` at the reservation) with the paths that need human handling (line 62).
+
+### Tests (first execution captured; `logs/stage3b-closeout3-20261031T205035Z/`)
+
+| Command (through `harness/tests/run_isolated.sh`, `/usr/bin/time -p`) | Wall clock | Exit | Result |
+|---|---|---|---|
+| `unittest grading.tests.test_layout_regressions` | 4.37 s | 0 | 57/57 OK |
+| `unittest grading.tests.test_grading_chain` | 2.58 s | 0 | 21/21 OK |
+
+Not run (unchanged modules, config and environment): harness unit, launcher/budget, Inspect,
+Docker, LibreOffice, compose regressions.
+
+## Stage 3b grader close-out and checkpoint (2026-10-31)
+
+- Independent final review of the 1137e2bb deterministic grader: CLOSED. The last blocking item
+  (no FAIL inferred from the two extreme overlap scopes) was confirmed; `grading.tests.test_layout_regressions`
+  57/57 and `grading.tests.test_grading_chain` 21/21 pass. No known Pilot-blocking scoring defect.
+  Scoring-logic fixes and open-ended review of this grader stop here.
+- Known maintenance issue (recorded, not scheduled): the `DEPENDENCIES` declarations and the
+  rubric-specific scoring loops in `grading/checks_1137e2bb.py` are not fully unified; some
+  declaration fields are unused (`line_absent_fails`, `fail_if_invalid` for items with their
+  own row loop, `ATTRIBUTION["not_located"]`); the split-table handling of items 15–17
+  (always cannot_assess) and 18–20 (overlap-aware) differs in a conservative direction.
+- Decision: DEFER REFACTOR. No architecture cleanup is required before Pilot A/B.
+- After Pilot A/B and before the remaining task-specific graders are implemented, evaluate
+  briefly whether a shared scoring contract or declarative interface (applicable objects,
+  PASS/FAIL evidence, uncertainty propagation) would reduce errors and development time. This
+  is not a commitment to convert the whole 1137e2bb checker to table-driven logic. Other tasks
+  may use lightweight task-specific deterministic checks plus the evidence-grounded judge and
+  human review. Any refactor is justified only by actual task requirements or observed
+  failures, lands in separate commits, and preserves the existing scoring semantics.
+- Approved rubrics, grading implementations and tests are unchanged by this entry.
 
 ## Known issues and findings (material check)
 
@@ -1302,6 +2427,15 @@ Remaining before the first real-model pilot (gates, unchanged in substance):
 - `c357f0e2…`: gold has 75 cases, non-matching role/module labels, General-formatted
   date column; would fail rubric 4, 12, 13, 67. Template headers are in row 2.
 - `a45bc83b…`: inputs readable; renders checked; resources complete.
+- Docker Desktop 29.6.1 (containerd image store): on 2026-10-31 `docker image inspect
+  gdpval-sandbox:stage2` answered "No such image" for about two minutes and across several
+  calls while `docker image ls` listed the tag and inspect by image ID
+  (`18cde712cde1…`) succeeded; after a `docker run --rm gdpval-sandbox:stage2 true` by tag
+  (exit 0) the tag lookup resolved again. Fourth observation of the misfire, first time
+  seen to persist. Inspect's prebuilt verification uses exactly `docker image inspect
+  <image>` and raises `PrerequisiteError` before any container starts when it misfires
+  (fast fail, no cost, no eval log); the launcher pre-flight retries a bounded number of
+  times. Evidence: `logs/pilot-a-remediation-20261031T002107Z/compose_local_attempt1_daemon_tag_misfire.log`.
 - Toolchain requirements surfaced for the next stage: read xlsx drawing text boxes;
   parse `pieChart`/`pie3DChart` from chart XML; read pivot data-field aggregation
   attributes; normalise store ids; LibreOffice recalculation; PivotTable creation test;
@@ -1313,6 +2447,51 @@ Nothing. Waiting for the human's decisions listed under "Next stage".
 
 ## Decisions taken (date · what · commit)
 
+- 2026-10-31 · Close-out review remediation: 1137e2bb extraction layer rebuilt as the pipeline
+  identify_tables → map_columns → parse_rows → evaluate_dependencies → checks (table identity
+  from structure, coverage only disambiguates; confirmed_missing vs unmapped; unidentified rows
+  bound the confirmed missing count; evidence-based verdicts without first-blocker short
+  circuit; id normalisation with identity-level collisions; error attribution by evidence
+  incl. independent XML validation); launcher single-sample contract; EvalStatus validation;
+  YAML pre-flight with platform and alias checks; long-term regressions corrected. All suites
+  green · uncommitted
+- 2026-10-31 · Final-review remediation: B2 eval-error override removed (fail closed,
+  adjudication cannot release errors); B3 unique column mapping with explicit dependency
+  sets, working-copy lifecycle and grader-side fault classes; B4 exact decimal quantities
+  with changed-row reporting; B6 aggregated/per-call usage reconciliation with conservative
+  settlement and review hold; I6 redaction in grading records; I7 Inspect ModelCost on
+  default-TTL rates, ledger assumptions recorded; I8 PLAN attribution wording; sandbox
+  image pinned by full local ID in compose, config, converter and pre-flight. All suites
+  green (see the section's table) · uncommitted
+- 2026-10-31 · Pilot-A pre-review remediation: B1 launcher dispatches `max_tokens`,
+  `attempt_timeout` and `token_limit` (fail closed, before any ledger change); B2 eval-level
+  log errors block grading unless an auditable exclusion is recorded; B3/B4 deterministic
+  checks rewritten (schema with synonyms, extraction separated from verdict, transfer and
+  format-based attribution, row multiset, phrase-bound Word counts); B5 fresh-directory
+  recalculation with soffice exit status; B6 ledger v2 (schema-validated events, persisted
+  engineering failures and stops, unknown-cost hold, locked init, strict reservation
+  idempotence); I1 no overwrite of review records; I2 stub gate and batch protocol; I3/I8
+  disclosures and retractions; I4 process-level concurrency test; I5 `x-local` +
+  `pull_policy: never` with corrected semantics; I6 redaction of persisted error text; I7
+  price tiers. All suites green (see the section's table) · uncommitted
+- 2026-10-30 · Pilot A/B DRAFT configuration: A `claude-opus-5-5`, B `gpt-6.1-sol`, judge
+  `gemini-3.1-pro-preview` (ids and Inspect names recorded; launcher contract checked, no
+  mismatch); no reasoning effort set, provider defaults documented separately from
+  Inspect's request construction and from pilot-pending behaviour; `cost_limit` 10 USD per
+  sample, `token_limit` 10,000,000 (type all), `max_tokens` 16,384, time / working 3,600 s,
+  `message_limit` 200, pilot ceiling 30 USD; report labels cost-capped / budget-limited /
+  output-capped recorded. Blocking before the pilot: launcher must pass `max_tokens` and
+  read `token_limit` from the config; output-capped detection is a pre-freeze TODO · config
+  and status only, uncommitted
+- 2026-10-30 · Second Stage 3b round: 1137e2bb C2 APPROVED (revised); Stage 3b
+  infrastructure committed as `efea742bceb304af841d0515cc48f256b2e64a24`; provider model
+  lists recorded (`data/provider_model_lists/20261030T223043Z.json`); Inspect `cost_limit`
+  verified and triggered with the mock, `cost` added to the budget limit types, launcher
+  fails closed without price data; partial-collection attribution (model-caused /
+  harness-caused / unknown, adjudication in a separate file) written into
+  `grading_decision` and the loader; grading chain for 1137e2bb implemented with fixtures
+  and 15 integration tests; preregistration 2.4 D list corrected to include items 2 and 21
+  · grading-chain work uncommitted
 - 2026-10-30 · Stage 3a second-round approvals (17 critical criteria, f841ddcf precision
   table with rubric-text basis, 7d7fc9a7 reconciliation and rounding rule, system prompt
   additions, run parameters, model-candidate strategies, 25 USD pilot ceiling) recorded
@@ -1425,6 +2604,39 @@ Nothing. Waiting for the human's decisions listed under "Next stage".
 - 2026-10-30 · The first Stage 2 `normal` smoke log (08:21 UTC) is not counted as a
   complete pass (four `bash` argument-validation errors); the 08:23 and 08:29 UTC logs
   are the valid evidence · (Stage 2 commit)
+
+- 2026-10-31 · Extraction review (`logs/extraction-review-0r3d__40/`): R1 cell-value rule (blank,
+  NaN, Infinity, non-numeric, non-binary = confirmed invalid; unrecalculated = grader side; no
+  skipped comparison), R2 held-by-identity rows and summary cells through `read_value`, R3
+  two-list column records and row-scoped named lines, R5 reference-entity resolution and
+  reference collisions, R6 single Task / EvalLog / sample contract (pre- and post-call), XML
+  validation cap = `resource_limit` (grader), R4 split-table safe exit; two Codex-flagged test
+  expectations corrected with their basis recorded; rubric 7 / 18–20 scope question recorded as
+  PENDING proposed adjudication in `preregistration.md` 2.4, not applied · (uncommitted)
+
+- 2026-10-31 · Human approved: cell-value rule (blank flag = confirmed invalid) and the scope of
+  rubric 7 / 18–20 (row-set defects act on C1 through items 5 and 6 only; 7 per identified
+  non-CASE line; 18–20 column sums over all delivered rows vs 15 / 10 / 25, independent) ·
+  applied in `DEPENDENCIES` and the 18–20 branch; amendment record in `preregistration.md`
+  2.4; Pilot A request drafted in `docs/pilot_a_request.md` · (uncommitted)
+
+- 2026-10-31 · Stage 3b review (`logs/stage3b-review-js7f8gca/`): item 7 decides applicability
+  from the row's own UOM before reading the flag (CASE lines outside rubric 7); split tables
+  with a business identity repeated across sheets make the affected sum items cannot_assess
+  (both scopes recorded) instead of a double-counted FAIL; Pilot A request corrected to the
+  implementation (cost arithmetic, no bill cap, missing-usage accounting, per-unit judge,
+  not executable yet) · (uncommitted)
+
+- 2026-10-31 · Stage 3b close-out 2 review: no FAIL is inferred from the two extreme overlap
+  scopes in items 18–20 (cannot_assess with both candidate totals and the occurrences as
+  evidence; zero-contribution overlaps still decided on the reliable total; invalid cells still
+  FAIL); Pilot A request wording corrected (per-criterion judge calls, settlement branches of a
+  returned eval error) · (uncommitted)
+
+- 2026-10-31 · Stage 3b deterministic grader final review CLOSED (no Pilot-blocking defect);
+  DEFER REFACTOR of the declaration/loop split recorded as maintenance; CLAUDE.md gains the
+  scoring proof-obligation rule; Git checkpoint prepared, commit awaiting authorization ·
+  (uncommitted)
 
 ## Next stage (not started)
 

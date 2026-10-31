@@ -25,7 +25,7 @@ import sys
 import time
 from decimal import Decimal
 
-from .budget import BudgetExhausted, BudgetLedger, usage_from_eval_sample
+from .budget import BudgetExhausted, BudgetLedger, calls_from_eval_sample, usage_from_eval_sample
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 KEY_ENV_BY_PROVIDER = {"anthropic": "ANTHROPIC_API_KEY", "openai": "OPENAI_API_KEY", "google": "GOOGLE_API_KEY"}
@@ -116,6 +116,52 @@ def preflight_image(image: str, attempts: int = 3, delay_s: float = 2.0, runner=
     raise LauncherError(f"image {image!r} not confirmed after {attempts} attempts: {record['attempts'][-1]['error']}")
 
 
+def preflight_sandbox(cfg: dict, compose_path: str | None = None, *, attempts: int = 3, delay_s: float = 2.0, runner=subprocess.run, sleeper=time.sleep) -> dict:
+    """Pin check for the sandbox image: the compose file must name exactly the full image ID recorded
+    in config.json (sandbox.image_id); the daemon must know that ID (bounded retry, by ID — never by
+    tag); its platform must match config (sandbox.platform). The tag listed on the image is recorded
+    for information only. Fails closed on any mismatch."""
+    from .image import IMAGE_ID_RE, ImageRefError, compose_image, COMPOSE as DEFAULT_COMPOSE
+    compose_path = compose_path or DEFAULT_COMPOSE
+    want = cfg["sandbox"].get("image_id")
+    if not isinstance(want, str) or not IMAGE_ID_RE.match(want):
+        raise LauncherError("config.json sandbox.image_id must be a full local image ID (sha256:<64 hex>); refusing to start")
+    alias = cfg["sandbox"].get("image")
+    if alias != want:
+        raise LauncherError(f"config.json sandbox.image {alias!r} differs from sandbox.image_id {want!r}; refusing to start")
+    platform = cfg["sandbox"].get("platform")
+    if not isinstance(platform, dict) or any(not isinstance(platform.get(k), str) or not platform.get(k).strip() for k in ("os", "architecture")):
+        raise LauncherError("config.json sandbox.platform must carry non-empty 'os' and 'architecture' strings; refusing to start")
+    try:
+        have = compose_image(compose_path)  # parsed from the YAML structure (quoted values accepted)
+    except ImageRefError as ex:
+        raise LauncherError(str(ex)) from ex
+    if have != want:
+        raise LauncherError(f"compose image {have!r} differs from config.json sandbox.image_id {want!r}; refusing to start")
+    record = {"image_id": want, "compose": compose_path, "attempts": []}
+    for i in range(1, attempts + 1):
+        try:
+            res = runner(["docker", "image", "inspect", want, "--format", "{{.Id}}|{{.Architecture}}|{{.Os}}|{{.RepoTags}}"], capture_output=True, text=True, timeout=60)
+            ok, out, err = res.returncode == 0, (res.stdout or "").strip(), (res.stderr or "").strip()[-300:]
+        except Exception as ex:
+            ok, out, err = False, "", f"{type(ex).__name__}: {str(ex)[:200]}"
+        record["attempts"].append({"n": i, "ok": ok, "error": None if ok else err, "at": _now()})
+        if ok:
+            parts = out.split("|")
+            record.update({"daemon_id": parts[0], "architecture": parts[1] if len(parts) > 1 else None, "os": parts[2] if len(parts) > 2 else None, "repo_tags": parts[3] if len(parts) > 3 else None})
+            break
+        if i < attempts:
+            sleeper(delay_s)
+    if "daemon_id" not in record:
+        raise LauncherError(f"image {want!r} not present in the local Docker image store after {attempts} attempts: {record['attempts'][-1]['error']}")
+    if record["daemon_id"] != want:
+        raise LauncherError(f"daemon returned image id {record['daemon_id']!r} for {want!r}; refusing to start")
+    for key in ("os", "architecture"):
+        if record.get(key) != platform[key]:
+            raise LauncherError(f"image {key} {record.get(key)!r} differs from config.json sandbox.platform {platform[key]!r}; refusing to start")
+    return record
+
+
 # ----------------------------------------------------------------------------- config and kwargs
 def load_config(path: str) -> dict:
     with open(path, encoding="utf-8") as f:
@@ -131,24 +177,94 @@ def config_sha256(path: str) -> str:
 
 
 def _int_or_none(v):
-    return v if isinstance(v, int) else None
+    return v if isinstance(v, int) and not isinstance(v, bool) else None
 
 
-def eval_kwargs(cfg: dict, *, log_dir: str, token_limit: int | None = None) -> dict:
+from .redact import redact  # noqa: E402  (shared with grading and the model-list script)
+
+
+def classify_eval_log(log) -> dict | None:
+    """Engineering failure recorded in a *returned* Inspect log (fail_on_error=false returns rather
+    than raises). Returns {"failure_class", "detail"} or None when the log shows no error."""
+    err = getattr(log, "error", None)
+    status = getattr(log, "status", None)
+    samples = getattr(log, "samples", None) or []
+    sample_errors = [getattr(s, "error", None) for s in samples if getattr(s, "error", None) is not None]
+    if err is None and status != "error" and not sample_errors:
+        return None
+    msg = getattr(err, "message", None) or (getattr(sample_errors[0], "message", None) if sample_errors else None) or f"eval status {status}"
+    m = re.match(r"\s*([A-Za-z_][A-Za-z0-9_.]*)(?:\(|:)", str(msg))
+    cls = m.group(1) if m else ("eval_error" if err is not None else "sample_error")
+    return {"failure_class": cls, "detail": redact(msg), "log_status": status, "eval_error": err is not None, "sample_errors": len(sample_errors)}
+
+
+def model_cost_config(cfg: dict) -> dict:
+    """Inspect ModelCost objects (USD per million tokens) for every candidate with complete prices,
+    keyed by Inspect model name; used for eval(model_cost_config=...) and the cost safety net.
+    Inspect 0.3.286 prices a call as input*input + output*output + cache_write*input_cache_write
+    (x 1.6 when the Anthropic provider reports a 1h TTL; no multiplier for other providers) +
+    cache_read*input_cache_read, with no long-context tier; therefore ``input_cache_write`` carries
+    the default-TTL rate, and long-context calls are under-priced by the safety net (the ledger,
+    which prices per call and per tier, is the primary control)."""
+    from inspect_ai.model import ModelCost
+    out = {}
+    for name, p in prices_from_config(cfg).items():
+        if all(isinstance(p.get(k), (int, float)) for k in ("input", "output", "cache_read", "cache_write_inspect")):
+            out[name] = ModelCost(input=float(p["input"]), output=float(p["output"]), input_cache_write=float(p["cache_write_inspect"]), input_cache_read=float(p["cache_read"]))
+    return out
+
+
+def verify_cost_data(model: str, cfg: dict) -> dict:
+    """Fail closed: when a numeric cost limit is configured, the model must have complete price
+    data (from the config's candidate facts, registered with Inspect). Returns the ModelCost used."""
+    from inspect_ai.model import get_model_info, set_model_cost, set_model_info, ModelInfo
+    costs = model_cost_config(cfg)
+    if model not in costs:
+        raise LauncherError(f"cost limit configured but no complete price data for {model!r} in config.json; refusing to start")
+    try:
+        set_model_cost(model, costs[model])  # model known to Inspect's database
+    except ValueError:
+        set_model_info(model, ModelInfo(cost=costs[model]))  # model unknown to the database: register it with its cost
+    info = get_model_info(model)
+    if info is None or info.cost is None:
+        raise LauncherError(f"cost data for {model!r} could not be registered with Inspect; refusing to start")
+    return costs[model].model_dump()
+
+
+def eval_kwargs(cfg: dict, *, log_dir: str, token_limit: int | None = None, model: str | None = None) -> dict:
     """The fixed execution and retry settings for inspect_ai.eval(); nothing here touches
     credentials. Four retry layers: Inspect request retries (max_retries), SDK retries
     (model_args max_retries=0), sample reruns (retry_on_error=0, fail_on_error=False), task
-    retries (task_retry_attempts=0; eval_set is not used)."""
+    retries (task_retry_attempts=0; eval_set is not used). A numeric ``cost_limit_usd`` in the
+    config adds Inspect's per-sample cost limit (safety net behind the ledger) and requires price
+    data for the model (fail closed)."""
     g, r, c = cfg["generation"], cfg["retries"], cfg["concurrency"]["pilot"]
     l1, l2 = r["layer_1_inspect_model_request"], r["layer_2_provider_sdk"]
+    cost_limit = g.get("cost_limit_usd")
+    cost_kw = {}
+    if isinstance(cost_limit, (int, float)) and not isinstance(cost_limit, bool):
+        if model is None:
+            raise LauncherError("cost_limit_usd is set; the model name is required to verify its price data")
+        verify_cost_data(model, cfg)
+        cost_kw = {"cost_limit": float(cost_limit), "model_cost_config": model_cost_config(cfg)}
+    max_tokens = _int_or_none(g.get("max_tokens_per_request"))
+    if max_tokens is None or max_tokens <= 0:
+        raise LauncherError("generation.max_tokens_per_request must be a positive integer (approved per-request output cap); refusing to start")
+    attempt_timeout = _int_or_none(l1.get("attempt_timeout_s"))
+    if attempt_timeout is None or attempt_timeout <= 0:
+        raise LauncherError("retries.layer_1_inspect_model_request.attempt_timeout_s must be a positive integer; refusing to start")
+    effective_token_limit = token_limit if token_limit is not None else _int_or_none(g.get("token_limit"))
+    if effective_token_limit is None or effective_token_limit <= 0:
+        raise LauncherError("generation.token_limit must be a positive integer (approved per-sample token cap); refusing to start")
     kw = {
         "log_dir": log_dir, "epochs": g["epochs"], "sandbox_prebuilt": True, "log_images": True,
         "time_limit": g["time_limit_s"], "working_limit": g["working_limit_s"], "message_limit": g["message_limit"],
-        "token_limit": token_limit if token_limit is not None else _int_or_none(g.get("token_limit")),
-        "max_retries": l1["max_retries"], "timeout": l1["timeout_s"],
+        "token_limit": effective_token_limit, "max_tokens": max_tokens,
+        "max_retries": l1["max_retries"], "timeout": l1["timeout_s"], "attempt_timeout": attempt_timeout,
         "model_args": {"max_retries": l2["max_retries"]},
         "retry_on_error": 0, "fail_on_error": False, "task_retry_attempts": 0,
         "max_samples": c["max_samples"], "max_tasks": c["max_tasks"], "max_sandboxes": c["max_sandboxes"], "max_connections": c["max_connections"],
+        **cost_kw,
     }
     if g["attempts"] != 1 or g["epochs"] != 1:
         raise LauncherError("attempts and epochs must both be 1")
@@ -156,14 +272,32 @@ def eval_kwargs(cfg: dict, *, log_dir: str, token_limit: int | None = None) -> d
 
 
 def prices_from_config(cfg: dict) -> dict:
-    """Ledger prices keyed by Inspect model name (provider/model) from the candidate facts."""
+    """Ledger prices keyed by Inspect model name (provider/model) from the candidate facts,
+    including the documented tiers: ``cache_write`` (default retention; the conservative rate the
+    facts name as ``cache_write_conservative_per_mtok_usd`` when present), ``cache_write_extended``
+    and ``long_context`` (threshold and rates)."""
     out = {}
     facts = cfg["models"].get("candidate_facts_queried_2026_10_30", {})
     for model, f in facts.items():
         provider = "anthropic" if model.startswith("claude") else "openai" if model.startswith("gpt") else "google"
+        default_rate = f.get("cache_write_default_per_mtok_usd", f.get("cache_write_5m_per_mtok_usd"))
+        ledger_rate = f.get("cache_write_ledger_per_mtok_usd", f.get("cache_write_conservative_per_mtok_usd", default_rate if default_rate is not None else f.get("input_per_mtok_usd")))
         price = {"input": f.get("input_per_mtok_usd"), "output": f.get("output_per_mtok_usd"),
                  "cache_read": f.get("cache_read_per_mtok_usd", f.get("cached_input_per_mtok_usd")),
-                 "cache_write": f.get("cache_write_5m_per_mtok_usd", f.get("input_per_mtok_usd"))}
+                 "cache_write": ledger_rate,
+                 # Inspect's ModelCost.input_cache_write must be the provider's default-TTL rate: Inspect applies the
+                 # Anthropic 1h multiplier itself when its provider reports ttl "1h" (compute_model_cost); a pre-baked
+                 # longer-TTL rate would be applied twice.
+                 "cache_write_inspect": default_rate if default_rate is not None else f.get("input_per_mtok_usd")}
+        price["cache_write_basis"] = f.get("cache_write_basis_short") or ("ledger rate from candidate facts" if f.get("cache_write_ledger_per_mtok_usd") is not None else
+                                                                         "conservative longest-retention" if f.get("cache_write_conservative_per_mtok_usd") is not None else
+                                                                         "default-retention" if default_rate is not None else "input-price stand-in")
+        if f.get("cache_write_extended_per_mtok_usd") is not None:
+            price["cache_write_extended"] = f["cache_write_extended_per_mtok_usd"]
+        lc = f.get("long_context")
+        if isinstance(lc, dict) and isinstance(lc.get("threshold_input_tokens"), int):
+            price["long_context"] = {"threshold_input_tokens": lc["threshold_input_tokens"], "input": lc.get("input_per_mtok_usd"), "output": lc.get("output_per_mtok_usd"),
+                                     "cache_read": lc.get("cache_read_per_mtok_usd"), "cache_write": lc.get("cache_write_per_mtok_usd")}
         if isinstance(price["input"], (int, float)) and isinstance(price["output"], (int, float)):
             out[f"{provider}/{model}"] = price
     return out
@@ -190,7 +324,35 @@ class PilotLauncher:
         self.log_dir = log_dir or os.path.join(runs_root, "inspect_logs")
         self.record_dir = record_dir or os.path.join(runs_root, "launcher_records")
         os.makedirs(self.record_dir, exist_ok=True)
-        self.engineering_failures: dict[str, int] = {}
+
+    @property
+    def engineering_failures(self) -> dict:
+        """Persisted failure counts (ledger events), not an in-memory counter."""
+        return self.ledger.snapshot()["engineering_failures"]
+
+    def _refuse_if_stopped(self, *, unit_id: str, model: str | None, estimate_usd, kind: str) -> None:
+        reasons = self.ledger.stop_reasons(next_estimate_usd=estimate_usd)
+        if reasons:
+            self.record("refused", {"unit_id": unit_id, "kind": kind, "model": model, "reasons": reasons, "ledger": self.ledger.snapshot()})
+            raise BudgetExhausted("; ".join(reasons))
+
+    def _after_unit(self, *, unit_id: str, settlement: dict, estimate_usd, log=None) -> dict:
+        """Post-run bookkeeping (never touches the unit's run directory or outcome): record an
+        engineering failure found in the returned log, record a stop when the unit cost more than
+        twice its estimate, and return the persisted stop state for the next start."""
+        post = {"engineering_failure": None, "stop_recorded": None}
+        if log is not None:
+            failure = classify_eval_log(log)
+            if failure:
+                self.ledger.record_engineering_failure(failure["failure_class"], unit_id, failure["detail"])
+                post["engineering_failure"] = failure
+        est = Decimal(str(estimate_usd))
+        if est > 0 and Decimal(settlement["cost_usd"]) > 2 * est:
+            reasons = [f"unit {unit_id} actual cost {settlement['cost_usd']} USD exceeds 2x its estimate {est} USD"]
+            self.ledger.record_stop(reasons)
+            post["stop_recorded"] = reasons
+        post["stop_reasons_now"] = self.ledger.stop_reasons()
+        return post
 
     def record(self, name: str, payload: dict) -> str:
         stamp = dt.datetime.now(dt.timezone.utc).strftime("%Y%m%dT%H%M%S.%fZ")
@@ -200,19 +362,25 @@ class PilotLauncher:
         return path
 
     def run_sample(self, *, task, model: str, unit_id: str, estimate_usd, token_limit: int | None = None, dry_run: bool = False) -> dict:
-        """One sample unit. Refuses to start when the budget cannot cover the estimate or a stop
-        condition applies; settles from the eval log afterwards; on failure settles conservatively
-        at the reserved amount (estimated) so nothing is released without a record."""
-        reasons = self.ledger.stop_reasons(next_estimate_usd=estimate_usd, engineering_failures=self.engineering_failures)
-        if reasons:
-            self.record("refused", {"unit_id": unit_id, "model": model, "reasons": reasons, "ledger": self.ledger.snapshot()})
-            raise BudgetExhausted("; ".join(reasons))
+        """One sample unit = one Task, one returned EvalLog, one sample. Refuses to start when the
+        budget cannot cover the estimate or a stop condition applies; settles from the eval log
+        afterwards only when the single-log / single-sample contract holds; on failure settles
+        conservatively at the reserved amount (estimated) so nothing is released without a record."""
+        # Fail closed on the execution settings before the ledger is touched: a configuration
+        # defect must not create a reservation or a conservative settlement.
+        kw = eval_kwargs(self.cfg, log_dir=self.log_dir, token_limit=token_limit, model=model)
+        # Single-task contract, before any call: the unit is one Task object. A list, tuple or set of
+        # tasks (even of length 1) is refused here, before the stop check and the reservation.
+        if task is None or isinstance(task, (list, tuple, set, frozenset, dict, str, bytes)):
+            self.record("refused", {"unit_id": unit_id, "kind": "sample", "model": model, "reasons": [f"single-task contract: run_sample takes exactly one Task object, got {type(task).__name__}"
+                                                                                                   + (f" of length {len(task)}" if hasattr(task, "__len__") else "")]})
+            raise LauncherError(f"single-task contract: run_sample takes exactly one Task object, got {type(task).__name__}; refusing before any call")
+        self._refuse_if_stopped(unit_id=unit_id, model=model, estimate_usd=estimate_usd, kind="sample")
         try:
             reservation = self.ledger.reserve(unit_id, "sample", estimate_usd, {"model": model, "task": getattr(task, "name", str(task))})
         except BudgetExhausted as ex:
-            self.record("refused", {"unit_id": unit_id, "model": model, "reasons": [str(ex)], "ledger": self.ledger.snapshot()})
+            self.record("refused", {"unit_id": unit_id, "model": model, "reasons": [redact(ex)], "ledger": self.ledger.snapshot()})
             raise
-        kw = eval_kwargs(self.cfg, log_dir=self.log_dir, token_limit=token_limit)
         meta = {"unit_id": unit_id, "model": model, "entry_point": "inspect_ai.eval", "eval_kwargs": kw, "reservation": reservation,
                 "config_status": self.cfg["_status"][:5], "started_at": _now()}
         if dry_run:
@@ -222,31 +390,52 @@ class PilotLauncher:
             self.record("dry_run", meta)
             return meta
         try:
-            logs = self.eval_fn(task, model=model, **kw)
+            returned = self.eval_fn(task, model=model, **kw)
+            logs = list(returned) if isinstance(returned, (list, tuple)) else [returned]
+            per_log = [{"index": i, "status": getattr(l, "status", None), "log_file": getattr(l, "location", None), "task": getattr(getattr(l, "eval", None), "task", None),
+                        "samples": [str(getattr(s, "uuid", j)) for j, s in enumerate(list(getattr(l, "samples", None) or []))]} for i, l in enumerate(logs)]
+            samples = [s for l in logs for s in list(getattr(l, "samples", None) or [])]
+            if len(logs) != 1 or len(samples) != 1:
+                # Single-EvalLog / single-sample contract: a unit is exactly one returned log holding exactly one
+                # sample. Anything else is never settled from logs[0] / samples[0]; the reservation stays open
+                # (budget not released), every log and every sample's usage is recorded, the unit is marked for
+                # manual review, an engineering stop is recorded and further paid starts are refused (also
+                # after a restart, because the stop is a ledger event).
+                all_usage = {str(getattr(s, "uuid", i)): usage_from_eval_sample(s)[0] for i, s in enumerate(samples)}
+                reasons = [f"unit {unit_id}: eval returned {len(logs)} EvalLog(s) with {len(samples)} sample(s) in total, expected exactly 1 and 1; "
+                           "no settlement, reservation kept open, manual review required"]
+                self.ledger.record_stop(reasons)
+                meta.update({"inspect_status": [p["status"] for p in per_log], "log_file": [p["log_file"] for p in per_log], "returned_logs": per_log, "log_count": len(logs),
+                             "sample_count": len(samples), "all_sample_usage": all_usage, "settlement": None, "manual_review_required": True, "stop_recorded": reasons,
+                             "ledger_after": self.ledger.snapshot(), "finished_at": _now()})
+                self.record("sample_cardinality", meta)
+                return meta
             log = logs[0]
-            sample = log.samples[0] if log.samples else None
+            sample = samples[0]
             usage, retries = usage_from_eval_sample(sample) if sample else ({}, {})
-            settlement = self.ledger.settle(unit_id, usage, retries_by_model=retries, note=f"inspect status {log.status}",
+            calls = calls_from_eval_sample(sample) if sample else {}
+            scope = {"same_sample": True, "sample_uuid": getattr(sample, "uuid", None), "samples_in_log": 1,
+                     "aggregate_source": "EvalSample.model_usage", "calls_source": "EvalSample.events[model].output.usage"}
+            settlement = self.ledger.settle(unit_id, usage, retries_by_model=retries, calls_by_model=calls, scope=scope, note=f"inspect status {log.status}",
                                             fallback_to_reservation=not usage)
+            post = self._after_unit(unit_id=unit_id, settlement=settlement, estimate_usd=estimate_usd, log=log)
             meta.update({"inspect_status": log.status, "log_file": getattr(log, "location", None), "usage": usage, "retries": retries,
-                         "settlement": settlement, "ledger_after": self.ledger.snapshot(), "finished_at": _now()})
+                         "settlement": settlement, "post_run": post, "ledger_after": self.ledger.snapshot(), "finished_at": _now()})
             self.record("sample", meta)
             return meta
         except Exception as ex:
             cls = type(ex).__name__
-            self.engineering_failures[cls] = self.engineering_failures.get(cls, 0) + 1
+            self.ledger.record_engineering_failure(cls, unit_id, redact(ex))
             settlement = self.ledger.settle(unit_id, {}, note=f"eval failed: {cls}", estimated=True, fallback_to_reservation=True)
-            meta.update({"error": f"{cls}: {str(ex)[:300]}", "settlement": settlement, "ledger_after": self.ledger.snapshot(), "finished_at": _now()})
+            post = self._after_unit(unit_id=unit_id, settlement=settlement, estimate_usd=estimate_usd)
+            meta.update({"error": f"{cls}: {redact(ex)}", "settlement": settlement, "post_run": post, "ledger_after": self.ledger.snapshot(), "finished_at": _now()})
             self.record("sample_error", meta)
             raise
 
     def run_judge_batch(self, *, unit_id: str, estimate_usd, batch_fn, dry_run: bool = False) -> dict:
         """One independent judge batch: same reserve → run → settle contract. ``batch_fn`` returns
         ({model: usage}, {model: retries}); the judge implementation itself is Stage 3b work."""
-        reasons = self.ledger.stop_reasons(next_estimate_usd=estimate_usd, engineering_failures=self.engineering_failures)
-        if reasons:
-            self.record("refused", {"unit_id": unit_id, "kind": "judge", "reasons": reasons, "ledger": self.ledger.snapshot()})
-            raise BudgetExhausted("; ".join(reasons))
+        self._refuse_if_stopped(unit_id=unit_id, model=None, estimate_usd=estimate_usd, kind="judge")
         reservation = self.ledger.reserve(unit_id, "judge", estimate_usd, {"kind": "judge"})
         if dry_run:
             self.ledger.void(unit_id, "dry run: judge batch not called")
@@ -254,11 +443,13 @@ class PilotLauncher:
         try:
             usage, retries = batch_fn()
             settlement = self.ledger.settle(unit_id, usage, retries_by_model=retries, note="judge batch", fallback_to_reservation=not usage)
-            return {"unit_id": unit_id, "settlement": settlement, "ledger_after": self.ledger.snapshot()}
+            post = self._after_unit(unit_id=unit_id, settlement=settlement, estimate_usd=estimate_usd)
+            return {"unit_id": unit_id, "settlement": settlement, "post_run": post, "ledger_after": self.ledger.snapshot()}
         except Exception as ex:
             cls = type(ex).__name__
-            self.engineering_failures[cls] = self.engineering_failures.get(cls, 0) + 1
-            self.ledger.settle(unit_id, {}, note=f"judge batch failed: {cls}", estimated=True, fallback_to_reservation=True)
+            self.ledger.record_engineering_failure(cls, unit_id, redact(ex))
+            settlement = self.ledger.settle(unit_id, {}, note=f"judge batch failed: {cls}", estimated=True, fallback_to_reservation=True)
+            self._after_unit(unit_id=unit_id, settlement=settlement, estimate_usd=estimate_usd)
             raise
 
     def open_reservations_after_restart(self) -> list[str]:
@@ -290,11 +481,11 @@ def main(argv=None) -> int:
     missing = missing_keys([provider])
     if missing and not args.dry_run:
         raise LauncherError(f"missing credential variable(s): {missing} (names only; nothing printed)")
-    image = preflight_image(cfg["sandbox"]["image"])
+    image = preflight_sandbox(cfg)  # by full image ID; compose and config must agree
     ledger = BudgetLedger(args.ledger, cfg["pilot"]["budget_ceiling_usd"], prices_from_config(cfg))
     print(json.dumps({"config_sha256": config_sha256(args.config), "config_status": cfg["_status"][:5], "runs_root": runs_root,
-                      "env_names_loaded": loaded, "missing_key_names": missing, "image_id": image.get("image_id"),
-                      "image_attempts": len(image["attempts"]), "ledger": ledger.snapshot(), "dry_run": args.dry_run}, indent=1))
+                      "env_names_loaded": loaded, "missing_key_names": missing, "image_id": image.get("daemon_id"), "image_platform": (image.get("os"), image.get("architecture")),
+                      "image_tags_informational": image.get("repo_tags"), "image_attempts": len(image["attempts"]), "ledger": ledger.snapshot(), "dry_run": args.dry_run}, indent=1))
     if args.dry_run:
         from .samples import build_samples
         from .task import make_task

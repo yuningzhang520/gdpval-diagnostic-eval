@@ -206,7 +206,9 @@ class CollectUnitTests(unittest.TestCase):
         self.assertEqual(by["/output/final/b.txt"]["status"], "error")
         self.assertTrue(by["/output/final/b.txt"]["reason"].startswith("read_failed:"))
         self.assertEqual(info["status"], "partial")
-        self.assertTrue(info["harness_error"])
+        # a read failure is not attributed by its name: the record flags it for adjudication, not as a harness error
+        self.assertFalse(info["harness_error"])
+        self.assertEqual((info["attribution"]["class"], info["outcome_class"]), ("unknown", "requires_adjudication"))
 
     def test_integrity_mismatch_recorded_not_written(self):
         listed = b"listed content"

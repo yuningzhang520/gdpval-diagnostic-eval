@@ -67,9 +67,10 @@ class OutcomePolicyTests(unittest.TestCase):
             (execution("limited", [limit("custom")]), "complete", False, "execution_limit_requires_review"),
             (execution("limited", [limit("time"), limit("operator", 1)]), "complete", False, "execution_limit_requires_review"),
             (execution("limited", []), "complete", False, "execution_limit_requires_review"),
-            (execution("limited", [limit("time")]), "partial", False, "harness_collection_error"),
+            (execution("limited", [limit("time")]), "partial", False, "requires_adjudication"),  # no attribution given: never an automatic verdict
             (execution("limited", [limit("time")]), "listing_failed", False, "harness_collection_error"),
-            (execution("completed"), "partial", False, "harness_collection_error"),
+            (execution("completed"), "partial", False, "requires_adjudication"),
+            (execution("limited", [limit("cost", 2.0)]), "complete", True, "collected"),  # Inspect per-sample cost limit is a budget type
             (execution("error", errors=[{"event_uuid": "e1", "message": "boom"}]), "complete", False, "execution_error"),
             (execution("error", [limit("time")], [{"event_uuid": "e1", "message": "boom"}]), "complete", False, "execution_error"),
             (execution("error", errors=[{"event_uuid": "e1", "message": "boom"}]), "no_files_confirmed", False, "execution_error"),
@@ -110,16 +111,17 @@ class OutcomePolicyTests(unittest.TestCase):
         self.assertEqual(out["outcome_class"], "no_deliverable_files_confirmed")
         self.assertEqual(c.load_run_outcome(self.host, self.binding)["execution"]["limit_types"], ["message"])
 
-    def test_limited_with_unrecovered_partial_is_harness_error(self):
-        rec = self.partial_collection()
+    def test_limited_with_unresolved_partial_requires_adjudication(self):
+        rec = self.partial_collection()  # read_failed: cause undetermined by the reason name alone
         out = c.write_run_outcome(self.host, self.binding, rec, execution("limited", [limit("time")]))
-        self.assertTrue(out["harness_error"])
+        self.assertFalse(out["harness_error"])
         self.assertFalse(out["grading_eligible"])
-        self.assertEqual(out["outcome_class"], "harness_collection_error")
+        self.assertTrue(out["requires_adjudication"])
+        self.assertEqual(out["outcome_class"], "requires_adjudication")
         self.assertEqual(out["execution"]["status"], "limited")
         with self.assertRaises(c.OutcomeValidationError):
             c.load_run_outcome(self.host, self.binding)
-        self.assertEqual(c.load_run_outcome(self.host, self.binding, for_grading=False)["outcome_class"], "harness_collection_error")
+        self.assertEqual(c.load_run_outcome(self.host, self.binding, for_grading=False)["outcome_class"], "requires_adjudication")
 
     def test_operator_limit_requires_review(self):
         rec = self.complete_collection()
@@ -162,7 +164,7 @@ class OutcomePolicyTests(unittest.TestCase):
     def test_outcome_records_budget_types_and_basis(self):
         rec = self.complete_collection()
         out = c.write_run_outcome(self.host, self.binding, rec, execution("completed"))
-        self.assertEqual(out["budget_limit_types"], ["time", "working", "message", "token"])
+        self.assertEqual(out["budget_limit_types"], ["time", "working", "message", "token", "cost"])
         self.assertEqual(json.loads(Path(self.host, "run_outcome.json").read_text())["grading_basis"], out["grading_basis"])
 
 
