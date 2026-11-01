@@ -3472,6 +3472,30 @@ token that directly follows the exception name on the last exception line (a 400
 "429" is not recovered). Applied offline to the real `47ef842d…` log: 132 model events, 2 without usage, both
 classified as recovered 429 (events 124, 125); under the new rule that unit would settle at 2.694430 + 2.694430/130.
 
+## Two-project Gemini generation under plan `paid-2026-11-01c` (2026-11-01, from 15:15:27Z; snapshot `config_357776d587a2.json`, commit `a27d9cf`; in progress)
+
+The detached scheduler (pid 74208; minimal environment; `caffeinate`) launched dev `1137e2bb…` and validation `f841ddcf…`
+at 15:15:27Z. Each unit's real-run provenance shows its own credential, checked after Inspect's `.env` initialisation:
+dev `GOOGLE_API_KEY` (KW5A), validation `GOOGLE_API_KEY_VALIDATION` (CCAA). Both show Inspect max_retries 10. Cap 2
+(one unit per class); the adaptive evaluation after 30 minutes of overlap kept 2 (host pressure level warn throughout,
+as at the start; Docker about 330 MB of 8.3 GB; swap +220 MB).
+
+| Unit | Class | Outcome | Wall clock | Settlement (USD) | Recovered 429/5xx |
+|---|---|---|---|---|---|
+| `f841ddcf…` run `8ekTJzpS95g8zy4MpW4sWa` | validation | completed, accepted | 22.9 min | 1.314576 | 0 |
+| `1137e2bb…` run `cjJkBnbBSGBa8WRa4bgdQS` | dev | limited (token), accepted | 33.4 min | 2.636164 inferred (2.616193 reported + 0.019971 buffer) | 3 (events 106, 107, 127; HTTP 429) |
+
+The recovered-attempt rule applied on its first live occurrence: no hold, gate accepted, the next dev unit launched at
+once. Retry-related waiting in `1137e2bb…` (dev; its grader is tagged, so its log metadata may be read): two turns of 27 s
+and 22 s wall time against 12.0 s and 17.6 s model working time, about 19 s in total. Observed throughput so far: 2 usable
+units in 0.56 h (about 3.6 units/hour overall; one per class). The single-unit baseline from the previous snapshot's four
+canonical units is 27.8 min per unit (about 2.2 units/hour). The sample is small; the comparison is repeated as units
+finish.
+
+Labeling batch 1 is deferred. Its three ready canonical dev runs (`f841ddcf…`, `47ef842d…`, `1137e2bb…`) carry
+workbooks whose formulas have no cached values (491, 457 and 923 formulas). Their deterministic pass therefore needs the
+LibreOffice recalculation in Docker, which is not started while paid sandboxes are active.
+
 ## Known issues and findings (material check)
 
 - `rubric_json.form_content`: 8,036 items hold `null`, 2,417 items lack the key, zero
@@ -3525,7 +3549,7 @@ classified as recovered 429 (events 124, 125); under the new rule that unit woul
 ## In flight
 
 Gemini dev and validation resume under the new snapshot and scheduler plan (two projects, cap 2, dev first when the
-cap is 1). `c3525d4d…` grader v0 tagged (`grader-v0-c3525d4d` at `5435534`; code-bound records `grading/validation/c3525d4d…/code_5435534/`). `7b08cd4d…` grader v0 tagged (`grader-v0-7b08cd4d` at `393a7bc`; code-bound records `grading/validation/7b08cd4d…/code_393a7bc/`). `c357f0e2…` grader v0 tagged (`grader-v0-c357f0e2` at `24d2eea`; code-bound records `grading/validation/c357f0e2…/code_24d2eea/`). All ten task graders exist; next: labeling batch 1 (ready canonical dev runs `f841ddcf…`, `47ef842d…`, `1137e2bb…`). `b5d2e6f1…` waits for rule A-1.
+cap is 1). `c3525d4d…` grader v0 tagged (`grader-v0-c3525d4d` at `5435534`; code-bound records `grading/validation/c3525d4d…/code_5435534/`). `7b08cd4d…` grader v0 tagged (`grader-v0-7b08cd4d` at `393a7bc`; code-bound records `grading/validation/7b08cd4d…/code_393a7bc/`). `c357f0e2…` grader v0 tagged (`grader-v0-c357f0e2` at `24d2eea`; code-bound records `grading/validation/c357f0e2…/code_24d2eea/`). All ten task graders exist. Labeling batch 1 (`f841ddcf…`, `47ef842d…`, `1137e2bb…`) waits for a Docker-idle window (recalculation needed). `b5d2e6f1…` waits for rule A-1.
 
 ## Decisions taken (date · what · commit)
 
