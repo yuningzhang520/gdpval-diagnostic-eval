@@ -23,6 +23,7 @@ VALID_EVAL_STATUS = frozenset(get_args(EvalStatus))
 from . import checks_1137e2bb as CK
 from . import checks_7d7fc9a7 as CK2
 from . import checks_2ea2e5b5 as CK3
+from . import checks_a45bc83b as CK4
 from . import judge as J
 from .extract import extract_all
 from .review import write_review_materials
@@ -35,7 +36,8 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ENGINE_VERSION = "engine-2026-11-01.1"
 TASK_MODULES = {CK.TASK: {"checks": CK.run_checks, "units": J.build_units_1137e2bb, "critical": CK.CRITICAL, "judge_items": CK.J_ITEMS, "visual_items": [], "version": CK.VERSION},
                 CK2.TASK: {"checks": CK2.run_checks, "units": J.build_units_7d7fc9a7, "critical": CK2.CRITICAL, "judge_items": CK2.J_ITEMS, "visual_items": CK2.V_ITEMS, "version": CK2.VERSION},
-                CK3.TASK: {"checks": CK3.run_checks, "units": J.build_units_2ea2e5b5, "critical": CK3.CRITICAL, "judge_items": CK3.J_ITEMS, "visual_items": CK3.V_ITEMS, "version": CK3.VERSION}}
+                CK3.TASK: {"checks": CK3.run_checks, "units": J.build_units_2ea2e5b5, "critical": CK3.CRITICAL, "judge_items": CK3.J_ITEMS, "visual_items": CK3.V_ITEMS, "version": CK3.VERSION},
+                CK4.TASK: {"checks": CK4.run_checks, "units": J.build_units_a45bc83b, "critical": CK4.CRITICAL, "judge_items": CK4.J_ITEMS, "visual_items": CK4.V_ITEMS, "version": CK4.VERSION}}
 
 
 def grader_version_of(task_id: str) -> str:
@@ -194,9 +196,9 @@ def _score(grades: list[dict], critical_spec: dict) -> dict:
     by_item = {g["item"]: g["verdict"] for g in grades}
     critical = {}
     for cid, spec in critical_spec.items():
-        items = spec["items"] + spec.get("judge_items", [])
+        items = spec["items"] + spec.get("judge_items", []) + spec.get("visual_items", [])  # visual rows stay pending_human until reviewed
         vs = [by_item.get(i, "pending") for i in items]
-        critical[cid] = {"name": spec["name"], "status": "fail" if "fail" in vs else "pass" if all(v == "pass" for v in vs) else "not_confirmed", "items": items,
+        critical[cid] = {"name": spec["name"], "status": "fail" if "fail" in vs else "pass" if vs and all(v == "pass" for v in vs) else "not_confirmed", "items": items,
                          "verdicts": {i: by_item.get(i, "pending") for i in items}}
     return {"W": W, "E": E, "P": P, "P_over_E": (P / E) if E else None, "E_over_W": (E / W) if W else None,
             "ungraded": [{"item": g["item"], "verdict": g["verdict"], "reason": g.get("note") or g.get("rationale") or g.get("parse_error")} for g in grades if g["verdict"] not in ("pass", "fail")],
@@ -258,7 +260,7 @@ def grade_run(host_dir: str, log, sample_uuid: str, *, task_id: str, rubric: lis
     for item in extraction["inventory"]:
         f = collected.get(item["path"])
         integrity[item["path"]] = (f is not None and f.get("sha256_in_sandbox") == f.get("sha256_collected") == item["sha256"]) if f else None
-    provenance = {k: {kk: v.get(kk) for kk in ("sha256", "copy_sha256", "copy_verified", "copy_verified_before_parse", "error_class", "exception_type", "error")} for k, v in list(extraction["xlsx"].items()) + list(extraction["docx"].items())}
+    provenance = {k: {kk: v.get(kk) for kk in ("sha256", "copy_sha256", "copy_verified", "copy_verified_before_parse", "error_class", "exception_type", "error")} for k, v in list(extraction["xlsx"].items()) + list(extraction["docx"].items()) + list(extraction["pptx"].items()) + list(extraction.get("pdf", {}).items())}
     checks = mod["checks"](extraction, reference, rubric, integrity=integrity)
     units = mod["units"](task_prompt, rubric, extraction, reference, checks, binding["uuid"])
     verdicts = J.judge_units(units, judge) if judge is not None else []

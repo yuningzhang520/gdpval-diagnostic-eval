@@ -1,0 +1,40 @@
+{
+ "task_id": "a45bc83b-22f9-4def-8d89-9c5661b2b86f",
+ "record": "gold first pass of grader a45bc83b-2026-11-01.1 before any variant was built",
+ "recorded_at": "2026-11-01T13:10:56+00:00",
+ "checks_sha256": "5d553f0d3031d5121dca1caf769d00e2d3453e85a745f7fbbe785e67859c55a1",
+ "extract_sha256": "daf59b0122dc66b731f693e10e60beec1852f1f9a89bff7df2485b3687a542f7",
+ "repo_head_at_run": "4f5cd146f72e60d90c1c630d4ed02a90a2d98271",
+ "tree": "uncommitted grader and extractor changes at the time of the run (identified by the hashes above)",
+ "gold_sha256": {
+  "POC_Implementation_Guide.docx": "b8b671f6e4f463d2e5b89d478201d2bdf698fcee2274c482190b7028e67f8ba9",
+  "Proposed Architecture Summary.docx": "f7e8a7e164c323780fff15b13dbd81f323069c8dcf2e006dc0d38f83f9f9a32d",
+  "Proposed_Architecture.pdf": "66d83a47e44c04800579a4448a0b4a9990a5585c83c4a303f967d7364128dc80"
+ },
+ "verdicts": {
+  "1": "pass",
+  "2": "pass",
+  "3": "pass",
+  "5": "pass"
+ },
+ "notes": {
+  "1": "a .docx proposed architecture summary (Proposed Architecture Summary.docx: file name)",
+  "2": "a .pdf diagram (Proposed_Architecture.pdf)",
+  "3": "a .docx POC with ordered steps (POC_Implementation_Guide.docx)",
+  "5": "the summary uses a bulleted format"
+ },
+ "documents": {
+  "POC_Implementation_Guide.docx": {
+   "roles": [
+    "poc"
+   ],
+   "basis": "file name"
+  },
+  "Proposed Architecture Summary.docx": {
+   "roles": [
+    "summary"
+   ],
+   "basis": "file name"
+  }
+ }
+}

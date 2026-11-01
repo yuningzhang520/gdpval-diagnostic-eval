@@ -1257,6 +1257,17 @@ Requirement layers (APPROVED 2026-10-30):
   26–30, 70, 72.
 - K1: open-ended task; organisation different from the gold is not an error.
 - K2: the gold diagram uses a non-GCP icon for "Users / Website"; irrelevant to grading.
+- Deterministic rules of grader v0 (2026-11-01; operational detail of C1, for human review at the labeling
+  checkpoint): document identity from the file name, else the opening text (summary: "summary" / "proposed
+  architecture"; POC: "POC" / "proof of concept" / "implementation guide"); with exactly two .docx files and one
+  identified, the other takes the remaining role; a file matching both roles or several unidentified files leave the
+  role unknown (`cannot_assess`, never `fail`). Item 2 needs a readable PDF with graphic content (vector drawings or an
+  embedded image); a text-only PDF fails. Item 3 needs ordered steps: at least three numbered list paragraphs or three
+  paragraphs opening with "Step <n>" (bullets are not ordered steps). Item 5 needs at least three bullet paragraphs (Word
+  bullet numbering, a "List Bullet" style or a typed bullet glyph) making up at least half of the summary's non-empty,
+  non-heading paragraphs. Expert deliverables: 1, 2, 3, 5 pass.
+- Item 70 routing (stated assumption, pending human confirmation; section 4): the item is listed under both J and V
+  above; grader v0 routes it to the judge with the summary text and the diagram's text labels as evidence.
 - DECISION (APPROVED 2026-10-30): the pre-staged resources enter the sandbox as the HTML
   snapshot plus the extracted text of each page plus the icon-pack zips (not pre-extracted),
   identical for both models: 2 task inputs + 11 HTML + 11 text + 3 zips = 27 files under
@@ -1267,6 +1278,10 @@ Requirement layers (APPROVED 2026-10-30):
 ---
 
 ## 4. Decisions still needed from the human before freeze
+
+- 2026-11-01, `a45bc83b…` item 70 (OPEN): section 2.10 lists item 70 ("Architecture diagram or summary annotates
+  regions and/or zones") under both J and V. Grader v0 routes it to the judge with the summary and the diagram's text
+  labels; the alternative is a visual review item. Needed before freeze.
 
 - 2026-11-01, `7d7fc9a7…` C2 composition: DECIDED the same day by the human - rubric 30 stays
   in C2 as preregistered. The requirement includes monthly GL Balance and Variance checks for

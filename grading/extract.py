@@ -20,6 +20,9 @@ IMAGE = sandbox_image_ref()  # full local image ID from config.json (sandbox.ima
 XLSX_EXT = (".xlsx", ".xlsm")
 DOCX_EXT = (".docx",)
 PPTX_EXT = (".pptx",)
+PDF_EXT = (".pdf",)
+BULLET_GLYPHS = ("•", "◦", "▪", "■", "●", "○", "– ", "- ", "* ", "\uf0b7")  # typed bullet glyphs (incl. the Symbol-font bullet U+F0B7)
+W_NS = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
 ERROR_PREFIXES = ("#VALUE!", "#DIV/0!", "#REF!", "#NAME?", "#N/A", "#NUM!", "#NULL!")
 
 
@@ -39,7 +42,8 @@ def inventory(final_dir: str) -> list[dict]:
             if os.path.islink(p) or not os.path.isfile(p):
                 continue
             out.append({"path": os.path.relpath(p, final_dir), "bytes": os.path.getsize(p), "sha256": sha256(p),
-                        "kind": "xlsx" if name.lower().endswith(XLSX_EXT) else "docx" if name.lower().endswith(DOCX_EXT) else "pptx" if name.lower().endswith(PPTX_EXT) else "other"})
+                        "kind": "xlsx" if name.lower().endswith(XLSX_EXT) else "docx" if name.lower().endswith(DOCX_EXT) else "pptx" if name.lower().endswith(PPTX_EXT)
+                        else "pdf" if name.lower().endswith(PDF_EXT) else "other"})
     return out
 
 
@@ -329,9 +333,64 @@ def apply_recalc_values(extracted: dict) -> dict:
     return extracted
 
 
+def _numbering_formats(doc) -> dict:
+    """(numId, ilvl) -> numFmt ('bullet', 'decimal', ...) from the document's numbering part; {} without one."""
+    try:
+        numbering = doc.part.numbering_part.element
+    except Exception:
+        return {}
+    abstract = {}
+    for an in numbering.findall(f"{W_NS}abstractNum"):
+        levels = {}
+        for lvl in an.findall(f"{W_NS}lvl"):
+            fmt = lvl.find(f"{W_NS}numFmt")
+            levels[lvl.get(f"{W_NS}ilvl")] = fmt.get(f"{W_NS}val") if fmt is not None else None
+        abstract[an.get(f"{W_NS}abstractNumId")] = levels
+    out = {}
+    for num in numbering.findall(f"{W_NS}num"):
+        ref = num.find(f"{W_NS}abstractNumId")
+        if ref is not None:
+            for ilvl, fmt in abstract.get(ref.get(f"{W_NS}val"), {}).items():
+                out[(num.get(f"{W_NS}numId"), ilvl)] = fmt
+    return out
+
+
+def _list_info(p, fmts: dict) -> dict:
+    """List membership of a paragraph: Word numbering (direct, else from the style chain) resolved to its format, a
+    'List Bullet' / 'List Number' style, or a leading bullet glyph typed as text."""
+    num_id = ilvl = None
+    source = None
+    elements = [p._p.pPr] + [st.element.pPr for st in _style_chain(p.style)]
+    for i, ppr in enumerate(elements):
+        numpr = ppr.find(f"{W_NS}numPr") if ppr is not None else None
+        if numpr is not None:
+            nid, lvl = numpr.find(f"{W_NS}numId"), numpr.find(f"{W_NS}ilvl")
+            num_id = nid.get(f"{W_NS}val") if nid is not None else num_id
+            ilvl = lvl.get(f"{W_NS}val") if lvl is not None else ilvl
+            source = "direct numbering" if i == 0 else "style numbering"
+            if num_id is not None:
+                break
+    fmt = fmts.get((num_id, ilvl or "0")) if num_id not in (None, "0") else None
+    style = (p.style.name if p.style is not None else "") or ""
+    glyph = p.text.lstrip().startswith(BULLET_GLYPHS) if p.text.strip() else False
+    bullet = fmt == "bullet" or (fmt is None and style.lower().startswith("list bullet")) or (fmt is None and num_id in (None, "0") and glyph)
+    numbered = (fmt not in (None, "bullet", "none")) or (fmt is None and style.lower().startswith("list number"))
+    return {"bullet": bool(bullet), "numbered": bool(numbered), "num_format": fmt, "level": int(ilvl) if ilvl and ilvl.isdigit() else 0,
+            "basis": source or ("style name" if style.lower().startswith(("list bullet", "list number")) else "typed glyph" if glyph else None)}
+
+
+def _style_chain(style):
+    out, seen = [], set()
+    while style is not None and id(style) not in seen:
+        seen.add(id(style)); out.append(style)
+        style = getattr(style, "base_style", None)
+    return out
+
+
 def extract_docx(path: str) -> dict:
     doc = Document(path)
-    paragraphs = [{"index": i, "style": p.style.name if p.style is not None else None, "text": p.text} for i, p in enumerate(doc.paragraphs)]
+    fmts = _numbering_formats(doc)
+    paragraphs = [{"index": i, "style": p.style.name if p.style is not None else None, "text": p.text, "list": _list_info(p, fmts)} for i, p in enumerate(doc.paragraphs)]
     tables = [[[cell.text for cell in row.cells] for row in t.rows] for t in doc.tables]
     text = "\n".join(p["text"] for p in paragraphs if p["text"].strip())
     for t in tables:
@@ -404,12 +463,24 @@ def extract_pptx(path: str) -> dict:
     return {"path": path, "slide_count": len(slides), "slide_width": prs.slide_width, "slide_height": prs.slide_height, "slides": slides}
 
 
+def extract_pdf(path: str) -> dict:
+    """Pages of a PDF with their text, word, embedded-image and vector-drawing counts (PyMuPDF; read-only)."""
+    import pymupdf
+    with pymupdf.open(path) as doc:
+        pages = []
+        for i, pg in enumerate(doc, 1):
+            pages.append({"index": i, "width": round(pg.rect.width, 1), "height": round(pg.rect.height, 1), "text": pg.get_text("text"), "words": len(pg.get_text("words")),
+                          "images": len(pg.get_images(full=True)), "drawings": len(pg.get_drawings())})
+        return {"path": path, "page_count": doc.page_count, "pages": pages, "text": "\n".join(p["text"] for p in pages), "encrypted": bool(doc.is_encrypted),
+                "metadata": {k: (doc.metadata or {}).get(k) for k in ("producer", "creator")}}
+
+
 def extract_all(final_dir: str, work_dir: str, *, recalc: bool = True, runner=subprocess.run) -> dict:
     """Inventory, copies, xlsx/docx extraction and (optionally) recalculation for every deliverable."""
     os.makedirs(work_dir, exist_ok=True)
     inv = inventory(final_dir)
     copies = copy_originals(final_dir, work_dir)
-    result = {"final_dir": final_dir, "inventory": inv, "xlsx": {}, "docx": {}, "pptx": {}, "other": [i["path"] for i in inv if i["kind"] == "other"]}
+    result = {"final_dir": final_dir, "inventory": inv, "xlsx": {}, "docx": {}, "pptx": {}, "pdf": {}, "other": [i["path"] for i in inv if i["kind"] == "other"]}
     result["copies"] = copies
     for item in inv:
         rec = copies[item["path"]]
@@ -467,6 +538,15 @@ def extract_all(final_dir: str, work_dir: str, *, recalc: bool = True, runner=su
             except Exception as e:
                 kind = classify_exception(e)
                 result["pptx"][item["path"]] = {"error": f"parser raised {type(e).__name__}", "error_class": {"structural": "original_corrupt", "resource": "grader_error"}.get(kind, "parser_undetermined"), "exception_type": type(e).__name__, **provenance}
+        elif item["kind"] == "pdf":
+            provenance["copy_verified_before_parse"] = rec["copy_verified"] and sha256(cp) == item["sha256"]
+            try:
+                d = extract_pdf(cp) if provenance["copy_verified_before_parse"] else None
+                result["pdf"][item["path"]] = ({**d, **provenance} if d else {"error": "working copy differs from the original", "error_class": "copy_fault", **provenance})
+            except Exception as e:
+                kind = classify_exception(e)
+                result["pdf"][item["path"]] = {"error": f"parser raised {type(e).__name__}", "error_class": {"structural": "original_corrupt", "resource": "grader_error"}.get(kind, "parser_undetermined"),
+                                               "exception_type": type(e).__name__, **provenance}
         elif item["kind"] == "docx":
             provenance["copy_verified_before_parse"] = rec["copy_verified"] and sha256(cp) == item["sha256"]
             try:

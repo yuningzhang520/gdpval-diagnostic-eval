@@ -3113,6 +3113,30 @@ shares that leave the denominator unverifiable. All 23 variants matched their de
 | `unittest grading.tests.test_grading_chain` / `test_review_packets` / `harness.tests.test_docs_consistency` | 3.5 / 0.1 / 1.3 s | 0 | 29 / 2 / 3 |
 | `unittest grading.tests.test_gold_7d7fc9a7` / `test_gold_1137e2bb` (registry change) | 5.4 / 14.5 s | 0 | 46 + 3 skipped / 53 + 2 skipped |
 
+## Task 10 `a45bc83b…` gold-first grader v0 (2026-11-01; task version a45bc83b-2026-11-01.1; no model, judge or paid call; logs `logs/gold-first-a45bc83b-20261101T131341Z/`)
+
+Deterministic items 1, 2, 3, 5 (`grading/checks_a45bc83b.py`; rules in preregistration 2.10), judge units for items
+6-25 and 31-71 with the requirement layers as source and the documents each criterion names as located excerpts
+(`grading/judge.py::build_units_a45bc83b`, 61 units), visual items 4, 26-30, 72 pending human review; registered in
+`grading/grade.py`. Shared changes: `grading/extract.py` reads PDFs (pages, text, words, embedded images, vector
+drawings; PyMuPDF already pinned) and records list membership per .docx paragraph (Word bullet or number format,
+list styles, typed bullet glyphs); `.pdf` files get their own inventory kind (previously `other`; no consumer of that
+list); the scorer counts visual items in critical status and an empty item list is `not_confirmed` (no existing task
+used visual items in a critical criterion). Grader provenance now also covers .pptx and .pdf files.
+Expert deliverables: 1, 2, 3, 5 pass; C1 pass; C2 and C3 not confirmed (judge, human). First pass kept in
+`grading/validation/a45bc83b…/gold_first_pass.json`. Found by variant R04 on its first observed run: a typed-bullet
+glyph entry was an empty string, so every paragraph counted as a typed bullet (the expert POC showed 33 such
+paragraphs); fixed with an explicit U+F0B7 escape and a regression test; the expert verdicts were unaffected (the
+summary's bullets are Word numbering). Name collision of a new judge helper with the 1137 helper caught by the chain
+suite (12 errors) and fixed by renaming. Open: item 70 is listed under both J and V (preregistration section 4).
+
+| Command (`run_isolated.sh`, `/usr/bin/time -p`) | Wall clock | Exit | Result |
+|---|---|---|---|
+| `unittest grading.tests.test_gold_a45bc83b` (anchor, 13 variants, extraction, critical score, production grade_run, judge units) | 3.1 s | 0 | 20/20 |
+| `unittest grading.tests.test_grading_chain` | 3.4 → 4.0 s | 1 / 0 | 29/29 (first run: 12 errors from the helper name collision) |
+| `unittest grading.tests.test_gold_2ea2e5b5` / `test_gold_7d7fc9a7` / `test_gold_1137e2bb` / `test_layout_regressions` | 2.1 / 4.8 / 15.1 / 5.1 s | 0 | 30 / 46 + 3 skipped / 53 + 2 skipped / 57 |
+| `unittest grading.tests.test_review_packets` / `harness.tests.test_docs_consistency` | 0.1 / 1.0 s | 0 | 2 / 3 |
+
 ## Known issues and findings (material check)
 
 - `rubric_json.form_content`: 8,036 items hold `null`, 2,417 items lack the key, zero

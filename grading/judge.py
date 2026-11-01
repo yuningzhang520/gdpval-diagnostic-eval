@@ -164,6 +164,68 @@ def build_units_2ea2e5b5(task_prompt: str, rubric: list[dict], extraction: dict,
     return units
 
 
+A45_LAYERS = ("Requirement layers (preregistration 2.10). Layer 1, the prompt's business requirements: easily scalable; modernised web and application "
+              "servers; static content hosting; Layer 3 and Layer 4 DDoS protection; enterprise-grade security and availability; data flow documented in the "
+              "summary; a diagram with official GCP icons; a POC with ordered steps and purposes. Layer 2, the rubric's service requirements: a Global External "
+              "HTTP(S) Load Balancer at the ingress; Cloud Armor policies on that load balancer (or Google Front End protections cited with Cloud Armor); Cloud CDN "
+              "enabled on the load balancer; static assets in Cloud Storage integrated with Cloud CDN; the application tier on a managed platform (Cloud Run, GKE, "
+              "App Engine or a Compute Engine managed instance group) with autoscaling; a managed database (Cloud SQL, Firestore or AlloyDB); compute in a "
+              "multi-zone or regional configuration. Layer 3, allowed differences that are not errors: the choice among the listed platforms and databases; "
+              "additional services (Cloud DNS, Memorystore, Secret Manager, VPC design, IAM, logging); the treatment of the NGFW and Redis components; the "
+              "organisation and ordering of the documents; migration sequencing. Grade whether the design establishes the criterion, not whether it matches any "
+              "reference design; a service named without its role or relationship does not establish a relationship the criterion requires; cite the file and "
+              "paragraph (or diagram page) that establishes it.")
+A45_SCOPE = {**{i: "architecture" for i in list(range(6, 25)) + [62, 63, 64]}, **{i: "summary" for i in [25, 50, 51, 52, 53, 54]},
+             **{i: "poc" for i in list(range(31, 49)) + list(range(55, 62))}, 49: "all", **{i: "architecture_or_poc" for i in [65, 66, 67, 68, 69, 71]}, 70: "diagram_or_summary"}
+
+
+def _excerpt_named_docx(extraction: dict, name: str | None, label: str) -> str:
+    if not name:
+        return f"No {label} document was identified."
+    d = (extraction.get("docx") or {}).get(name) or {}
+    if "paragraphs" not in d:
+        return f"The {label} document {name} could not be read."
+    lines = [f"{label} document {name} (paragraph index; '•' bullet, '#' numbered list item, indentation by list level):"]
+    for p in d["paragraphs"]:
+        if p["text"].strip():
+            li = p.get("list") or {}
+            mark = "• " if li.get("bullet") else "# " if li.get("numbered") else ""
+            lines.append(f"[{name} p{p['index']}] " + "  " * int(li.get("level") or 0) + mark + p["text"].strip())
+    for ti, t in enumerate(d.get("tables") or []):
+        lines += [f"[{name} table {ti + 1} row {ri + 1}] " + " | ".join(r) for ri, r in enumerate(t)]
+    return "\n".join(lines)
+
+
+def _excerpt_pdf(extraction: dict) -> str:
+    pdfs = {k: v for k, v in (extraction.get("pdf") or {}).items() if "pages" in v}
+    if not pdfs:
+        return "No readable PDF diagram was delivered."
+    out = []
+    for name, v in sorted(pdfs.items()):
+        for pg in v["pages"]:
+            labels = " | ".join(l.strip() for l in pg["text"].splitlines() if l.strip())
+            out.append(f"[{name} page {pg['index']}] text labels: {labels or '(none)'} (vector drawings {pg['drawings']}, embedded images {pg['images']})")
+    return "Diagram (text labels extracted from the PDF; icons and arrows are not text and are reviewed visually):\n" + "\n".join(out)
+
+
+def build_units_a45bc83b(task_prompt: str, rubric: list[dict], extraction: dict, reference: dict, checks: dict, run_uuid: str) -> list[dict]:
+    """Judge units for the GCP migration design (preregistration 2.10: J items 6-25 and 31-71, item 70 included with the
+    summary and the diagram labels). Source material: the requirement layers; the deliverable excerpt holds exactly the
+    documents the criterion names (summary, diagram labels, POC), each paragraph located by file and index."""
+    task_id = checks["task"]
+    docs = checks.get("documents") or {}
+    summary, poc, diagram = _excerpt_named_docx(extraction, docs.get("summary"), "Summary"), _excerpt_named_docx(extraction, docs.get("poc"), "POC"), _excerpt_pdf(extraction)
+    parts = {"architecture": [summary, diagram, poc], "summary": [summary], "poc": [poc], "all": [summary, diagram, poc], "architecture_or_poc": [summary, diagram, poc],
+             "diagram_or_summary": [summary, diagram]}
+    units = []
+    for item in list(range(6, 26)) + list(range(31, 72)):
+        scope = A45_SCOPE[item]
+        units.append({"unit_id": unit_id(task_id, item), "run_uuid": run_uuid, "task_id": task_id, "item": item, "weight": rubric[item - 1]["score"],
+                      "criterion": rubric[item - 1]["criterion"], "task_requirement": task_prompt, "source_material": A45_LAYERS,
+                      "deliverable_excerpt": "\n\n".join(parts[scope]), "excerpt_kind": f"docs:{scope}", "assembled_at": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds")})
+    return units
+
+
 def render_unit(unit: dict) -> str:
     return (f"TASK REQUIREMENT (as given to the worker):\n{unit['task_requirement']}\n\n"
             f"CRITERION (item {unit['item']}, weight {unit['weight']}):\n{unit['criterion']}\n\n"
