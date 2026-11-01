@@ -31,7 +31,7 @@ from .engine.sheets import first_text, month_of, row_cells, sheet_names, text_in
 from .engine.workbook import workbook_gate
 
 TASK = "7d7fc9a7-21a7-4b83-906f-416dea5ad04f"
-VERSION = "7d7fc9a7-2026-11-01.4"  # .1 first gold-first version; .2 Codex Review 1 B1-B4 (item contract, evidence states, label-first summary identity, item 53 without allowance)
+VERSION = "7d7fc9a7-2026-11-01.5"  # .1 first gold-first version; .2 Codex Review 1 B1-B4 (item contract, evidence states, label-first summary identity, item 53 without allowance)
 MONTHS = {1: "Jan", 2: "Feb", 3: "Mar", 4: "Apr"}
 D_ITEMS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 14, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 33, 34, 36, 37, 38, 39, 40, 41, 42, 43, 44, 47, 48, 49, 50, 53]
 J_ITEMS = [12, 15, 16, 17, 18, 31, 32, 35, 45, 46, 51, 52, 54, 55]
@@ -137,13 +137,21 @@ def across_candidates(d: Decision, candidates: list, evaluate, label: str) -> No
         scratch.append(sd)
     for sd in scratch:  # unassessable inputs are evidence in every outcome
         d.unassessable.extend(sd.unassessable)
-    if all(sd.violations for sd in scratch):
-        for v in scratch[0].violations:
-            d.violation(v["kind"], f"{v['detail']} (in every one of {len(candidates)} candidate {label})", v.get("attribution", "model_caused"),
-                        **{k: x for k, x in v.items() if k not in ("kind", "detail", "attribution")})
+    if all(sd.violations for sd in scratch):  # every reading fails; each candidate keeps its own details (amounts may differ)
+        for i, (cand, sd) in enumerate(zip(candidates, scratch), 1):
+            for v in sd.violations:
+                d.violation(v["kind"], f"candidate {i} of {len(candidates)} {label} ({_candidate_rows(cand)}): {v['detail']}", v.get("attribution", "model_caused"),
+                            candidate=i, candidate_rows=_candidate_rows(cand), **{k: x for k, x in v.items() if k not in ("kind", "detail", "attribution")})
     elif any(sd.violations for sd in scratch):
         d.unreliable("ambiguous", "bottom_rows", f"conflicting duplicate {label}: the verdict depends on which row is read "
-                     f"({[(i, [str(v['detail'])[:80] for v in sd.violations[:1]]) for i, sd in enumerate(scratch)]})")
+                     f"({[(i, _candidate_rows(c), [str(v['detail'])[:80] for v in sd.violations[:1]]) for i, (c, sd) in enumerate(zip(candidates, scratch), 1)]})")
+
+
+def _candidate_rows(cand) -> str:
+    """Sheet rows a candidate reading uses (a bottom-row record, or a tuple of them)."""
+    recs = cand if isinstance(cand, tuple) else (cand,)
+    rows = [f"row {r['row']}" for r in recs if isinstance(r, dict) and r.get("row") is not None]
+    return ", ".join(rows) if rows else "no row"
 
 
 # ----------------------------------------------------------------------------- schedule parsing

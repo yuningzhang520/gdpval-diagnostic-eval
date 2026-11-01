@@ -3241,6 +3241,16 @@ override bypasses the scheduler's own contention fallback, so the assistant's wa
 goes back to 1 on any of them (no unit is terminated). Gemini validation launched at 13:59:29Z (`b5d2e6f1…`) beside dev
 `47ef842d…`. Scheduler not restarted; no unit killed or rerun.
 
+## Task 2 closure accepted; R36 evidence wording (2026-11-01; task version 7d7fc9a7-2026-11-01.5; no model call)
+
+Codex Review 1 returned READY for the B2 fixes at `a9a1f88`; the human accepted the closure: the Task 2 shared grading
+core checkpoint is CLOSED. Nonblocking R36 wording fixed: when every candidate reading fails, each candidate's own
+violations are kept with their rows (`candidate i of N ... (row r): detail`, fields `candidate`, `candidate_rows`)
+instead of the first candidate's details labelled "in every one of N"; verdict semantics unchanged. Regression
+`CandidateEvidenceTests` (R36: two January violations, one per candidate, distinct rows and amounts; the unrelated
+unassessable cell kept). `unittest grading.tests.test_gold_7d7fc9a7` 56 + 3 skipped, `test_grading_chain` 29,
+`test_docs_consistency` 3.
+
 ## Known issues and findings (material check)
 
 - `rubric_json.form_content`: 8,036 items hold `null`, 2,417 items lack the key, zero

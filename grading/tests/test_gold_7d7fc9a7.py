@@ -125,6 +125,27 @@ for _name in GV.CATALOG:
     setattr(GoldVariantTests, f"test_{_name}", _make(_name))
 
 
+class CandidateEvidenceTests(unittest.TestCase):
+    """R36 evidence (Codex R1 closure, nonblocking): when every candidate reading fails, each candidate's own violation
+    details are kept with its rows; differing amounts are never collapsed into one candidate's figures. Verdicts as
+    declared in the catalog."""
+    def test_r36_keeps_distinct_per_candidate_details(self):
+        with tempfile.TemporaryDirectory(prefix="gold_7d7f_r36_") as tmp:
+            base = os.path.realpath(tmp)
+            twin = GV.build_twin(os.path.join(base, "twin"))
+            g = grade(GV.build_variant("R36_totals_rows_both_wrong_one_unreadable_1250", twin, os.path.join(base, "v")), os.path.join(base, "w"))
+        item = g["res"]["items"][22]
+        self.assertEqual(item["verdict"], "fail")
+        jan = [v for v in item["evidence"]["violations"] if v.get("month") == "Jan"]
+        self.assertEqual(sorted(v["candidate"] for v in jan), [1, 2])
+        self.assertEqual(len({v["candidate_rows"] for v in jan}), 2)  # each candidate names its own row
+        details = [v["detail"] for v in jan]
+        self.assertEqual(len(set(details)), 2)  # the two rows misstate January by different amounts
+        self.assertTrue(all(d.startswith(f"candidate {v['candidate']} of 2 totals rows (row ") for d, v in zip(details, jan)))
+        self.assertFalse(any("in every one of" in v["detail"] for v in item["evidence"]["violations"]))
+        self.assertTrue(item["evidence"]["unassessable_count"] >= 1)  # the unrelated unreadable February cell stays as evidence
+
+
 class ProductionGradeRunTests(unittest.TestCase):
     """Codex B1: the production entry grade_run on a 7d7fc9a7 run directory built through the real collector and outcome
     writer (fake sandbox listing the expert workbook), judge disabled, no recalculation: one results record and one row per
