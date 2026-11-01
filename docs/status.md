@@ -3650,6 +3650,27 @@ items left unlabelled, and ignores labels outside the queue.
 
 Preregistration sections 1.14 (amended), 1.18 and 1.19 are new, dated 2026-11-01 and marked as not preregistered before.
 
+Tag `grader-v0-2ea2e5b5` moved to `a8eb078` (old target `558bbb3` archived as `grader-v0-2ea2e5b5-superseded-558bbb3`;
+no dev output of the task exists yet). The review queue is frozen as `grading/review_queue/queue_v1.json` (seed
+20261101, policy review-queue-2026-11-01.1; `review_queue verify` reproduces it from the seed and the input hashes). It
+was committed before any queue packet was built.
+
+| Task | Queued items | Critical | Visual | Random D | Random J | Shortfall |
+|---|---|---|---|---|---|---|
+| `1137e2bb…` | 59 | 53 | 0 | 5 | 1 | J 4 |
+| `2ea2e5b5…` | 60 (the whole rubric) | 60 | 0 | 0 | 0 | D 5, J 5 |
+| `47ef842d…` | 38 | 29 | 3 | 5 | 1 | J 4 |
+| `7b08cd4d…` | 32 | 20 | 2 | 5 | 5 | — |
+| `7d7fc9a7…` | 36 | 25 | 1 | 5 | 5 | — |
+| `a45bc83b…` | 26 | 19 | 8 | 0 | 5 | D 5 |
+| `b5d2e6f1…` | 27 | 21 | 1 | 5 | 0 | J 5 |
+| `c3525d4d…` | 38 | 28 | 1 | 5 | 4 | J 1 |
+| `c357f0e2…` | 53 | 42 | 1 | 5 | 5 | — |
+| `f841ddcf…` | 35 | 24 | 1 | 5 | 5 | — |
+
+The critical and visual columns can overlap (an item is listed once with all its categories). Every shortfall is a
+pool exhausted by the critical and visual items.
+
 | Command (`run_isolated.sh`, `/usr/bin/time -p`) | Wall clock | Exit | Result |
 |---|---|---|---|
 | `unittest grading.tests.test_review_queue` / `test_item_partition` | 1.4 / 1.1 s | 0 | 6 / 2 |

@@ -1,0 +1,24 @@
+{
+ "tag": "grader-v0-2ea2e5b5",
+ "moved_at": "2026-11-01T16:55:33+00:00",
+ "moved_by": "assistant, on the human's decision of 2026-11-01 (expert-gold audit: A-21 precedent for 2ea2e5b5 C2 item 10)",
+ "previous": {
+  "target_commit": "558bbb3c0bc980f9ef23fa87ab446be2ccd551a3",
+  "tag_object": "02cb1c4589f18bfe692010a1c725dd6ab58119a7",
+  "tagged_at": "2026-11-01 04:59:15 -0800",
+  "task_grader_version": "2ea2e5b5-2026-11-01.1",
+  "archived_as": "grader-v0-2ea2e5b5-superseded-558bbb3"
+ },
+ "current": {
+  "target_commit": "a8eb078bbd5d5ff7ae718b2256441f8f3560231d",
+  "tag_object": "ca009224f0a3b72b9d3a0baf3ec31b955ec81a1b",
+  "task_grader_version": "2ea2e5b5-2026-11-01.2",
+  "code_bound_records": "grading/validation/2ea2e5b5-257f-42e6-a7dc-93763f28b19d/code_a8eb078/"
+ },
+ "reason": "C2 revision R-2.8-1: item 10 removed from C2 (scored literally as a rubric item); preregistered definition kept and reported (section 1.18)",
+ "dev_output_revealed_before_move": "no dev output existed at the move (dev 2ea2e5b5 pending)",
+ "prior_records_preserved": [
+  "code_558bbb3",
+  "gold_first_pass.json"
+ ]
+}
