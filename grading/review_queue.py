@@ -151,9 +151,6 @@ def main(argv=None) -> int:
     return 0
 
 
-if __name__ == "__main__":
-    sys.exit(main())
-
 
 # ============================================================================= policy v2 (amended 2026-11-01)
 POLICY_VERSION_V2 = "review-queue-2026-11-01.2"
@@ -296,3 +293,7 @@ def verify_v2(path: str) -> dict:
     diffs = sorted(t for t, p in rec["plans"].items() if build_plan_v2(t, rec["seed"]) != p)
     return {"path": path, "seed": rec["seed"], "tasks": len(rec["plans"]), "reproduced": not diffs, "differs": diffs,
             "inputs_changed": sorted(k for k, v in input_hashes(sorted(rec["plans"])).items() if rec["inputs_sha256"].get(k) != v)}
+
+
+if __name__ == "__main__":
+    sys.exit(main())
