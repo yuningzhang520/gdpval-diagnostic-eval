@@ -233,6 +233,19 @@ def verify_cost_data(model: str, cfg: dict) -> dict:
     return costs[model].model_dump()
 
 
+def sdk_model_args(model: str | None, layer_2: dict) -> dict:
+    """Layer-2 (provider SDK) retry policy as model creation arguments, per provider. Anthropic and OpenAI clients take
+    ``max_retries`` (verified: AsyncAnthropic / AsyncOpenAI constructor parameters). The Google provider forwards model
+    arguments to ``google.genai.Client(**model_args)``, whose constructor has no ``max_retries`` (dev batch of
+    2026-11-01: TypeError before any request); google-genai 2.34.0 never retries unless ``HttpOptions.retry_options``
+    is set (``_api_client.retry_args(None)`` -> stop after one attempt) and Inspect's provider sets none, so the policy
+    "SDK retries 0" holds for Google with no argument at all."""
+    provider = (model or "").split("/", 1)[0]
+    if provider == "google":
+        return {}
+    return {"max_retries": layer_2["max_retries"]}
+
+
 def eval_kwargs(cfg: dict, *, log_dir: str, token_limit: int | None = None, model: str | None = None, cost_limit_override=None) -> dict:
     """The fixed execution and retry settings for inspect_ai.eval(); nothing here touches
     credentials. Four retry layers: Inspect request retries (max_retries), SDK retries
@@ -273,7 +286,7 @@ def eval_kwargs(cfg: dict, *, log_dir: str, token_limit: int | None = None, mode
         "token_limit": effective_token_limit, "max_tokens": max_tokens,
         "reasoning_effort": reasoning_effort, "reasoning_summary": reasoning_summary,
         "max_retries": l1["max_retries"], "timeout": l1["timeout_s"], "attempt_timeout": attempt_timeout,
-        "model_args": {"max_retries": l2["max_retries"]},
+        "model_args": sdk_model_args(model, l2),
         "retry_on_error": 0, "fail_on_error": False, "task_retry_attempts": 0,
         "max_samples": c["max_samples"], "max_tasks": c["max_tasks"], "max_sandboxes": c["max_sandboxes"], "max_connections": c["max_connections"],
         **cost_kw,
@@ -570,8 +583,10 @@ class PilotLauncher:
         Never carries model-generated content."""
         st = meta.get("settlement") or {}
         binding = meta.get("ledger_binding") or {}
+        failure = (meta.get("post_run") or {}).get("engineering_failure")
         rec = {"recorded_at": _now(), "kind": kind, "run_label": self.run_label, "task_id": meta.get("task_id"), "model": meta.get("model"), "unit_id": meta.get("unit_id"),
                "run_uuid": binding.get("run_uuid"), "inspect_status": meta.get("inspect_status"), "dry_run": bool(meta.get("dry_run")), "error": meta.get("error"),
+               "engineering_failure": (failure or {}).get("failure_class") or (meta.get("error") or "").split(":", 1)[0] or None,  # a sample or eval error: not a completed model attempt
                "settlement_cost_usd": st.get("cost_usd"), "estimated": st.get("estimated"), "manual_review_required": bool(meta.get("manual_review_required") or st.get("manual_review_required")),
                "stop_recorded": meta.get("stop_recorded") or (meta.get("post_run") or {}).get("stop_recorded"), "log_file": meta.get("log_file"), "log_dir": meta.get("log_dir"),
                "artifact_manifest": {k: (meta.get("artifact_manifest") or {}).get(k) for k in ("path", "sha256", "file_count")} if meta.get("artifact_manifest") else None,

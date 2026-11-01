@@ -2774,6 +2774,41 @@ Not run (unchanged code): limits / closeout / tools / compose / collect / image 
 2. Preregistration section 4: textual booleans in the flag columns (rubric 9).
 3. Judge model and judge block (separate approval, unchanged).
 
+## Paid batch launch and first blocker (2026-11-01; dev batch unit 1; engineering failure in the harness, no provider request made)
+
+Launch: `scripts/run_authorized_batches_2026-11-01.sh` (detached, sequential dev -> compat -> validation, config snapshot
+`config_5a26e17c8cdd.json`, console logs under `~/turing-eval-runs/batch_console/`). The dev batch started at
+2026-11-01T09:16:03Z, ran one unit and the chain stopped after 8 s.
+
+Unit `b5d2e6f1-62a2-433a-bcdd-95b260cdd860:google/gemini-3.8-flash:20261101T091604Z` (run uuid `mo4USH2rxoVvDWEjAYeV6z`,
+run class dev): Inspect status success, sample error `TypeError("Client.__init__() got an unexpected keyword argument
+'max_retries'")`, one model event with no usage, no limit, collection `no_files_confirmed`, outcome class
+`execution_error`. Cause: the layer-2 policy (SDK retries 0) was passed as `model_args={"max_retries": 0}` for every
+provider; Inspect's Google provider forwards model args to `google.genai.Client(**model_args)`, whose constructor has no
+such parameter, so the client was never built and no HTTP request was made. The anthropic and openai SDK clients accept
+the argument (verified). Accounting as designed: the unit settled at the reservation (5.000000 USD, estimated, hold),
+an `engineering_failure` event (TypeError) was recorded, the batch runner saw the hold and stopped; the run stays in the
+dev inventory as a run error. Nothing was retried.
+
+Fix (local, uncommitted at the time of this entry's writing, committed with it): `harness.launcher.sdk_model_args` passes
+`max_retries` to anthropic / openai / mockllm only and nothing to google; google-genai 2.34.0 never retries unless
+`HttpOptions.retry_options` is set (`_api_client.retry_args(None)` -> stop after one attempt) and Inspect's provider sets
+none, so SDK retries are 0 for Google without an argument. Offline regression: the old argument reproduces the TypeError,
+the fixed arguments construct the client through Inspect's provider with `retry_options None` and the configured timeout
+(`harness/tests/test_generation_config.py`). The inventory now records `engineering_failure`; the batch runner treats an
+errored attempt as "not a completed sample" but never reruns it by itself (`harness/tests/test_batch_unit.py`). The
+driver script takes its config snapshot at launch and accepts a resumable batch list.
+
+Decisions needed (paid-run blocker; nothing restarted):
+1. Reconcile the held unit at the verified amount 0.00 USD (evidence: client construction failed before any request; no
+   usage; the provider console will show no call at 09:16Z): `python -m harness.ledger_admin resolve --ledger
+   ~/turing-eval-runs/dev/ledger.json --unit-id '<unit id above>' --resolution settled_amount --amount-usd 0 --basis
+   '<evidence>' --by '<name>'`.
+2. Authorize the rerun of task `b5d2e6f1…` in the dev class (`harness.batch --run-label dev --tasks b5d2e6f1-… --allow-repeat`
+   with the batch authorization fields) - a rerun of a unit that never reached the provider, recorded as such.
+3. Relaunch the chain for the remaining batches (`scripts/run_authorized_batches_2026-11-01.sh "dev compat validation"`;
+   the completed/errored units are skipped by the inventory logic).
+
 ## Known issues and findings (material check)
 
 - `rubric_json.form_content`: 8,036 items hold `null`, 2,417 items lack the key, zero
@@ -2826,13 +2861,27 @@ Not run (unchanged code): limits / closeout / tools / compose / collect / image 
 
 ## In flight
 
-Evaluation architecture implementation (section above): Task 1 gold-first done and tagged; run classes and batch
-controls implemented and dry-run verified; waiting for the human's authorization of the Gemini dev + validation
-batches and the candidate compatibility batch. Next offline work while authorization is pending: Task 2
-(`7d7fc9a7…`) gold-first grader and the shared spreadsheet core.
+Paid batches authorized (decision 2026-11-01) and launched; the dev batch stopped at its first unit on a harness
+defect (Google SDK argument), fixed and regression-tested; waiting for the human's decisions on the held unit, the
+rerun and the relaunch (section "Paid batch launch and first blocker"). Offline: finalization of the 1137 grader
+(item 9 format rule, business-row rule review, grouped SKU roll-up variant) before any 1137 development output is
+opened; then Task 2 (`7d7fc9a7…`) and the shared spreadsheet core.
 
 ## Decisions taken (date · what · commit)
 
+- 2026-11-01 · Paid batches AUTHORIZED by the human (chat, after the checkpoint report): (1) `google/gemini-3.8-flash`
+  10 dev samples and 10 independently generated sealed validation samples, reservation 5.00 USD per sample,
+  Inspect cost limit 10 USD per sample, class ledger ceiling 100 USD each; (2) candidate compatibility on
+  `87da214f-fd92-4c58-9854-f4d0d10adce0`: one `anthropic/claude-opus-5-5` sample (reservation 8.00 USD), one
+  `openai/gpt-6.1-sol` sample (reservation 5.00 USD), Inspect cost limit 20 USD per sample, compat ceiling
+  45 USD. Internal controls, not provider billing caps. No automatic whole-sample reruns, budget increases,
+  judge or formal calls. Execution order dev -> compat -> validation, sequential, concurrency 1, detached
+  with persistent logs under `~/turing-eval-runs/batch_console/`, config snapshot passed as `--config`.
+  Authorization reference for the launcher: this entry. Also decided: rubric 9 of `1137e2bb…` requires numeric
+  0/1 (TRUE/FALSE, Yes/No and textual "0"/"1" fail its format requirement); items 5-8 and 18-20 coerce
+  unambiguous representations to 0/1 and a format failure never cascades into them; the 1137 grader is
+  finalized, tested and committed before any 1137 development output is opened; the local tag
+  `grader-v0-1137e2bb` may be moved to the final tested v0 commit when no immutable record depends on it.
 - 2026-11-01 · Revised evaluation architecture adopted (human): three grading layers, gold-first grader
   development with declared corruption catalogs, Gemini Flash development + sealed validation samples
   (two independent execution units per task), verdict-free batched human labelling, candidate

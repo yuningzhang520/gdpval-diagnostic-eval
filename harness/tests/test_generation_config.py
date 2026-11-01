@@ -170,5 +170,23 @@ class GoogleMappingTests(_Offline):
         self.assertEqual((price["input"], price["output"], price["cache_read"], price["cache_write"]), (0.75, 3.75, 0.075, 0.75))
         mc = L.model_cost_config(cfg)["google/gemini-3.8-flash"]
         self.assertEqual((mc.input, mc.output, mc.input_cache_read, mc.input_cache_write), (0.75, 3.75, 0.075, 0.75))
-        kw = L.eval_kwargs(cfg, log_dir="/x", model="google/gemini-3.8-flash", cost_limit_override=3.0)
-        self.assertEqual((kw["cost_limit"], kw["reasoning_effort"], kw["max_tokens"]), (3.0, "high", 32000))
+        kw = L.eval_kwargs(cfg, log_dir="/x", model="google/gemini-3.8-flash", cost_limit_override=10.0)
+        self.assertEqual((kw["cost_limit"], kw["reasoning_effort"], kw["max_tokens"]), (10.0, "high", 32000))
+
+    def test_google_client_is_constructed_with_the_launcher_model_args_and_never_retries(self):
+        """Reproduction of the dev-batch failure of 2026-11-01 and its fix: google.genai.Client rejects max_retries; with the
+        launcher's (empty) Google model args the client constructs offline and carries no retry options (never retry)."""
+        import os
+        import google.genai as genai
+        from inspect_ai.model import GenerateConfig, get_model
+        from harness import launcher as L
+        os.environ["GOOGLE_API_KEY"] = "dummy-not-a-real-key-offline"
+        with self.assertRaisesRegex(TypeError, "max_retries"):
+            genai.Client(api_key="dummy-not-a-real-key-offline", max_retries=0)  # what model_args={"max_retries": 0} produced
+        cfg = L.load_config(os.path.join(L.ROOT, "config.json"))
+        kw = L.eval_kwargs(cfg, log_dir="/x", model="google/gemini-3.8-flash")
+        api = get_model("google/gemini-3.8-flash", **kw["model_args"]).api
+        self.assertEqual(api.model_args, {})
+        client = api.model_client(api._http_options(GenerateConfig(timeout=kw["timeout"])))
+        self.assertIsNone(client._api_client._http_options.retry_options)  # google-genai: retry_args(None) -> stop after one attempt
+        self.assertEqual(client._api_client._http_options.timeout, kw["timeout"] * 1000)

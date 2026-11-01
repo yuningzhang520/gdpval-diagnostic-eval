@@ -31,8 +31,11 @@ def _now() -> str:
     return dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds")
 
 
-def completed_units(runs_root: str) -> dict:
-    """(task_id, model) -> inventory records of completed samples (kind 'sample') in this class's inventory."""
+def prior_attempts(runs_root: str) -> dict:
+    """(task_id, model) -> inventory records of earlier real attempts in this class: completed samples (kind 'sample'
+    without an engineering failure) and attempts that ended in an execution error (sample error, eval exception,
+    cardinality fault). Both block an automatic rerun: a completed sample is the task's one sample; an errored attempt
+    may have reached the provider, so running it again is a whole-sample rerun that needs explicit authorization."""
     path = os.path.join(runs_root, "run_inventory.jsonl")
     out: dict = {}
     if not os.path.isfile(path):
@@ -41,9 +44,13 @@ def completed_units(runs_root: str) -> dict:
         for line in f:
             if line.strip():
                 rec = json.loads(line)
-                if rec.get("kind") == "sample" and not rec.get("dry_run"):
+                if rec.get("kind") != "dry_run" and not rec.get("dry_run"):
                     out.setdefault((rec.get("task_id"), rec.get("model")), []).append(rec)
     return out
+
+
+def completed_units(runs_root: str) -> dict:
+    return {k: [r for r in v if r.get("kind") == "sample" and not r.get("engineering_failure")] for k, v in prior_attempts(runs_root).items()}
 
 
 def ledger_blocks(ledger: BudgetLedger) -> list[str]:
@@ -114,14 +121,20 @@ def main(argv=None, *, eval_fn=None, environ: dict | None = None, docker_runner=
         parse_confirm_batch(args.confirm_batch, run_label=args.run_label, model=args.model, units=len(tasks), estimate_usd=estimate)
         if not (args.authorized_by and args.authorization_ref):
             raise L.LauncherError("--real-run requires --authorized-by and --authorization-ref (the batch authorization, recorded verbatim)")
-    done = completed_units(runs_root)
+    attempts = prior_attempts(runs_root)
     plan = []
     for tid in tasks:
-        prior = done.get((tid, args.model), [])
+        prior = attempts.get((tid, args.model), [])
+        completed = [r for r in prior if r.get("kind") == "sample" and not r.get("engineering_failure")]
+        errored = [r for r in prior if r not in completed]
         if prior and not args.allow_repeat:
-            plan.append({"task_id": tid, "action": "skip", "reason": f"completed sample exists ({[r.get('run_uuid') for r in prior]}); pass --allow-repeat to run it again"})
+            reason = (f"completed sample exists ({[r.get('run_uuid') for r in completed]}); pass --allow-repeat to run it again" if completed else
+                      f"an earlier attempt ended in an execution error ({[(r.get('engineering_failure') or r.get('kind')) for r in errored]}; run uuids {[r.get('run_uuid') for r in errored]}); "
+                      "a rerun is a whole-sample rerun that needs explicit authorization: pass --allow-repeat with --tasks <id>")
+            plan.append({"task_id": tid, "action": "skip", "reason": reason})
         else:
-            plan.append({"task_id": tid, "action": "run", "repeat_of": [r.get("run_uuid") for r in prior] if prior else None})
+            plan.append({"task_id": tid, "action": "run", "repeat_of": [r.get("run_uuid") for r in prior] if prior else None,
+                         "earlier_execution_errors": [r.get("engineering_failure") for r in errored] if errored else None})
     record_dir = os.path.join(runs_root, "batch_records")
     os.makedirs(record_dir, exist_ok=True)
     stamp = dt.datetime.now(dt.timezone.utc).strftime("%Y%m%dT%H%M%SZ")

@@ -905,6 +905,15 @@ if __name__ == "__main__":
 
 
 
+class SdkRetryArgsTests(_Base):
+    """Dev batch 2026-11-01: the Google SDK client rejects max_retries; the layer-2 policy is provider-aware."""
+    def test_google_models_get_no_sdk_retry_argument_and_the_others_keep_it(self):
+        self.assertEqual(L.eval_kwargs(self.cfg, log_dir="/x", model="google/gemini-3.8-flash")["model_args"], {})
+        self.assertEqual(L.eval_kwargs(self.cfg, log_dir="/x", model="anthropic/claude-opus-5-5")["model_args"], {"max_retries": self.cfg["retries"]["layer_2_provider_sdk"]["max_retries"]})
+        self.assertEqual(L.eval_kwargs(self.cfg, log_dir="/x", model="openai/gpt-6.1-sol")["model_args"], {"max_retries": 0})
+        self.assertEqual(L.sdk_model_args("mockllm/model", {"max_retries": 0}), {"max_retries": 0})
+
+
 class RunClassTests(_Base):
     """Run classes (2026-11-01): per-batch controls from config.batches, labelled roots and ledgers that are never mixed,
     the model and task set of a class, the per-class cost limit, the append-only run inventory and the artifact manifest."""
@@ -930,7 +939,7 @@ class RunClassTests(_Base):
         with self.assertRaisesRegex(L.LauncherError, "not a number"):
             L.batch_controls(c, "formal")  # PLACEHOLDER until freeze-v1
         dev = L.batch_controls(c, "dev")
-        self.assertEqual((dev["budget_ceiling_usd"], dev["models"], dev["task_manifest"], dev["cost_limit_usd"]), (Decimal("30"), [self.DEV_MODEL], "data/selected_tasks.json", 3.0))
+        self.assertEqual((dev["budget_ceiling_usd"], dev["models"], dev["task_manifest"], dev["cost_limit_usd"]), (Decimal("100"), [self.DEV_MODEL], "data/selected_tasks.json", 10.0))
         compat = L.batch_controls(c, "compat")
         self.assertEqual((compat["task_manifest"], sorted(compat["models"]), compat["cost_limit_usd"]), ("data/compat_tasks.json", ["anthropic/claude-opus-5-5", "openai/gpt-6.1-sol"], None))
 
@@ -948,15 +957,15 @@ class RunClassTests(_Base):
         argv = ["--config", CONFIG, "--run-label", "dev", "--runs-root", runs, "--ledger", ledger, "--task-id", self.TASK, "--model", self.DEV_MODEL, "--estimate-usd", "1.00", "--env-file", self.env_file, "--dry-run"]
         self.assertEqual(L.main(argv, docker_runner=self.docker), 0)
         state = json.loads(Path(ledger).read_text())
-        self.assertEqual((state["label"], state["ceiling_usd"]), ("dev", "30.000000"))
+        self.assertEqual((state["label"], state["ceiling_usd"]), ("dev", "100.000000"))
         rec = next(json.loads(Path(runs, "launcher_records", f).read_text()) for f in os.listdir(os.path.join(runs, "launcher_records")) if "_dry_run_" in f)
-        self.assertEqual((rec["run_label"], rec["task_id"], rec["eval_kwargs"]["cost_limit"], rec["eval_kwargs"]["reasoning_effort"]), ("dev", self.TASK, 3.0, "high"))
+        self.assertEqual((rec["run_label"], rec["task_id"], rec["eval_kwargs"]["cost_limit"], rec["eval_kwargs"]["reasoning_effort"]), ("dev", self.TASK, 10.0, "high"))
         self.assertIn("input=0.75", str(rec["eval_kwargs"]["model_cost_config"][self.DEV_MODEL]))  # ModelCost serialised into the record
         inv = [json.loads(l) for l in Path(runs, "run_inventory.jsonl").read_text().splitlines()]
         self.assertEqual([(i["kind"], i["run_label"], i["task_id"], i["model"], i["dry_run"]) for i in inv], [("dry_run", "dev", self.TASK, self.DEV_MODEL, True)])
         self.assertTrue(inv[0]["config_sha256"] and inv[0]["code_commit"])
         with self.assertRaisesRegex(b.LedgerConflict, "label"):  # the dev ledger cannot be reused by another class
-            b.BudgetLedger(ledger, 30, PRICES, label="validation")
+            b.BudgetLedger(ledger, 100, PRICES, label="validation")
 
     def test_model_and_task_set_are_bound_to_the_class(self):
         with self.assertRaisesRegex(L.LauncherError, "not allowed in run class 'dev'"):

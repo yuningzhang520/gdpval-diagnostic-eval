@@ -808,8 +808,8 @@
     "layer_2_provider_sdk": {
       "max_retries": 0,
       "approved_2026_10_30": true,
-      "mechanism": "passed as a model creation arg (eval(model_args={'max_retries': 0})); Inspect forwards unknown model_args to AsyncAnthropic(**model_args) / AsyncOpenAI(**model_args) (anthropic.py l. 629-633, openai.py l. 331-338)",
-      "verification": "PENDING Stage 3b item 8: instantiate the provider with the SDK installed and read client.max_retries",
+      "mechanism": "anthropic / openai: passed as a model creation arg (eval(model_args={'max_retries': 0})); Inspect forwards unknown model_args to AsyncAnthropic(**model_args) / AsyncOpenAI(**model_args). google: NO model arg (harness.launcher.sdk_model_args): google.genai.Client has no max_retries parameter (dev batch 2026-11-01: TypeError before any request, unit held and reconciled per docs/status.md), and google-genai 2.34.0 never retries unless HttpOptions.retry_options is set (_api_client.retry_args(None) -> stop_after_attempt(1)); Inspect's provider sets none, so SDK retries are 0 for Google by default",
+      "verification": "closed 2026-11-01: AsyncAnthropic.max_retries == 0 with the arg (offline construction); AsyncOpenAI accepts max_retries (constructor signature); google client constructed offline through Inspect's provider with no model args, retry_options None (harness/tests/test_generation_config.py)",
       "sdk_default_if_unset": "2 retries with short exponential backoff on connection errors, 408, 409, 429, >=500; default request timeout 600 s (Anthropic Python SDK docs and openai-python README, queried 2026-10-30)",
       "worst_case_if_default_kept": "4 Inspect attempts x 3 SDK attempts = 12 HTTP attempts per request"
     },
@@ -1034,11 +1034,11 @@
       ],
       "samples_per_task": 1,
       "units_total": 10,
-      "budget_ceiling_usd": 30,
+      "budget_ceiling_usd": 100,
       "reservation_usd_by_model": {
-        "google/gemini-3.8-flash": "2.00"
+        "google/gemini-3.8-flash": "5.00"
       },
-      "cost_limit_usd": 3.0,
+      "cost_limit_usd": 10.0,
       "stop_conditions": [
         "no new sample or judge batch starts when the remaining budget cannot cover its reservation",
         "after the ceiling is reached no further sample starts (no per-request interception)",
@@ -1048,8 +1048,8 @@
       ],
       "concurrency": "config.concurrency.<label> (1 on every axis until memory and stability evidence)",
       "ledger": "one ledger file per run class (ledger label = run label; the launcher refuses a ledger or runs root whose path does not carry the label)",
-      "status": "DRAFT: proposed controls pending the human's batch authorization; every paid batch needs one explicit authorization (recorded in docs/status.md and passed as --authorized-by / --authorization-ref)",
-      "forecast": "FORECAST per sample at the list rates with no cache credit: 0.5-3.6 USD (25-90 calls, 0.5-4.0 M input tokens re-sent, 20-150 k output incl. thinking); the 3 USD Inspect cost limit ends a sample between calls; reservation 2.00 (2x stop above 4.00); ceiling 30 covers 10 units at the cap"
+      "status": "AUTHORIZED 2026-11-01 by the human (chat): 10 units, reservation 5.00 USD per sample, Inspect cost limit 10 USD per sample, class ledger ceiling 100 USD; internal controls, not provider billing caps; no automatic reruns, budget increases, judge or formal calls (docs/status.md decision 2026-11-01)",
+      "forecast": "FORECAST per sample at the list rates with no cache credit: 0.5-3.6 USD (25-90 calls, 0.5-4.0 M input tokens re-sent, 20-150 k output incl. thinking); the 10 USD Inspect cost limit ends a sample between calls; reservation 5.00 (2x stop above 10.00); ceiling 100 covers 10 units at the cap"
     },
     "validation": {
       "run_label": "validation",
@@ -1060,11 +1060,11 @@
       ],
       "samples_per_task": 1,
       "units_total": 10,
-      "budget_ceiling_usd": 30,
+      "budget_ceiling_usd": 100,
       "reservation_usd_by_model": {
-        "google/gemini-3.8-flash": "2.00"
+        "google/gemini-3.8-flash": "5.00"
       },
-      "cost_limit_usd": 3.0,
+      "cost_limit_usd": 10.0,
       "stop_conditions": [
         "no new sample or judge batch starts when the remaining budget cannot cover its reservation",
         "after the ceiling is reached no further sample starts (no per-request interception)",
@@ -1074,8 +1074,8 @@
       ],
       "concurrency": "config.concurrency.<label> (1 on every axis until memory and stability evidence)",
       "ledger": "one ledger file per run class (ledger label = run label; the launcher refuses a ledger or runs root whose path does not carry the label)",
-      "status": "DRAFT: proposed controls pending the human's batch authorization; every paid batch needs one explicit authorization (recorded in docs/status.md and passed as --authorized-by / --authorization-ref)",
-      "forecast": "FORECAST per sample at the list rates with no cache credit: 0.5-3.6 USD (25-90 calls, 0.5-4.0 M input tokens re-sent, 20-150 k output incl. thinking); the 3 USD Inspect cost limit ends a sample between calls; reservation 2.00 (2x stop above 4.00); ceiling 30 covers 10 units at the cap"
+      "status": "AUTHORIZED 2026-11-01 by the human (chat): 10 units, reservation 5.00 USD per sample, Inspect cost limit 10 USD per sample, class ledger ceiling 100 USD; internal controls, not provider billing caps; no automatic reruns, budget increases, judge or formal calls (docs/status.md decision 2026-11-01)",
+      "forecast": "FORECAST per sample at the list rates with no cache credit: 0.5-3.6 USD (25-90 calls, 0.5-4.0 M input tokens re-sent, 20-150 k output incl. thinking); the 10 USD Inspect cost limit ends a sample between calls; reservation 5.00 (2x stop above 10.00); ceiling 100 covers 10 units at the cap"
     },
     "compat": {
       "run_label": "compat",
@@ -1101,7 +1101,7 @@
       ],
       "concurrency": "config.concurrency.<label> (1 on every axis until memory and stability evidence)",
       "ledger": "one ledger file per run class (ledger label = run label; the launcher refuses a ledger or runs root whose path does not carry the label)",
-      "status": "DRAFT: proposed controls pending the human's batch authorization; every paid batch needs one explicit authorization (recorded in docs/status.md and passed as --authorized-by / --authorization-ref)"
+      "status": "AUTHORIZED 2026-11-01 by the human (chat): one sample per candidate on 87da214f, reservations 8.00 (Opus 5.5) and 5.00 (GPT-6.1 Sol) USD, Inspect cost limit 20 USD per sample, class ledger ceiling 45 USD; internal controls, not provider billing caps; no automatic reruns, budget increases, judge or formal calls (docs/status.md decision 2026-11-01)"
     },
     "formal": {
       "run_label": "formal",
