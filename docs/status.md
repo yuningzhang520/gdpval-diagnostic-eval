@@ -3541,7 +3541,28 @@ generation and limits) are identical for dev and validation within and across bo
 snapshots differ only in non-model-visible settings (retry count, per-class credential, recovered-attempt settlement)
 and grader versions. Reproducibility limitation: unpinned sampling parameters and the model alias.
 
-Labeling batch 1 is deferred. Its three ready canonical dev runs (`f841ddcf…`, `47ef842d…`, `1137e2bb…`) carry
+Labeling batch 1 built (2026-11-01 16:28-16:30Z; narrow recalculation authorized by the human). The three official
+deterministic passes (no judge) ran one at a time, each after a pressure check (level 2 = warn, unchanged from the
+scheduler baseline; 35-38 % free; Docker under 4 %):
+
+| Run | Pass | Wall clock |
+|---|---|---|
+| `f841ddcf…` `XqKh2bn4…` | `pass-20261101T162849461839Z-dacd` | 3.0 s |
+| `47ef842d…` `dGuK7hzr…` | `pass-20261101T162856501722Z-2ebe` | 6.2 s |
+| `1137e2bb…` `cjJkBnbB…` | `pass-20261101T162906743576Z-a9a3` | 2.5 s |
+
+LibreOffice recalculation on copies, provenance only:
+- Every formula has a value afterwards (491, 457 and 923), with no error values.
+- The originals are unchanged and every working copy is hash-verified.
+- Sheet names and dimensions are unchanged. Literal cells are unchanged except 106 cells of the `1137e2bb…` copy's
+  'Error Pivot Table' sheet, which LibreOffice re-rendered on load. This does not affect grading:
+  `apply_recalc_values` fills only formula cells without a cached value, and literals come from the original.
+
+The packets are in `~/turing-eval-runs/labeling/batch-1/`: 62 + 58 + 59 items, a labels.csv per run, copies of the
+deliverables, and a README with the save-labels command. They contain no verdict text; the sealed verdict files are
+referenced by path only. Next: the human's independent labels.
+
+Earlier note (superseded): labeling batch 1 was deferred. Its three ready canonical dev runs (`f841ddcf…`, `47ef842d…`, `1137e2bb…`) carry
 workbooks whose formulas have no cached values (491, 457 and 923 formulas). Their deterministic pass therefore needs the
 LibreOffice recalculation in Docker, which is not started while paid sandboxes are active.
 
