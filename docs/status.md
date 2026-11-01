@@ -3353,6 +3353,32 @@ construction error (R08's extra row without number formats) fixed in the variant
 | `unittest grading.tests.test_gold_f841ddcf` / `b5d2e6f1` / `1137e2bb` / `7d7fc9a7` / `2ea2e5b5` / `a45bc83b` | 3.7 / 50.0 / 15.9 / 6.7 / 2.4 / 3.3 s | 0 | 18 / 22 / 53 + 2 / 56 + 3 / 30 / 20 |
 | `unittest grading.tests.test_grading_chain` / `test_label_batch` / `harness.tests.test_docs_consistency` | 3.3 / 13.4 / 1.0 s | 0 | 29 / 3 / 3 |
 
+## Holiday floor-stand budget `c3525d4d…` gold-first grader v0 (2026-11-01; task version c3525d4d-2026-11-01.1; no model, judge or paid call; logs `logs/gold-first-c3525d4d-20261101T153620Z/`)
+
+Deterministic items 1, 3-39, 41-47, 49 (`grading/checks_c3525d4d.py`; rules in preregistration 2.5); judge units for 2,
+40, 48, 50, 51 (`grading.judge.build_units_c3525d4d`); visual item 52. Preregistration contradiction found and corrected
+editorially (for human confirmation): the 2.5 D list omitted 37, 38, 39, 41, which C3 (approved) classes as D (the
+email's numbers). The comparison is read by label, header and scenario (side-by-side blocks, stacked blocks and tables
+with Original / Revised / Change columns); store lists are compared with the task's input files after normalisation;
+the added-store flag follows a fixed precedence (text flag, legend style, single highlight style; otherwise
+cannot_assess). Shared extractor change (recorded for Codex Review 2): xlsx cells carry `fill`, `font_color` and `bold`
+when set, and sheets carry `conditional_formats` (range, rule type, formulas, applied colours); no `grading/engine/`
+change. First pass (`grading/validation/c3525d4d…/gold_first_pass.json`): declared fails 6, 7, 32, 33 (K2), 34, 35,
+36, 46. Run 1 had a grader input-reading defect (the original input's header cell is `STORE`, the reader matched only
+`STORE #`: 0 original ids, item 34 passed vacuously); fixed, with a guard that refuses any reading other than
+1,228 / 1,257 ids; run 2 equals the declaration. Found by the 21 declared variants: a row label containing a change word
+scoped the cells below it as change values (fixed: only titles and headers, cells with no number to their right,
+scope a block); one variant construction error (R12 wrote its REMOVED flags at the sheet's formatted extent) fixed in the
+variant, not in the grader. All 21 match.
+
+| Command (`run_isolated.sh`, `/usr/bin/time -p`) | Wall clock | Exit | Result |
+|---|---|---|---|
+| `unittest grading.tests.test_gold_c3525d4d` | 5.4 s | 0 | 27/27 |
+| `unittest grading.tests.test_gold_1137e2bb` / `7d7fc9a7` / `2ea2e5b5` / `a45bc83b` / `b5d2e6f1` / `f841ddcf` / `47ef842d` | 13.1 / 5.7 / 1.9 / 2.8 / 49.1 / 4.0 / 5.3 s | 0 | 53 + 2 skipped / 56 + 3 skipped / 30 / 20 / 22 / 18 / 14 |
+| `unittest grading.tests.test_grading_chain` / `test_label_batch` / `harness.tests.test_docs_consistency` | 3.4 / 12.5 / 1.2 s | 0 | 29 / 3 / 3 |
+
+The skipped tests are the Docker-gated LibreOffice paths (`GOLD_RECALC_DOCKER`), not run while paid sandboxes are active.
+
 ## Gemini two-project credentials, retry limit and recovered-attempt settlement (2026-11-01; approved by the human; offline verified; no paid call by this work)
 
 Credentials. `.env` (mode 0600, gitignored) holds `GOOGLE_API_KEY` (dev, original Paid Tier 1 project, suffix `KW5A`)
@@ -3460,7 +3486,7 @@ classified as recovered 429 (events 124, 125); under the new rule that unit woul
 ## In flight
 
 Gemini dev and validation resume under the new snapshot and scheduler plan (two projects, cap 2, dev first when the
-cap is 1). Remaining graders: `c3525d4d…`, `7b08cd4d…`, `c357f0e2…`. `b5d2e6f1…` waits for rule A-1.
+cap is 1). `c3525d4d…` grader v0 committed (tag and code-bound records next). Remaining graders: `7b08cd4d…`, `c357f0e2…`. `b5d2e6f1…` waits for rule A-1.
 
 ## Decisions taken (date · what · commit)
 
@@ -3765,7 +3791,11 @@ cap is 1). Remaining graders: `c3525d4d…`, `7b08cd4d…`, `c357f0e2…`. `b5d2
 - 2026-11-01 · Gemini two-project credentials (dev `GOOGLE_API_KEY`, validation `GOOGLE_API_KEY_VALIDATION`), the
   Inspect `.env`-override guard, Gemini-only Inspect max_retries 10, the recovered-429/5xx inferred settlement rule,
   the `47ef842d…` hold resolved at 5.000000 USD inferred and its run designated canonical (approved by the human,
-  chat) · (this commit)
+  chat) · a27d9cf
+
+- 2026-11-01 · `c3525d4d…` grader v0 (task version c3525d4d-2026-11-01.1), the shared extractor's cell styles and
+  conditional formats, and the editorial correction of the preregistration 2.5 classification (37, 38, 39, 41 are D
+  under C3; pending human confirmation) · (this commit)
 
 ## Next stage (not started)
 

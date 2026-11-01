@@ -70,6 +70,53 @@ def _cell_value(v):
     return v
 
 
+def _color(col) -> str | None:
+    """A compact colour id ('rgb:FFFFFF00', 'theme:5', 'theme:5+0.6', 'indexed:13'); None when unset or automatic."""
+    if col is None:
+        return None
+    try:
+        kind = col.type
+        if kind == "rgb" and isinstance(col.rgb, str):
+            return f"rgb:{col.rgb.upper()}"
+        if kind == "theme" and col.theme is not None:
+            return f"theme:{col.theme}" + (f"{col.tint:+g}" if col.tint else "")
+        if kind == "indexed" and col.indexed is not None and col.indexed != 64:  # 64 = system foreground (automatic)
+            return f"indexed:{col.indexed}"
+    except (AttributeError, TypeError, ValueError):
+        return None
+    return None
+
+
+def _style(c) -> dict:
+    """Visual marks of a cell that a deliverable can use to highlight it (added 2026-11-01 for c3525d4d, shared): a
+    pattern fill (type and foreground colour), a non-automatic font colour, bold. Only keys that are set are returned."""
+    out = {}
+    f = c.fill
+    if f is not None and getattr(f, "fill_type", None) not in (None, "none"):
+        out["fill"] = f"{f.fill_type}:{_color(f.fgColor) or 'auto'}"
+    fc = _color(getattr(c.font, "color", None)) if c.font is not None else None
+    if fc and fc not in ("rgb:FF000000", "theme:1"):
+        out["font_color"] = fc
+    if c.font is not None and c.font.b:
+        out["bold"] = True
+    return out
+
+
+def _conditional_formats(ws) -> list[dict]:
+    """Conditional-format rules of a sheet: range, rule type, operator, formulas, and the fill / font colour they apply."""
+    out = []
+    try:
+        for cf, rules in ws.conditional_formatting._cf_rules.items():
+            for r in rules:
+                dxf = getattr(r, "dxf", None)
+                fill = _color(getattr(getattr(dxf, "fill", None), "bgColor", None)) or _color(getattr(getattr(dxf, "fill", None), "fgColor", None)) if dxf else None
+                out.append({"range": str(cf.sqref), "type": r.type, "operator": getattr(r, "operator", None), "formula": list(getattr(r, "formula", None) or []),
+                            "text": getattr(r, "text", None), "fill": fill, "font_color": _color(getattr(getattr(dxf, "font", None), "color", None)) if dxf else None})
+    except Exception as ex:  # structure present but unreadable: record, never crash the grader
+        out.append({"error": type(ex).__name__})
+    return out
+
+
 def extract_xlsx(path: str) -> dict:
     """Formulas (first load) and cached values (data_only load) for every non-empty cell, plus
     sheet-level structure: dimensions, pivot tables (name, cache source, row/data fields),
@@ -97,7 +144,7 @@ def extract_xlsx(path: str) -> dict:
                     cached = ""
                 raw = cached if formula else v
                 cells[c.coordinate] = {"formula": formula, "cached": _cell_value(cached), "literal": None if formula else _cell_value(v), "number_format": c.number_format,
-                                       "value_type": type(raw).__name__}  # before ISO conversion: datetime / date / time cells stay distinguishable from text
+                                       "value_type": type(raw).__name__, **_style(c)}  # before ISO conversion: datetime / date / time cells stay distinguishable from text
                 vals.append(_cell_value(cached if formula else v))
             rows.append(vals)
         pivots = []
@@ -117,7 +164,7 @@ def extract_xlsx(path: str) -> dict:
                             "pivots": pivots, "tables": sorted(ws.tables.keys()) if hasattr(ws, "tables") else [], "merged": [str(m) for m in ws.merged_cells.ranges],
                             "table_objects": {t.displayName or t.name: {"ref": t.ref, "autofilter": t.autoFilter is not None, "header_rows": t.headerRowCount}
                                               for t in (ws.tables.values() if hasattr(ws, "tables") else [])},  # TableList.items() yields (name, ref string); values() the Table objects
-                            "auto_filter": ws.auto_filter.ref if ws.auto_filter and ws.auto_filter.ref else None}
+                            "auto_filter": ws.auto_filter.ref if ws.auto_filter and ws.auto_filter.ref else None, "conditional_formats": _conditional_formats(ws)}
     import zipfile
     with zipfile.ZipFile(path) as z:
         names = z.namelist()

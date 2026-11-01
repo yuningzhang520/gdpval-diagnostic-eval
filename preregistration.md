@@ -889,6 +889,35 @@ applies.
   Scoring effect: items 24, 25 graded as written; floor (1,319) fails 25 and passes 29
   within its 0.5 % tolerance; ceiling (1,290) fails 24 and passes 28 within 0.1 %.
   Status: APPROVED.
+- Item classification, corrected 2026-11-01 (editorial; for human confirmation): the list above omitted 37, 38, 39 and
+  41. C3 (approved) states "D for numbers" for rubric 37-42; 37, 38, 39 and 41 are the email's numbers, so they are D.
+  Classification used by grader v0: D 1, 3-39, 41-47, 49 (46 items); J 2, 40, 48, 50, 51; V 52.
+- Deterministic rules of grader v0 (2026-11-01; operational detail, for human review at the labeling checkpoint):
+  - Tabs are identified by content, not position. The comparison tab is the sheet with the most budget labels. The
+    final-list tab is a sheet other than the comparison tab with a store-number column. A list that exists only on
+    the comparison tab fails 6, 7, 32 and 33.
+  - Values are read by row label, column header and scenario (original, revised or change). Component values without
+    a scenario count as the production estimate, and as the unchanged revised value when no revised value is given.
+  - Item 6: the listed set is closer, by Jaccard, to the final input than to the original input.
+  - Item 32: exact set equality with the final input. Rows flagged as removed are not part of the listed set.
+  - Added-store flags: a text flag in the row (added or new) decides. Otherwise a highlight style named by a legend
+    cell decides. Otherwise the single non-baseline fill or font colour of the id cell decides. Several unexplained
+    styles, or a highlight made only through conditional formatting, make 7 and 33 cannot_assess.
+  - Item 7: at least one row is flagged, more than half of the flagged rows are added stores, and any removed store
+    listed on the tab carries a removal flag. Item 33: the flagged set equals Final - Original exactly.
+  - Items 34-36: a removal phrase (removed, dropped, not included, no longer, excluded, ...) appears together with
+    the id in one email paragraph or table row, in one workbook row, or the id is listed under a removal header.
+    A positive inclusion statement for 4099 or 3737 fails. Contradictory statements are cannot_assess.
+  - Item 21: 5 % is stated for both scenarios, as a label or a value, and each scenario's units equal stores x 1.05,
+    either unrounded or under floor, half-up or ceiling rounding.
+  - Items 26 and 27: the total equals the shown per-unit cost times the shown units, at cents.
+  - Items 37 and 41: the email contains the number. Items 38 and 39: "approximately" is the tolerance of the paired
+    workbook item (0.5 %, items 31 and 29).
+  - Item 42: the email contains the workbook's revised units, budget change and revised total exactly as displayed.
+    When the change line is missing, the change is derived as revised total - original total.
+  - A formula without a cached value is unreadable (cannot_assess).
+  - Expert deliverables: 6, 7, 32 and 33 fail (K2); 34, 35 and 36 fail (the removed stores are not mentioned); 46
+    fails (no per-unit change line). C1 fails; C2 and C3 pass.
 
 ### 2.6 `7b08cd4d-df60-41ae-9102-8aaa49306ba2` — Tour profit and loss (Accountants and Auditors)
 Inputs: `Fall Music Tour Ref File.xlsx` (three sheets: tour manager income and costs,

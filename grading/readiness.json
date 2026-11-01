@@ -24,6 +24,10 @@
   "47ef842d-8eac-4b90-bda8-dd934c228c96": {
    "tag": "grader-v0-47ef842d",
    "basis": "grader v0 2026-11-01 (task version 47ef842d-2026-11-01.1)"
+  },
+  "c3525d4d-2012-45df-853e-2d2a0e902991": {
+   "tag": "grader-v0-c3525d4d",
+   "basis": "grader v0 2026-11-01 (task version c3525d4d-2026-11-01.1)"
   }
  },
  "not_ready": {

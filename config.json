@@ -847,7 +847,8 @@
       "a45bc83b-22f9-4def-8d89-9c5661b2b86f": "a45bc83b-2026-11-01.2",
       "b5d2e6f1-62a2-433a-bcdd-95b260cdd860": "b5d2e6f1-2026-11-01.1",
       "f841ddcf-2a28-4f6d-bac3-61b607219d3e": "f841ddcf-2026-11-01.1",
-      "47ef842d-8eac-4b90-bda8-dd934c228c96": "47ef842d-2026-11-01.1"
+      "47ef842d-8eac-4b90-bda8-dd934c228c96": "47ef842d-2026-11-01.1",
+      "c3525d4d-2012-45df-853e-2d2a0e902991": "c3525d4d-2026-11-01.1"
     },
     "grader_version_scheme": "every grading pass records grader_version = '<engine_version>+<task_grader_version>', the engine and task versions separately, and the full git commit of the grading code (grading.grade.code_provenance); the engine covers extraction, recalculation, outcome gate, scoring, pass selection, judge and review infrastructure; each task specification carries its own version; superseded value: grader_version grading-1137e2bb-2026-10-31 (pre gold-first fixes)",
     "judge_input_manifest": "grading.judge.build_units_1137e2bb (task requirement, criterion, independent reference, deliverable excerpt per unit); other tasks: Stage 3 work",

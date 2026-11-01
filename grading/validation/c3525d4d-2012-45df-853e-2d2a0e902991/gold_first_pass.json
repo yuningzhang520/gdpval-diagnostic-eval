@@ -1,0 +1,122 @@
+{
+ "task_id": "c3525d4d-2012-45df-853e-2d2a0e902991",
+ "record": "gold first pass of grader c3525d4d-2026-11-01.1 before any variant was built",
+ "recorded_at": "2026-11-01T15:31:54+00:00",
+ "declared_before_run": {
+  "fail": [
+   6,
+   7,
+   32,
+   33,
+   34,
+   35,
+   36,
+   46
+  ],
+  "cannot_assess": []
+ },
+ "runs": [
+  {
+   "run": 1,
+   "defect": {
+    "kind": "grader_input_reading",
+    "detail": "the original input's header cell is 'STORE' (row 5), the reader matched only 'STORE #': the original list read as 0 ids, so the removed set was empty and item 34 passed vacuously; every other verdict equalled the declaration"
+   },
+   "non_pass": {
+    "6": "fail",
+    "7": "fail",
+    "32": "fail",
+    "33": "fail",
+    "35": "fail",
+    "36": "fail",
+    "46": "fail"
+   }
+  },
+  {
+   "run": 2,
+   "fix": "header 'STORE' or 'STORE #'; a guard refuses any reading other than 1,228 / 1,257 ids",
+   "non_pass": {
+    "6": "fail",
+    "7": "fail",
+    "32": "fail",
+    "33": "fail",
+    "34": "fail",
+    "35": "fail",
+    "36": "fail",
+    "46": "fail"
+   },
+   "equals_declaration": true
+  },
+  {
+   "run": 3,
+   "change": "change-column values on per-unit and program rows read as change lines (for table layouts; the gold has none)",
+   "equals_declaration": true
+  }
+ ],
+ "checks_sha256": "86b272d9c679bd2a8363fa7685d83abc526958684a4ba0103d50eebe1969e27d",
+ "extract_sha256": "c6819ae5b3e6fe7e174dd7c2a910f77882a9a60decdb273bdc1905a0ca7394ab",
+ "repo_head_at_run": "a27d9cf3b47dfb13bf222061b1b904122f86d6e6",
+ "tree": "uncommitted grader and extractor changes (identified by the hashes above)",
+ "verdicts": {
+  "1": "pass",
+  "3": "pass",
+  "4": "pass",
+  "5": "pass",
+  "6": "fail",
+  "7": "fail",
+  "8": "pass",
+  "9": "pass",
+  "10": "pass",
+  "11": "pass",
+  "12": "pass",
+  "13": "pass",
+  "14": "pass",
+  "15": "pass",
+  "16": "pass",
+  "17": "pass",
+  "18": "pass",
+  "19": "pass",
+  "20": "pass",
+  "21": "pass",
+  "22": "pass",
+  "23": "pass",
+  "24": "pass",
+  "25": "pass",
+  "26": "pass",
+  "27": "pass",
+  "28": "pass",
+  "29": "pass",
+  "30": "pass",
+  "31": "pass",
+  "32": "fail",
+  "33": "fail",
+  "34": "fail",
+  "35": "fail",
+  "36": "fail",
+  "37": "pass",
+  "38": "pass",
+  "39": "pass",
+  "41": "pass",
+  "42": "pass",
+  "43": "pass",
+  "44": "pass",
+  "45": "pass",
+  "46": "fail",
+  "47": "pass",
+  "49": "pass"
+ },
+ "notes": {
+  "6": "confirmed violation: the listed ids are not the final list: 0 of 1257 in the final input (Jaccard final 0.000 vs original 0.000) [not_final_list]",
+  "7": "confirmed violation: 0 of 31 flagged rows are added stores (Final - Original) [wrong_rows]",
+  "32": "confirmed violation: 1257 final store(s) missing, e.g. ['2', '3', '4', '6', '7', '8']; 1257 id(s) not in the final list, e.g. ['100246', '100906', '101538', '101980', '102257', '102727'] [extra_stores, missing_stores]",
+  "33": "confirmed violation: flagged 31 vs added 31: missing ['557', '657', '679', '893', '1031', '1034'], extra ['162845', '221354', '267366', '286366', '288495', '288978'] [set_differs]",
+  "34": "confirmed violation: removed store 3737 not identified as removed; removed store 4099 not identified as removed [not_listed]",
+  "35": "confirmed violation: no explicit status of store 4099 [not_stated]",
+  "36": "confirmed violation: no explicit status of store 3737 [not_stated]",
+  "46": "confirmed violation: no per-unit cost change line shown [missing]"
+ },
+ "gold_sha256": {
+  "Deliverable Holiday Floorstand Budget.xlsx": "69b5d5e5b9db1e8d7e4a7dbd9eb59c9c1c91aeee908bcd66758900c7f0dc647c",
+  "Final Email Deliverable.docx": "6a00a219e7ca2bdfb681d2e9b25a62059723c161551f4a2c4417dd442c10e683"
+ }
+}
