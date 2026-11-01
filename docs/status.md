@@ -3505,6 +3505,21 @@ its memo at 121-128. Every delivered workbook formula lacks a cached value (reca
 recommendation: CONTINUE without a strategy change (a second unit per project risks the 2 M input-token-per-minute
 Tier 1 quota; a lower dev token limit would cut deliverables and break dev / validation comparability).
 
+Offline calibration on the three openable dev outputs (structure only; no recalculation; no verdict reported). Structure
+detection worked on every real layout:
+- `f841ddcf…`: PO-level tables (with their Excel Table object) and the narrative.
+- `47ef842d…`: the summary table with the five UPCs.
+- `1137e2bb…`: the PO data table and its fields.
+
+Almost every unassessable item depends on recalculation. Open observations, to be re-checked on the recalculated
+official pass before any grader change:
+- `f841ddcf…` item 37: no table totals to compare with; the totals are probably uncached formulas.
+- `1137e2bb…` item 21: two variance column headers were not mapped. This is a possible header-mapping gap.
+- `1137e2bb…` items 25 and 26: conflicting counts, routed to the judge or a human as designed.
+
+Labeling batch 1 preflight (`grading.label_batch.check_runs`) passed: the tasks are ready, the tags exist, the runs are
+canonical dev runs and none has a pass yet. The build waits for a Docker-idle window.
+
 Labeling batch 1 is deferred. Its three ready canonical dev runs (`f841ddcf…`, `47ef842d…`, `1137e2bb…`) carry
 workbooks whose formulas have no cached values (491, 457 and 923 formulas). Their deterministic pass therefore needs the
 LibreOffice recalculation in Docker, which is not started while paid sandboxes are active.
