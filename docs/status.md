@@ -3068,6 +3068,17 @@ a warn baseline the raise to 3 is not available (it needs normal pressure throug
 | compat Opus 5.5 (`WAdNGvRiqFvDegQPcpcwAd`) | completed, no limit event | 70 / 27 / 41 (0 tool errors) | 1.52, 4 | 1.571204 USD, complete |
 | compat GPT-6.1 Sol (`U6UgKmucEdbsaNdiQXHcG5`) | completed, no limit event | 56 / 24 assistant messages, 25 model calls / 30 (1 bash argument-parsing error) | 1.25, 3 | 5.000000 USD estimated, HOLD |
 
+Gemini `b5d2e6f1…` replacement ACCEPTED and canonical (run `3mhbRUHW7n2U8vuFDFpVu9`, 12:39:30-13:09:55Z): execution
+`completed`, no limit event, solver finished; eval config message limit none (time 7,200 s, tokens 20 M, cost 10 USD);
+277 messages, 138 model calls, 137 tool calls, 0 tool errors, one call per turn; usage 686,390 input / 15,617,618
+cache-read / 178,387 output (74,673 reasoning) tokens; settled 2.355106 USD, not estimated (Inspect 2.355065); collection
+complete with three structurally valid files (.xlsx, the expected type, plus .docx and .pdf), manifest consistent;
+dev ledger settled 3.595443 USD, no hold or stop. Content not opened (no Grader v0 for this task). The scheduler then
+launched the next dev unit (`f841ddcf…`). Cap: at 13:05:07Z swap had grown 1.11 GiB above the restarted scheduler's
+baseline (container memory 0.27 GiB; the growth comes from the host's other applications on a 16 GB machine already at
+pressure level warn), so the contention rule lowered the cap to 1: Gemini dev and validation now run one unit at a
+time; no unit was terminated.
+
 Message-limit assessment (counts only; one small compat task per candidate, so indicative, not conclusive): both
 candidates finished far from the shared 200-message limit (Opus 70, 35 %; GPT 56, 28 %). Each turn adds one assistant
 message plus one tool message per call, so 200 messages buy about 198 / (1 + calls per turn) turns: Opus at 1.52 calls
