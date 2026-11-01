@@ -592,6 +592,15 @@ points for percentages.
   APPROVED.
 - K1: rubric 9 (division by zero) cannot occur with this data; graded `pass` if no error
   is shown and the WOS cells are numeric.
+- Deterministic rules of grader v0 (2026-11-01; operational detail, for human review at the labeling checkpoint):
+  the summary table is the header row naming a UPC column and at least three measures, with its rows down to the first
+  blank row; "shown as the nearest integer" (22-56) is the value as displayed - a number format without decimals (or
+  an integral value under General) showing that integer, percentages in percent; item 3 fails for a 12-digit UPC
+  stored as a number under General (Excel shows it in scientific notation); item 11 needs a sheet with UPC and store
+  number columns whose rows exist in Reference Inventory.xlsx for all five UPCs, with matching current week inventory;
+  item 12 needs formulas for the five metrics and a reference to that sheet; item 17 reads the chart's cached values
+  (in percent, one decimal). A formula without a cached value is unreadable (cannot_assess). Expert workbook: 4, 31,
+  52 (A-31, A-52), 11, 12 and 17 fail; all four critical criteria pass.
 
 ### 2.4 `1137e2bb-bdf9-4876-b572-f29b7de5e595` — PO entry audit (Order Clerks, pilot task)
 Inputs: `Reference_PO Data.xlsx` (41 lines, UOM CASE 24 / EA 17, no blank case packs;

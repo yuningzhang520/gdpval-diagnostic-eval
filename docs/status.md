@@ -3337,6 +3337,22 @@ account summary is the June table). All 14 variants match.
 | `unittest grading.tests.test_gold_b5d2e6f1` / `1137e2bb` / `7d7fc9a7` / `2ea2e5b5` / `a45bc83b` | 48.4 / 13.8 / 5.9 / 2.0 / 3.0 s | 0 | 22 / 53 + 2 / 56 + 3 / 30 / 20 |
 | `unittest grading.tests.test_grading_chain` / `test_label_batch` / `harness.tests.test_docs_consistency` | 3.4 / 13.1 → 13.3 / 1.2 s | 0 / 1 → 0 / 0 | 29 / 3 (gate message pin updated for the readiness reason) / 3 |
 
+## Task 5 `47ef842d…` gold-first grader v0 (2026-11-01; task version 47ef842d-2026-11-01.1; no model, judge or paid call; logs `logs/gold-first-47ef842d-20261101T145507Z/`)
+
+Deterministic items 1-14, 17-56 (`grading/checks_47ef842d.py`; rules in preregistration 2.3), judge unit for 57,
+visual items 15, 16, 58; 9 declared variants (`grading/gold_variants_47ef842d.py`): package-level XML edits keep the
+expert chart, openpyxl rebuilds drop it and declare 13 and 14 accordingly. Shared extractor change (recorded for
+Codex Review 2): xlsx chart parts with each series' category and value cell references (the chart parser now also
+returns those references for pptx). First pass equal to the declaration (fails 4, 11, 12, 17, 31, 52). Found by the
+variants: items 9 and 10 skipped unreadable cells without registering them (fixed: unassessable); one variant
+construction error (R08's extra row without number formats) fixed in the variant, not in the grader. All 9 match.
+
+| Command (`run_isolated.sh`, `/usr/bin/time -p`) | Wall clock | Exit | Result |
+|---|---|---|---|
+| `unittest grading.tests.test_gold_47ef842d` | 5.2 s | 0 | 14/14 |
+| `unittest grading.tests.test_gold_f841ddcf` / `b5d2e6f1` / `1137e2bb` / `7d7fc9a7` / `2ea2e5b5` / `a45bc83b` | 3.7 / 50.0 / 15.9 / 6.7 / 2.4 / 3.3 s | 0 | 18 / 22 / 53 + 2 / 56 + 3 / 30 / 20 |
+| `unittest grading.tests.test_grading_chain` / `test_label_batch` / `harness.tests.test_docs_consistency` | 3.3 / 13.4 / 1.0 s | 0 | 29 / 3 / 3 |
+
 ## Known issues and findings (material check)
 
 - `rubric_json.form_content`: 8,036 items hold `null`, 2,417 items lack the key, zero

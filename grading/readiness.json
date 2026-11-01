@@ -20,6 +20,10 @@
   "f841ddcf-2a28-4f6d-bac3-61b607219d3e": {
    "tag": "grader-v0-f841ddcf",
    "basis": "grader v0 2026-11-01 (task version f841ddcf-2026-11-01.1)"
+  },
+  "47ef842d-8eac-4b90-bda8-dd934c228c96": {
+   "tag": "grader-v0-47ef842d",
+   "basis": "grader v0 2026-11-01 (task version 47ef842d-2026-11-01.1)"
   }
  },
  "not_ready": {

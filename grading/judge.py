@@ -264,6 +264,29 @@ def build_units_f841ddcf(task_prompt: str, rubric: list[dict], extraction: dict,
     return units
 
 
+def build_units_47ef842d(task_prompt: str, rubric: list[dict], extraction: dict, reference: dict, checks: dict, run_uuid: str) -> list[dict]:
+    """Judge unit for the weeks-of-supply summary (preregistration 2.3: J item 57, heading wording). The excerpt is the
+    summary table (header row and its rows) located by sheet and cell; the source material lists the required headings."""
+    task_id = checks["task"]
+    st = (checks.get("extraction_status") or {}).get("summary")
+    xs = {k: v for k, v in (extraction.get("xlsx") or {}).items() if "sheets" in v}
+    if st and xs:
+        from .engine.cells import cell_coord
+        name = sorted(xs)[0]; sh = xs[name]["sheets"][st["sheet"]]
+        lines = []
+        for r in range(st["header_row"], min(st["header_row"] + st["rows"], len(sh["rows"])) + 1):
+            vals = [f"{cell_coord(r, c)}={v}" for c, v in enumerate(sh["rows"][r - 1]) if v is not None]
+            lines.append(f"[{name} '{st['sheet']}' row {r}] " + " | ".join(vals))
+        excerpt = "\n".join(lines)
+    else:
+        excerpt = "No summary table was located in the workbook."
+    source = ("Required headings (rubric 57): Current Week Inventory, Daily Inventory Sold in Last 4 Weeks, Weekly Unit Rate of Sale, Weeks of Supply (WOS), Number of Stores, "
+              "Count of OOS Stores and Percent of Stores Out of Stock; clear equivalents count, abbreviations that keep the meaning (for example 'WOS', '% OOS') count.")
+    return [{"unit_id": unit_id(task_id, 57), "run_uuid": run_uuid, "task_id": task_id, "item": 57, "weight": rubric[56]["score"], "criterion": rubric[56]["criterion"],
+             "task_requirement": task_prompt, "source_material": source, "deliverable_excerpt": excerpt, "excerpt_kind": "sheet:summary_table",
+             "assembled_at": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds")}]
+
+
 def render_unit(unit: dict) -> str:
     return (f"TASK REQUIREMENT (as given to the worker):\n{unit['task_requirement']}\n\n"
             f"CRITERION (item {unit['item']}, weight {unit['weight']}):\n{unit['criterion']}\n\n"

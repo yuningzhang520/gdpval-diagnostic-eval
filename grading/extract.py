@@ -138,7 +138,14 @@ def extract_xlsx(path: str) -> dict:
                     if txt.strip():
                         texts.append(txt)
             drawings.append({"part": n, "texts": texts})
-    package = {"drawing_texts": drawings,
+    charts = []
+    with zipfile.ZipFile(path) as z:
+        for n in sorted(x for x in names if x.startswith("xl/charts/chart") and x.endswith(".xml")):
+            try:
+                charts.append({"part": n, **_chart_from_xml(z.read(n))})
+            except Exception as ex:  # an unreadable chart part is recorded, never hidden
+                charts.append({"part": n, "error": type(ex).__name__})
+    package = {"drawing_texts": drawings, "charts": charts,
                "pivot_tables": sorted(n for n in names if n.startswith("xl/pivotTables/pivotTable") and n.endswith(".xml")),
                "pivot_cache_definitions": sorted(n for n in names if n.startswith("xl/pivotCache/pivotCacheDefinition") and n.endswith(".xml")),
                "pivot_cache_records": sorted(n for n in names if n.startswith("xl/pivotCache/pivotCacheRecords") and n.endswith(".xml"))}
@@ -447,7 +454,9 @@ def _chart_from_xml(blob: bytes) -> dict:
         val_m = re.search(r"<c:val>(.*?)</c:val>", ser, re.S)
         cats = re.findall(r"<c:pt[^>]*>\s*<c:v>([^<]*)</c:v>", cat_m.group(1)) if cat_m else []
         vals = re.findall(r"<c:pt[^>]*>\s*<c:v>([^<]*)</c:v>", val_m.group(1)) if val_m else []
-        series.append({"name": name, "categories": cats, "values": vals})
+        cat_ref = re.search(r"<c:f>([^<]*)</c:f>", cat_m.group(1)) if cat_m else None
+        val_ref = re.search(r"<c:f>([^<]*)</c:f>", val_m.group(1)) if val_m else None
+        series.append({"name": name, "categories": cats, "values": vals, "category_ref": cat_ref.group(1) if cat_ref else None, "value_ref": val_ref.group(1) if val_ref else None})
     return {"kinds": kinds, "title": title, "series": series, "data_labels": bool(re.search(r"<c:dLbls>", x))}
 
 
