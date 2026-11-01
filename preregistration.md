@@ -947,9 +947,10 @@ also 929,354.31 (A-10).
   independent recalculation (`scripts/recalc/task_7d7fc9a7_prepaid.py`) is the reference.
   The per-line-rounding variant figures listed by that script document the drift and are
   not allowed values.
-- D: 1–11, 13, 14, 19–30, 33, 34, 36–44, 47–50, 53, 55 (structure and values);
-  J: 12, 15–18, 31, 32, 35, 45, 46, 51, 52, 54 (period documentation, organisation, COA
-  mapping); V: 56.
+- D: 1–11, 13, 14, 19–30, 33, 34, 36–44, 47–50, 53 (structure and values);
+  J: 12, 15–18, 31, 32, 35, 45, 46, 51, 52, 54, 55 (period documentation, organisation, COA
+  mapping, column structure "or an equivalent structure" per K1); V: 56. (Corrected
+  2026-11-01: the earlier D list also carried 55, in conflict with K1; K1 governs.)
 - COA mapping (APPROVED): any account from `COA.xlsx` whose description reasonably covers
   the invoice's service passes items 45, 46, 51, 52 when the deliverable states the
   basis; the gold's mapping is not the reference (K2).
@@ -972,6 +973,42 @@ also 929,354.31 (A-10).
 - K3 (class c): the BCBS treatment is pinned down by the GL balances and the prompt's
   coverage/payment dates, not stated explicitly; recorded as an inference the model must
   make from the reconciliation requirement.
+- Gold-first verification (2026-11-01; grader 7d7fc9a7-2026-11-01.1; records in
+  `grading/validation/7d7fc9a7-…/`). First pass of the new grader on the expert workbook:
+  39 pass, 2 fail, 0 `cannot_assess`; C1 pass, C3 pass, C2 fail, C4 fail. Findings:
+  - A-10b (class a, expert-deliverable defect): the expert summary shows no total prepaid
+    balance; rubric 10 fails as written. The standard is not lowered.
+  - A-30 (class a, expert-deliverable defect): the expert 1250 schedule's "variance" row
+    carries no per-month figures (only a column-O residual) and its "G.L. Balance" row holds
+    the schedule's own unrounded balances; rubric 30 ("for each month a GL Balance and
+    Variance check is present and the Variance equals $0.00") fails as written. The 1251
+    schedule has both rows. Consequence to decide (section 4): with 30 inside C2, the expert
+    workbook fails C2 although every 1250 balance reconciles to the cent.
+  - Expert workbook amounts carry Excel's accounting format without a currency symbol.
+    Operational definition (class c) for rubric 53: an amount is "formatted as dollars" when
+    its number format carries a currency symbol or shows exactly two decimals with thousands
+    separators (accounting or number format); date cells must carry a date format. The expert
+    passes; the General format fails (gold variant R17).
+  - Operational definition (class c) for rubric 6: the reporting period is read from the
+    summary's header block (the rows above the first amount) and must name April 30, 2025 or
+    the April 2025 period (4/30/2025, April 30, 2025, 2025-04-30, "through April 2025"); a
+    date inside a body label does not count (variant R16).
+  - Invoice presence (rubric 13, 14, 33, 34), operational definition: an invoice is present
+    when a line of its vendor (names normalised for case, spacing and company suffixes)
+    carries its exact amount as the addition of its invoice month, or as the line's original
+    amount; a consolidated vendor line with one addition per month satisfies several invoices
+    (the expert's single BCBS line carries the four monthly invoices). A line of the vendor in
+    the invoice month with a different amount is a wrong amount (14/34), not an omission.
+  - Ending balances (23–26, 41–44) are read from the ending-balance row, else the totals
+    row, else the sum of the lines; a labelled rounding adjustment row that closes the
+    difference to the GL is applied (rule (b)); any other difference fails.
+  - Rubric 22/40 compare the amortization and ending totals with the sums of the lines
+    (additions are not named by the text; variant R02).
+  The catalog (`grading/gold_variants_7d7fc9a7.py`: 20 rubric-relevant corruptions and
+  transitions, 15 neutral layouts incl. one-row headers, header synonyms, extra columns,
+  title rows, label variants, "$" formats, no beginning-balance column) lands on its declared
+  maps; formula-dependent cases (summary linkage) run through LibreOffice when the docker
+  path is free.
 
 ### 2.8 `2ea2e5b5-257f-42e6-a7dc-93763f28b19d` — Work-time study deck (CIS Managers)
 Inputs: `Work Time Study - Source.xlsx` (15,918 rows; labels "Audit / Compliance" (546
@@ -1146,6 +1183,13 @@ Requirement layers (APPROVED 2026-10-30):
 ---
 
 ## 4. Decisions still needed from the human before freeze
+
+- 2026-11-01, `7d7fc9a7…` C2 composition: rubric 30 (GL and variance check present and
+  zero for every month) is part of C2 "1250 reconciliation". The expert workbook fails 30 on
+  presentation (no per-month variance figures) while every 1250 balance reconciles to the
+  cent. Decide whether 30 stays in C2 (the approved text names "variance line shows 0.00")
+  or C2 is restricted to the balance items 21–26. Until decided, the approved composition
+  stands and the grader reports it as is.
 
 - 2026-11-01, `1137e2bb…` rubric 9 and 5–8: DECIDED the same day (rule recorded in
   section 2.4: item 9 numeric 0/1 only; 5–8 and 18–20 coerce unambiguous representations;

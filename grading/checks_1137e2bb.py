@@ -42,6 +42,11 @@ import re
 from collections import Counter
 from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 
+from .engine.cells import (INVALID_KINDS, UNRELIABLE_KINDS, cell_coord as _cell_coord, describe_cell, norm_text as _norm, num_value as _num, numeric_cell, q2, qty,
+                           read_cell, read_value)
+from .engine.decision import ATTRIBUTION, Decision as _Decision, Result
+from .engine import headers as H
+from .engine.workbook import workbook_gate
 from .extract import ERROR_PREFIXES
 
 TASK = "1137e2bb-bdf9-4876-b572-f29b7de5e595"
@@ -74,7 +79,7 @@ FLAG_SCHEMA = {
     "total": {"synonyms": ["total errors", "total error", "total errors per line", "errors total", "error count", "total issues", "errors", "# errors", "total",
                            "number of errors", "no. of errors", "no of errors", "# of errors", "num errors", "number of errors per line", "error count per line",
                            "total error count", "errors per line", "error total", "line errors", "errors (total)", "total errors (per line)"],
-              "keywords": (("total", "number", "count", "#", "num "), ("error", "issue"))},
+              "keywords": (("total", "number", "count", "#", "num "), ("error", "issue")), "keyword_exclude": ("price", "case")},
     "summary_text": {"synonyms": ["error summary", "summary", "error type", "error types", "error description", "description", "issue", "issues", "errors found", "error detail", "error summary text"],
                      "keywords": (("summary", "error type", "description", "issue", "detail"), ())},
     "case_missing": {"synonyms": ["case pack missing", "missing case pack", "case pack missing flag", "invalid case pack", "case pack missing/invalid"],
@@ -90,8 +95,6 @@ MIN_MATCH_FRACTION = 0.5  # used only to choose between several detail-table can
 MIN_DETAIL_SOURCE_FIELDS = 2  # a detail-table header must show PO, SKU and at least this many further source fields
 # Cell states that are reliably read but not a valid value where the rubric requires one (confirmed invalid), and the
 # cell states that make a value unreliable (grader side). ``empty`` is confirmed invalid only for required numeric cells.
-INVALID_KINDS = ("error_value", "empty", "non_numeric", "non_finite", "non_binary")
-UNRELIABLE_KINDS = ("formula_unrecalculated",)
 DERIVED_INPUTS = ("line_identity", "row_set", "summary_sheet", "summary_measures", "docx")
 
 # Every input of every deterministic item, and which confirmed states fail the item on their own.
@@ -144,8 +147,6 @@ PER_LINE = {31: ("PO1001", "SKU-0112", 96, "price"), 32: ("PO1002", "SKU-0103", 
 PER_SKU = {56: "SKU-0103", 57: "SKU-0104", 58: "SKU-0107", 59: "SKU-0108", 60: "SKU-0111", 61: "SKU-0112", 62: "SKU-0118"}
 PRICE_PHRASES = r"(?:price[\s_-]*mismatch(?:es)?|pricing[\s_-]*mismatch(?:es)?|price[\s_-]*discrepanc(?:y|ies)|price[\s_-]*error(?:s)?)"
 CASE_PHRASES = r"(?:case[\s_-]*pack[\s_-]*(?:error|violation|mismatch|issue)?(?:s)?)"
-ATTRIBUTION = {"ambiguous": "grader_extraction", "unmapped": "grader_extraction", "grader_error": "grader_caused_recalculation", "unknown": "unknown",
-               "collision": "grader_extraction", "unidentified": "unknown", "split_tables": "grader_extraction", "split_overlap": "grader_extraction"}
 # Source id formats (data/inputs: PO + 4 digits, SKU- + 4 digits). Normalisation rules the source format supports:
 # case, surrounding and internal whitespace, an optional hyphen/underscore after the prefix, leading zeros of the number.
 ID_PATTERNS = {"po": re.compile(r"^PO[-_]?(\d+)$"), "sku": re.compile(r"^SKU[-_]?(\d+)$")}
@@ -153,9 +154,6 @@ ID_FORMATS = {"po": "PO{:04d}", "sku": "SKU-{:04d}"}
 
 
 # ----------------------------------------------------------------------------- helpers
-def _norm(s) -> str:
-    t = re.sub(r"\s+", " ", str(s or "")).strip().lower()
-    return t.rstrip(":?").strip()
 
 
 COERCIBLE_TRUE = ("1", "1.0", "true", "yes", "y")
@@ -178,40 +176,6 @@ def _flag(v):
         if s_ in COERCIBLE_FALSE:
             return 0, "coerced"
     return None, None
-
-
-def _num(v):
-    """Finite number or None: NaN, Infinity, booleans and strings that are not numbers are not values."""
-    if v is None or isinstance(v, bool):
-        return None
-    try:
-        f = float(v.strip()) if isinstance(v, str) else float(v)
-    except (TypeError, ValueError):
-        return None
-    return f if math.isfinite(f) else None
-
-
-def qty(v) -> str | None:
-    """Exact decimal normalisation of a quantity (no truncation): 60 -> '60', 60.5 -> '60.5', '60.0' -> '60'."""
-    if v is None or isinstance(v, bool):
-        return None
-    try:
-        d = Decimal(str(v).strip())
-    except (InvalidOperation, ValueError):
-        return None
-    if not d.is_finite():
-        return None
-    return format(d.normalize(), "f")
-
-
-def q2(x) -> Decimal | None:
-    try:
-        d = Decimal(str(x))
-        if not d.is_finite():
-            return None
-        return d.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
-    except Exception:
-        return None
 
 
 def normalize_id(kind: str, raw) -> dict:
@@ -244,23 +208,6 @@ def normalize_id(kind: str, raw) -> dict:
     return {"raw": raw, "norm": norm, "status": "ok", "rules": rules}
 
 
-def numeric_cell(cell: dict) -> tuple[str, object]:
-    """A cell read through read_value, required to hold a finite number: ok (value) / empty /
-    formula_unrecalculated / error_value / non_numeric / non_finite."""
-    st, v = cell["status"], cell["value"]
-    if st != "ok":
-        return st, v
-    if isinstance(v, bool):
-        return "non_numeric", v
-    try:
-        f = float(v.strip()) if isinstance(v, str) else float(v)
-    except (TypeError, ValueError):
-        return "non_numeric", v
-    if not math.isfinite(f):
-        return "non_finite", v
-    return "ok", f
-
-
 def flag_cell(cell: dict) -> tuple[str, object]:
     """A cell required to hold a binary flag: ok (0 or 1) / empty / formula_unrecalculated / error_value / non_binary."""
     st, v = cell["status"], cell["value"]
@@ -277,110 +224,13 @@ def flag_form(cell: dict) -> str | None:
     return _flag(cell["value"])[1]
 
 
-def describe_cell(kind: str, value) -> str:
-    return {"empty": "blank", "error_value": f"an Excel error value {value!r}", "non_numeric": f"not a number ({value!r})", "non_finite": f"not a finite number ({value!r})",
-            "non_binary": f"not a 0/1 flag ({value!r})", "formula_unrecalculated": "a formula without a cached value (not recalculated)"}.get(kind, kind)
-
-
-class Result:
-    def __init__(self, item, verdict, evidence, deliverable=None, reference=None, note="", attribution=None):
-        self.item, self.verdict, self.evidence, self.deliverable, self.reference, self.note, self.attribution = item, verdict, evidence, deliverable, reference, note, attribution
-
-    def as_dict(self):
-        d = {"item": self.item, "verdict": self.verdict, "evidence": self.evidence, "deliverable_value": self.deliverable, "reference_value": self.reference, "note": self.note, "source": "D"}
-        if self.attribution:
-            d["attribution"] = self.attribution
-        return d
-
-
 # ----------------------------------------------------------------------------- stage: map_columns
 def map_columns(header: list) -> dict:
-    """Map a header row to canonical fields with a uniqueness requirement. For every field all
-    candidate columns are collected (exact synonyms; containment of long synonyms and keyword rules
-    only when no exact candidate exists). A column claimed exactly by one field is withdrawn from
-    the non-exact candidate lists of other fields. A field is mapped only when exactly one candidate
-    remains and no other field claims that column; otherwise it is ``ambiguous`` (candidates kept as
-    evidence). A field with no candidate is ``confirmed_missing`` when no unrecognised header remains
-    in the row (structural evidence that the column does not exist) and ``unmapped`` otherwise (the
-    column may exist under a name the schema does not know). Column order never decides."""
-    hdr = [_norm(h) for h in header]
-    cands: dict[str, list[tuple[int, str]]] = {}
-    for field, spec in SCHEMA.items():
-        exact = [(j, "exact") for j, h in enumerate(hdr) if h and h in spec["synonyms"]]
-        cands[field] = exact or [(j, "contains") for j, h in enumerate(hdr) if h and any(len(s) >= 6 and s in h for s in spec["synonyms"])]
-    for field, spec in FLAG_SCHEMA.items():
-        exact = [(j, "exact") for j, h in enumerate(hdr) if h and h in spec["synonyms"]]
-        if exact:
-            cands[field] = exact
-            continue
-        must_any, also_any = spec["keywords"]
-        kw = []
-        for j, h in enumerate(hdr):
-            if not h or not any(m in h for m in must_any) or (also_any and not any(a in h for a in also_any)):
-                continue
-            if field == "total" and ("price" in h or "case" in h):
-                continue
-            kw.append((j, "keyword"))
-        cands[field] = kw
-    exact_owner: dict[int, set[str]] = {}
-    for field, lst in cands.items():
-        for j, m in lst:
-            if m == "exact":
-                exact_owner.setdefault(j, set()).add(field)
-    for field, lst in cands.items():  # exact precedence: a column exactly claimed elsewhere is not a weak candidate here
-        cands[field] = [(j, m) for j, m in lst if m == "exact" or j not in exact_owner]
-    claims: dict[int, set[str]] = {}
-    for field, lst in cands.items():
-        for j, _ in lst:
-            claims.setdefault(j, set()).add(field)
-    cols, method, ambiguous = {}, {}, {}
-    for field, lst in cands.items():
-        if len(lst) == 1 and len(claims[lst[0][0]]) == 1:
-            cols[field], method[field] = lst[0][0], lst[0][1]
-        elif lst:
-            ambiguous[field] = [{"col": j, "header": hdr[j], "method": m, "also_claimed_by": sorted(claims[j] - {field})} for j, m in lst]
-    taken = set(cols.values()) | {j for lst in ambiguous.values() for j in (c["col"] for c in lst)}
-    unmapped_headers = [hdr[j] for j in range(len(hdr)) if hdr[j] and j not in taken]
-    field_status = {}
-    for field in list(SCHEMA) + list(FLAG_SCHEMA):
-        if field in cols:
-            field_status[field] = "ok"
-        elif field in ambiguous:
-            field_status[field] = "ambiguous"
-        elif unmapped_headers:
-            field_status[field] = "unmapped"
-        else:
-            field_status[field] = "confirmed_missing"
-    return {"cols": cols, "method": method, "ambiguous": ambiguous, "field_status": field_status,
-            "candidates": {f: [{"col": j, "header": hdr[j], "method": m} for j, m in lst] for f, lst in cands.items() if lst},
-            "unmapped_headers": unmapped_headers, "headers": hdr}
+    """This task's header mapping through the engine (schemas above; the total column never claims a price or case header by keyword)."""
+    return H.map_columns(header, SCHEMA, FLAG_SCHEMA)
 
 
 # ----------------------------------------------------------------------------- stage: read_value
-def _cell_coord(excel_row: int, col_index: int) -> str:
-    import openpyxl.utils.cell as oc
-    return f"{oc.get_column_letter(col_index + 1)}{excel_row}"
-
-
-def read_value(sheet: dict, excel_row: int, col: int) -> tuple[str, object]:
-    """The one cell-reading interface: (status, value) with status ok / empty / formula_unrecalculated
-    (a formula without a cached value: recalculation failed or did not run) / error_value (an Excel
-    error value, literal or produced by a recalculated formula: kept apart from the unrecalculated case)."""
-    coord = _cell_coord(excel_row, col)
-    c = sheet["cells"].get(coord)
-    if c is None:
-        return "empty", None
-    if c.get("formula") and c.get("cached") is None:
-        return "formula_unrecalculated", None
-    v = c.get("cached") if c.get("formula") else c.get("literal")
-    if isinstance(v, str) and v.strip().upper().startswith(ERROR_PREFIXES):
-        return "error_value", v
-    return "ok", v
-
-
-def read_cell(sheet: dict, excel_row: int, col: int) -> dict:
-    st, v = read_value(sheet, excel_row, col)
-    return {"status": st, "value": v, "coord": _cell_coord(excel_row, col)}
 
 
 # ----------------------------------------------------------------------------- stage: identify_tables
@@ -821,42 +671,6 @@ def count_verdict(item: int, docx: dict, name: str, phrase_re: str, reference: i
 
 
 # ----------------------------------------------------------------------------- stage: checks
-class _Decision:
-    """Collects everything a criterion depends on, then decides: confirmed violation -> FAIL;
-    otherwise unreliable required input -> cannot_assess; otherwise PASS. Violations and
-    unassessable inputs are both kept in the evidence."""
-
-    def __init__(self, item: int, base_evidence: dict):
-        self.item, self.evidence = item, dict(base_evidence)
-        self.violations: list[dict] = []
-        self.unassessable: list[dict] = []
-        self.deliverable, self.reference = None, None
-
-    def violation(self, kind: str, detail, attribution: str = "model_caused", **extra):
-        self.violations.append({"kind": kind, "detail": detail, "attribution": attribution, **extra})
-
-    def unreliable(self, kind: str, field: str, detail=None, **extra):
-        self.unassessable.append({"kind": kind, "field": field, "detail": detail, "attribution": ATTRIBUTION.get(kind, "grader_extraction"), **extra})
-
-    def cell(self, field: str, st: str, value, coord: str, row: int | None = None, recalc=None):
-        """Register one cell the criterion needs: reliably invalid -> violation; unreliable -> unassessable."""
-        if st in UNRELIABLE_KINDS:
-            self.unreliable("grader_error", field, {"row": row, "cell": coord, "recalc": recalc}, cell=coord)
-        elif st in INVALID_KINDS:
-            self.violation(st, f"{field} at {coord} is {describe_cell(st, value)}", cell=coord, row=row, value=value)
-
-    def result(self, note_ok: str) -> Result:
-        ev = {**self.evidence, "violations": self.violations[:10], "violation_count": len(self.violations), "unassessable": self.unassessable[:10], "unassessable_count": len(self.unassessable)}
-        if self.violations:
-            kinds = sorted({v["kind"] for v in self.violations})
-            attribution = self.violations[0]["attribution"]
-            note = "confirmed violation: " + "; ".join(str(v["detail"])[:160] for v in self.violations[:3]) + ("; other inputs unassessable: " + ", ".join(sorted({u["field"] for u in self.unassessable})) if self.unassessable else "")
-            return Result(self.item, "fail", ev, self.deliverable, self.reference, note + f" [{', '.join(kinds)}]", attribution)
-        if self.unassessable:
-            u = self.unassessable[0]
-            note = "extraction_failed: " + "; ".join(f"{x['field']} {x['kind']}" + (f" ({str(x['detail'])[:100]})" if x["detail"] else "") for x in self.unassessable[:4])
-            return Result(self.item, "cannot_assess", ev, self.deliverable, self.reference, note, u["attribution"])
-        return Result(self.item, "pass", ev, self.deliverable, self.reference, note_ok)
 
 
 def _apply_column_dependencies(d: _Decision, spec: dict, dep: dict):
@@ -908,9 +722,6 @@ def run_checks(extraction: dict, reference: dict, rubric: list[dict], integrity:
     results: dict[int, Result] = {}
     ref_lines = reference["lines"]
     ref_by_key = {(l["po"], l["sku"], qty(l["units"])): l for l in ref_lines}
-    inventory_xlsx = [i["path"] for i in extraction["inventory"] if i["kind"] == "xlsx"]
-    readable = {k: v for k, v in extraction["xlsx"].items() if "sheets" in v}
-    unreadable = {k: v for k, v in extraction["xlsx"].items() if "sheets" not in v}
     docx_files = {k: v for k, v in extraction["docx"].items() if "text" in v}
     status: dict = {"workbooks": {}, "docx": sorted(docx_files), "pipeline": {}}
 
@@ -918,39 +729,8 @@ def run_checks(extraction: dict, reference: dict, rubric: list[dict], integrity:
         for i in items:
             results.setdefault(i, Result(i, verdict, evidence, None, None, note, attribution))
 
-    # --- workbook presence and provenance ---------------------------------------------------------
-    if not inventory_xlsx:
-        ev = {"files": [i["path"] for i in extraction["inventory"]]}
-        results[1] = Result(1, "fail", ev, False, True, "no .xlsx deliverable in the collected set", "model_caused_missing")
-        fill(WORKBOOK_ITEMS, "fail", "no workbook delivered (requirement not met)", "model_caused_missing", ev)
-    elif not readable:
-        name, info = next(iter(unreadable.items()))
-        intact = integrity.get(name)
-        fmt = info.get("format", {})
-        cls = info.get("error_class") or "parser_undetermined"
-        ev = {"file": name, "format_check": fmt, "transfer_integrity": intact, "error": info.get("error"), "error_class": cls, "exception_type": info.get("exception_type"),
-              "copy_verified": info.get("copy_verified"), "original_sha256": info.get("sha256"), "copy_sha256": info.get("copy_sha256"), "resource_limit": fmt.get("resource_limit")}
-        structural_ok = bool(fmt.get("structure_ok"))
-        if cls == "original_corrupt" and intact is True:
-            status["workbooks"][name] = {"attribution": "model_caused_corrupt", "error_class": cls, "format": fmt, "transfer_integrity": True}
-            results[1] = Result(1, "fail", ev, False, True, f"original workbook structurally corrupt ({fmt.get('error_kind')}: {fmt.get('error')}); transfer integrity verified -> model-delivered corrupt file", "model_caused_corrupt")
-            fill(WORKBOOK_ITEMS, "fail", "workbook structurally corrupt; treated as not delivered (model-caused, transfer verified)", "model_caused_corrupt", ev)
-        elif cls == "original_corrupt":
-            status["workbooks"][name] = {"attribution": "unknown_transfer", "error_class": cls, "format": fmt, "transfer_integrity": intact}
-            results[1] = Result(1, "cannot_assess", ev, None, True, "original workbook structurally corrupt but transfer integrity not verified -> cause unknown", "unknown")
-            fill(WORKBOOK_ITEMS, "cannot_assess", "workbook corrupt; cause unknown (transfer not verified)", "unknown", ev)
-        elif cls in ("grader_error", "copy_fault"):
-            status["workbooks"][name] = {"attribution": "grader_caused_extraction", "error_class": cls, "format": fmt, "transfer_integrity": intact}
-            results[1] = (Result(1, "pass", ev, True, True, f"original workbook structure independently valid; grader-side {cls} ({info.get('error')})") if structural_ok
-                          else Result(1, "cannot_assess", ev, None, True, f"grader-side {cls} before the structure could be verified ({info.get('error')})", "grader_caused_extraction"))
-            fill(WORKBOOK_ITEMS, "cannot_assess", f"extraction_failed: grader-side {cls} ({info.get('error')}); not a model failure", "grader_caused_extraction", ev)
-        else:  # parser_undetermined: a parser could not handle the file; its validity is undetermined
-            status["workbooks"][name] = {"attribution": "unknown", "error_class": cls, "format": fmt, "transfer_integrity": intact}
-            results[1] = (Result(1, "pass", ev, True, True, f"zip and XML parts independently valid; a parser failed ({info.get('error')}); validity beyond the structural check undetermined") if structural_ok
-                          else Result(1, "cannot_assess", ev, None, True, f"workbook validity undetermined ({info.get('error')})", "unknown"))
-            fill(WORKBOOK_ITEMS, "cannot_assess", f"extraction_failed: parser could not read the workbook ({info.get('error')}); file validity undetermined, reason kept", "unknown", ev)
-    else:
-        results[1] = Result(1, "pass", {"files": sorted(readable)}, True, True, "readable .xlsx deliverable present")
+    # --- workbook presence and provenance (engine gate; this task's workbook items) -----------------
+    readable = workbook_gate(extraction, integrity, results, status, fill, workbook_items=WORKBOOK_ITEMS, file_item=1)
     results[2] = Result(2, "pass" if docx_files else "fail", {"files": sorted(extraction["docx"]) or [i["path"] for i in extraction["inventory"]]}, bool(docx_files), True,
                         "" if docx_files else "no readable .docx deliverable", None if docx_files else "model_caused_missing")
 

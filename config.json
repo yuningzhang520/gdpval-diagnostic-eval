@@ -832,7 +832,8 @@
     "preregistration": "preregistration.md (draft; frozen at freeze-v1)",
     "engine_version": "engine-2026-11-01.1",
     "task_grader_versions": {
-      "1137e2bb-bdf9-4876-b572-f29b7de5e595": "1137e2bb-2026-11-01.2"
+      "1137e2bb-bdf9-4876-b572-f29b7de5e595": "1137e2bb-2026-11-01.2",
+      "7d7fc9a7-21a7-4b83-906f-416dea5ad04f": "7d7fc9a7-2026-11-01.1"
     },
     "grader_version_scheme": "every grading pass records grader_version = '<engine_version>+<task_grader_version>', the engine and task versions separately, and the full git commit of the grading code (grading.grade.code_provenance); the engine covers extraction, recalculation, outcome gate, scoring, pass selection, judge and review infrastructure; each task specification carries its own version; superseded value: grader_version grading-1137e2bb-2026-10-31 (pre gold-first fixes)",
     "judge_input_manifest": "grading.judge.build_units_1137e2bb (task requirement, criterion, independent reference, deliverable excerpt per unit); other tasks: Stage 3 work",

@@ -21,6 +21,7 @@ except ImportError:  # pragma: no cover
     from inspect_ai.log._log import EvalStatus
 VALID_EVAL_STATUS = frozenset(get_args(EvalStatus))
 from . import checks_1137e2bb as CK
+from . import checks_7d7fc9a7 as CK2
 from . import judge as J
 from .extract import extract_all
 from .review import write_review_materials
@@ -31,7 +32,8 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # the combined grader version "<engine>+<task>" and the full git commit of the code that graded. config.grading must state
 # the engine version and the per-task versions (checked by run_grading before any grading).
 ENGINE_VERSION = "engine-2026-11-01.1"
-TASK_MODULES = {CK.TASK: {"checks": CK.run_checks, "units": J.build_units_1137e2bb, "critical": CK.CRITICAL, "judge_items": CK.J_ITEMS, "version": CK.VERSION}}
+TASK_MODULES = {CK.TASK: {"checks": CK.run_checks, "units": J.build_units_1137e2bb, "critical": CK.CRITICAL, "judge_items": CK.J_ITEMS, "visual_items": [], "version": CK.VERSION},
+                CK2.TASK: {"checks": CK2.run_checks, "units": J.build_units_7d7fc9a7, "critical": CK2.CRITICAL, "judge_items": CK2.J_ITEMS, "visual_items": CK2.V_ITEMS, "version": CK2.VERSION}}
 
 
 def grader_version_of(task_id: str) -> str:
@@ -268,6 +270,9 @@ def grade_run(host_dir: str, log, sample_uuid: str, *, task_id: str, rubric: lis
                        "verdict": v["verdict"] if v else "pending_judge", "evidence": v["evidence"] if v else [], "rationale": v["rationale"] if v else "", "judge_id": v["judge_id"] if v else None,
                        "parse_error": v["parse_error"] if v else None, "error_class": v.get("error_class") if v else None, "call_status": v.get("call_status") if v else None,
                        "usage_status": v.get("usage_status") if v else None, "grader_version": grader_version, "grading_pass": rec["grading_pass"]})
+    for i in mod.get("visual_items", []):  # visual criteria: never judged from text; stay in W as ungraded until the human review records a verdict
+        grades.append({"run_uuid": binding["uuid"], "task_id": task_id, "item": i, "weight": rubric[i - 1]["score"], "criterion": rubric[i - 1]["criterion"], "source": "V",
+                       "verdict": "pending_human", "evidence": [], "note": "visual criterion: human review from the rendered deliverable", "grader_version": grader_version, "grading_pass": rec["grading_pass"]})
     grades.sort(key=lambda g: g["item"])
     with open(os.path.join(out_dir, "grades.jsonl"), "a", encoding="utf-8") as f:
         for g in grades:

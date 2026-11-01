@@ -1,0 +1,69 @@
+{
+ "task_id": "7d7fc9a7-21a7-4b83-906f-416dea5ad04f",
+ "grader_code": "grading/checks_7d7fc9a7.py at its first run (task version 7d7fc9a7-2026-11-01.1), 2026-11-01, fast path on the expert file's cached values",
+ "gold_files_sha256": {
+  "Aurisic_Amortization_4-25.xlsx": "894e8b780163b00ff589075e97e1898c85a469f5503bb66bcc74208efd20a533"
+ },
+ "note": "ORIGINAL first-pass result of the new grader on the expert deliverable; preserved. The two subsequent code changes before the suite (summary total-cell label exclusion; item 14 independent of missing invoices) changed evidence wording only, not this map",
+ "verdicts": {
+  "1": "pass",
+  "2": "pass",
+  "3": "pass",
+  "4": "pass",
+  "5": "pass",
+  "6": "pass",
+  "7": "pass",
+  "8": "pass",
+  "9": "pass",
+  "10": "fail",
+  "11": "pass",
+  "13": "pass",
+  "14": "pass",
+  "19": "pass",
+  "20": "pass",
+  "21": "pass",
+  "22": "pass",
+  "23": "pass",
+  "24": "pass",
+  "25": "pass",
+  "26": "pass",
+  "27": "pass",
+  "28": "pass",
+  "29": "pass",
+  "30": "fail",
+  "33": "pass",
+  "34": "pass",
+  "36": "pass",
+  "37": "pass",
+  "38": "pass",
+  "39": "pass",
+  "40": "pass",
+  "41": "pass",
+  "42": "pass",
+  "43": "pass",
+  "44": "pass",
+  "47": "pass",
+  "48": "pass",
+  "49": "pass",
+  "50": "pass",
+  "53": "pass"
+ },
+ "non_pass_items": {
+  "10": {
+   "verdict": "fail",
+   "note": "confirmed violation: total prepaid balance as of 4/30/2025: 1087156.21 at B7 != 929354.31 [wrong_value]",
+   "attribution": "model_caused"
+  },
+  "30": {
+   "verdict": "fail",
+   "note": "confirmed violation: Jan: no variance figure; Feb: no variance figure; Mar: no variance figure [variance_missing_month]",
+   "attribution": "model_caused"
+  }
+ },
+ "critical": {
+  "C1": "pass",
+  "C2": "fail",
+  "C3": "pass",
+  "C4": "fail"
+ }
+}

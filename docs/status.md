@@ -2834,6 +2834,39 @@ their last green run). Tag `grader-v0-1137e2bb` moved from `a172980d09eb98f08adc
 to the finalization commit: no immutable record referenced the tag (the validation records, inventories and ledgers
 reference commit SHAs and versions only); no development output has been opened.
 
+## Task 2 `7d7fc9a7…` gold-first grader and the shared grading engine (2026-11-01; engine-2026-11-01.1, 7d7fc9a7-2026-11-01.1; no model, judge or paid call by this work; logs `logs/gold-first-7d7fc9a7-20261101T*/`)
+
+Engine (`grading/engine/`): cells, decision, headers, workbook, money, sheets — extracted from the 1137 grader on the
+rule of two (the second task needed the same reading interface, verdict assembly, header mapping and workbook gate;
+money and month helpers are new). The 1137 module imports them (its pipeline unchanged); its three suites were run
+after each move (cells/decision, headers, workbook gate): 53 + 2 / 57 / 28 every time. `extract_xlsx` now records
+each cell's number format; `grade_run` adds visual items as `pending_human` rows (source V) so they stay in W.
+
+Task 2 grader (`grading/checks_7d7fc9a7.py`, judge units `build_units_7d7fc9a7`, registered in `TASK_MODULES`,
+version in `config.grading.task_grader_versions`): D items 1–11, 13, 14, 19–30, 33, 34, 36–44, 47–50, 53; J items
+12, 15–18, 31, 32, 35, 45, 46, 51, 52, 54, 55 (55 moved to J per K1; the D/J conflict in prereg 2.7 corrected);
+V 56. First pass on the expert workbook (preserved): 39 pass, 2 fail (10: no total prepaid balance cell; 30: the
+1250 variance row has no per-month figures), 0 `cannot_assess`; C1 pass, C2 fail (through 30), C3 pass, C4 fail
+(through 10). Both failures are expert-deliverable defects (A-10b, A-30 in prereg 2.7); the BCBS invoices sit on one
+consolidated line with monthly additions and are matched as present. Operational definitions recorded (rubric 6
+header block, rubric 53 currency formats, invoice presence, ending-balance source and adjustment bridge, 22/40
+scope). Gold catalog: 20 rubric-relevant and 15 neutral variants on the values-only twin (item 7 needs formulas and
+is part of the twin baseline); all on their declared maps; two declarations corrected from the rubric text before
+pinning (22 excludes additions; the period is read from the header block). Escalated (prereg section 4): whether
+rubric 30 stays inside C2.
+
+| Command (`run_isolated.sh`, `/usr/bin/time -p`) | Wall clock | Exit | Result |
+|---|---|---|---|
+| `unittest grading.tests.test_gold_7d7fc9a7` (40 incl. 3 docker-gated) | 2.8 → 3.0 s | 1 / 0 | 37/37 + 3 skipped (first run: one test defect and two declaration errors, fixed and rerun) |
+| `unittest grading.tests.test_gold_1137e2bb` after each engine move | 13.1 / 13.2 / 13.4 s | 0 | 53/53 + 2 skipped |
+| `unittest grading.tests.test_layout_regressions` after each engine move | 3.7–4.1 s | 0 | 57/57 |
+| `unittest grading.tests.test_grading_chain` | 2.1–2.9 s | 0 | 28/28 |
+| `unittest harness.tests.test_docs_consistency` | 0.9 s | 0 | 3/3 |
+
+Deferred while the sandbox is in paid use: the docker-gated gold cases of both tasks and the docker regressions
+(`regress_recalc_docker`, `regress_grading_cli`); to be run before the Codex review closes. Codex Review 1 package:
+`docs/codex_review_1_shared_grading_core.md`. Tag `grader-v0-7d7fc9a7` on this commit.
+
 ## Known issues and findings (material check)
 
 - `rubric_json.form_content`: 8,036 items hold `null`, 2,417 items lack the key, zero
@@ -2886,14 +2919,17 @@ reference commit SHAs and versions only); no development output has been opened.
 
 ## In flight
 
-Paid batches authorized (decision 2026-11-01) and launched; the dev batch stopped at its first unit on a harness
-defect (Google SDK argument), fixed and regression-tested; waiting for the human's decisions on the held unit, the
-rerun and the relaunch (section "Paid batch launch and first blocker"). Offline: finalization of the 1137 grader
-(item 9 format rule, business-row rule review, grouped SKU roll-up variant) before any 1137 development output is
-opened; then Task 2 (`7d7fc9a7…`) and the shared spreadsheet core.
+Recovery actions executed (reconciliation at 0.00 recorded; the single authorized replacement unit of `b5d2e6f1…`
+running detached in the dev class since 09:34:47Z); the chain (remaining dev units, compat, validation) resumes after
+the replacement unit is verified. Offline: Task 2 grader and the shared engine done and tagged; Codex Review 1
+package prepared (stop point); docker-gated tests deferred until the sandbox is free.
 
 ## Decisions taken (date · what · commit)
 
+- 2026-11-01 · 1137e2bb grader finalized (item 9 numeric-format rule, business-row rule, roll-up variant; task
+  version .2; commit `384721957b6d553825159bb2d2f8225923e3d9c9`, tag `grader-v0-1137e2bb` moved there from
+  `a172980…`). Shared engine extracted and Task 2 `7d7fc9a7…` gold-first grader v0 (this entry's commit, tag
+  `grader-v0-7d7fc9a7`); the 7d7fc9a7 development output may be opened at or after that tag.
 - 2026-11-01 · Recovery actions AUTHORIZED by the human (chat): (1) the failed dev unit
   `b5d2e6f1-62a2-433a-bcdd-95b260cdd860:google/gemini-3.8-flash:20261101T091604Z` is reconciled at 0.00 USD
   (verified client-construction TypeError before any HTTP request, no usage; the human checked the Google

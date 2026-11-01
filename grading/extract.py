@@ -90,7 +90,7 @@ def extract_xlsx(path: str) -> dict:
                     # LibreOffice both write t="str" with an empty value for "" results); openpyxl returns None for
                     # it, exactly as for a formula with no cached value, which is typed "n". Keep the two apart.
                     cached = ""
-                cells[c.coordinate] = {"formula": formula, "cached": _cell_value(cached), "literal": None if formula else _cell_value(v)}
+                cells[c.coordinate] = {"formula": formula, "cached": _cell_value(cached), "literal": None if formula else _cell_value(v), "number_format": c.number_format}
                 vals.append(_cell_value(cached if formula else v))
             rows.append(vals)
         pivots = []
