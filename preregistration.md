@@ -187,6 +187,23 @@ validation evidence; the development model's samples do not establish cross-fami
 generalisation. Compatibility runs (`compat`, task `87da214f…`, outside the formal
 ten) verify provider, tool, artifact, rendering and accounting behaviour only.
 
+Amendment (approved by the human 2026-11-01, before any canonical development or validation
+sample of the development model exists): the Gemini `dev` and `validation` classes run
+without an Inspect message limit (`config.batches.<label>.message_limit` null); the time
+and working-time limits (7,200 s), the token limit (20 M), the per-sample cost limit
+(10 USD), the reservation and every ledger stop condition are unchanged; the candidate
+classes keep `generation.message_limit` 200. Reason: the earlier 200-message attempt of
+`b5d2e6f1…` (run `LJbb8ZyPWZgPE8VCFRbLGD`) ended on the message limit after 99 single-call
+turns with no tool error; it is kept as a diagnostic run outside the canonical ten. A
+canonical Gemini unit is accepted when its execution is `completed`, or `limited` by the
+time, working-time, cost or token limit only, with a grading-eligible outcome, complete
+(or confirmed empty) collection, structurally valid collected files, a consistent
+artifact manifest, a clean settlement and no suspected tool-error loop; the actual status
+and limit reason are kept. Two distinct canonical Gemini units across `dev` and
+`validation` limited by time or cost stop further Gemini launches (token limits are
+recorded, not counted). Designations (canonical, diagnostic) are append-only records
+next to each class's run inventory.
+
 ### 1.17 Rubric-to-capability mapping (DRAFT, 2026-11-01; approved at `freeze-v1`)
 Every rubric item of the ten tasks carries one primary capability for the cross-task analysis:
 requirements (deliverable-spec compliance), grounding (figures and items taken from the attached
@@ -1105,6 +1122,25 @@ with the rubric's own tolerance; hours compared at two decimals (half-up).
   percentages only (gold would fail 10). Rubric governs.
 - K2: the gold uses `pie3DChart`; 2D and 3D pie chart parts are both read and accepted
   (section 1.9).
+- A-9 (rubric 34, 55, 56; APPROVED by the human 2026-11-01, Option A; recorded before any
+  Task 3 development output is opened). Rubric text: the total hours represented in the
+  Margin Impact / Time Sensitivity / Strategic Level table equal the total hours
+  represented in the Activity Analysis table. Interpretation: compare each segment table's
+  total hours with the total hours the Activity Analysis table represents. Where the
+  Activity table prints a clearly identifiable hour total, that printed total is used
+  (these items test consistency between the tables, not correctness against the source,
+  which other items cover). Where it shows percentages only, its represented hours are
+  derived from the source data, provided category coverage, denominator and mapping are
+  unambiguous and independently verifiable (every row maps to exactly one source category,
+  no duplicates, and the printed shares agree with the source shares over the covered
+  categories within the rubric's ±0.20 point tolerance); percentages summing to 100 % alone
+  do not establish the hours. A segment table's total is its printed hour total when one
+  is identifiable, otherwise the sum of its readable hour cells, otherwise derived the
+  same way. When either side cannot be determined reliably the item is `cannot_assess`;
+  the expert value is never assumed. Hours are compared at two decimals (half-up). Item 10
+  keeps its separate requirement to display hours; items 34, 55 and 56 are not failed for
+  the same missing display when the independently verifiable hours agree. Rubric
+  requirements and the C3 composition are unchanged.
 
 ### 2.9 `c357f0e2-963d-4eb7-a6fa-3078fe55b3ba` — UAT test plan (CIS Managers)
 Inputs: `UAT Plan - Template.xlsx` (one sheet; row 1 holds the title "UAT Test Plan",

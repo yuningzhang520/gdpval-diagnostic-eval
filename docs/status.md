@@ -3009,6 +3009,43 @@ both entries now carry the corrected count and a correction note.
 Also drafted (not committed with the fixes): the rubric-to-capability map (`scripts/capability_map.py`,
 `grading/capability_map.json`, preregistration 1.17 DRAFT).
 
+## Gemini message limit removed, one more replacement, controlled parallel execution (2026-11-01; approved by the human; offline verified; logs `logs/gemini-unlimited-20261101T122630Z/`)
+
+Run-level metadata of the 200-message attempt (`LJbb8ZyPWZgPE8VCFRbLGD`, counts only, `harness/run_metadata.py`): 200
+messages (1 system, 1 user, 99 assistant, 99 tool), 99 model calls (0 errors), 99 tool calls (python 74, bash 19,
+render_document 6), 0 Inspect tool errors (longest error streak 0), exactly one tool call per turn; limit event
+`message` 200. No tool-error loop. Inspect's bash and python tools report non-zero exit codes inside the tool output,
+which was not read, so failed shell commands are not visible in these counts.
+
+Change (Gemini only): `config.batches.dev` and `.validation` carry `message_limit: null`, the unit policy
+(`gemini_unit_policy`) and `config.concurrency.cross_class`; `generation.message_limit` stays 200 and compat / formal
+carry no override. The launcher reads a class override (absent = inherit, null = no limit, otherwise a positive
+integer; anything else refused). Inspect 0.3.286 applies no substitute: `eval(message_limit=None)` leaves the task
+value (None, `make_task` sets none), the sample state builds `message_limit(None)` (no limit), `turn_limit` is None, the
+`generate(tool_calls="loop")` loop has no cap, and `INSPECT_EVAL_MESSAGE_LIMIT` applies only to the Inspect CLI.
+New: `harness/unit_gate.py` (gate between units; canonical designations in `<runs_root>/canonical_designations.jsonl`),
+`harness/scheduler.py` (one detached owner of all paid launches; one unit per class; global cap 2, adaptive 3;
+`caffeinate -i`; own sessions; resource samples), `harness/run_metadata.py`. Suspected tool-error loop rule
+(`tool-error-loop-2026-11-01.1`): 10 consecutive tool errors, or at least 20 errors making up at least half of all tool
+calls; a suspected loop stops Gemini launches for review. Candidate units keep their stopping policy (batch return code,
+ledger); the gate records their facts as observations only.
+
+Parallel ownership (verified in code and by a run): every class has its own runs root, ledger and lock, inventory,
+Inspect log directories, launcher and batch records; Inspect names each compose project with a random suffix, skips
+image builds and image cleanup for prebuilt images and cleans only its own process's projects; the harness has no
+Docker-wide check or cleanup; the render tool's temporary directory is inside the sandbox.
+
+| Command (`run_isolated.sh`, `/usr/bin/time -p`) | Wall clock | Exit | Result |
+|---|---|---|---|
+| `unittest harness.tests.test_launcher_regressions` (+ MessageLimitOverrideTests) | 6.6 s | 0 | 52/52 |
+| `unittest harness.tests.test_generation_config` / `test_budget_unit` / `test_batch_unit` / `test_staging_unit` | 2.8 / 1.1 / 1.3 / 0.9 s | 0 | 8 / 34 / 3 / 12 |
+| `unittest harness.tests.test_scheduler_unit` (fake unit processes; cap, one per class, order, gates, two-limit rule, diagnostic exclusion, loop, candidate policy, single replacement, stop file, cap override, adaptive cap, real batch argv as a batch dry run) | 24.8 s | 0 | 17/17 (first runs: a test-side status assertion and a hard-coded task id, fixed) |
+| `unittest harness.tests.test_docs_consistency` | 1.2 s | 0 | 3/3 (after registering the scheduler parser) |
+| `harness.tests.regress_message_limit_parallel --output-root …` (real CLI + Inspect + docker + mockllm, two concurrent class processes, 110 tool calls each) | 21.8 s | 0 | 20 PASS, 0 FAIL: dev 225 messages, no limit event, `completed`; compat `limited` by message at 200; evals overlapped 17.9 s; separate roots and inventories |
+
+Interaction kept as approved: a cost-limited Gemini unit settles just above 10 USD, which is more than twice its 5.00
+reservation, so the existing ledger stop ends that class's launches before the two-limit rule counts it.
+
 ## Known issues and findings (material check)
 
 - `rubric_json.form_content`: 8,036 items hold `null`, 2,417 items lack the key, zero
@@ -3061,13 +3098,22 @@ Also drafted (not committed with the fixes): the rubric-to-capability map (`scri
 
 ## In flight
 
-Paid chain stopped after the third `b5d2e6f1…` attempt ended `limited` (message limit); waiting for the human's decision on
-the development resource setting before the remaining dev units, compat and validation run. Codex Review 1 fixes committed
-(`9b1df11`), Docker-gated suites green, code-bound records written; focused closure package
-`docs/codex_review_1_closure.md` ready for the Codex closure check. Task 3 (`2ea2e5b5…`) grader drafted offline.
+Gemini-only message-limit change and the scheduler committed; next: config snapshot, the diagnostic designation of
+`LJbb8ZyPWZgPE8VCFRbLGD`, then the scheduler plan (replacement and compat in parallel). Codex Review 1 closure pinned to
+`2c37d6a`. Task 3 (`2ea2e5b5…`) grader: A-9 recorded; implementation next (offline).
 
 ## Decisions taken (date · what · commit)
 
+- 2026-11-01 · Gemini limits and scheduling APPROVED by the human (chat): (1) `message_limit` null for the Gemini dev and
+  validation classes only, every other limit and ledger control unchanged, candidates keep 200; (2) exactly one more
+  `b5d2e6f1…` dev replacement under the new configuration, the 200-message attempt kept as a diagnostic run outside the
+  canonical ten; accepted if `completed`, or `limited` by time, cost or token with valid collection, structurally valid
+  files and clean settlement; stop on error, tool-error loop, provider or accounting blocker, integrity failure, hold or
+  stop; (3) later limited Gemini units continue when integrity and settlement hold; two distinct canonical units
+  limited by time or cost stop Gemini launches; (4) controlled parallel execution: one unit per class, global cap 2,
+  raised to 3 after 30 min of overlap below 50 % Docker memory without pressure, swap growth, OOM or integrity issue;
+  (5) task 2ea2e5b5 rubric 34, 55, 56: Option A as recorded in preregistration 2.8 A-9. Authorization reference for
+  the scheduler: this entry · this commit
 - 2026-11-01 · Codex Review 1 fixes committed (`9b1df11851f65349a8e5e0bc63a418f311202dac`); Docker-gated suites green;
   code-bound gold records under `grading/validation/<task>/code_9b1df11/`. Paid chain held after the third `b5d2e6f1…`
   attempt ended `limited` (message limit): the authorization requires a successful replacement; decision requested from

@@ -34,6 +34,9 @@ REASONING_SUMMARIES = ("none", "concise", "detailed", "auto")  # GenerateConfig.
 ENV_LINE = re.compile(r"^\s*(?:export\s+)?([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*?)\s*$")
 
 
+INHERIT = "inherit"  # run-class override absent: the generation value applies (config.batches.<label> has no such key)
+
+
 class LauncherError(RuntimeError):
     pass
 
@@ -246,7 +249,7 @@ def sdk_model_args(model: str | None, layer_2: dict) -> dict:
     return {"max_retries": layer_2["max_retries"]}
 
 
-def eval_kwargs(cfg: dict, *, log_dir: str, token_limit: int | None = None, model: str | None = None, cost_limit_override=None) -> dict:
+def eval_kwargs(cfg: dict, *, log_dir: str, token_limit: int | None = None, model: str | None = None, cost_limit_override=None, message_limit_override=INHERIT) -> dict:
     """The fixed execution and retry settings for inspect_ai.eval(); nothing here touches
     credentials. Four retry layers: Inspect request retries (max_retries), SDK retries
     (model_args max_retries=0), sample reruns (retry_on_error=0, fail_on_error=False), task
@@ -255,7 +258,10 @@ def eval_kwargs(cfg: dict, *, log_dir: str, token_limit: int | None = None, mode
     data for the model (fail closed). The reasoning settings are explicit and identical for both
     candidates (approved 2026-11-01): ``generation.reasoning_effort`` and ``generation.reasoning_summary``
     are required and must be Inspect literals; they reach the provider adapters as GenerateConfig fields
-    through eval(**kwargs) (Anthropic: adaptive thinking + output_config.effort; OpenAI: reasoning.effort)."""
+    through eval(**kwargs) (Anthropic: adaptive thinking + output_config.effort; OpenAI: reasoning.effort).
+    ``message_limit_override``: a run class's own message limit (config.batches.<label>.message_limit; ``None`` = no
+    message limit, approved 2026-11-01 for the Gemini dev and validation classes only); ``INHERIT`` keeps
+    generation.message_limit (the candidate classes)."""
     g, r, c = cfg["generation"], cfg["retries"], cfg["concurrency"]["pilot"]
     l1, l2 = r["layer_1_inspect_model_request"], r["layer_2_provider_sdk"]
     cost_limit = g.get("cost_limit_usd") if cost_limit_override is None else cost_limit_override  # a run class may set its own per-sample safety net (config.batches.<label>.cost_limit_usd)
@@ -274,6 +280,8 @@ def eval_kwargs(cfg: dict, *, log_dir: str, token_limit: int | None = None, mode
     effective_token_limit = token_limit if token_limit is not None else _int_or_none(g.get("token_limit"))
     if effective_token_limit is None or effective_token_limit <= 0:
         raise LauncherError("generation.token_limit must be a positive integer (approved per-sample token cap); refusing to start")
+    message_limit = check_message_limit(g.get("message_limit"), "generation.message_limit") if message_limit_override is INHERIT else \
+        check_message_limit(message_limit_override, "the run class message limit", allow_none=True)
     reasoning_effort = g.get("reasoning_effort")
     if reasoning_effort not in REASONING_EFFORTS:
         raise LauncherError(f"generation.reasoning_effort must be one of {REASONING_EFFORTS} (explicit, identical for both candidates); got {reasoning_effort!r}; refusing to start")
@@ -282,7 +290,7 @@ def eval_kwargs(cfg: dict, *, log_dir: str, token_limit: int | None = None, mode
         raise LauncherError(f"generation.reasoning_summary must be one of {REASONING_SUMMARIES}; got {reasoning_summary!r}; refusing to start")
     kw = {
         "log_dir": log_dir, "epochs": g["epochs"], "sandbox_prebuilt": True, "log_images": True,
-        "time_limit": g["time_limit_s"], "working_limit": g["working_limit_s"], "message_limit": g["message_limit"],
+        "time_limit": g["time_limit_s"], "working_limit": g["working_limit_s"], "message_limit": message_limit,
         "token_limit": effective_token_limit, "max_tokens": max_tokens,
         "reasoning_effort": reasoning_effort, "reasoning_summary": reasoning_summary,
         "max_retries": l1["max_retries"], "timeout": l1["timeout_s"], "attempt_timeout": attempt_timeout,
@@ -332,6 +340,15 @@ def prices_from_config(cfg: dict) -> dict:
 BATCH_LABELS = ("dev", "validation", "compat", "formal")
 
 
+def check_message_limit(value, where: str, *, allow_none: bool = False):
+    """A message limit is a positive integer; ``None`` (no limit) only where explicitly allowed (a run-class override)."""
+    if value is None and allow_none:
+        return None
+    if isinstance(value, bool) or not isinstance(value, int) or value <= 0:
+        raise LauncherError(f"{where} must be a positive integer{' or null (no limit)' if allow_none else ''}; got {value!r}; refusing to start")
+    return value
+
+
 def batch_controls(cfg: dict, run_label: str) -> dict:
     """The approved controls of one run class from config.batches: ceiling (a start gate on that class's ledger), the
     task manifest (which task set may run), the allowed models, the per-model reservation forecasts and an optional
@@ -349,8 +366,9 @@ def batch_controls(cfg: dict, run_label: str) -> dict:
     cost_limit = b.get("cost_limit_usd")
     if cost_limit is not None and (isinstance(cost_limit, bool) or not isinstance(cost_limit, (int, float))):
         raise LauncherError(f"config.batches.{run_label}.cost_limit_usd must be a number when set")
+    message_limit = check_message_limit(b["message_limit"], f"config.batches.{run_label}.message_limit", allow_none=True) if "message_limit" in b else INHERIT
     return {"run_label": run_label, "budget_ceiling_usd": Decimal(str(ceiling).strip()), "models": list(b["models"]), "task_manifest": b.get("task_manifest", "data/selected_tasks.json"),
-            "reservation_usd_by_model": dict(b.get("reservation_usd_by_model") or {}), "cost_limit_usd": cost_limit, "status": b.get("status")}
+            "reservation_usd_by_model": dict(b.get("reservation_usd_by_model") or {}), "cost_limit_usd": cost_limit, "message_limit": message_limit, "status": b.get("status")}
 
 
 def check_run_class_paths(run_label: str, runs_root: str, ledger_path: str) -> None:
@@ -387,9 +405,10 @@ class PilotLauncher:
     """Orchestrates one unit at a time: check → reserve → run → settle → stop check."""
 
     def __init__(self, cfg: dict, *, runs_root: str, ledger: BudgetLedger, eval_fn, log_dir: str | None = None, record_dir: str | None = None,
-                 run_label: str | None = None, cost_limit_override=None, provenance: dict | None = None):
+                 run_label: str | None = None, cost_limit_override=None, message_limit_override=INHERIT, provenance: dict | None = None):
         self.run_label = run_label
         self.cost_limit_override = cost_limit_override
+        self.message_limit_override = message_limit_override
         self.provenance = provenance or {}
         self.cfg = cfg
         self.runs_root = runs_root
@@ -449,7 +468,7 @@ class PilotLauncher:
         # Fail closed on the execution settings before the ledger is touched: a configuration
         # defect must not create a reservation or a conservative settlement.
         unit_log_dir = os.path.join(self.log_dir, unit_id.replace("/", "_").replace(":", "_"))  # this execution's own log directory: the binding usage recovery relies on
-        kw = eval_kwargs(self.cfg, log_dir=unit_log_dir, token_limit=token_limit, model=model, cost_limit_override=self.cost_limit_override)
+        kw = eval_kwargs(self.cfg, log_dir=unit_log_dir, token_limit=token_limit, model=model, cost_limit_override=self.cost_limit_override, message_limit_override=self.message_limit_override)
         # Single-task contract, before any call: the unit is one Task object. A list, tuple or set of
         # tasks (even of length 1) is refused here, before the stop check and the reservation.
         if task is None or isinstance(task, (list, tuple, set, frozenset, dict, str, bytes)):
@@ -878,14 +897,14 @@ def main(argv=None, *, eval_fn=None, environ: dict | None = None, docker_runner=
                   "env_names_loaded": loaded, "missing_key_names": missing, "credential_required": provider in KEY_ENV_BY_PROVIDER}
     print(json.dumps({**provenance, "image_attempts": len(image["attempts"]), "ledger": ledger.snapshot(), "mode": "real-run" if args.real_run else "dry-run"}, indent=1, default=str))
     if args.dry_run:
-        launcher = PilotLauncher(cfg, runs_root=runs_root, ledger=ledger, eval_fn=None, run_label=args.run_label, cost_limit_override=batch["cost_limit_usd"], provenance=provenance)
+        launcher = PilotLauncher(cfg, runs_root=runs_root, ledger=ledger, eval_fn=None, run_label=args.run_label, cost_limit_override=batch["cost_limit_usd"], message_limit_override=batch["message_limit"], provenance=provenance)
         launcher.run_sample(task=unit["task"], model=args.model, unit_id=unit["unit_id"], estimate_usd=args.estimate_usd, token_limit=args.token_limit, dry_run=True, task_id=args.task_id)
         return 0
     # --real-run: the only paid path; inspect_ai.eval is imported here and nowhere else in this module
     if eval_fn is None:
         from inspect_ai import eval as inspect_eval
         eval_fn = inspect_eval
-    launcher = PilotLauncher(cfg, runs_root=runs_root, ledger=ledger, eval_fn=eval_fn, run_label=args.run_label, cost_limit_override=batch["cost_limit_usd"], provenance=provenance)
+    launcher = PilotLauncher(cfg, runs_root=runs_root, ledger=ledger, eval_fn=eval_fn, run_label=args.run_label, cost_limit_override=batch["cost_limit_usd"], message_limit_override=batch["message_limit"], provenance=provenance)
     authorization = {"by": args.authorized_by, "ref": args.authorization_ref, "confirm": args.confirm, "estimate_usd": str(args.estimate_usd),
                      "note": "operator-supplied audit metadata recorded verbatim; the launcher does not verify an approval"}
     launcher.record("real_run_provenance", {**provenance, "unit_id": unit["unit_id"], "authorization": authorization, "started_at": _now()})

@@ -48,6 +48,12 @@ A whole batch (`harness/batch.py`: every task of the class's task set, one model
 .venv/bin/python -m harness.batch --run-label dev --model google/gemini-3.8-flash --runs-root ~/turing-eval-runs/dev/runs --ledger ~/turing-eval-runs/dev/ledger.json     --real-run --confirm-batch 'dev|google/gemini-3.8-flash|10|1.00' --authorized-by '<name>' --authorization-ref '<status.md entry>'
 ```
 
+Several run classes in parallel (`harness/scheduler.py`): one detached scheduler owns every paid launch of a plan, starts one unit at a time per class (each a one-task `harness.batch` invocation under `caffeinate -i` in its own session, so an interrupted terminal never stops it), keeps at most the configured number of paid units across classes (`config.concurrency.cross_class`), and applies the gate of `harness/unit_gate.py` after every unit (run outcome, collection and manifest consistency, structural file checks, settlement; for the development model also the tool-error-loop rule of `harness/run_metadata.py`, which reads counts only, and the two-limit rule). Files `stop_new` and `cap_override` in its state directory stop new launches or fix the cap; in-flight units are never terminated:
+
+```
+.venv/bin/python -m harness.scheduler --plan <plan.json> --dry-plan
+```
+
 Offline deterministic grading of a saved run (no provider call):
 
 ```

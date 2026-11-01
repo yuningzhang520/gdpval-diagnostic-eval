@@ -791,6 +791,15 @@
       "max_sandboxes": 1,
       "max_connections": 1,
       "basis": "pilot values (approved 2026-10-30) applied to every run class until memory and stability evidence"
+    },
+    "cross_class": {
+      "approved": "human 2026-11-01 (chat): controlled parallel execution across run classes",
+      "global_paid_units_cap_initial": 2,
+      "global_paid_units_cap_max": 3,
+      "units_per_class": 1,
+      "raise_rule": "after at least 1,800 s of actual overlap of two paid sandbox units: peak Docker memory below 50 % of the Docker VM allocation, host memory-pressure level normal throughout, swap growth at most 512 MiB, no Docker OOM event and no execution- or collection-integrity failure -> cap 3 without further approval; otherwise 2",
+      "fallback": "on contention (Docker memory above 80 % of the VM allocation, host memory pressure warn or critical, an OOM event): stop scheduling new units and lower the cap; in-flight paid units are never terminated",
+      "ownership": "one scheduler process (harness.scheduler) launches every paid unit; one unit per run class at a time; each class keeps its own runs root, ledger, inventory, config snapshot and console logs"
     }
   },
   "retries": {
@@ -1040,6 +1049,38 @@
         "google/gemini-3.8-flash": "5.00"
       },
       "cost_limit_usd": 10.0,
+      "message_limit": null,
+      "message_limit_policy": "Gemini development and validation classes only (approved by the human 2026-11-01, chat): no Inspect message limit (null). The 7,200 s time and working-time limits, the 20,000,000 token limit, the 10 USD per-sample Inspect cost limit, the reservation and every ledger stop condition are unchanged; the candidate classes (compat, formal) carry no override and inherit generation.message_limit 200. Supersedes the 200-message dev attempt of b5d2e6f1 (run LJbb8ZyPWZgPE8VCFRbLGD, kept as a diagnostic run outside the canonical set).",
+      "gemini_unit_policy": {
+        "approved": "human 2026-11-01 (chat): Gemini dev and validation units; applied between units by harness.scheduler and harness.unit_gate",
+        "accepted_outcomes": "execution success, or limited by the time, working-time, cost or token limit, with complete collection (or confirmed empty), structurally valid collected files, a consistent artifact manifest and a clean settlement (not estimated, no hold, no stop); the actual status and limit reason are kept, never relabelled",
+        "two_limit_rule": {
+          "counted_limit_types": [
+            "time",
+            "working",
+            "cost"
+          ],
+          "threshold_units": 2,
+          "scope_run_labels": [
+            "dev",
+            "validation"
+          ],
+          "not_counted": [
+            "token"
+          ],
+          "excluded": "attempts designated diagnostic or superseded in <runs_root>/canonical_designations.jsonl",
+          "effect": "no further Gemini unit is launched in either class; in-flight units finish"
+        },
+        "always_stop": [
+          "execution error or engineering failure",
+          "a message limit (none is configured for these classes)",
+          "suspected tool-error loop (harness.run_metadata rule tool-error-loop-2026-11-01.1)",
+          "collection-integrity or structural failure",
+          "estimated settlement, ledger hold or stop",
+          "unknown outcome"
+        ],
+        "reruns": "never automatic"
+      },
       "stop_conditions": [
         "no new sample or judge batch starts when the remaining budget cannot cover its reservation",
         "after the ceiling is reached no further sample starts (no per-request interception)",
@@ -1066,6 +1107,38 @@
         "google/gemini-3.8-flash": "5.00"
       },
       "cost_limit_usd": 10.0,
+      "message_limit": null,
+      "message_limit_policy": "Gemini development and validation classes only (approved by the human 2026-11-01, chat): no Inspect message limit (null). The 7,200 s time and working-time limits, the 20,000,000 token limit, the 10 USD per-sample Inspect cost limit, the reservation and every ledger stop condition are unchanged; the candidate classes (compat, formal) carry no override and inherit generation.message_limit 200. Supersedes the 200-message dev attempt of b5d2e6f1 (run LJbb8ZyPWZgPE8VCFRbLGD, kept as a diagnostic run outside the canonical set).",
+      "gemini_unit_policy": {
+        "approved": "human 2026-11-01 (chat): Gemini dev and validation units; applied between units by harness.scheduler and harness.unit_gate",
+        "accepted_outcomes": "execution success, or limited by the time, working-time, cost or token limit, with complete collection (or confirmed empty), structurally valid collected files, a consistent artifact manifest and a clean settlement (not estimated, no hold, no stop); the actual status and limit reason are kept, never relabelled",
+        "two_limit_rule": {
+          "counted_limit_types": [
+            "time",
+            "working",
+            "cost"
+          ],
+          "threshold_units": 2,
+          "scope_run_labels": [
+            "dev",
+            "validation"
+          ],
+          "not_counted": [
+            "token"
+          ],
+          "excluded": "attempts designated diagnostic or superseded in <runs_root>/canonical_designations.jsonl",
+          "effect": "no further Gemini unit is launched in either class; in-flight units finish"
+        },
+        "always_stop": [
+          "execution error or engineering failure",
+          "a message limit (none is configured for these classes)",
+          "suspected tool-error loop (harness.run_metadata rule tool-error-loop-2026-11-01.1)",
+          "collection-integrity or structural failure",
+          "estimated settlement, ledger hold or stop",
+          "unknown outcome"
+        ],
+        "reruns": "never automatic"
+      },
       "stop_conditions": [
         "no new sample or judge batch starts when the remaining budget cannot cover its reservation",
         "after the ceiling is reached no further sample starts (no per-request interception)",

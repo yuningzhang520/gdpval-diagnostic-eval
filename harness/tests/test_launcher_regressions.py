@@ -1010,3 +1010,57 @@ class CodeLoadedTests(_Base):
         fp = L.harness_source_fingerprint()
         self.assertEqual(first["harness_source"], fp)  # the tree has not changed during this test
         self.assertGreater(fp["files"], 5)
+
+
+class MessageLimitOverrideTests(_Base):
+    """Gemini-only message limit (approved 2026-11-01): config.batches.dev / validation carry message_limit null (no
+    limit); compat and formal carry no override and inherit generation.message_limit 200; a bad override fails closed;
+    the effective value reaches eval() unchanged (no implicit substitute)."""
+    TASK, DEV_MODEL, COMPAT_TASK, OPUS = RealRunCliTests.TASK, "google/gemini-3.8-flash", "87da214f-fd92-4c58-9854-f4d0d10adce0", "anthropic/claude-opus-5-5"
+
+    def setUp(self):
+        super().setUp()
+        self.env_file = os.path.join(self.root, "env.test")
+        Path(self.env_file).write_text("ANTHROPIC_API_KEY=dummy-test-key-not-real-0005\nGOOGLE_API_KEY=dummy-test-key-not-real-0006\n")
+        image_id = self.cfg["sandbox"]["image_id"]
+        self.docker = lambda cmd, **kw: SimpleNamespace(returncode=0, stdout=f"{image_id}|arm64|linux|[]\n", stderr="")
+
+    def test_batch_controls_carry_the_class_override(self):
+        c = cfg()
+        self.assertEqual(c["generation"]["message_limit"], 200)
+        self.assertIsNone(L.batch_controls(c, "dev")["message_limit"])
+        self.assertIsNone(L.batch_controls(c, "validation")["message_limit"])
+        self.assertEqual(L.batch_controls(c, "compat")["message_limit"], L.INHERIT)
+        self.assertNotIn("message_limit", c["batches"]["formal"])
+
+    def test_eval_kwargs_none_inherit_and_refusals(self):
+        c = cfg()
+        log = os.path.join(self.root, "logs")
+        self.assertIsNone(L.eval_kwargs(c, log_dir=log, model=self.DEV_MODEL, cost_limit_override=10.0, message_limit_override=None)["message_limit"])
+        self.assertEqual(L.eval_kwargs(c, log_dir=log, model=self.OPUS)["message_limit"], 200)
+        self.assertEqual(L.eval_kwargs(c, log_dir=log, model=self.OPUS, message_limit_override=L.INHERIT)["message_limit"], 200)
+        for bad in (0, -5, "200", 2.5, True):
+            with self.assertRaisesRegex(L.LauncherError, "message limit"):
+                L.eval_kwargs(c, log_dir=log, model=self.OPUS, message_limit_override=bad)
+        broken = json.loads(json.dumps(c, default=str)); broken["generation"]["message_limit"] = None
+        with self.assertRaisesRegex(L.LauncherError, "generation.message_limit"):
+            L.eval_kwargs(broken, log_dir=log, model=self.OPUS)  # the shared candidate value may never be null
+        broken = json.loads(json.dumps(c, default=str)); broken["batches"]["dev"]["message_limit"] = "none"
+        with self.assertRaisesRegex(L.LauncherError, "config.batches.dev.message_limit"):
+            L.batch_controls(broken, "dev")
+
+    def _dry_run_kwargs(self, label, task, model, est):
+        runs = os.path.join(self.root, label, "runs"); ledger = os.path.join(self.root, label, "ledger.json")
+        argv = ["--config", CONFIG, "--run-label", label, "--runs-root", runs, "--ledger", ledger, "--task-id", task, "--model", model, "--estimate-usd", est, "--env-file", self.env_file, "--dry-run"]
+        self.assertEqual(L.main(argv, docker_runner=self.docker), 0)
+        rec = next(json.loads(Path(runs, "launcher_records", f).read_text()) for f in os.listdir(os.path.join(runs, "launcher_records")) if "_dry_run_" in f)
+        return rec["eval_kwargs"]
+
+    def test_dry_run_records_the_effective_limit_per_class(self):
+        dev = self._dry_run_kwargs("dev", self.TASK, self.DEV_MODEL, "5.00")
+        self.assertIn("message_limit", dev); self.assertIsNone(dev["message_limit"])
+        self.assertEqual((dev["time_limit"], dev["working_limit"], dev["token_limit"], dev["cost_limit"]), (7200, 7200, 20_000_000, 10.0))  # the other limits unchanged
+        val = self._dry_run_kwargs("validation", self.TASK, self.DEV_MODEL, "5.00")
+        self.assertIsNone(val["message_limit"])
+        compat = self._dry_run_kwargs("compat", self.COMPAT_TASK, self.OPUS, "8.00")
+        self.assertEqual((compat["message_limit"], compat["time_limit"], compat["token_limit"], compat["cost_limit"]), (200, 7200, 20_000_000, 20.0))
