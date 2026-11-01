@@ -3719,6 +3719,54 @@ validation outputs stay sealed.
 | `unittest grading.tests.test_gold_1137e2bb` / `7d7fc9a7` | 15.2 / 6.5 s | 0 | 53 + 2 skipped / 56 + 3 skipped |
 | `unittest grading.tests.test_grading_chain` / `test_item_partition` / `test_review_queue` / `harness.tests.test_docs_consistency` | 3.5 / 1.0 / 1.0 / 0.9 s | 0 | 29 / 2 / 6 / 3 |
 
+## Review-queue policy v2, rebuilt batch 1 and the judge Dev package (2026-11-01; decided by the human before any label; logs `logs/queue-v2-20261101-172523Z/`)
+
+Policy review-queue-2026-11-01.2 (preregistration 1.19, amendment v2; dated; not preregistered). The v1 queue was
+never labelled and is kept. Frozen as `grading/review_queue/queue_v2.json` (seed 20261101; `verify-v2` reproduces it)
+before any v2 packet was built.
+- Dev: full calibration for `f841ddcf…`, `47ef842d…`, `1137e2bb…`, `2ea2e5b5…` and `a45bc83b…` (chosen for
+  deliverable-type coverage, not for grader performance). The other five tasks get a smoke check (exploratory).
+- Validation and formal: every criterion at criterion level, every visual item, and 3 + 3 non-critical items at random;
+  formal uses the same item ids for both candidates.
+- The item-10 sensitivity label of `2ea2e5b5…` appears in every phase.
+
+Code (recorded for Codex Review 2): `review_queue.build_plan_v2`, `workload` and `freeze_v2`; criterion rows (`C1` …)
+in the label CSVs; `review.compare_criteria`, which reports criterion-level agreement apart from item-level agreement
+and derives the preregistered-definition status from the differing items' labels; `label_batch.assemble_v2`.
+
+Projected labels, from `queue_v2.json`. "Evidence" counts the rubric items whose evidence a reviewer must examine
+(every member of each labelled criterion, plus the labelled items), summed over the outputs.
+
+| Task | Dev (mode): labels / evidence | Validation: labels / evidence | Formal (2 outputs): labels / evidence |
+|---|---|---|---|
+| `f841ddcf…` | full: 5 c + 11 i = 16 / 35 | 5 c + 7 i = 12 / 31 | 24 / 62 |
+| `47ef842d…` | full: 4 c + 9 i = 13 / 38 | 4 c + 7 i = 11 / 36 | 22 / 72 |
+| `1137e2bb…` | full: 3 c + 6 i = 9 / 59 | 3 c + 4 i = 7 / 57 | 14 / 114 |
+| `2ea2e5b5…` | full: 3 c + 1 i = 4 / 60 | 3 c + 1 i = 4 / 60 | 8 / 120 |
+| `a45bc83b…` | full: 3 c + 13 i = 16 / 26 | 3 c + 11 i = 14 / 24 | 28 / 48 |
+| `7b08cd4d…` | smoke: 1 c + 1 i = 2 / 8 | 3 c + 8 i = 11 / 28 | 22 / 56 |
+| `7d7fc9a7…` | smoke: 1 c + 1 i = 2 / 6 | 4 c + 7 i = 11 / 32 | 22 / 64 |
+| `b5d2e6f1…` | smoke: 1 c + 0 i = 1 / 7 | 4 c + 4 i = 8 / 25 | 16 / 50 |
+| `c3525d4d…` | smoke: 1 c + 1 i = 2 / 8 | 3 c + 7 i = 10 / 35 | 20 / 70 |
+| `c357f0e2…` | smoke: 1 c + 1 i = 2 / 11 | 3 c + 7 i = 10 / 49 | 20 / 98 |
+| **Total** | **67 labels (23 criterion, 44 item) / 258** | **98 (35, 63) / 377** | **196 (70, 126) / 754** |
+
+Shortfalls:
+- `2ea2e5b5…` has no non-critical item (all 60 are critical).
+- `b5d2e6f1…` has no judge item.
+- `1137e2bb…` has one non-critical judge item; `a45bc83b…` has no non-critical deterministic item.
+
+Batch 1 under v2: `~/turing-eval-runs/labeling/batch-1v2/`, built from the existing three passes.
+- `f841ddcf…`: 5 criteria + 11 items.
+- `47ef842d…`: 4 criteria + 9 items.
+- `1137e2bb…`: 3 criteria + 6 items.
+Each criterion section has the preregistered definition and every member requirement (judge excerpts for judge
+members). No verdict and no grader location. `batch-1/` and `batch-1q/` are kept and superseded.
+
+Judge Dev authorization package: `docs/judge_dev_authorization.md`. Proposal only: `google/gemini-3.1-pro-preview`,
+thinking high, max_tokens 16,384, pinned temperature; 84 units per pass, about 0.39 M input tokens, forecast
+2.29-17.29 USD per pass; at most three passes; a 30 USD ceiling; five decisions requested. No judge call has been made.
+
 ## Known issues and findings (material check)
 
 - `rubric_json.form_content`: 8,036 items hold `null`, 2,417 items lack the key, zero
