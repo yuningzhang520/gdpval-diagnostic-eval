@@ -69,15 +69,17 @@ def prices():
                      "cache_read": Decimal(str(p["long_context_above_200k_prompt_tokens"]["cache_read"]))}}
 
 
-def worst_case_usd(request_chars: int, max_tokens: int) -> Decimal:
+def worst_case_usd(request_chars: int, max_tokens: int, tier_name: str | None = None) -> Decimal:
     """Conservative cost of one call: input tokens estimated at chars / 3, the whole output cap (thinking included)."""
     tin = Decimal(request_chars) / 3
-    tier = prices()["long" if tin > 200_000 else "std"]
+    tier = prices()[tier_name or ("long" if tin > 200_000 else "std")]
     return (tin * tier["input"] + Decimal(max_tokens) * tier["output"]) / Decimal(1_000_000)
 
 
-def call_cost_usd(usage: dict) -> Decimal:
-    tier = prices()["std"]
+def call_cost_usd(usage: dict, tier_name: str = "std") -> Decimal:
+    """Provider cost of one call (every judge call is far below the 200 k-token tier: standard rates). The guard passes
+    "long": the ledger settles a judge unit on its summed usage, whose tier can be the long-context one."""
+    tier = prices()[tier_name]
     return (Decimal(usage.get("input_tokens", 0)) * tier["input"] + Decimal(usage.get("cache_read_tokens", 0)) * tier["cache_read"]
             + Decimal(usage.get("output_tokens", 0)) * tier["output"]) / Decimal(1_000_000)
 
@@ -208,8 +210,10 @@ def make_guard(judge_holder: dict, max_tokens: int, base: dict):
         if any(os.environ.get(k) for k in ("GEMINI_API_KEY", "VERTEX_API_KEY", "GOOGLE_GENAI_USE_VERTEXAI")):
             return "a Google credential override variable is set"
         j = judge_holder.get("judge")
-        so_far = sum((call_cost_usd(cl["usage"]) for cl in (getattr(j, "calls", None) or []) if cl.get("usage")), Decimal(0))
-        nxt = worst_case_usd(request_chars, max_tokens)
+        # Long-context rates bound what the ledger can settle for this unit (it prices the unit's summed usage, which may
+        # cross the 200 k tier), so the ledger total stays within both ceilings, not only the provider bill.
+        so_far = sum((call_cost_usd(cl["usage"], "long") for cl in (getattr(j, "calls", None) or []) if cl.get("usage")), Decimal(0))
+        nxt = worst_case_usd(request_chars, max_tokens, "long")
         if base["pass_1"] + so_far + nxt > cap1:
             return f"Pass 1 ceiling {cap1} USD would be exceeded (spent {base['pass_1'] + so_far:.4f} + worst case {nxt:.4f})"
         if base["aggregate"] + so_far + nxt > capall:

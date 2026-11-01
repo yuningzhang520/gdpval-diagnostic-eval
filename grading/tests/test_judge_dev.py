@@ -112,6 +112,30 @@ class SeparateJudgeLedgerGateTests(unittest.TestCase):
                 RG.judge_history_gate(gen, binding, out, "RUN", False, host_dir=host, prices=prices, reservation_ledger=jl)  # the run's open judge unit blocks
 
 
+class GuardTierTests(unittest.TestCase):
+    """The guard prices calls at the long-context rates, an upper bound of the ledger's settlement of the unit."""
+
+    def test_guard_uses_long_context_rates(self):
+        from unittest import mock
+        from decimal import Decimal
+        from grading import judge_dev as JD
+        usage = {"input_tokens": 20_000, "output_tokens": 1_000}
+        self.assertGreater(JD.call_cost_usd(usage, "long"), JD.call_cost_usd(usage))
+        std_total = JD.call_cost_usd(usage) * 10
+        long_total = JD.call_cost_usd(usage, "long") * 10
+        nxt = JD.worst_case_usd(3_000, 16_384, "long")
+        cap = std_total + nxt + Decimal("0.01")  # enough at standard rates, not at long-context rates
+        self.assertLess(cap, long_total + nxt)
+        j = SimpleNamespace(calls=[{"usage": usage}] * 10)
+        cfg = JD.cfg(); cfg["judge"]["ceilings_usd"] = {"pass_1": str(cap), "judge_dev_aggregate": "30"}
+        env = {"GOOGLE_API_KEY": "x" + JD.DEV_KEY_SUFFIX}
+        with mock.patch.object(JD, "cfg", return_value=cfg), mock.patch.dict(os.environ, env, clear=False):
+            for k in ("GEMINI_API_KEY", "VERTEX_API_KEY", "GOOGLE_GENAI_USE_VERTEXAI"):
+                os.environ.pop(k, None)
+            guard = JD.make_guard({"judge": j}, 16_384, {"pass_1": Decimal(0), "aggregate": Decimal(0)})
+            self.assertRegex(guard(3_000) or "", "Pass 1 ceiling")
+
+
 class AddendumTests(unittest.TestCase):
     """Runs that become eligible after the plan get one append-only addendum; the frozen repeat subset is untouched."""
 

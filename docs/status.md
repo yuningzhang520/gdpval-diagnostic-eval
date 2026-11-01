@@ -3840,6 +3840,19 @@ Usage detail: Inspect 0.3.286 folds Gemini thinking tokens into `output_tokens` 
 complete. The shared usage mapping drops the separate `reasoning_tokens` subset, so the thinking share of each judge
 call is not recorded.
 
+Pass 1 results so far (registry `~/turing-eval-runs/judge_dev/registry.jsonl`; verdicts sealed):
+- Primary units: 52 of 52 planned and 54 of 54 from addendum 1 (`c357f0e2…`, 18:08-18:16Z), all `ok`. No provider
+  error, parse error or halt.
+- Self-consistency: 20 of 20 repeats with requests identical to their primaries. 20 of 20 complete pairs agree. Both
+  runs gave PASS 16, FAIL 4, CANNOT ASSESS 0. Per-unit pairs are sealed in
+  `judge_dev/self_consistency_pass1_SEALED.json`. This measures stability, not correctness.
+- Cost at the per-call standard tier: 4.174 USD (primaries 3.715, repeats 0.459). Judge Dev ledger, conservative:
+  7.158 USD. Remaining: Pass 1 12.84 USD; aggregate 22.84 USD.
+- Pending: `a45bc83b…` (Dev generation running).
+- Guard change before `a45bc83b…`: the guard now prices calls already made and the next worst case at the long-context
+  rates (4 / 18 USD per M). Those rates bound the ledger's settlement of a unit, so the ledger total, not only the
+  provider bill, stays within both ceilings. Test: `GuardTierTests`.
+
 ## Known issues and findings (material check)
 
 - `rubric_json.form_content`: 8,036 items hold `null`, 2,417 items lack the key, zero
@@ -4222,7 +4235,8 @@ call is not recorded.
   passes, separate Judge Dev ledger, Dev key at concurrency 1, a frozen 20-unit self-consistency subset · f9d8858, 612249c
 - 2026-11-01 · judge history gate checks the separate judge ledger's open reservations · 0aa4047
 - 2026-11-01 · Pass 1 addendum 1 (`c357f0e2…` primary units; repeat subset unchanged) · 2284d65
-- 2026-11-01 · no-recalculation references for `c357f0e2…` and `a45bc83b…` (entry-point material; no verdict change) · (this commit)
+- 2026-11-01 · no-recalculation references for `c357f0e2…` and `a45bc83b…` (entry-point material; no verdict change) · 6d92e47
+- 2026-11-01 · Judge Dev guard priced at long-context rates (bounds the ledger settlement) · (this commit)
 
 ## Next stage (not started)
 
