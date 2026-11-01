@@ -1,0 +1,91 @@
+"""Judge Dev configuration (approved 2026-11-01): the effective Google request settings through Inspect's adapter, the
+per-call cost guard, assessment failures never becoming rubric fails, and the recorded call fields. Offline: synthetic
+key, socket connects blocked, injected generate functions; no provider call."""
+import json
+import os
+import socket
+import unittest
+from types import SimpleNamespace
+from unittest import mock
+
+from grading import judge as J
+
+CONFIG = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "config.json")
+
+
+def cfg_judge():
+    return json.load(open(CONFIG, encoding="utf-8"))["judge"]
+
+
+def unit(i=38):
+    return {"unit_id": f"task:item{i:02d}", "run_uuid": "r", "task_id": "task", "item": i, "weight": 1, "criterion": "C", "task_requirement": "T", "source_material": "S",
+            "deliverable_excerpt": "E", "evidence_builder": "grading.judge.build_units_x@x-1"}
+
+
+def output(text, stop="stop", usage=(1000, 500)):
+    return SimpleNamespace(completion=text, usage=SimpleNamespace(input_tokens=usage[0], output_tokens=usage[1], input_tokens_cache_read=0, input_tokens_cache_write=0,
+                                                                 total_tokens=sum(usage), reasoning_tokens=300), error=None, model="gemini-3.1-pro-preview", stop_reason=stop)
+
+
+class Offline(unittest.TestCase):
+    def setUp(self):
+        self._c = socket.socket.connect
+        socket.socket.connect = lambda *a, **k: (_ for _ in ()).throw(AssertionError("network"))
+
+    def tearDown(self):
+        socket.socket.connect = self._c
+
+
+class EffectiveSettingsTests(Offline):
+    def test_config_block_and_the_request_inspect_builds(self):
+        c = cfg_judge()
+        self.assertEqual((c["model"], c["temperature"], c["max_tokens"], c["max_retries"], c["reasoning_effort"]), ("google/gemini-3.1-pro-preview", 1.0, 16384, 3, "high"))
+        self.assertEqual(c["prompt_sha256"], J.ProviderJudge("google/x").prompt_sha256)
+        from inspect_ai.model import GenerateConfig
+        from inspect_ai.model._providers.google import GoogleGenAIAPI
+        pj = J.ProviderJudge(c["model"], **{k: c[k] for k in ("temperature", "max_tokens", "max_retries", "reasoning_effort")})
+        gc = GenerateConfig(**{k: v for k, v in pj.generate_params.items() if v is not None})
+        with mock.patch.dict(os.environ, {"GOOGLE_API_KEY": "synthetic-not-real-KEY0"}, clear=False):
+            api = GoogleGenAIAPI(model_name="gemini-3.1-pro-preview", base_url=None, api_key=None, config=GenerateConfig())
+            tc = api.chat_thinking_config(gc)
+        self.assertEqual((str(tc.thinking_level), tc.include_thoughts, tc.thinking_budget), ("ThinkingLevel.HIGH", True, None))
+        self.assertEqual((gc.temperature, gc.max_tokens, gc.max_retries), (1.0, 16384, 3))
+        self.assertEqual(pj._model_args, {})  # nothing forwarded to google.genai
+
+
+class GuardAndFailureTests(Offline):
+    def test_cost_guard_stops_before_the_request_and_never_fails_an_item(self):
+        sent = []
+        def gen(messages):
+            sent.append(1); return output('{"verdict": "pass", "evidence": [{"file": "f.xlsx", "location": "A1", "quote": "x"}], "rationale": "ok"}')
+        state = {"n": 0}
+        def guard(chars):
+            state["n"] += 1
+            return "pass 1 ceiling would be exceeded" if state["n"] > 1 else None
+        pj = J.ProviderJudge("google/gemini-3.1-pro-preview", generate=gen, cost_guard=guard)
+        vs = J.judge_units([unit(1), unit(2), unit(3)], pj)
+        self.assertEqual(len(sent), 1)
+        self.assertEqual([v["verdict"] for v in vs], ["pass", "cannot_assess", "cannot_assess"])
+        self.assertEqual([v["error_class"] for v in vs[1:]], ["not_attempted", "not_attempted"])
+        self.assertIn("budget stop", pj.halted)
+
+    def test_truncated_and_malformed_responses_are_assessment_failures(self):
+        for text, stop in (("", "max_tokens"), ('{"verdict": "pass"', "max_tokens"), ("The item passes.", "stop")):
+            pj = J.ProviderJudge("google/gemini-3.1-pro-preview", generate=lambda m, t=text, s=stop: output(t, s))
+            v = J.judge_units([unit()], pj)[0]
+            with self.subTest(text=text):
+                self.assertEqual((v["verdict"], v["error_class"]), ("cannot_assess", "judge_parse_error"))
+                self.assertEqual(pj.calls[0]["stop_reason"], stop)
+
+    def test_call_record_fields(self):
+        pj = J.ProviderJudge("google/gemini-3.1-pro-preview", temperature=1.0, max_tokens=16384, max_retries=3, reasoning_effort="high",
+                             generate=lambda m: output('{"verdict": "fail", "evidence": [{"file": "f.xlsx", "location": "A1", "quote": "x"}], "rationale": "r"}'))
+        J.judge_units([unit()], pj)
+        c = pj.calls[0]
+        self.assertEqual((c["served_model"], c["stop_reason"], c["prompt_sha256"], c["generate_params"]["reasoning_effort"], c["evidence_builder"]),
+                         ("gemini-3.1-pro-preview", "stop", pj.prompt_sha256, "high", "grading.judge.build_units_x@x-1"))
+        self.assertTrue(c["request_sha256"] and c["usage"])
+
+
+if __name__ == "__main__":
+    unittest.main()

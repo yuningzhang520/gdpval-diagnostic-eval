@@ -611,11 +611,17 @@ class ProviderJudge:
     is_stub = False
 
     def __init__(self, model_name: str, *, temperature: float = 0.0, max_tokens: int = 1024, max_retries: int | None = None, timeout: int | None = None,
-                 generate=None, judge_id: str | None = None, log_path: str | None = None, run_uuid: str | None = None, judge_unit: str | None = None,
-                 stop_on_uncertain_usage: bool = True, **model_args):
+                 reasoning_effort: str | None = None, generate=None, judge_id: str | None = None, log_path: str | None = None, run_uuid: str | None = None,
+                 judge_unit: str | None = None, stop_on_uncertain_usage: bool = True, cost_guard=None, **model_args):
         self.model_name = model_name
         self.judge_id = judge_id or f"{model_name}@{dt.datetime.now(dt.timezone.utc).strftime('%Y-%m-%d')}"
-        self.generate_params = {"temperature": temperature, "max_tokens": max_tokens, "max_retries": max_retries, "timeout": timeout}
+        # reasoning_effort is an Inspect GenerateConfig field (Gemini 3: mapped by Inspect's Google adapter to ThinkingConfig(thinking_level));
+        # nothing is forwarded to google.genai directly (approved 2026-11-01: thinking HIGH, temperature 1.0, max_tokens 16,384 incl. thinking, max_retries 3)
+        self.generate_params = {"temperature": temperature, "max_tokens": max_tokens, "max_retries": max_retries, "timeout": timeout, "reasoning_effort": reasoning_effort}
+        # cost_guard(request_chars) -> None or a reason: called before every request; a reason stops this and every later unit
+        # of the batch before any request is sent (a budget stop: the units become not_attempted, never a rubric fail)
+        self.cost_guard = cost_guard
+        self.prompt_sha256 = hashlib.sha256(JUDGE_SYSTEM_PROMPT.encode("utf-8")).hexdigest()
         self._generate = generate
         self._model_args = model_args
         self._model = None
@@ -655,7 +661,12 @@ class ProviderJudge:
         user = render_unit(unit)
         messages = [ChatMessageSystem(content=JUDGE_SYSTEM_PROMPT), ChatMessageUser(content=user)]
         rec = {"unit_id": unit["unit_id"], "item": unit["item"], "model": self.model_name, "judge_id": self.judge_id, "started_at": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
-               "request_sha256": hashlib.sha256((JUDGE_SYSTEM_PROMPT + "\n" + user).encode("utf-8")).hexdigest(), "request_chars": len(JUDGE_SYSTEM_PROMPT) + len(user)}
+               "request_sha256": hashlib.sha256((JUDGE_SYSTEM_PROMPT + "\n" + user).encode("utf-8")).hexdigest(), "request_chars": len(JUDGE_SYSTEM_PROMPT) + len(user),
+               "prompt_sha256": self.prompt_sha256, "generate_params": dict(self.generate_params), "evidence_builder": unit.get("evidence_builder")}
+        if not self.halted and self.cost_guard is not None:
+            reason = self.cost_guard(rec["request_chars"])
+            if reason:
+                self.halted = f"budget stop: {reason}"
         if self.halted:
             # Approved policy: after a call whose usage could not be accounted, no further paid request is sent in this batch.
             rec.update({"status": "not_attempted", "error": {"class": "halted_after_usage_uncertain", "message": self.halted}, "raw_response": None, "usage": None, "usage_status": "not_attempted", "seconds": 0.0})
@@ -678,6 +689,8 @@ class ProviderJudge:
         raw = getattr(out, "completion", None)
         usage = usage_dict(getattr(out, "usage", None))
         err = getattr(out, "error", None)
+        rec["served_model"] = getattr(out, "model", None)
+        rec["stop_reason"] = str(getattr(out, "stop_reason", None)) if getattr(out, "stop_reason", None) is not None else None
         if err:
             rec.update({"status": "provider_error", "error": {"class": "ModelOutputError", "message": redact(str(err))}, "raw_response": raw, "usage": usage, "usage_status": "ok" if usage else "uncertain"})
         else:
@@ -691,7 +704,7 @@ class ProviderJudge:
             if self.stop_on_uncertain_usage:
                 self.halted = f"call for {unit['unit_id']} returned no usage; its cost cannot be accounted"
         rec["seconds"] = round(time.monotonic() - t0, 3)
-        self._persist({"phase": "finished", **{k: rec[k] for k in ("unit_id", "item", "status", "error", "raw_response", "usage", "usage_status", "seconds")}})
+        self._persist({"phase": "finished", **{k: rec[k] for k in ("unit_id", "item", "status", "error", "raw_response", "usage", "usage_status", "seconds", "served_model", "stop_reason")}})
         self.calls.append(rec)
         return rec
 

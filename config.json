@@ -1252,5 +1252,20 @@
       ],
       "note": "compatibility task outside the ten selected tasks (data/compat_tasks.json, data/compat_manifest.json); no business grader; its rubric is not used for scoring"
     }
-  ]
+  ],
+  "judge": {
+    "model": "google/gemini-3.1-pro-preview",
+    "temperature": 1.0,
+    "max_tokens": 16384,
+    "max_retries": 3,
+    "reasoning_effort": "high",
+    "prompt_sha256": "1de955e607e16bd8d236469603bde099b3d309a885be170c21d7e759c57487b5",
+    "status": "APPROVED 2026-11-01 by the human (chat) for Judge Dev calibration only: model google/gemini-3.1-pro-preview, thinking HIGH (Inspect reasoning_effort 'high' -> ThinkingConfig(thinking_level=HIGH)), temperature 1.0, max_tokens 16,384 including thinking, Inspect max_retries 3, no other retry or backoff layer; nothing forwarded to google.genai; Dev outputs and the Dev project key (GOOGLE_API_KEY) only; never Validation or Formal",
+    "ceilings_usd": {
+      "pass_1": 20,
+      "judge_dev_aggregate": 30,
+      "passes_max": 3
+    },
+    "self_consistency": "Pass 1 includes 20 fixed random repeats (seed recorded before any result), inside the same ceilings"
+  }
 }

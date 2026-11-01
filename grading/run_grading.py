@@ -132,6 +132,52 @@ def run_judge_history(ledger: BudgetLedger, binding: dict) -> dict:
     return {"units": units, "logs": {k: {"events": v["events"], "unknown": v["unknown"], "states": {u: c["state"] for u, c in v["calls"].items()}} for k, v in logs.items()}, "unknown_calls": unknown}
 
 
+JUDGE_LEDGER_BINDING = "judge_ledger_binding.json"
+
+
+def judge_ledger_bindings(host_dir: str) -> list[dict]:
+    """Separate judge ledgers declared for a run (approved 2026-11-01: a Judge Dev cost ledger apart from the run's
+    generation ledger, whose claim rule refuses while a generation unit holds an open reservation). Append-only list."""
+    path = os.path.join(host_dir, JUDGE_LEDGER_BINDING)
+    if not os.path.isfile(path):
+        return []
+    with open(path, encoding="utf-8") as f:
+        return json.load(f)
+
+
+def declare_judge_ledger(host_dir: str, run_uuid: str, ledger: BudgetLedger, reason: str) -> dict:
+    entries = judge_ledger_bindings(host_dir)
+    ident = ledger.identity()
+    if not any(e["ledger_path"] == ledger.path and e["ledger_id"] == ident.get("ledger_id") for e in entries):
+        entries.append({"run_uuid": run_uuid, "ledger_path": ledger.path, "ledger_id": ident.get("ledger_id"), "label": ident.get("label"), "declared_at": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
+                        "reason": reason})
+        tmp = os.path.join(host_dir, JUDGE_LEDGER_BINDING + ".tmp")
+        with open(tmp, "w", encoding="utf-8") as f:
+            json.dump(entries, f, indent=1)
+        os.replace(tmp, os.path.join(host_dir, JUDGE_LEDGER_BINDING))
+    return entries
+
+
+def combined_judge_history(ledger: BudgetLedger, binding: dict, host_dir: str, prices: dict) -> dict:
+    """The run's judge history from its bound ledger plus every declared judge ledger (fail closed: a declared ledger
+    that is missing or whose id differs raises)."""
+    hist = run_judge_history(ledger, binding)
+    for e in judge_ledger_bindings(host_dir):
+        if not os.path.isfile(e["ledger_path"]):
+            raise GradingCliError(f"declared judge ledger {e['ledger_path']} is missing; the run's judge history cannot be verified")
+        jl = BudgetLedger.open_existing(e["ledger_path"], prices)
+        if jl.identity().get("ledger_id") != e["ledger_id"]:
+            raise GradingCliError(f"declared judge ledger {e['ledger_path']} has another ledger id than declared; refusing")
+        h = run_judge_history(jl, binding)
+        hist["units"]["units"].update(h["units"]["units"])
+        for k in ("judge_units", "open", "review_pending", "unresolvable"):
+            hist["units"][k] = sorted(set(hist["units"][k]) | set(h["units"][k]))
+        hist["logs"].update({f"{e['label'] or 'judge'}/{n}": v for n, v in h["logs"].items()})
+        hist["unknown_calls"].update(h["unknown_calls"])
+        hist.setdefault("judge_ledgers", []).append({k: e[k] for k in ("ledger_path", "ledger_id", "label")})
+    return hist
+
+
 def report_selection(cfg: dict, host_dir: str, out_dir: str, run_uuid: str, ledger: BudgetLedger | None = None) -> dict:
     """The attempt-aware selection a report must use. FAIL-CLOSED: the run's ledger binding (host_dir/ledger_binding.json)
     is resolved here, the bound ledger is opened and its judge attempts and write-ahead logs are read; a missing binding,
@@ -159,7 +205,10 @@ def report_selection(cfg: dict, host_dir: str, out_dir: str, run_uuid: str, ledg
     if ledger.snapshot().get("ledger_id") != binding.get("ledger_id"):
         return {"pass": None, "blocked": True, "authoritative": False, "history": select_pass(passes)["history"], "attempts": None, "binding": binding,
                 "basis": "the bound ledger's id differs from ledger_binding.json; selection fails closed", "warnings": []}
-    attempts = judge_attempts(run_judge_history(ledger, binding), passes)
+    try:
+        attempts = judge_attempts(combined_judge_history(ledger, binding, host_dir, prices_from_config(cfg)), passes)
+    except GradingCliError as ex:
+        return {"pass": None, "blocked": True, "authoritative": False, "history": select_pass(passes)["history"], "attempts": None, "binding": binding, "basis": str(ex), "warnings": []}
     sel = select_pass(passes, attempts=attempts)
     return {**sel, "pass": sel["pass"].get("grading_pass") if sel.get("pass") else None, "attempts": attempts, "binding": {k: binding.get(k) for k in ("run_uuid", "ledger_path", "ledger_id")}}
 
@@ -248,10 +297,10 @@ def judge_gate(args, run_uuid: str, env: dict, out_dir: str, host_dir: str) -> d
             "note": "operator-supplied audit metadata recorded verbatim; this CLI does not verify an approval"}
 
 
-def judge_history_gate(ledger: BudgetLedger, binding: dict, out_dir: str, run_uuid: str, rejudge: bool) -> dict:
+def judge_history_gate(ledger: BudgetLedger, binding: dict, out_dir: str, run_uuid: str, rejudge: bool, host_dir: str | None = None, prices: dict | None = None) -> dict:
     """Refuse on any unresolved paid state of this run, from the canonical ledger (not the out_dir): open reservations,
     held (manual review) or unresolvable units, UNKNOWN write-ahead calls; an earlier judged unit needs --rejudge."""
-    hist = run_judge_history(ledger, binding)
+    hist = combined_judge_history(ledger, binding, host_dir, prices) if host_dir else run_judge_history(ledger, binding)
     blocking = []
     if hist["units"]["open"]:
         blocking.append(f"open reservation(s) of this run: {hist['units']['open']}")
@@ -296,6 +345,7 @@ def main(argv=None, *, judge_factory=None, environ: dict | None = None) -> int:
     p.add_argument("--authorized-by", default=None); p.add_argument("--authorization-ref", default=None)
     p.add_argument("--rejudge", action="store_true", help="allow a second judged pass for a run that already has one (paid again)")
     p.add_argument("--env-file", default=os.path.join(ROOT, ".env"), help="credential file read (names only logged) for a real judge provider")
+    p.add_argument("--judge-ledger", default=None, help="a separate judge cost ledger (e.g. the Judge Dev ledger): judge reservations, settlements and write-ahead logs go there; declared in the run's judge_ledger_binding.json")
     args = p.parse_args(argv)
     env = os.environ if environ is None else environ
     if args.unit_id and not args.ledger:
@@ -316,18 +366,24 @@ def main(argv=None, *, judge_factory=None, environ: dict | None = None) -> int:
         rec = grade_run(host_dir, log, sample.uuid, judge=None, **common)
     else:
         judge_auth = judge_gate(args, sample.uuid, env, args.out_dir, host_dir)
-        history = judge_history_gate(ledger, judge_auth["binding"], args.out_dir, sample.uuid, bool(args.rejudge))
+        judge_ledger = ledger
+        if args.judge_ledger:
+            if not os.path.isfile(args.judge_ledger):
+                raise GradingCliError(f"--judge-ledger {args.judge_ledger} does not exist; grading never creates a ledger")
+            judge_ledger = BudgetLedger.open_existing(args.judge_ledger, prices_from_config(cfg))
+            declare_judge_ledger(host_dir, sample.uuid, judge_ledger, "separate judge cost ledger (approved 2026-11-01)")
+        history = judge_history_gate(ledger, judge_auth["binding"], args.out_dir, sample.uuid, bool(args.rejudge), host_dir=host_dir, prices=prices_from_config(cfg))
         stamp = dt.datetime.now(dt.timezone.utc).strftime("%Y%m%dT%H%M%S%fZ") + "-" + os.urandom(2).hex()  # unique even for two passes within one second
         judge_unit = f"{sample.uuid}:judge:{stamp}"
-        log_path = judge_log_path(args.ledger, sample.uuid, judge_unit)
-        judge_params = {k: v for k, v in (cfg.get("judge") or {}).items() if k in ("temperature", "max_tokens", "max_retries", "timeout")}
+        log_path = judge_log_path(judge_ledger.path, sample.uuid, judge_unit)
+        judge_params = {k: v for k, v in (cfg.get("judge") or {}).items() if k in ("temperature", "max_tokens", "max_retries", "timeout", "reasoning_effort")}
         judge = judge_factory(args.judge_model, cfg) if judge_factory else ProviderJudge(args.judge_model, **judge_params)
         if getattr(judge, "is_stub", False):
             raise GradingCliError("a stub judge is never a judged pass")
         for attr, value in (("log_path", log_path), ("run_uuid", sample.uuid), ("judge_unit", judge_unit)):
             setattr(judge, attr, value)  # the write-ahead log is bound to this run and unit whatever factory built the judge
-        launcher = PilotLauncher(cfg, runs_root=args.out_dir, ledger=ledger, eval_fn=None)
-        launcher.record("judge_authorization", {**{k: v for k, v in judge_auth.items() if k != "binding"}, "ledger": ledger.identity(), "unit_id": judge_unit, "run": binding, "task_id": args.task_id,
+        launcher = PilotLauncher(cfg, runs_root=args.out_dir, ledger=judge_ledger, eval_fn=None)
+        launcher.record("judge_authorization", {**{k: v for k, v in judge_auth.items() if k != "binding"}, "ledger": judge_ledger.identity(), "generation_ledger": ledger.identity(), "unit_id": judge_unit, "run": binding, "task_id": args.task_id,
                                                 "criteria": "judge-only items of the task module", "rejudge_of": history["prior_judge_units"] if args.rejudge else [],
                                                 "superseded_judged_passes": history["prior_judged_passes_in_out_dir"] if args.rejudge else [], "judge_call_log": log_path,
                                                 "code": git_provenance(), "config_sha256": materials["config_sha256"], "started_at": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds")})
@@ -352,7 +408,7 @@ def main(argv=None, *, judge_factory=None, environ: dict | None = None) -> int:
                                "calls": getattr(judge, "calls", []), "batch": getattr(judge, "batch_result", lambda: None)()}, f, indent=1, default=str)
         rec = state["rec"]
     settlement = settlement_for(ledger, args.unit_id) if (ledger and args.unit_id) else None
-    judge_settlement = settlement_for(ledger, (judge_run or {}).get("unit_id")) if (ledger and judge_run) else None  # effective, from the ledger
+    judge_settlement = settlement_for(judge_ledger, (judge_run or {}).get("unit_id")) if (judge is not None and judge_run) else None  # effective, from the judge ledger (the run's ledger unless --judge-ledger)
     grading = None
     if judge is not None:
         accounting = ("manual_review_required" if judge_settlement and judge_settlement.get("manual_review_required") else "estimated" if judge_settlement and judge_settlement.get("estimated")

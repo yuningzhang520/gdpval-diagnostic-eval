@@ -280,6 +280,11 @@ def grade_run(host_dir: str, log, sample_uuid: str, *, task_id: str, rubric: lis
     provenance = {k: {kk: v.get(kk) for kk in ("sha256", "copy_sha256", "copy_verified", "copy_verified_before_parse", "error_class", "exception_type", "error")} for k, v in list(extraction["xlsx"].items()) + list(extraction["docx"].items()) + list(extraction["pptx"].items()) + list(extraction.get("pdf", {}).items())}
     checks = mod["checks"](extraction, reference, rubric, integrity=integrity)
     units = mod["units"](task_prompt, rubric, extraction, reference, checks, binding["uuid"])
+    for u in units:  # the per-task evidence builder and its version travel with every judge call record
+        u["evidence_builder"] = f"grading.judge.{getattr(mod['units'], '__name__', 'units')}@{mod['version']}"
+    if judge is not None and units:  # verdict-free evidence of every judge unit of this pass (item identity, builder, rendered request), for repeats and audit
+        with open(os.path.join(out_dir, f"judge_units_{binding['uuid']}_{rec['grading_pass']}.json"), "x", encoding="utf-8") as f:
+            json.dump({"run_uuid": binding["uuid"], "grading_pass": rec["grading_pass"], "units": units}, f, indent=1, default=str)
     verdicts = J.judge_units(units, judge) if judge is not None else []
     grades = []
     # Approved 2026-11-01 (c357f0e2 item 69): a deterministic check may return verdict "route_to_judge" when its rule
