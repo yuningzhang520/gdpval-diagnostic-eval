@@ -3862,6 +3862,59 @@ Pass 1 results so far (registry `~/turing-eval-runs/judge_dev/registry.jsonl`; v
   rates (4 / 18 USD per M). Those rates bound the ledger's settlement of a unit, so the ledger total, not only the
   provider bill, stays within both ceilings. Test: `GuardTierTests`.
 
+## Time-bounded review (policy v3), v3 Dev packets, Pass 1 complete (2026-11-01; decided by the human before any label)
+
+Policy review-queue-2026-11-01.3 (preregistration 1.19, amendment v3):
+- Queue: `grading/review_queue/queue_v3.json`, seed 20261101; `verify-v3` reproduces it.
+- Kept on record: `queue_v1.json`, `queue_v2.json` and the packet folders `batch-1*` and `batch-2*` (never labelled,
+  superseded).
+- Code (for Codex Review 2):
+  - `review_queue.build_plans_v3` (same plan schema as v2, so the packet assembly and `review compare` are unchanged).
+  - `freeze_v3` / `verify_v3`.
+  - `label_batch._dedupe_excerpts`: a repeated deliverable excerpt is replaced by a pointer to its first appearance.
+- Tests: `QueueV3Tests`.
+
+| Phase | Labels (criterion + item) | Evidence items | v2 for comparison |
+|---|---|---|---|
+| Dev (2ea2e5b5…, a45bc83b…, f841ddcf…) | 19 (3 + 16) | 41 | 67 / 258 |
+| Validation (ten tasks) | 26 (4 + 22) | 56 | 98 / 377 |
+| Formal (both candidates) | 44 (6 + 38) | 128 | 196 / 754 |
+| **Total** | **89** | **225** | **361 / 1,389** |
+
+- Not in these counts: the targeted critical-FAIL verification of the Formal results. Its size is unknown until the
+  results exist; it is aligned with the 20-30 deep failure investigations.
+- Formal visual items are `not evaluated` unless a human verdict is obtained.
+
+v3 Dev packets: `~/turing-eval-runs/labeling/dev-v3/`, built from the judged passes, verdict-free. Checked against
+the queue: members, judge excerpts, label rows, no pre-filled cell, no verdict wording.
+
+| Packet | Labels | Evidence items |
+|---|---|---|
+| `f841ddcf_XqKh2bn4` | C1 + items 21, 43, 45, 46, 56 = 6 | 6 |
+| `a45bc83b_jQBk9JXX` | C3 + items 1, 3, 17, 33, 56 = 6 | 11 |
+| `2ea2e5b5_PTD5aFkm` | C2 + items 7, 10 (sensitivity), 30, 57, 59, 60 = 7 | 24 |
+
+Judge Dev Pass 1 complete on all ten Dev outputs:
+- Primary units: 167, all ok (52 planned, addendum 1 `c357f0e2…` 54, addendum 2 `a45bc83b…` 61, 18:19-18:27Z).
+- Self-consistency repeats: 20 of 20.
+- Cost: 6.525 USD at the per-call standard tier; 11.605 USD on the conservative Judge Dev ledger.
+- Remaining: Pass 1 8.40 USD, aggregate 18.40 USD.
+
+Every eligible Dev output has a full automatic pass:
+- Each of the ten Dev outputs has a judged pass in which every rubric item has a record. Visual items wait for a
+  human verdict.
+- The `a45bc83b…` and `c357f0e2…` offline deterministic passes preceded their judged passes.
+
+AI-assisted QA (sealed, `~/turing-eval-runs/qa/dev_pass1/`, mode 600):
+- 8 of 10 Dev runs are reviewed. `c357f0e2…` and `a45bc83b…` are not reviewed yet (optional; off the critical path).
+- Leads are engineering input, not human ground truth.
+- For the three v3 Dev-labelled runs, leads stay unopened until their labels are checkpointed.
+
+Generation (18:29Z):
+- Dev: 10 of 10 canonical.
+- Validation: 7 of 10 canonical (sealed). `2ea2e5b5…` is running; `a45bc83b…` and `c357f0e2…` are pending.
+- Scheduler cap lowered to 1 at 18:24Z (memory contention).
+
 ## Known issues and findings (material check)
 
 - `rubric_json.form_content`: 8,036 items hold `null`, 2,417 items lack the key, zero
@@ -3914,10 +3967,9 @@ Pass 1 results so far (registry `~/turing-eval-runs/judge_dev/registry.jsonl`; v
 
 ## In flight
 
-- Gemini dev and validation generation under plan `paid-2026-11-01c` (cap 2). Validation outputs stay sealed.
-- Judge Dev Pass 1 relaunched after the gate fix (above).
-- Blind Batch 1 labels for `f841ddcf…`, `47ef842d…` and `1137e2bb…` (`labeling/batch-1v2r/`) await the human.
-- All ten task graders exist.
+- Gemini validation generation (`paid-2026-11-01c`, cap 1): 3 tasks remain. Validation outputs stay sealed.
+- v3 Dev packets (`labeling/dev-v3/`, 19 labels) await the human.
+- Grader V1 work from the sealed QA leads on the seven Dev tasks without v3 human labels.
 
 ## Decisions taken (date · what · commit)
 
@@ -4245,7 +4297,9 @@ Pass 1 results so far (registry `~/turing-eval-runs/judge_dev/registry.jsonl`; v
 - 2026-11-01 · judge history gate checks the separate judge ledger's open reservations · 0aa4047
 - 2026-11-01 · Pass 1 addendum 1 (`c357f0e2…` primary units; repeat subset unchanged) · 2284d65
 - 2026-11-01 · no-recalculation references for `c357f0e2…` and `a45bc83b…` (entry-point material; no verdict change) · 6d92e47
-- 2026-11-01 · Judge Dev guard priced at long-context rates (bounds the ledger settlement) · (this commit)
+- 2026-11-01 · Judge Dev guard priced at long-context rates (bounds the ledger settlement) · 02a35b5
+- 2026-11-01 · Pass 1 addendum 2 (`a45bc83b…`) and the `b5d2e6f1…` packet reference · b062e33
+- 2026-11-01 · review policy v3 (time-bounded human review; critical-FAIL verification before reporting), queue_v3 frozen (seed 20261101) · (this commit)
 
 ## Next stage (not started)
 

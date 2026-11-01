@@ -191,5 +191,42 @@ class PolicyV2Tests(unittest.TestCase):
         self.assertEqual((c2["class"], c2["preregistered"]["human_derived"], c2["preregistered"]["class"]), ("agree", "fail", "agree"))
 
 
+class QueueV3Tests(unittest.TestCase):
+    """Time-bounded policy v3: reproducible, verdict-independent, bounded Dev workload, one formal list for both candidates."""
+
+    @classmethod
+    def setUpClass(cls):
+        from grading import review_queue as RQ
+        from grading.grade import TASK_MODULES
+        cls.RQ, cls.tasks = RQ, sorted(TASK_MODULES)
+        cls.built = RQ.build_plans_v3(20261101, cls.tasks)
+
+    def test_reproducible(self):
+        self.assertEqual(self.RQ.build_plans_v3(20261101, self.tasks), self.built)
+
+    def test_dev_one_task_per_family_and_bounded(self):
+        fams = sorted(self.built["plans"][t]["family"] for t in self.built["dev_tasks"])
+        self.assertEqual(fams, ["document", "presentation", "spreadsheet"])
+        w = self.RQ.workload_v3(self.built["plans"])
+        self.assertTrue(15 <= w["dev"]["labels"] <= 25, w["dev"])
+        for t, p in self.built["plans"].items():
+            if t not in self.built["dev_tasks"]:
+                self.assertEqual((p["phases"]["dev"]["criteria"], p["phases"]["dev"]["items"]), ([], []))
+
+    def test_phase_items_and_shortfalls(self):
+        for phase in ("validation", "formal"):
+            for t, p in self.built["plans"].items():
+                ph = p["phases"][phase]
+                kinds = [c for x in ph["items"] for c in x["categories"]]
+                self.assertEqual(sum("random deterministic" in c for c in kinds), 1)
+                self.assertEqual(sum("random judge-only" in c for c in kinds) + ph["shortfall"].get("judge", 0), 1)
+            self.assertEqual(self.built["plans"]["b5d2e6f1-62a2-433a-bcdd-95b260cdd860"]["phases"][phase]["shortfall"], {"judge": 1})
+        formal_v = [x for p in self.built["plans"].values() for x in p["phases"]["formal"]["items"] if any("visual" in c for c in x["categories"])]
+        self.assertEqual(formal_v, [])
+        self.assertTrue(all(p["phases"]["formal"]["outputs"] == 2 for p in self.built["plans"].values()))
+        self.assertEqual(sum(len(p["phases"]["validation"]["criteria"]) for p in self.built["plans"].values()), 4)
+        self.assertEqual(sum(len(p["phases"]["formal"]["criteria"]) for p in self.built["plans"].values()), 3)
+
+
 if __name__ == "__main__":
     unittest.main()

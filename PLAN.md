@@ -255,12 +255,24 @@ parse error and its criteria stay ungraded.
 - Freeze: the shared prompt and settings are frozen before any validation output is revealed.
 - Budget: judge calibration costs have their own ledger and ceiling.
 
-**Human review.** Every deliverable is opened (rendered where needed). All critical
-criteria and pre-defined visual requirements are checked by hand. Disagreements between
-judge and deterministic checks are adjudicated and recorded. Non-critical criteria are
-sampled, stratified by model and criterion type; the human judgment is written down
-before the judge verdict is revealed. Agreement rates are reported per model with
-numerators and denominators. Agreement measures consistency, not correctness.
+**Human review.**
+- Approach: time-bounded and blind, from a frozen, seeded queue whose membership never depends on a verdict.
+- Development outputs: three tasks, one per deliverable family (spreadsheet, presentation, document), calibrate the
+  judge prompt and the graders. Each gets one critical criterion, two deterministic items and three judge-only items.
+- Validation and formal outputs: one deterministic and one judge-only item per task (the same ids for both
+  candidates, candidate identity hidden), plus a small stratified critical and visual subset fixed in advance.
+- Packets: the human labels from verdict-free packets, and the labels are saved with a hash and timestamp before any
+  automated verdict is shown.
+- Agreement: reported per model with its actual numerators and denominators. Agreement measures consistency, not
+  correctness. A small random sample bounds false-pass risk only loosely, and no precise false-pass rate is claimed.
+- Visual criteria: those without a human verdict are reported as not evaluated. A judge verdict never stands in for
+  them.
+- Reported critical failures: every critical fail used in the candidate comparison, the headline findings or the
+  failure taxonomy is verified by a human against the deliverable, the source data and the rubric. Until then it is
+  reported as an unverified finding, and any reclassification (grader, dataset, rubric, environment) is recorded.
+- Failure analysis: about 20-30 failure events, chosen by impact, severity, uncertainty and capability family, are
+  investigated in depth, separately from the agreement statistics.
+- Disagreements: those between the judge and the deterministic checks are adjudicated and recorded.
 
 **Scores.** For each task and model: W is the total rubric weight, E the weight of
 criteria judged pass or fail, P the weight confirmed pass. Reported figures are the

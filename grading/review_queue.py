@@ -124,10 +124,20 @@ def verify(path: str) -> dict:
 
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description="fixed, verdict-independent human review queue")
-    ap.add_argument("command", choices=("freeze", "verify", "show", "freeze-v2", "verify-v2"))
+    ap.add_argument("command", choices=("freeze", "verify", "show", "freeze-v2", "verify-v2", "freeze-v3", "verify-v3"))
     ap.add_argument("--seed", type=int, default=None)
     ap.add_argument("--out", default=os.path.join(ROOT, "grading", "review_queue", "queue_v1.json"))
     args = ap.parse_args(argv)
+    if args.command in ("freeze-v3", "verify-v3"):
+        out = args.out if args.out != os.path.join(ROOT, "grading", "review_queue", "queue_v1.json") else os.path.join(ROOT, "grading", "review_queue", "queue_v3.json")
+        if args.command == "freeze-v3":
+            if args.seed is None:
+                raise SystemExit("freeze-v3 needs --seed (recorded in the queue)")
+            rec = freeze_v3(args.seed, out)
+            print(json.dumps({"dev_tasks": rec["dev_tasks"], "workload_total": rec["workload_total"]}, indent=1))
+        else:
+            print(json.dumps(verify_v3(out), indent=1))
+        return 0
     if args.command in ("freeze-v2", "verify-v2"):
         out = args.out if args.out != os.path.join(ROOT, "grading", "review_queue", "queue_v1.json") else os.path.join(ROOT, "grading", "review_queue", "queue_v2.json")
         if args.command == "freeze-v2":
@@ -292,6 +302,159 @@ def verify_v2(path: str) -> dict:
     rec = load(path)
     diffs = sorted(t for t, p in rec["plans"].items() if build_plan_v2(t, rec["seed"]) != p)
     return {"path": path, "seed": rec["seed"], "tasks": len(rec["plans"]), "reproduced": not diffs, "differs": diffs,
+            "inputs_changed": sorted(k for k, v in input_hashes(sorted(rec["plans"])).items() if rec["inputs_sha256"].get(k) != v)}
+
+
+
+# ============================================================================= policy v3 (amended 2026-11-01, time-bounded review)
+# Human review is bounded: Dev calibrates on three tasks (one per deliverable family); Validation and Formal label one
+# deterministic and one judge-only item per task plus a small stratified critical / visual subset. Membership is drawn
+# from item lists, critical mappings, visual categories, deliverable families and the seed only (no verdict).
+POLICY_VERSION_V3 = "review-queue-2026-11-01.3"
+FAMILY = {"2ea2e5b5-257f-42e6-a7dc-93763f28b19d": "presentation", "a45bc83b-22f9-4def-8d89-9c5661b2b86f": "document"}  # every other task: spreadsheet
+DEV_SPREADSHEET_CANDIDATES = ("1137e2bb-bdf9-4876-b572-f29b7de5e595", "47ef842d-8eac-4b90-bda8-dd934c228c96", "f841ddcf-2a28-4f6d-bac3-61b607219d3e")  # v2 full-calibration xlsx tasks
+DEV_V3 = {"criteria": 1, "deterministic": 2, "judge": 3}
+VALIDATION_V3 = {"deterministic": 1, "judge": 1, "criteria_by_family": {"spreadsheet": 2, "presentation": 1, "document": 1}, "visual_by_family": {"spreadsheet": 2, "presentation": 1, "document": 1}, "visual_total": 3}
+FORMAL_V3 = {"deterministic": 1, "judge": 1, "criteria_by_family": {"spreadsheet": 1, "presentation": 1, "document": 1}}
+ALGORITHM_V3 = ("rng(key) = random.Random(int(sha256(f'{seed}:v3:{key}').hexdigest()[:16], 16)). Dev tasks: the presentation and document tasks plus "
+                "rng('dev-spreadsheet').choice(DEV_SPREADSHEET_CANDIDATES). Per Dev task (rng('dev:'+task)): one criterion (choice of sorted ids), 2 deterministic and 3 judge-only "
+                "items sampled from the non-critical pools, topped up from the items outside the chosen criterion when a pool is short. Per phase P in (validation, formal), per task "
+                "(rng(P+':'+task)): 1 deterministic and 1 judge-only item by the same rule. Critical subset (rng(P+':criteria')): per family, tasks sampled from the sorted family list, "
+                "one criterion each (rng(P+':criterion:'+task)). Visual subset (validation only, rng('validation:visual')): per family, tasks with visual items sampled, one item each, "
+                "capped at 3 in family order presentation, document, spreadsheet. Items that differ between the preregistered and revised definition of a chosen criterion are added. "
+                "Formal uses one list for both candidates.")
+
+
+def _rng3(seed: int, key: str) -> random.Random:
+    return random.Random(int(hashlib.sha256(f"{seed}:v3:{key}".encode()).hexdigest()[:16], 16))
+
+
+def _family(task_id: str) -> str:
+    return FAMILY.get(task_id, "spreadsheet")
+
+
+def _task_facts(task_id: str) -> dict:
+    ck = task_module(task_id)
+    n = rubric_length(task_id)
+    cur, pre = ck.CRITICAL, getattr(ck, "CRITICAL_PREREGISTERED", None) or ck.CRITICAL
+    crit_union = set(_critical_items(pre)) | set(_critical_items(cur))
+    visual = sorted(getattr(ck, "V_ITEMS", []) or [])
+    criteria = [{"id": cid, "members": _members(cur[cid]), **({"preregistered_members": _members(pre[cid])} if cid in pre and _members(pre[cid]) != _members(cur[cid]) else {})}
+                for cid in sorted(cur, key=lambda c: int(c[1:]))]
+    return {"n": n, "criteria": criteria, "visual": visual, "D": sorted(set(ck.D_ITEMS) - set(visual)), "J": sorted(set(ck.J_ITEMS) - set(visual)), "crit_union": crit_union,
+            "differing": sorted({i for c in criteria if "preregistered_members" in c for i in set(c["members"]) ^ set(c["preregistered_members"])})}
+
+
+def _pick(r: random.Random, pool: list[int], k: int, fallback: list[int]) -> tuple[list[int], int]:
+    """k items from pool; a short pool is topped up from fallback (sorted, disjoint); returns (items, shortfall)."""
+    got = r.sample(pool, min(k, len(pool)))
+    rest = [i for i in fallback if i not in got]
+    if len(got) < k and rest:
+        got += r.sample(rest, min(k - len(got), len(rest)))
+    return sorted(got), k - len(got)
+
+
+def build_plans_v3(seed: int, task_ids: list[str]) -> dict:
+    facts = {t: _task_facts(t) for t in task_ids}
+    fam = {f: sorted(t for t in task_ids if _family(t) == f) for f in ("spreadsheet", "presentation", "document")}
+    dev_tasks = sorted([t for f in ("presentation", "document") for t in fam[f]] + [_rng3(seed, "dev-spreadsheet").choice(sorted(DEV_SPREADSHEET_CANDIDATES))])
+    plans = {t: {"task_id": t, "family": _family(t), "rubric_items": facts[t]["n"], "criteria": facts[t]["criteria"], "visual_items": facts[t]["visual"],
+                 "differing_items": facts[t]["differing"], "phases": {}} for t in task_ids}
+
+    def items_for(r, t, kd, kj, exclude=()):
+        f = facts[t]
+        ex = set(exclude)
+        d_pool = [i for i in f["D"] if i not in f["crit_union"] and i not in ex]
+        j_pool = [i for i in f["J"] if i not in f["crit_union"] and i not in ex]
+        d, sd = _pick(r, d_pool, kd, [i for i in f["D"] if i not in ex and i not in d_pool])
+        j, sj = _pick(r, j_pool, kj, [i for i in f["J"] if i not in ex and i not in j_pool])
+        return d, j, {k: v for k, v in (("deterministic", sd), ("judge", sj)) if v}
+
+    def sensitivity(t, cids):
+        return [i for c in facts[t]["criteria"] if c["id"] in cids and "preregistered_members" in c for i in set(c["members"]) ^ set(c["preregistered_members"])]
+
+    for t in task_ids:
+        if t in dev_tasks:
+            r = _rng3(seed, f"dev:{t}")
+            cids = [c["id"] for c in facts[t]["criteria"]]
+            cid = r.choice(cids)
+            members = next(c for c in facts[t]["criteria"] if c["id"] == cid)["members"]
+            d, j, short = items_for(r, t, DEV_V3["deterministic"], DEV_V3["judge"], exclude=members)
+            cats = {i: ["dev: deterministic"] for i in d} | {i: ["dev: judge-only"] for i in j}
+            for i in sensitivity(t, [cid]):
+                cats.setdefault(i, []).append("sensitivity: differs between the preregistered and revised criterion")
+            plans[t]["phases"]["dev"] = {"mode": "v3 dev calibration", "evidence_class": "dev calibration (labels inform the judge prompt and graders; not held-out agreement)",
+                                         "criteria": [cid], "items": [{"item": i, "categories": sorted(c)} for i, c in sorted(cats.items())], "shortfall": short, "outputs": 1}
+        else:
+            plans[t]["phases"]["dev"] = {"mode": "automatic only (no human label under v3)", "evidence_class": "none", "criteria": [], "items": [], "outputs": 1}
+    for phase, rule in (("validation", VALIDATION_V3), ("formal", FORMAL_V3)):
+        chosen_c = {}
+        rc = _rng3(seed, f"{phase}:criteria")
+        for f, k in rule["criteria_by_family"].items():
+            for t in sorted(rc.sample(fam[f], min(k, len(fam[f])))):
+                chosen_c[t] = _rng3(seed, f"{phase}:criterion:{t}").choice([c["id"] for c in facts[t]["criteria"]])
+        chosen_v = {}
+        if phase == "validation":
+            rv = _rng3(seed, "validation:visual")
+            for f in ("presentation", "document", "spreadsheet"):
+                cand = [t for t in fam[f] if facts[t]["visual"]]
+                for t in sorted(rv.sample(cand, min(rule["visual_by_family"][f], len(cand)))):
+                    if len(chosen_v) < rule["visual_total"]:
+                        chosen_v[t] = rv.choice(facts[t]["visual"])
+        for t in task_ids:
+            r = _rng3(seed, f"{phase}:{t}")
+            d, j, short = items_for(r, t, rule["deterministic"], rule["judge"])
+            cats = {i: [f"{phase}: random deterministic"] for i in d} | {i: [f"{phase}: random judge-only"] for i in j}
+            if t in chosen_v:
+                cats.setdefault(chosen_v[t], []).append(f"{phase}: stratified visual")
+            for i in sensitivity(t, [chosen_c[t]] if t in chosen_c else []):
+                cats.setdefault(i, []).append("sensitivity: differs between the preregistered and revised criterion")
+            plans[t]["phases"][phase] = {"mode": f"v3 {phase}", "evidence_class": f"{phase} blind agreement sample" + ("; identical item ids for both candidates, identity hidden" if phase == "formal" else ""),
+                                         "criteria": [chosen_c[t]] if t in chosen_c else [], "items": [{"item": i, "categories": sorted(c)} for i, c in sorted(cats.items())],
+                                         "shortfall": short, "outputs": 2 if phase == "formal" else 1}
+    for t, pl in plans.items():
+        bad = [x["item"] for ph in pl["phases"].values() for x in ph["items"] if not 1 <= x["item"] <= facts[t]["n"]]
+        if bad:
+            raise ValueError(f"{t}: plan items outside 1..{facts[t]['n']}: {bad}")
+    return {"dev_tasks": dev_tasks, "plans": plans}
+
+
+def workload_v3(plans: dict) -> dict:
+    tot = {}
+    for t, pl in plans.items():
+        for ph, w in workload(pl).items():
+            a = tot.setdefault(ph, {"criterion_labels": 0, "item_labels": 0, "labels": 0, "evidence_items": 0})
+            a["criterion_labels"] += w["criterion_labels_per_output"] * w["outputs"]; a["item_labels"] += w["item_labels_per_output"] * w["outputs"]
+            a["labels"] += w["csv_labels_total"]; a["evidence_items"] += w["evidence_items_total"] if w["csv_labels_total"] else 0
+    return tot
+
+
+def freeze_v3(seed: int, out_path: str, task_ids: list[str] | None = None) -> dict:
+    from .grade import TASK_MODULES
+    task_ids = sorted(task_ids or TASK_MODULES)
+    built = build_plans_v3(seed, task_ids)
+    rec = {"policy_version": POLICY_VERSION_V3, "amends": POLICY_VERSION_V2 + " (queue_v2.json, never labelled; kept)",
+           "adopted": "2026-11-01, on the human's instruction (time-bounded review), before any human label; not preregistered",
+           "frozen_at": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"), "seed": seed, "algorithm": ALGORITHM_V3,
+           "rules": {"dev": DEV_V3, "validation": VALIDATION_V3, "formal": FORMAL_V3, "families": {t: _family(t) for t in task_ids}, "dev_spreadsheet_candidates": list(DEV_SPREADSHEET_CANDIDATES)},
+           "dev_tasks": built["dev_tasks"], "inputs_sha256": input_hashes(task_ids),
+           "verdict_independent": "membership is computed from item lists, critical mappings, visual categories, deliverable families and the seed only",
+           "not_covered": "visual items outside the validation subset and every formal visual item are reported as not evaluated unless a human verdict is obtained; "
+                          "no judge verdict substitutes for them. Critical criteria outside the subsets are not human-verified (critical FAILs that are reported are verified separately).",
+           "plans": built["plans"], "workload": {t: workload(p) for t, p in built["plans"].items()}, "workload_total": workload_v3(built["plans"])}
+    if os.path.exists(out_path):
+        raise FileExistsError(f"{out_path} exists; a frozen queue is never overwritten (write a new version)")
+    os.makedirs(os.path.dirname(out_path), exist_ok=True)
+    with open(out_path, "x", encoding="utf-8") as f:
+        json.dump(rec, f, indent=1)
+    return rec
+
+
+def verify_v3(path: str) -> dict:
+    rec = load(path)
+    built = build_plans_v3(rec["seed"], sorted(rec["plans"]))
+    diffs = sorted(t for t, p in rec["plans"].items() if built["plans"][t] != p)
+    return {"path": path, "seed": rec["seed"], "tasks": len(rec["plans"]), "reproduced": not diffs and built["dev_tasks"] == rec["dev_tasks"], "differs": diffs,
             "inputs_changed": sorted(k for k, v in input_hashes(sorted(rec["plans"])).items() if rec["inputs_sha256"].get(k) != v)}
 
 

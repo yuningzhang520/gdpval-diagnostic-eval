@@ -344,6 +344,27 @@ def _clean(sec: str, judge_item: bool) -> list[str]:
     return keep
 
 
+def _dedupe_excerpts(text: str) -> str:
+    """Shorter packets: a deliverable excerpt identical to one shown earlier in the packet is replaced by a pointer to
+    the section that shows it (the excerpt text is unchanged where it first appears)."""
+    import re
+    seen, out, pos, heading = {}, [], 0, "above"
+    pat = re.compile(r"^(#{2,3} [^\n]+)$|\*\*Deliverable excerpt:\*\*\n\n```\n(.*?)\n```", re.M | re.S)
+    for m in pat.finditer(text):
+        if m.group(1):
+            heading = m.group(1).lstrip("# ").strip()
+            continue
+        body = m.group(2)
+        if body in seen:
+            out.append(text[pos:m.start()])
+            out.append(f"**Deliverable excerpt:** identical to the excerpt under \"{seen[body]}\" above.")
+            pos = m.end()
+        else:
+            seen[body] = heading
+    out.append(text[pos:])
+    return "".join(out)
+
+
 def assemble_v2(batch: str, runs: list[dict], passes: list[dict], out_root: str, queue_path: str, phase: str = "dev") -> dict:
     """A labeling batch under review-queue policy v2 (amended 2026-11-01): criterion-level critical labels on full
     evidence, plus the plan's item labels. Never overwrites a batch."""
@@ -401,7 +422,7 @@ def assemble_v2(batch: str, runs: list[dict], passes: list[dict], out_root: str,
                 md.append("## Item " + "\n".join(ls).rstrip() + "\n")
         items_md = os.path.join(sub, "items.md")
         with open(items_md, "x", encoding="utf-8") as f:
-            f.write("\n".join(md))
+            f.write(_dedupe_excerpts("\n".join(md)))
         labels = os.path.join(sub, "labels.csv")
         with open(rm["independent_template"], encoding="utf-8", newline="") as src, open(labels, "x", encoding="utf-8", newline="") as dst:
             rd, wr = csv.reader(src), csv.writer(dst)

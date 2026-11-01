@@ -283,6 +283,62 @@ queue `queue_v1.json` was never labelled and is kept; not preregistered; `gradin
   - Validation and formal results never tune the frozen grader; a later corrected re-grade is regression and
     sensitivity evidence, not fresh held-out validation.
 
+Amendment v3 (review-queue-2026-11-01.3): time-bounded human review.
+- Adoption: 2026-11-01, on the human's instruction, before any human label. Not preregistered.
+- Kept unchanged on record: `queue_v1.json` and `queue_v2.json` (never labelled), and the earlier packet folders
+  (superseded).
+- Queue: `grading/review_queue/queue_v3.json`, seed 20261101 (the seed recorded before any verdict existed).
+  `verify-v3` reproduces it.
+
+Dev:
+- Labelled tasks: three, one per deliverable family.
+  - Presentation: `2ea2e5b5…`. Document: `a45bc83b…`.
+  - Spreadsheet: drawn with the seed from the three v2 full-calibration xlsx tasks; the draw gave `f841ddcf…`.
+- Per labelled task: one critical criterion (criterion level, full evidence), plus two deterministic and three
+  judge-only items at random. The non-critical pools are used first and topped up from items outside the chosen
+  criterion. 19 labels in all.
+- Every Dev output of all ten tasks still receives full automatic grading (every deterministic and judge item) and
+  AI-assisted diagnostic QA. QA findings guide engineering fixes; they are not human ground truth.
+- Disclosure: when the rule was set, the coding agent knew per-run counts of sealed AI QA leads (no item identity, no
+  verdict). The rule uses only deliverable families, rubric structure and the pre-recorded seed.
+
+Validation:
+- Per task: one deterministic and one judge-only item at random. `b5d2e6f1…` has no judge item.
+- A stratified critical subset of four criteria: two spreadsheet tasks, the presentation task and the document task.
+- A visual subset of three items: the document task and two spreadsheet tasks (the presentation task has no visual
+  item).
+- 26 labels in all. Full critical human verification is not claimed.
+
+Formal:
+- Per task: one deterministic and one judge-only item, with the same item ids for both candidates and candidate
+  identity hidden.
+- A paired critical subset of three criteria (one per family), selected before any candidate result exists.
+- 44 labels over both candidates.
+
+Rules for every phase:
+- Visual criteria outside the human subsets are reported as `not evaluated`. No judge verdict substitutes for a
+  human-authoritative visual verdict.
+- Critical-failure verification (Formal; mandatory before reporting):
+  - Scope: every critical FAIL that appears in the candidate comparison, the headline findings or the failure taxonomy.
+  - Method: a human verifies it against the deliverable, the authoritative source data and the rubric. For an
+    all-members criterion, one verified decisive violation establishes the FAIL. For an aggregate or threshold
+    criterion, the aggregation is verified.
+  - Until verified, an automated FAIL is reported as an unverified finding.
+  - Separation: this verification is separate from the blind agreement sample and starts only after the relevant blind
+    labels are checkpointed.
+  - Records: evidence locations, and any reclassification as a grader, dataset, rubric or environment issue.
+- False-PASS risk: investigated on the random sample, reported with its actual size and observed disagreements. No
+  precise false-PASS rate is claimed from it.
+- Failure analysis: after the blind sample, about 20-30 failure events are investigated in depth. They are selected by
+  impact, severity, uncertainty and capability family, kept separate from agreement statistics, and aligned with the
+  critical-failure verification where possible.
+- Kept from v2:
+  - A criterion label is a pass only on full evidence.
+  - The differing items of a revised definition are labelled whenever their criterion is in a subset (1.18).
+  - Seeds, membership, label hashes and timestamps, and the V0 and calibrated results are preserved.
+  - Outcome-driven items never join the agreement sample.
+  - Validation runs once per frozen version and never tunes it.
+
 ### 1.15 Budget, concurrency, timeouts
 Values are in `config.json` (high-reasoning configuration approved 2026-11-01 as the initial
 Pilot A/B condition; fixed at `freeze-v1` after the pilot cost report): `reasoning_effort` high on
