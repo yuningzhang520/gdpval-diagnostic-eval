@@ -39,7 +39,7 @@ from .engine.money import parse_money
 from .engine.workbook import workbook_gate
 
 TASK = "c3525d4d-2012-45df-853e-2d2a0e902991"
-VERSION = "c3525d4d-2026-11-01.3"  # .3 (calibration on the dev output, 2026-11-01): the store-list header is a store-field column label, not any text naming a store  # .2: item 7 per the rubric text (every added store flagged; no majority); conflicting flag indicators cannot_assess (approved 2026-11-01)
+VERSION = "c3525d4d-2026-11-01.4"  # .4 (Dev calibration 2026-11-01): the row label is the leftmost text naming a metric; captions naming production units, store counts, spend, piece counts, percentages and component totals decide over entity-style labels; Orig/Rev; placeholder headers skipped; base demand vs units to produce  # .3 (calibration on the dev output, 2026-11-01): the store-list header is a store-field column label, not any text naming a store  # .2: item 7 per the rubric text (every added store flagged; no majority); conflicting flag indicators cannot_assess (approved 2026-11-01)
 D_ITEMS = [1] + list(range(3, 40)) + list(range(41, 48)) + [49]
 J_ITEMS = [2, 40, 48, 50, 51]
 V_ITEMS = [52]
@@ -177,8 +177,8 @@ def scenario_of(text: str) -> str | None:
         return None
     if re.search(DELTA_RX, t):
         return "delta"
-    o = re.search(r"origin|initial|\bbefore\b|previous|\bprior\b|\bold\b|baseline", t)
-    r = re.search(r"revis|updat|\bfinal\b|\bnew\b|\bafter\b", t)
+    o = re.search(r"origin|\borig\b|initial|\bbefore\b|previous|\bprior\b|\bold\b|baseline", t)
+    r = re.search(r"revis|\brev\b|updat|\bfinal\b|\bnew\b|\bafter\b", t)
     if o and not r:
         return "original"
     if r and not o:
@@ -190,12 +190,29 @@ def metric_of(label: str, header: str, num, fmt: str) -> str | None:
     lb, hd = norm(label), norm(header)
     if not lb:
         return None
+    if hd and re.search(r"\(%\)|\bpercent|%\s*$|\bshare\b", hd):
+        return None  # a percentage or share column (.4)
+    comp_ext = hd and re.search(r"extended|\bext\b|\btotal\b", hd) and not re.search(r"per\s*(unit|stand|piece|display)|/\s*(unit|stand|piece)", hd)
+    if comp_ext and re.search(r"shelf|strip|side|\bbase\b", lb):
+        return None  # a component's extended or program total, not its per-unit piece count or cost (.4)
     if re.search(r"shelf|strip", lb):
         return "comp_strip"
     if re.search(r"side", lb) and re.search(r"panel", lb):
         return "comp_side"
     if re.search(r"\bbase\b", lb):
         return "comp_base"
+    # .4: a column caption naming the quantity decides over an entity-style row label (not on change rows)
+    change_row = re.search(r"\b(added|new|newly|removed|dropped|net|difference|change|variance|impact|increase)\b", lb)
+    money_hd = re.search(r"cost|price|spend|\$|budget", hd)
+    if hd and not change_row:
+        if re.search(r"production units|total units|units?\s*\(?incl|units to (order|produce)", hd) and not money_hd:
+            return "total_units"
+        if re.search(r"store count|#\s*stores|number of stores|door count", hd) and not money_hd:
+            return "stores"
+        if re.search(r"spend|total \$|\(\$\)|budget|total cost", hd) and not re.search(r"per\s*(unit|piece|stand)|/\s*(piece|unit|stand)", hd) and re.search(r"program|matrix|total|budget|plan", lb):
+            return "program_cost"
+    if hd and re.search(r"\bpcs\b|pieces|\bqty\b|quantity|volume basis", hd) and not money_hd:
+        return None  # piece or volume counts, not a scenario metric
     unit_ctx = re.search(r"per\s*(unit|stand|floor\s*stand|display)|unit\s*cost|cost\s*/\s*unit|/\s*unit", lb + " " + hd)
     if re.search(DELTA_RX, lb):
         return "delta_unit" if re.search(r"per\s*(unit|stand|floor\s*stand)|unit\s*cost|/\s*unit", lb) else "delta_program"
@@ -206,6 +223,8 @@ def metric_of(label: str, header: str, num, fmt: str) -> str | None:
     if re.search(r"overage|buffer|breakage|spare", lb):
         pct = isinstance(num, Decimal) and ("%" in (fmt or "") or (num <= 1 and num == num.quantize(Decimal("0.01")) and num != num.to_integral_value()) or "%" in lb and num <= 100 and re.search(r"%\s*$|percent|rate", lb))
         return "overage_pct" if pct else "overage_units"
+    if re.search(r"need|demand|requir", lb) and not re.search(r"total|produce|production|order|incl|overage", lb) and not re.search(r"cost|price|\$", lb):
+        return "base_units"  # demand before the overage, not the units to produce (.4)
     if re.search(r"\bunits?\b|floor\s*stands?|displays?|production|quantity|qty", lb) and re.search(r"total|produce|production|order|build|need|incl|with overage|qty|quantity", lb) and not re.search(r"cost|price|\$", lb):
         return "total_units"
     if re.search(r"stores?|locations?|doors?", lb) and not re.search(r"\b(added|new|removed|dropped|net|difference)\b", lb):
@@ -226,8 +245,13 @@ def facts_of(sh: dict) -> list[dict]:
             n = as_number(v)
             if n is None:
                 continue
-            label = next((texts[(r, cc)] for cc in range(c - 1, 0, -1) if (r, cc) in texts), "")
-            header = next((texts[(rr, c)] for rr in range(r - 1, max(0, r - 40), -1) if (rr, c) in texts), "")
+            header = next((texts[(rr, c)] for rr in range(r - 1, max(0, r - 40), -1) if (rr, c) in texts and re.search(r"[a-z]", norm(texts[(rr, c)]))), "")  # placeholders such as '-' are not headers (.4)
+            left = [texts[(r, cc)] for cc in range(1, c) if (r, cc) in texts]
+            nearest = left[-1] if left else ""
+            fmt0 = fmt_of(sh, r, c)
+            # the row label is the leftmost text that names a metric (a description column between label and figures
+            # does not relabel the row); without one, the nearest text as before (.4)
+            label = next((x for x in left if metric_of(x, header, n if isinstance(n, Decimal) else None, fmt0)), nearest)
             sl, sh_ = scenario_of(label), scenario_of(header)
             if "delta" in (sl, sh_):
                 scen = "delta"

