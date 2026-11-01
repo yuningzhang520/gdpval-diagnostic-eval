@@ -1,0 +1,107 @@
+{
+ "_provenance": {
+  "commit": "ff86cb3e72f714362dced10e4bd6827cebfb1001",
+  "dirty": false,
+  "changed_paths": 0,
+  "untracked_paths": 0,
+  "task_grader_version": "a45bc83b-2026-11-01.1",
+  "engine_version": "engine-2026-11-01.1",
+  "exported_by": "write_catalog of the variant module at this commit"
+ },
+ "task_id": "a45bc83b-22f9-4def-8d89-9c5661b2b86f",
+ "gold_files_sha256": {
+  "POC_Implementation_Guide.docx": "b8b671f6e4f463d2e5b89d478201d2bdf698fcee2274c482190b7028e67f8ba9",
+  "Proposed Architecture Summary.docx": "f7e8a7e164c323780fff15b13dbd81f323069c8dcf2e006dc0d38f83f9f9a32d",
+  "Proposed_Architecture.pdf": "66d83a47e44c04800579a4448a0b4a9990a5585c83c4a303f967d7364128dc80"
+ },
+ "baseline": {
+  "1": "pass",
+  "2": "pass",
+  "3": "pass",
+  "5": "pass"
+ },
+ "scope": "expectations cover the deterministic items 1, 2, 3, 5 only; 'neutral' means deterministic-neutral; judge and visual items are not asserted",
+ "variants": {
+  "R01_summary_deleted": {
+   "kind": "rubric_relevant",
+   "basis": "no summary document: 1 fails as not delivered, and with it the bulleted format (5)",
+   "expected_overrides": {
+    "1": "fail",
+    "5": "fail"
+   }
+  },
+  "R02_pdf_deleted": {
+   "kind": "rubric_relevant",
+   "basis": "no PDF diagram (2)",
+   "expected_overrides": {
+    "2": "fail"
+   }
+  },
+  "R03_poc_deleted": {
+   "kind": "rubric_relevant",
+   "basis": "no POC document (3); the summary is still identified by its file name",
+   "expected_overrides": {
+    "3": "fail"
+   }
+  },
+  "R04_summary_not_bulleted": {
+   "kind": "rubric_relevant",
+   "basis": "the summary's Word bullet numbering removed: plain paragraphs, not a bulleted format (5)",
+   "expected_overrides": {
+    "5": "fail"
+   }
+  },
+  "R05_poc_without_ordered_steps": {
+   "kind": "rubric_relevant",
+   "basis": "the POC's numbered lists removed (typed bullets remain): no ordered steps (3)",
+   "expected_overrides": {
+    "3": "fail"
+   }
+  },
+  "R06_pdf_text_only": {
+   "kind": "rubric_relevant",
+   "basis": "the PDF replaced by a text-only page (no drawing, no image): not a diagram (2)",
+   "expected_overrides": {
+    "2": "fail"
+   }
+  },
+  "R07_summary_identity_unknown": {
+   "kind": "rubric_relevant",
+   "basis": "the summary renamed 'Document.docx' beside an extra unidentified 'notes.docx': which file is the summary cannot be determined (1, 5 cannot_assess, never fail)",
+   "expected_overrides": {
+    "1": "cannot_assess",
+    "5": "cannot_assess"
+   }
+  },
+  "N01_summary_renamed": {
+   "kind": "neutral",
+   "basis": "the summary under a neutral file name: identified by elimination (two documents, the POC identified)",
+   "expected_overrides": {}
+  },
+  "N02_summary_typed_bullets": {
+   "kind": "neutral",
+   "basis": "bullets typed as '\u2022 ' glyphs instead of Word numbering",
+   "expected_overrides": {}
+  },
+  "N03_poc_step_text": {
+   "kind": "neutral",
+   "basis": "ordered steps written as 'Step n:' paragraphs instead of a numbered list",
+   "expected_overrides": {}
+  },
+  "N04_extra_readme": {
+   "kind": "neutral",
+   "basis": "an extra README.txt",
+   "expected_overrides": {}
+  },
+  "N05_pdf_rasterised": {
+   "kind": "neutral",
+   "basis": "the diagram exported as an image inside the PDF (embedded image, no vector drawing)",
+   "expected_overrides": {}
+  },
+  "N06_poc_renamed": {
+   "kind": "neutral",
+   "basis": "the POC under a neutral file name: identified by its opening text",
+   "expected_overrides": {}
+  }
+ }
+}

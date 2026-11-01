@@ -1,0 +1,252 @@
+{
+ "_provenance": {
+  "commit": "ff86cb3e72f714362dced10e4bd6827cebfb1001",
+  "dirty": false,
+  "changed_paths": 0,
+  "untracked_paths": 0,
+  "task_grader_version": "a45bc83b-2026-11-01.1",
+  "engine_version": "engine-2026-11-01.1"
+ },
+ "gold_anchor": {
+  "gold_map": {
+   "1": "pass",
+   "2": "pass",
+   "3": "pass",
+   "5": "pass"
+  },
+  "gold_critical": {
+   "C1": "pass",
+   "C2": "not_confirmed",
+   "C3": "not_confirmed"
+  },
+  "gold_sha256": {
+   "POC_Implementation_Guide.docx": "b8b671f6e4f463d2e5b89d478201d2bdf698fcee2274c482190b7028e67f8ba9",
+   "Proposed Architecture Summary.docx": "f7e8a7e164c323780fff15b13dbd81f323069c8dcf2e006dc0d38f83f9f9a32d",
+   "Proposed_Architecture.pdf": "66d83a47e44c04800579a4448a0b4a9990a5585c83c4a303f967d7364128dc80"
+  }
+ },
+ "N01_summary_renamed": {
+  "kind": "neutral",
+  "expected_overrides": {},
+  "observed": {
+   "1": "pass",
+   "2": "pass",
+   "3": "pass",
+   "5": "pass"
+  },
+  "critical": {
+   "C1": "pass",
+   "C2": "not_confirmed",
+   "C3": "not_confirmed"
+  },
+  "diff": {}
+ },
+ "N02_summary_typed_bullets": {
+  "kind": "neutral",
+  "expected_overrides": {},
+  "observed": {
+   "1": "pass",
+   "2": "pass",
+   "3": "pass",
+   "5": "pass"
+  },
+  "critical": {
+   "C1": "pass",
+   "C2": "not_confirmed",
+   "C3": "not_confirmed"
+  },
+  "diff": {}
+ },
+ "N03_poc_step_text": {
+  "kind": "neutral",
+  "expected_overrides": {},
+  "observed": {
+   "1": "pass",
+   "2": "pass",
+   "3": "pass",
+   "5": "pass"
+  },
+  "critical": {
+   "C1": "pass",
+   "C2": "not_confirmed",
+   "C3": "not_confirmed"
+  },
+  "diff": {}
+ },
+ "N04_extra_readme": {
+  "kind": "neutral",
+  "expected_overrides": {},
+  "observed": {
+   "1": "pass",
+   "2": "pass",
+   "3": "pass",
+   "5": "pass"
+  },
+  "critical": {
+   "C1": "pass",
+   "C2": "not_confirmed",
+   "C3": "not_confirmed"
+  },
+  "diff": {}
+ },
+ "N05_pdf_rasterised": {
+  "kind": "neutral",
+  "expected_overrides": {},
+  "observed": {
+   "1": "pass",
+   "2": "pass",
+   "3": "pass",
+   "5": "pass"
+  },
+  "critical": {
+   "C1": "pass",
+   "C2": "not_confirmed",
+   "C3": "not_confirmed"
+  },
+  "diff": {}
+ },
+ "N06_poc_renamed": {
+  "kind": "neutral",
+  "expected_overrides": {},
+  "observed": {
+   "1": "pass",
+   "2": "pass",
+   "3": "pass",
+   "5": "pass"
+  },
+  "critical": {
+   "C1": "pass",
+   "C2": "not_confirmed",
+   "C3": "not_confirmed"
+  },
+  "diff": {}
+ },
+ "R01_summary_deleted": {
+  "kind": "rubric_relevant",
+  "expected_overrides": {
+   "1": "fail",
+   "5": "fail"
+  },
+  "observed": {
+   "1": "fail",
+   "2": "pass",
+   "3": "pass",
+   "5": "fail"
+  },
+  "critical": {
+   "C1": "fail",
+   "C2": "not_confirmed",
+   "C3": "not_confirmed"
+  },
+  "diff": {}
+ },
+ "R02_pdf_deleted": {
+  "kind": "rubric_relevant",
+  "expected_overrides": {
+   "2": "fail"
+  },
+  "observed": {
+   "1": "pass",
+   "2": "fail",
+   "3": "pass",
+   "5": "pass"
+  },
+  "critical": {
+   "C1": "fail",
+   "C2": "not_confirmed",
+   "C3": "not_confirmed"
+  },
+  "diff": {}
+ },
+ "R03_poc_deleted": {
+  "kind": "rubric_relevant",
+  "expected_overrides": {
+   "3": "fail"
+  },
+  "observed": {
+   "1": "pass",
+   "2": "pass",
+   "3": "fail",
+   "5": "pass"
+  },
+  "critical": {
+   "C1": "fail",
+   "C2": "not_confirmed",
+   "C3": "not_confirmed"
+  },
+  "diff": {}
+ },
+ "R04_summary_not_bulleted": {
+  "kind": "rubric_relevant",
+  "expected_overrides": {
+   "5": "fail"
+  },
+  "observed": {
+   "1": "pass",
+   "2": "pass",
+   "3": "pass",
+   "5": "fail"
+  },
+  "critical": {
+   "C1": "fail",
+   "C2": "not_confirmed",
+   "C3": "not_confirmed"
+  },
+  "diff": {}
+ },
+ "R05_poc_without_ordered_steps": {
+  "kind": "rubric_relevant",
+  "expected_overrides": {
+   "3": "fail"
+  },
+  "observed": {
+   "1": "pass",
+   "2": "pass",
+   "3": "fail",
+   "5": "pass"
+  },
+  "critical": {
+   "C1": "fail",
+   "C2": "not_confirmed",
+   "C3": "not_confirmed"
+  },
+  "diff": {}
+ },
+ "R06_pdf_text_only": {
+  "kind": "rubric_relevant",
+  "expected_overrides": {
+   "2": "fail"
+  },
+  "observed": {
+   "1": "pass",
+   "2": "fail",
+   "3": "pass",
+   "5": "pass"
+  },
+  "critical": {
+   "C1": "fail",
+   "C2": "not_confirmed",
+   "C3": "not_confirmed"
+  },
+  "diff": {}
+ },
+ "R07_summary_identity_unknown": {
+  "kind": "rubric_relevant",
+  "expected_overrides": {
+   "1": "cannot_assess",
+   "5": "cannot_assess"
+  },
+  "observed": {
+   "1": "cannot_assess",
+   "2": "pass",
+   "3": "pass",
+   "5": "cannot_assess"
+  },
+  "critical": {
+   "C1": "not_confirmed",
+   "C2": "not_confirmed",
+   "C3": "not_confirmed"
+  },
+  "diff": {}
+ }
+}
