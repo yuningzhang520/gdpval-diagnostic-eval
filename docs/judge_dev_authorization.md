@@ -1,7 +1,15 @@
 # Judge Dev calibration: authorization package
 
-Written for: the human approver. Prepared 2026-11-01. Status: PROPOSAL. No judge call has been made, and none is made
-until every item in section 6 is approved.
+Written for: the human approver. Prepared 2026-11-01. Status: APPROVED 2026-11-01 with changes (below); the proposal
+text is kept as written.
+
+Approved, differing from the proposal:
+- Temperature 1.0, pinned.
+- Pass 1 covers every judge-scored item of the eligible Dev outputs, plus a frozen 20-unit self-consistency subset.
+- Ceilings: Pass 1 20 USD including the repeats; aggregate 30 USD over at most three passes.
+- A separate Judge Dev cost ledger instead of the Dev class ledger.
+- Passes 2 and 3 only for documented prompt calibration after comparison with saved human labels.
+The settings are recorded in the `config.json` `judge` block.
 
 ## 1. Purpose
 

@@ -3767,6 +3767,51 @@ Judge Dev authorization package: `docs/judge_dev_authorization.md`. Proposal onl
 thinking high, max_tokens 16,384, pinned temperature; 84 units per pass, about 0.39 M input tokens, forecast
 2.29-17.29 USD per pass; at most three passes; a 30 USD ceiling; five decisions requested. No judge call has been made.
 
+## Judge Dev Pass 1: adapter, separate ledger, frozen plan and first launch (2026-11-01; approved by the human in chat; logs `~/turing-eval-runs/judge_dev/`)
+
+Approved settings (`config.json` `judge` block, status APPROVED):
+- Model and sampling: `google/gemini-3.1-pro-preview`, thinking level high, temperature 1.0 pinned.
+- Limits: max_tokens 16,384 including thinking; Inspect `max_retries` 3, no other retry.
+- Shared prompt sha256 `1de955e607e16bd8…`, recorded per call.
+- Ceilings: Pass 1 20 USD including the self-consistency repeats; the Judge Dev aggregate 30 USD over at most three passes.
+- Credential and concurrency: the Dev project key (`GOOGLE_API_KEY`) at concurrency 1, overlapping Gemini generation.
+
+Code:
+- `ProviderJudge` sets the thinking level through Inspect `reasoning_effort` and records per call the prompt sha256,
+  the generate params, the evidence-builder version, the served model and the stop reason.
+- A pre-request cost guard halts later units (they become not_attempted, then cannot_assess) before either ceiling
+  could be exceeded. The guard prices the worst case at characters / 3 input plus 16,384 output tokens.
+- A truncated, malformed or evidence-free response is a `judge_parse_error`, never a rubric FAIL.
+- `run_grading --judge-ledger` keeps judge reservations, settlements and write-ahead logs in the separate Judge Dev
+  ledger (`~/turing-eval-runs/judge_dev/ledger.json`, label judge_dev, ceiling 30, id `6ef9f73dc2d38d06…`). Each run
+  declares its judge ledger in `judge_ledger_binding.json`; the per-run history gate reads both ledgers.
+- `grading.judge_dev` (plan / run / status) checks the Dev key suffix, refuses a Google credential override, drops
+  the Validation key from its environment and runs the eligible runs serially. It writes registry events to
+  `judge_dev/registry.jsonl` and seals the repeats in `judge_dev/repeats/`. Verdicts never reach stdout.
+- Recorded for Codex Review 2.
+
+Pass 1 plan (`grading/judge_dev/pass1_plan.json`, committed `612249c` before any call, sha256 `6f278cc6…`):
+- 8 eligible Dev runs, 52 primary judge units: `1137e2bb…` 7, `2ea2e5b5…` 4, `47ef842d…` 1, `7b08cd4d…` 14,
+  `7d7fc9a7…` 14, `b5d2e6f1…` 0 (deterministic pass only), `c3525d4d…` 5, `f841ddcf…` 7.
+- Pending until their Dev outputs complete: `c357f0e2…` and `a45bc83b…`.
+- Self-consistency: 20 units drawn with `random.Random(20261101)` from the sorted (run, item) pairs, independent of
+  any verdict, each run once more with an identical request.
+
+Batch 1 labeling packets rebuilt as `~/turing-eval-runs/labeling/batch-1v2r/` (`bf22ead`). They add input-derived
+reference summaries for `f841ddcf…`, `47ef842d…`, `c3525d4d…` and `7b08cd4d…` (no gold values). `batch-1v2/` is
+superseded. Corrected count: 12 criterion labels and 26 item labels, 38 in total (an earlier chat report said 27).
+
+First launch, 17:51Z:
+- Every run was refused before any call: the history gate read the open reservations of the generation (Dev) ledger,
+  where the running Gemini `c357f0e2…` unit held one.
+- Spend 0; Judge Dev ledger empty; repeats skipped (no primary units).
+- Fix: with `--judge-ledger` the gate checks the open reservations of the judge ledger. The run's own open, held or
+  unresolvable units in either ledger still block.
+- Test `SeparateJudgeLedgerGateTests` covers three cases: an unrelated open generation reservation does not block, the
+  old path still blocks, and an open judge-ledger unit blocks.
+- Disclosure: `grading/tests/regress_grading_cli.py` started one short Docker mockllm sandbox (about 7 s, no network,
+  no paid call) while paid Gemini sandboxes were running.
+
 ## Known issues and findings (material check)
 
 - `rubric_json.form_content`: 8,036 items hold `null`, 2,417 items lack the key, zero
@@ -3819,8 +3864,10 @@ thinking high, max_tokens 16,384, pinned temperature; 84 units per pass, about 0
 
 ## In flight
 
-Gemini dev and validation resume under the new snapshot and scheduler plan (two projects, cap 2, dev first when the
-cap is 1). `c3525d4d…` grader v0 tagged (`grader-v0-c3525d4d` at `5435534`; code-bound records `grading/validation/c3525d4d…/code_5435534/`). `7b08cd4d…` grader v0 tagged (`grader-v0-7b08cd4d` at `393a7bc`; code-bound records `grading/validation/7b08cd4d…/code_393a7bc/`). `c357f0e2…` grader v0 tagged (`grader-v0-c357f0e2` at `24d2eea`; code-bound records `grading/validation/c357f0e2…/code_24d2eea/`). All ten task graders exist. Labeling batch 1 (`f841ddcf…`, `47ef842d…`, `1137e2bb…`) waits for a Docker-idle window (recalculation needed). `b5d2e6f1…` waits for rule A-1.
+- Gemini dev and validation generation under plan `paid-2026-11-01c` (cap 2). Validation outputs stay sealed.
+- Judge Dev Pass 1 relaunched after the gate fix (above).
+- Blind Batch 1 labels for `f841ddcf…`, `47ef842d…` and `1137e2bb…` (`labeling/batch-1v2r/`) await the human.
+- All ten task graders exist.
 
 ## Decisions taken (date · what · commit)
 
@@ -4141,6 +4188,11 @@ cap is 1). `c3525d4d…` grader v0 tagged (`grader-v0-c3525d4d` at `5435534`; co
   .2), `c3525d4d…` item 7 / flag identity, `b5d2e6f1…` A-1 · 7f3594c; tags `grader-v0-c3525d4d`, `grader-v0-c357f0e2`,
   `grader-v0-b5d2e6f1` moved to 7f3594c (old targets archived as `-superseded-5435534`, `-superseded-24d2eea`,
   `-superseded-48fd3fc`; `tag_provenance.json` and code-bound records `code_7f3594c/` per task)
+
+- 2026-11-01 · Judge Dev APPROVED by the human (chat): `google/gemini-3.1-pro-preview`, thinking high, temperature 1.0,
+  max_tokens 16,384, Inspect max_retries 3, Pass 1 ceiling 20 USD including repeats, aggregate 30 USD over at most three
+  passes, separate Judge Dev ledger, Dev key at concurrency 1, a frozen 20-unit self-consistency subset · f9d8858, 612249c
+- 2026-11-01 · judge history gate checks the separate judge ledger's open reservations · (this commit)
 
 ## Next stage (not started)
 

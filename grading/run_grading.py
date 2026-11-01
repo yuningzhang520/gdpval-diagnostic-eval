@@ -297,7 +297,8 @@ def judge_gate(args, run_uuid: str, env: dict, out_dir: str, host_dir: str) -> d
             "note": "operator-supplied audit metadata recorded verbatim; this CLI does not verify an approval"}
 
 
-def judge_history_gate(ledger: BudgetLedger, binding: dict, out_dir: str, run_uuid: str, rejudge: bool, host_dir: str | None = None, prices: dict | None = None) -> dict:
+def judge_history_gate(ledger: BudgetLedger, binding: dict, out_dir: str, run_uuid: str, rejudge: bool, host_dir: str | None = None, prices: dict | None = None,
+                       reservation_ledger: BudgetLedger | None = None) -> dict:
     """Refuse on any unresolved paid state of this run, from the canonical ledger (not the out_dir): open reservations,
     held (manual review) or unresolvable units, UNKNOWN write-ahead calls; an earlier judged unit needs --rejudge."""
     hist = combined_judge_history(ledger, binding, host_dir, prices) if host_dir else run_judge_history(ledger, binding)
@@ -314,7 +315,7 @@ def judge_history_gate(ledger: BudgetLedger, binding: dict, out_dir: str, run_uu
     unknown_blocking = {name: calls for name, calls in hist["unknown_calls"].items() if not any(name == f"{uid.replace('/', '_').replace(':', '_')}.jsonl" for uid in resolved_ok)}
     if unknown_blocking:
         blocking.append(f"UNKNOWN judge call(s) (started, no terminal event) not yet reconciled with a verified amount: {unknown_blocking}")
-    snap = ledger.snapshot()
+    snap = (reservation_ledger or ledger).snapshot()  # the ledger the judge unit is claimed in (the run's own open units of every ledger block above)
     if snap["open_reservations"]:
         blocking.append(f"open reservation(s) in the ledger: {snap['open_reservations']}")
     if blocking:
@@ -372,7 +373,8 @@ def main(argv=None, *, judge_factory=None, environ: dict | None = None) -> int:
                 raise GradingCliError(f"--judge-ledger {args.judge_ledger} does not exist; grading never creates a ledger")
             judge_ledger = BudgetLedger.open_existing(args.judge_ledger, prices_from_config(cfg))
             declare_judge_ledger(host_dir, sample.uuid, judge_ledger, "separate judge cost ledger (approved 2026-11-01)")
-        history = judge_history_gate(ledger, judge_auth["binding"], args.out_dir, sample.uuid, bool(args.rejudge), host_dir=host_dir, prices=prices_from_config(cfg))
+        history = judge_history_gate(ledger, judge_auth["binding"], args.out_dir, sample.uuid, bool(args.rejudge), host_dir=host_dir, prices=prices_from_config(cfg),
+                                     reservation_ledger=judge_ledger)
         stamp = dt.datetime.now(dt.timezone.utc).strftime("%Y%m%dT%H%M%S%fZ") + "-" + os.urandom(2).hex()  # unique even for two passes within one second
         judge_unit = f"{sample.uuid}:judge:{stamp}"
         log_path = judge_log_path(judge_ledger.path, sample.uuid, judge_unit)

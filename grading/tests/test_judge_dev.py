@@ -87,5 +87,30 @@ class GuardAndFailureTests(Offline):
         self.assertTrue(c["request_sha256"] and c["usage"])
 
 
+class SeparateJudgeLedgerGateTests(unittest.TestCase):
+    """A separate judge ledger: unrelated open reservations of the generation ledger do not block; open units of the
+    judge ledger and the run's own open units do."""
+
+    def test_gate(self):
+        import tempfile
+        from harness.budget import BudgetLedger
+        from grading import run_grading as RG
+        prices = {"google/x": {"input": 1, "output": 1, "cache_read": 1, "cache_write": 1}}
+        with tempfile.TemporaryDirectory() as d:
+            gen = BudgetLedger(os.path.join(d, "dev", "ledger.json"), 100, prices, label="dev")
+            jl = BudgetLedger(os.path.join(d, "judge_dev", "ledger.json"), 30, prices, label="judge_dev")
+            host = os.path.join(d, "run"); os.makedirs(host)
+            binding = {"run_uuid": "RUN", "generation_unit_id": "gen-RUN", "ledger_path": gen.path, "ledger_id": gen.identity()["ledger_id"]}
+            gen.reserve("other-unit", "sample", 5, {"model": "m", "task": "t"})  # another run's generation unit in flight
+            RG.declare_judge_ledger(host, "RUN", jl, "test")
+            out = os.path.join(d, "out"); os.makedirs(out)
+            RG.judge_history_gate(gen, binding, out, "RUN", False, host_dir=host, prices=prices, reservation_ledger=jl)  # no block
+            with self.assertRaisesRegex(RG.GradingCliError, "open reservation"):
+                RG.judge_history_gate(gen, binding, out, "RUN", False, host_dir=host, prices=prices)  # without the separate ledger: blocked as before
+            jl.reserve("RUN:judge:x", "judge", 1, {"kind": "judge"})
+            with self.assertRaisesRegex(RG.GradingCliError, "open reservation"):
+                RG.judge_history_gate(gen, binding, out, "RUN", False, host_dir=host, prices=prices, reservation_ledger=jl)  # the run's open judge unit blocks
+
+
 if __name__ == "__main__":
     unittest.main()
