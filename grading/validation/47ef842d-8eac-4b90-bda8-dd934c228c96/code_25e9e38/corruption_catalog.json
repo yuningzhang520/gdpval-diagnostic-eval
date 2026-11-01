@@ -1,0 +1,181 @@
+{
+ "_provenance": {
+  "commit": "25e9e38b13b877f38473a5db0531653a72a78465",
+  "dirty": false,
+  "changed_paths": 0,
+  "untracked_paths": 0,
+  "task_grader_version": "47ef842d-2026-11-01.1",
+  "engine_version": "engine-2026-11-01.1",
+  "exported_by": "write_catalog of the variant module at this commit"
+ },
+ "task_id": "47ef842d-8eac-4b90-bda8-dd934c228c96",
+ "gold_files_sha256": {
+  "Inventory final.xlsx": "9bc65d11c56e3c15a38a2b162a16313a7237d4864d0e5e27e61b4aa4cf123435"
+ },
+ "baseline": {
+  "1": "pass",
+  "2": "pass",
+  "3": "pass",
+  "4": "fail",
+  "5": "pass",
+  "6": "pass",
+  "7": "pass",
+  "8": "pass",
+  "9": "pass",
+  "10": "pass",
+  "11": "fail",
+  "12": "fail",
+  "13": "pass",
+  "14": "pass",
+  "17": "fail",
+  "18": "pass",
+  "19": "pass",
+  "20": "pass",
+  "21": "pass",
+  "22": "pass",
+  "23": "pass",
+  "24": "pass",
+  "25": "pass",
+  "26": "pass",
+  "27": "pass",
+  "28": "pass",
+  "29": "pass",
+  "30": "pass",
+  "31": "fail",
+  "32": "pass",
+  "33": "pass",
+  "34": "pass",
+  "35": "pass",
+  "36": "pass",
+  "37": "pass",
+  "38": "pass",
+  "39": "pass",
+  "40": "pass",
+  "41": "pass",
+  "42": "pass",
+  "43": "pass",
+  "44": "pass",
+  "45": "pass",
+  "46": "pass",
+  "47": "pass",
+  "48": "pass",
+  "49": "pass",
+  "50": "pass",
+  "51": "pass",
+  "52": "fail",
+  "53": "pass",
+  "54": "pass",
+  "55": "pass",
+  "56": "pass"
+ },
+ "scope": "expectations cover the deterministic items only; 'neutral' means deterministic-neutral; judge item 57 and visual items 15, 16, 58 are not asserted",
+ "variants": {
+  "R01_oos_count_wrong": {
+   "kind": "rubric_relevant",
+   "basis": "375301052429 OOS count 65 instead of 64 (5, 32); the cached % OOS is unchanged (6, 33 hold)",
+   "expected_overrides": {
+    "5": "fail",
+    "32": "fail"
+   }
+  },
+  "R02_rate_wrong": {
+   "kind": "rubric_relevant",
+   "basis": "875218534223 weekly rate cache 70 instead of 73.75 (7, 22); WOS cache unchanged (8, 23 hold)",
+   "expected_overrides": {
+    "7": "fail",
+    "22": "fail"
+   }
+  },
+  "R03_chart_category_changed": {
+   "kind": "rubric_relevant",
+   "basis": "a chart category 217313054557 (a UPC outside the five): categories not exactly the five (13), no table value for it (14), a UPC outside the five in the chart (21)",
+   "expected_overrides": {
+    "13": "fail",
+    "14": "fail",
+    "21": "fail"
+   }
+  },
+  "R04_chart_values_one_decimal": {
+   "kind": "rubric_relevant",
+   "basis": "chart values rounded to one decimal place in percent (17 passes); still within 0.1 pp of the table (14 holds)",
+   "expected_overrides": {
+    "17": "pass"
+   }
+  },
+  "R05_store_sheet": {
+   "kind": "rubric_relevant",
+   "basis": "a Store Data sheet with the 5,377 source rows of the five UPCs (11 passes); the openpyxl rebuild drops the chart (13, 14 fail; 17 still fails)",
+   "expected_overrides": {
+    "11": "pass",
+    "13": "fail",
+    "14": "fail"
+   }
+  },
+  "R06_store_formulas": {
+   "kind": "rubric_relevant",
+   "basis": "R05 plus summary formulas on the store-level sheet (12 passes); the formulas carry no cached value (openpyxl), so every item that reads them is cannot_assess, never fail; chart dropped",
+   "expected_overrides": {
+    "11": "pass",
+    "12": "pass",
+    "13": "fail",
+    "14": "fail",
+    "4": "cannot_assess",
+    "5": "cannot_assess",
+    "6": "cannot_assess",
+    "7": "cannot_assess",
+    "8": "cannot_assess",
+    "9": "cannot_assess",
+    "10": "cannot_assess",
+    "22": "cannot_assess",
+    "23": "cannot_assess",
+    "24": "cannot_assess",
+    "25": "cannot_assess",
+    "26": "cannot_assess",
+    "29": "cannot_assess",
+    "30": "cannot_assess",
+    "31": "cannot_assess",
+    "32": "cannot_assess",
+    "33": "cannot_assess",
+    "36": "cannot_assess",
+    "37": "cannot_assess",
+    "38": "cannot_assess",
+    "39": "cannot_assess",
+    "40": "cannot_assess",
+    "43": "cannot_assess",
+    "44": "cannot_assess",
+    "45": "cannot_assess",
+    "46": "cannot_assess",
+    "47": "cannot_assess",
+    "50": "cannot_assess",
+    "51": "cannot_assess",
+    "52": "cannot_assess",
+    "53": "cannot_assess",
+    "54": "cannot_assess"
+   }
+  },
+  "R07_upc_general_format": {
+   "kind": "rubric_relevant",
+   "basis": "UPC cells in the General format: Excel shows 12 digits in scientific notation (3); chart dropped by the rebuild",
+   "expected_overrides": {
+    "3": "fail",
+    "13": "fail",
+    "14": "fail"
+   }
+  },
+  "R08_extra_upc_row": {
+   "kind": "rubric_relevant",
+   "basis": "a sixth UPC row (2, 21); chart dropped by the rebuild",
+   "expected_overrides": {
+    "2": "fail",
+    "21": "fail",
+    "13": "fail",
+    "14": "fail"
+   }
+  },
+  "N01_package_roundtrip": {
+   "kind": "neutral",
+   "basis": "the package re-zipped without content change",
+   "expected_overrides": {}
+  }
+ }
+}
