@@ -101,10 +101,12 @@ def sample_resources(run=subprocess.run, since_epoch: int | None = None) -> dict
 class ResourceTracker:
     """Overlap accounting and the adaptive cap rule (config.concurrency.cross_class): after OVERLAP_S of actual overlap
     of two paid sandbox units, raise 2 -> 3 when peak Docker memory during the overlap stayed below RAISE_SHARE of the
-    Docker VM memory, the pressure level stayed normal, swap grew by at most SWAP_GROWTH and no OOM event occurred;
-    otherwise keep 2. Contention (Docker memory above CONTENTION_SHARE, pressure warn or critical, an OOM event) lowers
-    the cap by one per episode and ends adaptive raising. Never terminates anything."""
-    OVERLAP_S, RAISE_SHARE, CONTENTION_SHARE, SWAP_GROWTH = 1800, 0.5, 0.8, 512 * MIB
+    Docker VM memory, the pressure level stayed normal (1), swap grew by at most SWAP_GROWTH and no OOM event occurred;
+    otherwise keep 2. Contention is judged against the state at the first sample (a host already under memory pressure
+    before any unit is not contention developed by the run): Docker memory above CONTENTION_SHARE of the VM, an OOM
+    event, a pressure level above the baseline or critical (4), or swap growth above SWAP_CONTENTION lowers the cap by
+    one per episode and ends adaptive raising. Never terminates anything."""
+    OVERLAP_S, RAISE_SHARE, CONTENTION_SHARE, SWAP_GROWTH, SWAP_CONTENTION = 1800, 0.5, 0.8, 512 * MIB, 1024 * MIB
 
     def __init__(self, cap: int = 2, cap_max: int = 3, state: dict | None = None):
         st = state or {}
@@ -120,11 +122,20 @@ class ResourceTracker:
         self.in_episode = st.get("in_episode", False)
         self.integrity_failures = st.get("integrity_failures", 0)
         self.last_at = st.get("last_at")
+        self.pressure_baseline = st.get("pressure_baseline")
         self.decisions = st.get("decisions", [])
 
     def to_state(self) -> dict:
         return {k: getattr(self, k) for k in ("cap", "overlap_s", "peak_overlap_mem", "max_overlap_pressure", "swap_baseline", "swap_max", "oom_total", "evaluated",
-                                              "contention", "in_episode", "integrity_failures", "last_at", "decisions")}
+                                              "contention", "in_episode", "integrity_failures", "last_at", "pressure_baseline", "decisions")}
+
+    def reset(self, cap: int, reason: str) -> dict:
+        """Operator reset to the approved initial cap (recorded): contention state and baselines are re-taken at the next
+        sample; overlap and peak counters are kept."""
+        d = {"at": now_iso(), "event": "cap_decision", "decision": f"operator reset: {reason}", "cap_before": self.cap, "cap_after": cap}
+        self.cap, self.contention, self.in_episode, self.pressure_baseline, self.swap_baseline, self.swap_max = cap, False, False, None, None, None
+        self.decisions.append(dict(d))
+        return d
 
     def update(self, s: dict, *, active_units: int, t: float) -> list[dict]:
         events = []
@@ -133,6 +144,8 @@ class ResourceTracker:
         if s.get("swap_used") is not None:
             self.swap_baseline = s["swap_used"] if self.swap_baseline is None else self.swap_baseline
             self.swap_max = max(self.swap_max or 0, s["swap_used"])
+        if self.pressure_baseline is None and s.get("pressure_level") is not None:
+            self.pressure_baseline = s["pressure_level"]
         self.oom_total += s.get("oom_events") or 0
         overlapping = active_units >= 2 and len(s.get("containers") or []) >= 2
         if overlapping:
@@ -140,7 +153,10 @@ class ResourceTracker:
             self.peak_overlap_mem = max(self.peak_overlap_mem, s.get("docker_mem_used") or 0)
             self.max_overlap_pressure = max(self.max_overlap_pressure, s.get("pressure_level") or 1)
         total = s.get("docker_vm_mem_total")
-        hot = (total and (s.get("docker_mem_used") or 0) > self.CONTENTION_SHARE * total) or (s.get("pressure_level") or 1) >= 2 or (s.get("oom_events") or 0) > 0
+        level = s.get("pressure_level") or 1
+        swap_growth_now = (s.get("swap_used") or 0) - (self.swap_baseline or 0) if s.get("swap_used") is not None and self.swap_baseline is not None else 0
+        hot = bool((total and (s.get("docker_mem_used") or 0) > self.CONTENTION_SHARE * total) or (s.get("oom_events") or 0) > 0 or level >= 4
+                   or level > max(self.pressure_baseline or 1, 1) or swap_growth_now > self.SWAP_CONTENTION)
         if hot and not self.in_episode:
             old = self.cap
             self.cap, self.contention, self.in_episode = max(1, self.cap - 1), True, True
@@ -445,7 +461,8 @@ class Scheduler:
         return any(True for _ in self.launchable())
 
     def loop(self) -> int:
-        self.event("scheduler_start", pid=os.getpid(), plan=self.plan["name"], config=self.plan["config"], config_sha256=self.config_sha, cap=self.tracker.cap)
+        self.event("scheduler_start", pid=os.getpid(), plan=self.plan["name"], config=self.plan["config"], config_sha256=self.config_sha, cap=self.tracker.cap,
+                   code_loaded=L.code_loaded(), adopted=[n for n in self.running()])
         while self.step():
             self.sleep(self.plan.get("poll_s", 20))
         self.event("scheduler_end", jobs={n: s["status"] for n, s in self.jobs.items()}, gemini_stop=self.gemini_stop, class_stop=self.class_stop)
@@ -467,6 +484,7 @@ def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description="paid-unit scheduler across run classes (one owner of all paid launches of a plan)")
     ap.add_argument("--plan", required=True)
     ap.add_argument("--dry-plan", action="store_true", help="print what would launch first and exit (no launch)")
+    ap.add_argument("--reset-cap", default=None, metavar="REASON", help="operator reset of the cap to the approved initial value at start (recorded with the reason)")
     args = ap.parse_args(argv)
     with open(args.plan, encoding="utf-8") as f:
         plan = json.load(f)
@@ -477,6 +495,10 @@ def main(argv=None) -> int:
     except BlockingIOError:
         print("another scheduler holds this plan's lock; refusing to start", file=sys.stderr)
         return 2
+    if args.reset_cap:
+        ev = sch.tracker.reset(sch.cfg["concurrency"]["cross_class"]["global_paid_units_cap_initial"], args.reset_cap)
+        sch.event(ev.pop("event"), **ev)
+        sch.save()
     if args.dry_plan:
         print(json.dumps({"would_launch": [(j["name"], t) for j, t in sch.launchable()][: sch.effective_cap()], "cap": sch.effective_cap(), "config_sha256": sch.config_sha}, indent=1))
         return 0

@@ -41,6 +41,9 @@ FAKE = textwrap.dedent(r'''
         f.write(json.dumps({"recorded_at": now(), "kind": o.get("kind", "sample"), "run_label": spec["label"], "task_id": spec["task"], "model": spec["model"], "run_uuid": uuid,
                             "log_file": "fake.eval", "settlement_cost_usd": "1.00", "estimated": o.get("estimated", False), "manual_review_required": False, "stop_recorded": None,
                             "engineering_failure": o.get("engineering_failure"), "config_sha256": spec["config_sha"], "dry_run": False}) + "\n")
+    os.makedirs(os.path.join(spec["runs_root"], "batch_records"), exist_ok=True)
+    json.dump({"model": spec["model"], "started_at": spec["started_at"], "plan": [{"task_id": spec["task"], "action": "run"}], "status": "completed" if o.get("rc", 0) == 0 else "stopped"},
+              open(os.path.join(spec["runs_root"], "batch_records", f"batch_{spec['label']}_{uuid}.json"), "w"))
     with open(spec["timeline"], "a") as f: f.write(json.dumps({"ev": "end", "label": spec["label"], "model": spec["model"], "task": spec["task"], "t": time.time(), "uuid": uuid}) + "\n")
     sys.exit(o.get("rc", 0))
 ''')
@@ -83,7 +86,7 @@ class _Base(unittest.TestCase):
 
         def argv(j, task):
             runs_root, _ = sch.roots(j["label"])
-            spec = {"runs_root": runs_root, "task": task, "model": j["model"], "label": j["label"], "timeline": self.timeline, "config_sha": sha,
+            spec = {"runs_root": runs_root, "task": task, "model": j["model"], "label": j["label"], "timeline": self.timeline, "config_sha": sha, "started_at": S.now_iso(),
                     "outcome": self.outcomes.get((j["label"], j["model"], task), {})}
             return [sys.executable, self.script, json.dumps(spec)]
 
@@ -232,6 +235,26 @@ class SchedulingTests(_Base):
         sch3.loop()
         self.assertEqual(self.events(), [])
 
+    def test_restarted_scheduler_adopts_in_flight_units_without_relaunching(self):
+        self.outcomes[("dev", GEM, B5)] = {"sleep": 2.0}
+        self.outcomes[("compat", OPUS, "87da214f-fd92-4c58-9854-f4d0d10adce0")] = {"sleep": 2.0}
+        a = self.make(plan_jobs())
+        a.step()  # launches the replacement and compat Opus, then "crashes" (never polled again)
+        self.assertEqual(sorted(a.running()), ["compat_opus", "dev_replacement"])
+        import threading  # in production the dead scheduler's children are reparented to launchd, which reaps them
+        for p in a.children.values():
+            threading.Thread(target=p.wait, daemon=True).start()
+        b = self.make(plan_jobs())  # new process view: same state directory, no child handles
+        self.assertEqual(sorted(b.running()), ["compat_opus", "dev_replacement"])
+        self.assertEqual(b.loop(), 0)
+        starts = [(e["label"], e["model"], e["task"]) for e in self.events() if e["ev"] == "start"]
+        self.assertEqual(len(starts), len(set(starts)))  # nothing launched twice
+        self.assertEqual(starts.count(("dev", GEM, B5)), 1)
+        st = json.load(open(b.state_path))
+        self.assertTrue(st["jobs"]["dev_replacement"]["accepted"])
+        self.assertEqual({n: s["status"] for n, s in st["jobs"].items()}, {"dev_replacement": "done", "compat_opus": "done", "dev_rest": "done", "compat_gpt": "done", "validation": "done"})
+        self.assertEqual(st["jobs"]["dev_replacement"]["invocations"][0]["rc"], 0)  # read from the batch record
+
     def test_cap_one_override_serialises_all_classes(self):
         sch = self.make(plan_jobs(dev=False))
         open(os.path.join(sch.dir, "cap_override"), "w").write("1")
@@ -271,8 +294,8 @@ class ResourceTrackerTests(unittest.TestCase):
         tr = S.ResourceTracker(cap=2)
         t = 0.0
         for i in range(32):
-            tr.update(self.s(int(0.3 * self.TOTAL), swap=i * 40 * S.MIB), active_units=2, t=t); t += 60
-        self.assertEqual(tr.cap, 2)
+            tr.update(self.s(int(0.3 * self.TOTAL), swap=i * 25 * S.MIB), active_units=2, t=t); t += 60  # 775 MiB: above the 512 MiB raise limit, below 1 GiB contention
+        self.assertEqual((tr.cap, tr.contention, tr.evaluated), (2, False, True))
         tr = S.ResourceTracker(cap=2); tr.integrity_failures = 1
         self.run_overlap(tr, int(0.3 * self.TOTAL))
         self.assertEqual(tr.cap, 2)
@@ -285,11 +308,36 @@ class ResourceTrackerTests(unittest.TestCase):
         self.run_overlap(tr, int(0.3 * self.TOTAL))
         self.assertEqual(tr.cap, 1)  # no raise after contention
         tr = S.ResourceTracker(cap=3)
-        tr.update(self.s(int(0.3 * self.TOTAL), pressure=2), active_units=2, t=0)
+        tr.update(self.s(int(0.3 * self.TOTAL), pressure=1), active_units=2, t=0)
+        tr.update(self.s(int(0.3 * self.TOTAL), pressure=2), active_units=2, t=60)  # worsened from a normal baseline
         self.assertEqual(tr.cap, 2)
         tr = S.ResourceTracker(cap=2)
         tr.update(self.s(int(0.3 * self.TOTAL), oom=1), active_units=2, t=0)
         self.assertEqual(tr.cap, 1)
+
+    def test_contention_is_relative_to_the_baseline(self):
+        tr = S.ResourceTracker(cap=2)  # the host is already at warn before any unit: not contention; no raise either
+        ev = self.run_overlap(tr, int(0.3 * self.TOTAL), pressure=2)
+        self.assertEqual(tr.cap, 2); self.assertEqual(len(ev), 1); self.assertTrue(ev[0]["decision"].startswith("adaptive evaluation after 30 min of overlap"))
+        self.assertIn("keep 2", ev[0]["decision"])
+        tr = S.ResourceTracker(cap=2)
+        tr.update(self.s(int(0.3 * self.TOTAL), pressure=2), active_units=2, t=0)
+        tr.update(self.s(int(0.3 * self.TOTAL), pressure=4), active_units=2, t=60)  # critical
+        self.assertEqual(tr.cap, 1)
+        tr = S.ResourceTracker(cap=2)
+        tr.update(self.s(int(0.3 * self.TOTAL), pressure=2, swap=8 << 30), active_units=2, t=0)
+        tr.update(self.s(int(0.3 * self.TOTAL), pressure=2, swap=(8 << 30) + 1100 * S.MIB), active_units=2, t=60)  # swap grew by more than 1 GiB
+        self.assertEqual(tr.cap, 1)
+
+    def test_operator_reset_restores_the_initial_cap_and_rebaselines(self):
+        tr = S.ResourceTracker(cap=2)
+        tr.update(self.s(int(0.3 * self.TOTAL), pressure=1), active_units=2, t=0)
+        tr.update(self.s(int(0.3 * self.TOTAL), pressure=2), active_units=2, t=60)
+        self.assertEqual((tr.cap, tr.contention), (1, True))
+        d = tr.reset(2, "test")
+        self.assertEqual((tr.cap, tr.contention, tr.pressure_baseline, d["cap_after"]), (2, False, None, 2))
+        tr.update(self.s(int(0.3 * self.TOTAL), pressure=2), active_units=2, t=120)  # new baseline warn
+        self.assertEqual(tr.cap, 2)
 
     def test_parse_size(self):
         self.assertEqual(S.parse_size("512MiB / 3GiB"), 512 * S.MIB)
