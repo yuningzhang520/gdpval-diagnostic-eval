@@ -24,7 +24,8 @@ from decimal import ROUND_HALF_UP, Decimal, InvalidOperation
 from .engine.decision import Decision, Result
 
 TASK = "2ea2e5b5-257f-42e6-a7dc-93763f28b19d"
-VERSION = "2ea2e5b5-2026-11-01.3"  # .2: item 10 removed from C2 (A-21 precedent, approved 2026-11-01); its verdict unchanged
+VERSION = "2ea2e5b5-2026-11-01.4"  # .4 (V1.1, 2026-11-01): picture-chart unassessable entries carry visual_review='picture_chart' (Formal: human visual judgment before a critical status is reported); verdicts unchanged
+# previous version: "2ea2e5b5-2026-11-01.3"  # .2: item 10 removed from C2 (A-21 precedent, approved 2026-11-01); its verdict unchanged
 # .3 (Dev calibration 2026-11-01): a slide without a title placeholder takes its heading from its topmost text shape;
 # a pie chart delivered only as a picture is not assessable (visual review), never "no pie chart"; segment levels shown
 # as group rows label the categories below them; with several % columns the one naming the total is the % of total
@@ -358,7 +359,7 @@ def run_checks(extraction: dict, reference: dict, rubric: list[dict], integrity:
                 d.violation("no_table", f"slide {sl['index']}: no table")
             if not pies:
                 if picture_chart:
-                    d.unreliable("unknown", "chart", f"slide {sl['index']}: no native chart; {len(pics)} picture(s) may hold the pie chart (visual review)")
+                    d.unreliable("unknown", "chart", f"slide {sl['index']}: no native chart; {len(pics)} picture(s) may hold the pie chart (visual review)", visual_review="picture_chart")
                 else:
                     d.violation("no_pie", f"slide {sl['index']}: pie chart absent")
             d.deliverable, d.reference = {"table": bool(tables), "pie": bool(pies), "picture_chart": picture_chart}, "a table and a pie chart"
@@ -389,7 +390,7 @@ def run_checks(extraction: dict, reference: dict, rubric: list[dict], integrity:
                 if outside:
                     d.violation("categories_outside", f"labels outside the twelve categories: {outside[:6]}")
                 elif a["picture_chart"]:
-                    d.unreliable("unknown", "chart", "the chart is a picture: its categories cannot be read (visual review)")
+                    d.unreliable("unknown", "chart", "the chart is a picture: its categories cannot be read (visual review)", visual_review="picture_chart")
                 results[9] = d.result("no categories outside the twelve")
                 results[10] = Result(10, "pass" if t["columns"]["hours"] is not None else "fail", {**ev, "headers": t["headers"]}, t["columns"]["hours"] is not None, "a Total Hours column or row",
                                      "" if t["columns"]["hours"] is not None else "the activity table has no hours column (K1: the expert deck shows percentages only)", None if t["columns"]["hours"] is not None else "model_caused")
@@ -435,7 +436,7 @@ def run_checks(extraction: dict, reference: dict, rubric: list[dict], integrity:
                 results[item] = d.result(f"{cat} {target}% ±{tol}")
             d = Decision(25, {**ev, "chart": shares["status"], "labels": shares.get("labels")})
             if not a["pie"] and a["picture_chart"]:
-                d.unreliable("unknown", "chart", "no native chart; a picture may hold the pie chart (visual review)")
+                d.unreliable("unknown", "chart", "no native chart; a picture may hold the pie chart (visual review)", visual_review="picture_chart")
             elif not a["pie"]:
                 d.violation("no_pie", "no pie chart on the activity slide")
             elif shares["status"] != "ok" and not shares.get("labels"):
@@ -447,7 +448,7 @@ def run_checks(extraction: dict, reference: dict, rubric: list[dict], integrity:
             results[25] = d.result("the pie chart uses the twelve categories")
             d = Decision(26, {**ev, "basis": shares.get("basis")})
             if not a["pie"] and a["picture_chart"]:
-                d.unreliable("unknown", "chart", "no native chart; a picture may hold the pie chart (visual review)")
+                d.unreliable("unknown", "chart", "no native chart; a picture may hold the pie chart (visual review)", visual_review="picture_chart")
             elif not a["pie"]:
                 d.violation("no_pie", "no pie chart on the activity slide")
             elif shares["status"] != "ok":
@@ -530,7 +531,7 @@ def run_checks(extraction: dict, reference: dict, rubric: list[dict], integrity:
             no_pie_picture = not p["pie"] and p["picture_chart"]  # .3: a picture may hold the pie chart (visual review)
             d = Decision(slices_item, {**ev, "labels": shares.get("labels")})
             if no_pie_picture:
-                d.unreliable("unknown", "chart", f"no native chart on the {key} slide; a picture may hold the pie chart (visual review)")
+                d.unreliable("unknown", "chart", f"no native chart on the {key} slide; a picture may hold the pie chart (visual review)", visual_review="picture_chart")
             elif not p["pie"]:
                 d.violation("no_pie", f"no pie chart on the {key} slide")
             elif sorted(norm(l) for l in shares.get("labels", [])) != sorted(norm(l) for l in expected_labels):
@@ -541,7 +542,7 @@ def run_checks(extraction: dict, reference: dict, rubric: list[dict], integrity:
                 v = next((val for k_, val in shares.get("shares", {}).items() if norm(k_) == norm(lab)), None)
                 d.reference = target
                 if no_pie_picture:
-                    d.unreliable("unknown", "chart", f"no native chart on the {key} slide; a picture may hold the pie chart (visual review)")
+                    d.unreliable("unknown", "chart", f"no native chart on the {key} slide; a picture may hold the pie chart (visual review)", visual_review="picture_chart")
                 elif not p["pie"]:
                     d.violation("no_pie", f"no pie chart on the {key} slide")
                 elif shares["status"] != "ok":
@@ -556,7 +557,7 @@ def run_checks(extraction: dict, reference: dict, rubric: list[dict], integrity:
             if sum_item:
                 d = Decision(sum_item, {**ev, "basis": shares.get("basis")})
                 if no_pie_picture:
-                    d.unreliable("unknown", "chart", f"no native chart on the {key} slide; a picture may hold the pie chart (visual review)")
+                    d.unreliable("unknown", "chart", f"no native chart on the {key} slide; a picture may hold the pie chart (visual review)", visual_review="picture_chart")
                 elif not p["pie"]:
                     d.violation("no_pie", f"no pie chart on the {key} slide")
                 elif shares["status"] != "ok":

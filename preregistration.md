@@ -388,6 +388,29 @@ off); per-sample Inspect `cost_limit` 20 USD as a safety net; pilot ceiling 45 U
 A 8 USD, B 5 USD (forecasts). Final values are fixed at
 `freeze-v1` after the pilot cost report. Budget exhaustion is graded under section 1.3.
 
+### 1.20 Judge infrastructure recovery and image-only evidence in critical reporting (approved by the human 2026-11-01; V1.1)
+Judge infrastructure recovery (engine-2026-11-01.7, `grading.judge_recovery`):
+- A judge call that failed at the provider, or was never attempted after the judge halted, has no evidence-based
+  verdict. Its row is recorded as `provider_error` or `not_run`, distinct from a rubric fail and from the judge's own
+  `cannot_assess`. It is excluded from E like any ungraded row, and a critical criterion with such a member is not
+  confirmed.
+- Such an item may be recovered once per run:
+  - a `provider_error` call is retried once;
+  - a `not_attempted` call gets its first evaluation.
+- Recovery reuses the base pass's stored judge unit unchanged: the same frozen prompt, settings and evidence, with the
+  request hash checked before any call.
+- An item with a completed call is never re-judged, whatever its verdict, so recovery cannot select a preferred
+  verdict.
+- The recovery is a new grading pass that copies every other row of the base pass unchanged. A separate record keeps
+  each attempt with its usage and outcome, and the base pass stays as recorded.
+- Candidate-model attempts are not affected (`attempts=1`).
+
+Image-only evidence: a required chart delivered only as a picture is not machine-readable. The items that depend on it
+are `cannot_assess`, never an automatic fail, and the evidence is tagged `visual_review`. In Formal, every critical
+member that is `cannot_assess` for this reason receives the human's visual judgment before that criterion's status is
+reported (`score.critical.<C>.visual_review_required`). Every other human-authoritative visual criterion is unchanged.
+The same rules apply to both candidates.
+
 ---
 
 ## 2. Task selection and exclusions
@@ -1545,7 +1568,9 @@ with the rubric's own tolerance; hours compared at two decimals (half-up).
     - a total row naming no segment level is the grand total (A-9).
   - Item 27 keeps the literal label: a column or row labelled "Margin Impact" (header or group row). The Dev deck's
     group rows read "COST IMPACT ..." and "INVESTMENT IMPACT ..." with no "Margin Impact" label, so 27 fails and C3
-    fails on this Dev output.
+    fails on this Dev output. CONFIRMED by the human 2026-11-01: the literal "Margin Impact" label is enforced where the
+    rubric names it. Picture charts are `cannot_assess`, never an automatic fail (confirmed the same day; section 1.20
+    for Formal critical reporting).
   - Synthetic regressions: `V1LayoutTests`. The gold-first suite passes (one excerpt assertion updated to the builder
     .3 wording).
 

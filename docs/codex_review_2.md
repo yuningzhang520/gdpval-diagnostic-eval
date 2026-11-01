@@ -136,9 +136,9 @@ Gold-first evidence per task:
 | Date (2026-11-01, UTC) | Command | Result | Wall time | Log |
 |---|---|---|---|---|
 | before `e2208d3` | `.venv/bin/python -m unittest discover -s grading/tests -p "test_*.py" -t .` | 421 tests, 5 skipped, OK | 117.34 s | `logs/v1-labelled-20261101/grading_tests.log` |
-| before `e2208d3` | `run_isolated.sh` for each `harness/tests/test_*.py` | 14 modules, 214 tests, OK | 51 s | `logs/v1-labelled-20261101/harness_isolated.log` |
+| before `e2208d3` | `run_isolated.sh` for each `harness/tests/test_*.py` | 14 modules, 199 tests, OK (first recorded as 214; corrected from the log) | 51 s | `logs/v1-labelled-20261101/harness_isolated.log` |
 | before `0c8efcb` | grading discover (as above) | 426 tests, 5 skipped, OK | 121.97 s | `logs/v1-freeze-20261101/grading_tests.log` |
-| before `0c8efcb` | `run_isolated.sh` for each harness module | 14 modules, 215 tests, OK | 51 s | `logs/v1-freeze-20261101/harness_isolated.log` |
+| before `0c8efcb` | `run_isolated.sh` for each harness module | 14 modules, 200 tests, OK (first recorded as 215; corrected from the log) | 51 s | `logs/v1-freeze-20261101/harness_isolated.log` |
 
 - The five skipped tests are `GoldRecalcDockerTests` in `test_gold_1137e2bb` and `test_gold_7d7fc9a7`, which need
   `GOLD_RECALC_DOCKER=1` and the pinned LibreOffice image.

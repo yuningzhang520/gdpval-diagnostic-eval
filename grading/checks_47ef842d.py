@@ -19,7 +19,8 @@ from .engine.decision import Decision, Result
 from .engine.workbook import workbook_gate
 
 TASK = "47ef842d-8eac-4b90-bda8-dd934c228c96"
-VERSION = "47ef842d-2026-11-01.2"  # .2 (Dev calibration 2026-11-01): "Stores Out of Stock" / "Stores OOS" headers; a chart delivered only as an embedded picture is not assessable (visual review), never "no chart"
+VERSION = "47ef842d-2026-11-01.3"  # .3 (V1.1, 2026-11-01): the picture-chart unassessable entry carries visual_review='picture_chart'; verdicts unchanged
+# previous version: "47ef842d-2026-11-01.2"  # .2 (Dev calibration 2026-11-01): "Stores Out of Stock" / "Stores OOS" headers; a chart delivered only as an embedded picture is not assessable (visual review), never "no chart"
 D_ITEMS = list(range(1, 15)) + list(range(17, 57))
 J_ITEMS = [57]
 V_ITEMS = [15, 16, 58]
@@ -390,7 +391,7 @@ def run_checks(extraction: dict, reference: dict, rubric: list[dict], integrity:
         if not oos_charts and not charts and media:  # .2: a picture may be the chart; its categories and values are not machine-readable
             for d_ in (d13, d14, d17):
                 d_.evidence["media"] = media[:10]
-                d_.unreliable("unknown", "chart", f"no native chart; {len(media)} embedded picture(s) may hold it (visual review)")
+                d_.unreliable("unknown", "chart", f"no native chart; {len(media)} embedded picture(s) may hold it (visual review)", visual_review="picture_chart")
         elif not oos_charts:
             for d_ in (d13, d14, d17):
                 d_.violation("no_chart", "no chart with the UPCs as categories")

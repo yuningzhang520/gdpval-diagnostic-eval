@@ -176,7 +176,7 @@ def read_labels(csv_path: str) -> list[dict]:
     return out
 
 
-def save_label_checkpoint(out_dir: str, run_uuid: str, csv_path: str, labeller: str) -> dict:
+def save_label_checkpoint(out_dir: str, run_uuid: str, csv_path: str, labeller: str, extra: dict | None = None) -> dict:
     """Checkpoint the filled labels: a copy under labels/<run>/, SHA-256, timestamp, counts; append-only log. Fails on an
     unknown label value or a row of another run; blank labels are allowed (unlabelled items are reported as such)."""
     rows = read_labels(csv_path)
@@ -192,17 +192,49 @@ def save_label_checkpoint(out_dir: str, run_uuid: str, csv_path: str, labeller: 
     stamp = dt.datetime.now(dt.timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     ldir = os.path.join(out_dir, "labels", run_uuid)
     os.makedirs(ldir, exist_ok=True)
+    n = 1
+    while os.path.exists(os.path.join(ldir, f"checkpoint_{stamp}{'' if n == 1 else f'_{n}'}.json")):  # two checkpoints within one second: '_2' sorts after the first
+        n += 1
+    stamp = stamp if n == 1 else f"{stamp}_{n}"
     copy = os.path.join(ldir, f"labels_{stamp}.csv")
     with open(csv_path, "rb") as src, open(copy, "xb") as dst:
         dst.write(src.read())
     cp = {"run_uuid": run_uuid, "saved_at": _now(), "labeller": labeller, "source_csv": os.path.realpath(csv_path), "copy": copy, "sha256": _sha(copy),
-          "labelled_items": sorted((r["item"] for r in labelled), key=lambda x: (isinstance(x, str), str(x).zfill(4))), "counts": {k: sum(1 for r in labelled if r["label"] == k) for k in LABELS}, "rows": len(rows)}
+          "labelled_items": sorted((r["item"] for r in labelled), key=lambda x: (isinstance(x, str), str(x).zfill(4))), "counts": {k: sum(1 for r in labelled if r["label"] == k) for k in LABELS}, "rows": len(rows),
+          **(extra or {})}
     path = os.path.join(ldir, f"checkpoint_{stamp}.json")
     with open(path, "x", encoding="utf-8") as f:
         json.dump(cp, f, indent=1)
     with open(os.path.join(out_dir, "labels", "checkpoints.jsonl"), "a", encoding="utf-8") as f:
         f.write(json.dumps({**cp, "checkpoint": path}) + "\n")
     return {**cp, "checkpoint": path}
+
+
+def save_evidence_correction(out_dir: str, run_uuid: str, csv_path: str, labeller: str, corrects: str, items: list, reason: str, corrected_by: str) -> dict:
+    """Append-only correction of the evidence DESCRIPTION of already checkpointed labels (approved 2026-11-01). Refused
+    unless every independent judgment (pass / fail / cannot_tell), the labelled items, their timestamps and reviewers are
+    identical to the checkpoint it corrects, and only the evidence text of the named items differs. The corrected
+    checkpoint is marked post-reveal and names the checkpoint it corrects; that checkpoint and its copy stay unchanged."""
+    old_cp = json.load(open(corrects, encoding="utf-8"))
+    if old_cp.get("run_uuid") != run_uuid or _sha(old_cp["copy"]) != old_cp["sha256"]:
+        raise ValueError("the corrected checkpoint is not this run's or its copy no longer matches its SHA-256")
+    old = {r["item"]: r for r in read_labels(old_cp["copy"])}
+    new = {r["item"]: r for r in read_labels(csv_path)}
+    if set(old) != set(new):
+        raise ValueError(f"the correction changes the item set: {sorted(set(old) ^ set(new), key=str)}")
+    for i in old:
+        a, b = old[i], new[i]
+        if (a["label"], a["judged_at"], a["reviewer"], a["run_uuid"]) != (b["label"], b["judged_at"], b["reviewer"], b["run_uuid"]):
+            raise ValueError(f"item {i}: a correction never changes a judgment, its timestamp or reviewer")
+        if a["evidence"] != b["evidence"] and i not in items:
+            raise ValueError(f"item {i}: evidence changed but the item is not named in the correction")
+    changed = [i for i in items if old[i]["evidence"] != new[i]["evidence"]]
+    if not changed:
+        raise ValueError("no evidence description changed")
+    return save_label_checkpoint(out_dir, run_uuid, csv_path, labeller, extra={
+        "correction": {"kind": "evidence_description", "post_reveal": True, "corrects_checkpoint": corrects, "corrects_sha256": old_cp["sha256"], "items": changed,
+                       "judgments_unchanged": True, "reason": reason, "corrected_by": corrected_by,
+                       "original_evidence": {str(i): old[i]["evidence"] for i in changed}, "corrected_evidence": {str(i): new[i]["evidence"] for i in changed}}})
 
 
 def latest_checkpoint(out_dir: str, run_uuid: str) -> str | None:

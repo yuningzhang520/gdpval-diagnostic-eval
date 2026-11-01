@@ -346,6 +346,8 @@ def main(argv=None, *, judge_factory=None, environ: dict | None = None) -> int:
     p.add_argument("--authorized-by", default=None); p.add_argument("--authorization-ref", default=None)
     p.add_argument("--rejudge", action="store_true", help="allow a second judged pass for a run that already has one (paid again)")
     p.add_argument("--env-file", default=os.path.join(ROOT, ".env"), help="credential file read (names only logged) for a real judge provider")
+    p.add_argument("--judge-recover", default=None, help="engine .7: comma-separated judge items of --base-pass to recover (provider_error retried once, not_attempted run once); never a completed call (grading.judge_recovery)")
+    p.add_argument("--base-pass", default=None, help="the judged pass whose interrupted items --judge-recover completes")
     p.add_argument("--judge-ledger", default=None, help="a separate judge cost ledger (e.g. the Judge Dev ledger): judge reservations, settlements and write-ahead logs go there; declared in the run's judge_ledger_binding.json")
     args = p.parse_args(argv)
     env = os.environ if environ is None else environ
@@ -363,6 +365,16 @@ def main(argv=None, *, judge_factory=None, environ: dict | None = None) -> int:
             raise GradingCliError(f"--ledger {args.ledger} does not exist; grading never creates a ledger")
         ledger = BudgetLedger.open_existing(args.ledger, prices_from_config(cfg))
     common = dict(task_id=args.task_id, rubric=materials["rubric"], task_prompt=materials["task_prompt"], reference=materials["reference"], out_dir=args.out_dir, recalc=not args.no_recalc)
+    recover_items = None
+    if args.judge_recover:
+        from . import judge_recovery as JR
+        if not (args.judge and args.base_pass):
+            raise GradingCliError("--judge-recover needs --judge and --base-pass")
+        recover_items = sorted({int(x) for x in args.judge_recover.split(",") if x.strip()})
+        plan = JR.recovery_plan(args.out_dir, sample.uuid, args.base_pass, recover_items)  # refused before any reservation or call
+        refused = {i: d["reason"] for i, d in plan["decision"].items() if not d["eligible"]}
+        if refused or not recover_items:
+            raise GradingCliError(f"judge recovery refused: {refused or 'no item'}")
     if not args.judge:
         rec = grade_run(host_dir, log, sample.uuid, judge=None, **common)
     else:
@@ -373,7 +385,7 @@ def main(argv=None, *, judge_factory=None, environ: dict | None = None) -> int:
                 raise GradingCliError(f"--judge-ledger {args.judge_ledger} does not exist; grading never creates a ledger")
             judge_ledger = BudgetLedger.open_existing(args.judge_ledger, prices_from_config(cfg))
             declare_judge_ledger(host_dir, sample.uuid, judge_ledger, "separate judge cost ledger (approved 2026-11-01)")
-        history = judge_history_gate(ledger, judge_auth["binding"], args.out_dir, sample.uuid, bool(args.rejudge), host_dir=host_dir, prices=prices_from_config(cfg),
+        history = judge_history_gate(ledger, judge_auth["binding"], args.out_dir, sample.uuid, bool(args.rejudge or recover_items), host_dir=host_dir, prices=prices_from_config(cfg),
                                      reservation_ledger=judge_ledger)
         stamp = dt.datetime.now(dt.timezone.utc).strftime("%Y%m%dT%H%M%S%fZ") + "-" + os.urandom(2).hex()  # unique even for two passes within one second
         judge_unit = f"{sample.uuid}:judge:{stamp}"
@@ -388,11 +400,15 @@ def main(argv=None, *, judge_factory=None, environ: dict | None = None) -> int:
         launcher.record("judge_authorization", {**{k: v for k, v in judge_auth.items() if k != "binding"}, "ledger": judge_ledger.identity(), "generation_ledger": ledger.identity(), "unit_id": judge_unit, "run": binding, "task_id": args.task_id,
                                                 "criteria": "judge-only items of the task module", "rejudge_of": history["prior_judge_units"] if args.rejudge else [],
                                                 "superseded_judged_passes": history["prior_judged_passes_in_out_dir"] if args.rejudge else [], "judge_call_log": log_path,
+                                                "recovery": {"base_pass": args.base_pass, "items": recover_items} if recover_items else None,
                                                 "code": git_provenance(), "config_sha256": materials["config_sha256"], "started_at": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds")})
         state = {}
 
         def batch_fn():
-            state["rec"] = grade_run(host_dir, log, sample.uuid, judge=judge, **common)
+            if recover_items:
+                state["rec"] = JR.recovery_pass(args.out_dir, sample.uuid, args.task_id, args.base_pass, recover_items, judge)
+            else:
+                state["rec"] = grade_run(host_dir, log, sample.uuid, judge=judge, **common)
             return judge.batch_result()
         def recover_usage():  # correction B: durable evidence first; the adapter's memory only cross-checks it
             durable = usage_from_judge_log(log_path)

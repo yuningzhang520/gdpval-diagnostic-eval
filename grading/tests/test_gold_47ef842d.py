@@ -160,6 +160,8 @@ class V1LayoutTests(unittest.TestCase):
             wb["package"]["media"] = ["xl/media/image1.png"]
         res = CK.run_checks(ex, REFERENCE, RUBRIC, integrity={i["path"]: True for i in ex["inventory"]})
         self.assertEqual({i: res["items"][i]["verdict"] for i in (13, 14, 17)}, {13: "cannot_assess", 14: "cannot_assess", 17: "cannot_assess"})
+        for i in (13, 14, 17):  # .3: tagged for the human's visual judgment (Formal critical reporting)
+            self.assertIn("picture_chart", [u.get("visual_review") for u in res["items"][i]["evidence"]["unassessable"]])
         for wb in ex["xlsx"].values():
             wb["package"]["media"] = []
         res = CK.run_checks(ex, REFERENCE, RUBRIC, integrity={i["path"]: True for i in ex["inventory"]})

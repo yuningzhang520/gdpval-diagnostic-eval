@@ -13,7 +13,7 @@ class FreezeGateTests(unittest.TestCase):
     def test_missing_tag_or_changed_code_fails_closed(self):
         with mock.patch.object(JV.subprocess, "run", return_value=SimpleNamespace(stdout="")):
             self.assertEqual(JV.frozen_state(), {"ok": False, "reason": f"tag {JV.FREEZE_TAG} does not exist"})
-        answers = iter([SimpleNamespace(stdout="abc123\n"), SimpleNamespace(stdout="grading/judge.py\n"), SimpleNamespace(stdout="")])
+        answers = iter([SimpleNamespace(stdout="abc123\n"), SimpleNamespace(stdout=""), SimpleNamespace(stdout="grading/judge.py\n"), SimpleNamespace(stdout="")])  # tags oldest first, then diff, status
         with mock.patch.object(JV.subprocess, "run", side_effect=lambda *a, **k: next(answers)):
             st = JV.frozen_state()
         self.assertFalse(st["ok"]); self.assertIn("grading/judge.py", st["reason"])
@@ -25,6 +25,15 @@ class FreezeGateTests(unittest.TestCase):
         with mock.patch.object(JV, "check", return_value={"plan_committed": True, "freeze": {"ok": False, "reason": "frozen paths differ"}}):
             with self.assertRaisesRegex(SystemExit, "freeze gate"):
                 JV.run()
+
+
+class RecoverGateTests(unittest.TestCase):
+    def test_recovery_refuses_while_the_ledger_holds_a_unit(self):
+        snap = {"review_pending_units": ["u"], "open_reservations": [], "stops": []}
+        with mock.patch.object(JV, "check", return_value={"plan_committed": True, "freeze": {"ok": True, "tag_commit": "c"}}), \
+             mock.patch.object(JV, "spent", return_value={"snapshot": snap}):
+            with self.assertRaisesRegex(SystemExit, "ledger not clear"):
+                JV.recover("RUN", [69])
 
 
 class GuardTests(unittest.TestCase):

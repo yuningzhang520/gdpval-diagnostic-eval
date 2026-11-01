@@ -199,8 +199,8 @@ def main():
         rows = [json.loads(l) for l in open(os.path.join(grading_out, "grades.jsonl"))]
         j = {x["item"]: x for x in rows if x["grading_pass"] == rj["grading_pass"] and x["source"] == "J"}
         classes = [(j[i]["call_status"], j[i]["error_class"], j[i]["usage_status"], j[i]["verdict"]) for i in CK.J_ITEMS]
-        check("calls 1-2 ok, call 3 verdict kept with missing usage, calls 4-7 not_attempted (no fabricated verdict)",
-              classes[:2] == [("ok", None, "ok", "pass")] * 2 and classes[2] == ("ok", None, "missing", "pass") and classes[3:] == [("not_attempted", "not_attempted", "not_attempted", "cannot_assess")] * 4, classes)
+        check("calls 1-2 ok, call 3 verdict kept with missing usage, calls 4-7 not_attempted -> verdict not_run (engine .7; no fabricated verdict)",
+              classes[:2] == [("ok", None, "ok", "pass")] * 2 and classes[2] == ("ok", None, "missing", "pass") and classes[3:] == [("not_attempted", "not_attempted", "not_attempted", "not_run")] * 4, classes)
         check("judge_completeness partial; call summary separates the classes", rj["judge_completeness"] == "partial" and rj["judge_call_summary"] == {"ok": 3, "provider_error": 0, "judge_parse_error": 0, "not_attempted": 4, "usage_uncertain": 1}, (rj["judge_completeness"], rj["judge_call_summary"]))
         js = [e for e in json.load(open(ledger_path))["entries"] if e["type"] == "settlement" and e["unit_id"].startswith(f"{uuid}:judge:")]
         check("ledger: estimated + manual_review hold at the reservation (mock model unpriced), known usage kept in raw_usage, floor flagged", len(js) == 1 and js[0]["estimated"] is True and js[0]["manual_review_required"] is True and js[0]["cost_usd"] == "0.200000" and js[0]["raw_usage"]["mockllm/model"]["input_tokens"] == 2400 and "incomplete" in js[0]["note"] and any(f.startswith("hold:") for f in js[0]["flags"]) and any(f.startswith(("incomplete usage", "estimated_unknown_cost")) for f in js[0]["flags"]), {k: js[0].get(k) for k in ("cost_usd", "estimated", "manual_review_required")} if js else None)

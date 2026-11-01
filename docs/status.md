@@ -4063,7 +4063,7 @@ Rubric decisions applied (preregistration R-2.7-11, R-2.7-21, R-2.5-27; general 
 
 Tests (logs `logs/v1-labelled-20261101/`):
 - Full offline grading suite: 421 tests, 5 skipped, 117.34 s, rc 0.
-- Harness unit modules via `run_isolated.sh`: 14 modules, 214 tests, all OK, 51 s. A plain `unittest discover` of
+- Harness unit modules via `run_isolated.sh`: 14 modules, 199 tests, all OK, 51 s (corrected 2026-11-01: first recorded as 214, the count of the plain discover run; the per-module log sums to 199). A plain `unittest discover` of
   `harness/tests` fails on macOS `/var` symlinks (environment, as documented in the runner).
 - New regressions: `V1LayoutTests` (`2ea2e5b5…`, `f841ddcf…`, `a45bc83b…`), `V1DecisionTests` (`7d7fc9a7…`,
   `c3525d4d…`), `Pass2GuardTests`.
@@ -4143,7 +4143,7 @@ Judge Validation runner `grading.judge_validation`, plan `grading/judge_validati
 
 Pre-freeze tests (logs `logs/v1-freeze-20261101/`):
 - Grading suite: 426 tests, 5 skipped, 121.97 s, rc 0.
-- Harness modules via `run_isolated.sh`: 14 modules, 215 tests, all OK, 51 s.
+- Harness modules via `run_isolated.sh`: 14 modules, 200 tests, all OK, 51 s (corrected 2026-11-01: first recorded as 215; the per-module log sums to 200).
 
 ## Validation reveal, Judge Validation halt, Validation packets, Docker-gated suites (2026-11-01; code at `0c8efcb`, tag `v1-calibration-freeze`)
 
@@ -4231,6 +4231,72 @@ Docker-gated suites (`run_isolated.sh`, at `0c8efcb`, clean frozen tree; logs `l
 
 Codex Review 2 package: `docs/codex_review_2.md`. It pins `0c8efcb` against the baseline `a9a1f88`, states facts
 only, and includes a copy-paste prompt that tells Codex to verify every claim against the code.
+
+## V1.1: per-item judge recovery, inferred ledger resolutions, engine .7 (2026-11-01; approved by the human; tag `v1.1-judge-item-recovery`)
+
+Approved by the human in chat, 2026-11-01:
+- the Validation ledger recovery;
+- per-item judge infrastructure recovery;
+- the confirmed rubric decisions;
+- one local Codex Review 2;
+- a conditional private GitHub backup.
+
+Changes (for Codex Review 2):
+- `harness/budget.py`: `resolve_manually(..., inferred={...})` is an inferred, not provider-confirmed `settled_amount`
+  carrying its calculation basis.
+  - It lifts that unit's hold; the unit stays estimated and is flagged inferred.
+  - The original events are untouched.
+  - Test: `test_inferred_settled_amount_lifts_the_hold_but_stays_an_estimate`.
+- Engine `engine-2026-11-01.7` (`grading/grade.py`):
+  - a judge row whose call failed at the provider, or was never attempted, has verdict `provider_error` / `not_run`
+    (`judge_row_verdict`), never `cannot_assess`;
+  - the score lists `judge_infrastructure` and `visual_review_required` (also per critical criterion);
+  - `score_rows` is shared by grading and recovery passes.
+- `grading/judge_recovery.py` and `run_grading --judge-recover ITEMS --base-pass PASS` (rules in preregistration 1.20):
+  - eligible items: base call `provider_error` (retried once) or `not_attempted` (first evaluation), at most once per
+    item ever;
+  - the stored base units are reused, with the request hash checked before any call;
+  - the result is a new `judge_item_recovery` pass copying all other rows, plus a separate `judge_recovery_<run>_<pass>.json`
+    with each attempt's request hash, status, usage and outcome;
+  - the same judge gate, history gate, write-ahead log and ledger settlement as any judged pass.
+  - Tests: `grading/tests/test_judge_recovery.py`.
+- `grading.judge_validation`:
+  - the freeze gate holds the code to the latest existing version tag, with that tag's freeze record;
+  - `recover --run-uuid RUN --items 69,71` requires a clear ledger and uses the same per-call guard and 15 USD ceiling.
+- `2ea2e5b5…` .4 and `47ef842d…` .3: picture-chart unassessable entries carry `visual_review="picture_chart"`. No
+  verdict changes.
+- `grading.review.save_evidence_correction`: an append-only, post-reveal evidence-text correction. It is refused
+  unless every judgment, item, timestamp and reviewer is unchanged. Checkpoint names get a `_2` suffix when two
+  checkpoints fall in the same second.
+- `grading/freeze_manifest.py`:
+  - `judge_surface` hashes the judge prompt, request construction, evidence builders and constants;
+  - `judge-surface TAG` compares them with a tag;
+  - `write --manifest --freeze --scope`.
+- Freeze record `grading/freeze/v1.1_manifest.json`: engine .7, ten task versions, 58 source files, 27 judge-surface
+  hashes.
+  - `judge-surface v1-calibration-freeze` reports identical: the judge prompt, model, settings and evidence builders
+    are those of V1.
+  - `v1-calibration-freeze` is unchanged at `0c8efcb`.
+- `grading/tests/regress_grading_cli.py`: the not-attempted rows now expect verdict `not_run` (the approved engine .7
+  label). The first run reported 60 PASS, 1 FAIL, that expectation only; after the update, 61 PASS.
+- Rubric decisions confirmed by the human: `2ea2e5b5…` item 27's literal "Margin Impact" label, and picture charts
+  `cannot_assess`. For Formal, preregistration 1.20 requires the human's visual judgment for an image-only critical
+  member before its criterion status is reported.
+
+Tests (logs `logs/v1.1-20261101/`, `logs/docker-gated-v1.1-221241Z/`):
+
+| Suite | Result | Wall time |
+|---|---|---|
+| Grading discover | 433 tests, 5 skipped, OK | 120.36 s |
+| Harness, 14 modules via `run_isolated.sh` | 201 tests, OK | 51 s |
+| Docker: `7d7fc9a7…` `GoldRecalcDockerTests` | 3/3 | 8.23 s |
+| Docker: `1137e2bb…` `GoldRecalcDockerTests` | 2/2 | 10.67 s |
+| Docker: `regress_recalc_docker` | 16 PASS | 3.93 s |
+| Docker: `regress_grading_cli` | 61 PASS | 7.91 s |
+
+Correction of earlier records: the isolated harness totals were 199 (before `e2208d3`) and 200 (before `0c8efcb`),
+not 214 and 215 (those counts came from a plain discover run); corrected in place above and in
+`docs/codex_review_2.md`.
 
 ## Known issues and findings (material check)
 
@@ -4630,7 +4696,8 @@ only, and includes a copy-paste prompt that tells Codex to verify every claim ag
 - 2026-11-01 · `c357f0e2…` grader .3 (edge case is not the Edge browser) · 146ce2a
 - 2026-11-01 · Dev labels checkpointed and compared (4/6); labelled-task calibration (`2ea2e5b5…` .3, `f841ddcf…` .2, `a45bc83b…` .3, engine .6); rubric decisions R-2.7-11, R-2.7-21 (`7d7fc9a7…` .7), R-2.5-27 (`c3525d4d…` .5); Judge Dev Pass 2 plan · e2208d3
 - 2026-11-01 · Judge Dev Pass 2 (`2ea2e5b5…`, 4 calls, 0.031 USD; 57 and 59 now agree); per-call judge pricing; V1 calibration freeze (shared judge + all task V1, `grading/freeze/v1_manifest.json`, tag `v1-calibration-freeze`); Judge Validation runner and plan · 0c8efcb
-- 2026-11-01 · Validation revealed under the frozen versions; Judge Validation halted on a provider error (hold, 7.06 USD settled conservatively); 10 Validation packets; Dev frozen re-grades; Docker-gated suites; Codex Review 2 package · (this commit)
+- 2026-11-01 · Validation revealed under the frozen versions; Judge Validation halted on a provider error (hold, 7.06 USD settled conservatively); 10 Validation packets; Dev frozen re-grades; Docker-gated suites; Codex Review 2 package · 2c4b8d7
+- 2026-11-01 · V1.1 (approved): per-item judge recovery, inferred ledger resolutions, engine .7 provider_error / not_run, picture-chart visual-review flags (`2ea2e5b5…` .4, `47ef842d…` .3), evidence corrections; tag `v1.1-judge-item-recovery` · (this commit)
 
 ## Next stage (not started)
 

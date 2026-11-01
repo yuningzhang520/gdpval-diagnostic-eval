@@ -198,6 +198,9 @@ def validate_event(e: dict, index: int) -> None:
         _require(isinstance(e.get("by"), str) and e["by"] and isinstance(e.get("basis"), str) and e["basis"], f"event {index}: manual resolution needs by and basis")
         if e["resolution"] == "settled_amount":
             _require(_is_money(e.get("amount_usd")) and Decimal(e["amount_usd"]) >= 0 and e.get("currency") == "USD", f"event {index}: settled_amount needs amount_usd (string) and currency USD")
+        if "inferred" in e:  # an inferred (not provider-confirmed) amount: only on settled_amount, with its calculation
+            _require(e["resolution"] == "settled_amount" and isinstance(e["inferred"], dict) and isinstance(e["inferred"].get("basis"), str) and e["inferred"]["basis"],
+                     f"event {index}: an inferred resolution is a settled_amount carrying its calculation basis")
 
 
 class BudgetLedger:
@@ -326,7 +329,9 @@ class BudgetLedger:
                     if uid in open_res:
                         res = open_res.pop(uid)
                         settled[uid] = {"type": "settlement", "unit_id": uid, "kind": res["kind"], "cost_usd": str(_d(amount)), "breakdown": {c: "0" for c in CATEGORIES},
-                                        "retry_estimate_usd": "0", "estimated": False, "manual_review_required": False, "flags": ["manual_resolution: verified amount"],
+                                        "retry_estimate_usd": "0", "estimated": bool(e.get("inferred")), "manual_review_required": False,
+                                        "flags": ["manual_resolution: inferred amount, not provider-confirmed" if e.get("inferred") else "manual_resolution: verified amount"],
+                                        **({"inferred": e["inferred"]} if e.get("inferred") else {}),
                                         "raw_usage": {}, "note": f"manual resolution by {e['by']}: {e['basis']}", "reserved_usd": res["estimated_usd"], "at": e["at"], "resolved_from": "open_reservation"}
                         settled_total += amount
                         if res["kind"] == "judge":
@@ -337,10 +342,13 @@ class BudgetLedger:
                         settled_total += delta
                         if prev.get("estimated"):
                             estimated_total -= Decimal(prev["cost_usd"])
+                        if e.get("inferred"):  # an inferred amount stays an estimate; only its hold is lifted
+                            estimated_total += amount
                         if prev["kind"] == "judge":
                             by_cat["judge"] += delta
-                        settled[uid] = {**prev, "cost_usd": str(_d(amount)), "estimated": False, "manual_review_required": False, "resolved_from": "estimated_settlement",
-                                        "previous_cost_usd": prev["cost_usd"], "flags": list(prev.get("flags", [])) + ["manual_resolution: verified amount"]}
+                        settled[uid] = {**prev, "cost_usd": str(_d(amount)), "estimated": bool(e.get("inferred")), "manual_review_required": False, "resolved_from": "estimated_settlement",
+                                        "previous_cost_usd": prev["cost_usd"], **({"inferred": e["inferred"]} if e.get("inferred") else {}),
+                                        "flags": list(prev.get("flags", [])) + ["manual_resolution: inferred amount, not provider-confirmed" if e.get("inferred") else "manual_resolution: verified amount"]}
                         review_pending.pop(uid, None)
                 else:
                     unresolvable[uid] = e
@@ -592,12 +600,16 @@ class BudgetLedger:
         return {"units": units, "judge_units": sorted(u for u in units if u.startswith(prefix)), "open": sorted(u for u, v in units.items() if v["open"]),
                 "review_pending": sorted(u for u, v in units.items() if v["review_pending"]), "unresolvable": sorted(u for u, v in units.items() if v["resolution"] == "unresolvable")}
 
-    def resolve_manually(self, unit_id: str, *, resolution: str, by: str, basis: str, amount_usd=None, currency: str = "USD") -> dict:
+    def resolve_manually(self, unit_id: str, *, resolution: str, by: str, basis: str, amount_usd=None, currency: str = "USD", inferred: dict | None = None) -> dict:
         """Append a human reconciliation of one unit (never overwrites an event). settled_amount must carry the verified
         amount; it closes an open reservation at that amount or adjusts an estimated settlement and lifts that unit's hold.
-        unresolvable records the investigation and changes no balance, hold or reservation."""
+        With ``inferred`` (a dict with its calculation ``basis``), the amount is an inferred, not provider-confirmed figure
+        the human authorized: the unit stays estimated and flagged inferred, and the reconciliation requirement travels
+        with it. unresolvable records the investigation and changes no balance, hold or reservation."""
         if resolution not in RESOLUTIONS:
             raise LedgerConflict(f"resolution must be one of {RESOLUTIONS}")
+        if inferred is not None and (resolution != "settled_amount" or not isinstance(inferred, dict) or not inferred.get("basis")):
+            raise LedgerConflict("an inferred resolution is a settled_amount carrying its calculation basis")
         with self._locked():
             state = self._read()
             d = self._derive(state["entries"])
@@ -610,6 +622,8 @@ class BudgetLedger:
                 if amount_usd is None:
                     raise LedgerConflict("settled_amount needs amount_usd")
                 entry.update({"amount_usd": str(_money_in(amount_usd, "amount_usd")), "currency": currency})
+            if inferred is not None:
+                entry["inferred"] = dict(inferred)
             return self._append(state, entry)
 
     def clear_review(self, unit_id: str, by: str, basis: str) -> dict:

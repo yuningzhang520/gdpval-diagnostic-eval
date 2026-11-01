@@ -179,6 +179,8 @@ class V1LayoutTests(unittest.TestCase):
             return {"inventory": [{"path": "d.pptx", "kind": "pptx"}], "pptx": {"d.pptx": {"slide_count": 1, "slide_height": self.H, "slides": [self.slide(2, shapes)]}}}
         pic = CK.run_checks(deck(self.pic()), REFERENCE, rubric)["items"]
         self.assertEqual((pic[4]["verdict"], pic[25]["verdict"], pic[26]["verdict"], pic[9]["verdict"], pic[12]["verdict"]), ("cannot_assess", "cannot_assess", "cannot_assess", "cannot_assess", "pass"))
+        for i in (4, 9, 25, 26):  # .4: tagged for the human's visual judgment (Formal critical reporting)
+            self.assertEqual([u.get("visual_review") for u in pic[i]["evidence"]["unassessable"]], ["picture_chart"])
         bar = {"name": "Chart 3", "top": 1234440, "chart": {"kinds": ["barChart"], "series": []}}
         nat = CK.run_checks(deck(bar), REFERENCE, rubric)["items"]
         self.assertEqual((nat[4]["verdict"], nat[25]["verdict"]), ("fail", "fail"))  # out of scope: a native chart that is not a pie is a confirmed violation

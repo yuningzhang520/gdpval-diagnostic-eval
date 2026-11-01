@@ -39,7 +39,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # review infrastructure) carries ENGINE_VERSION; every task specification carries its own VERSION; a grading pass records
 # the combined grader version "<engine>+<task>" and the full git commit of the code that graded. config.grading must state
 # the engine version and the per-task versions (checked by run_grading before any grading).
-ENGINE_VERSION = "engine-2026-11-01.6"  # .6: docx tables record the body paragraph they follow (table_after_paragraph); .2: a deterministic item may route itself to the judge (route_to_judge); scored once, as a J row; .3: critical status also under the preregistered definition when a task revised it; .4: recalculated values joined to sheets whose names LibreOffice truncated at 31 characters; .5: the xlsx package lists embedded media parts
+ENGINE_VERSION = "engine-2026-11-01.7"  # .7: per-item judge recovery passes (grading.judge_recovery); a judge provider failure or an unattempted judge call is recorded as verdict provider_error / not_run (never cannot_assess); critical status lists the members needing human visual review (picture charts); .6: docx tables record the body paragraph they follow (table_after_paragraph); .2: a deterministic item may route itself to the judge (route_to_judge); scored once, as a J row; .3: critical status also under the preregistered definition when a task revised it; .4: recalculated values joined to sheets whose names LibreOffice truncated at 31 characters; .5: the xlsx package lists embedded media parts
 TASK_MODULES = {CK.TASK: {"checks": CK.run_checks, "units": J.build_units_1137e2bb, "critical": CK.CRITICAL, "judge_items": CK.J_ITEMS, "visual_items": [], "version": CK.VERSION},
                 CK2.TASK: {"checks": CK2.run_checks, "units": J.build_units_7d7fc9a7, "critical": CK2.CRITICAL, "judge_items": CK2.J_ITEMS, "visual_items": CK2.V_ITEMS, "version": CK2.VERSION},
                 CK3.TASK: {"checks": CK3.run_checks, "units": J.build_units_2ea2e5b5, "critical": CK3.CRITICAL, "critical_preregistered": CK3.CRITICAL_PREREGISTERED, "judge_items": CK3.J_ITEMS,
@@ -202,6 +202,29 @@ def selected_grades(out_dir: str, run_uuid: str, prefer: str = "latest_with_judg
     return {**sel, "grades": rows}
 
 
+JUDGE_INFRASTRUCTURE_VERDICTS = {"provider_error": "provider_error", "not_attempted": "not_run"}
+
+
+def judge_row_verdict(v: dict | None) -> str:
+    """Engine .7: a judge call that failed at the provider or was never attempted carries no evidence-based verdict; it is
+    recorded as provider_error / not_run, apart from a rubric fail and from the judge's own evidence-based cannot_assess."""
+    if not v:
+        return "pending_judge"
+    return JUDGE_INFRASTRUCTURE_VERDICTS.get(v.get("error_class"), v["verdict"])
+
+
+def visual_review_items(grades: list[dict]) -> list[int]:
+    """Items left unassessable because required evidence is only an image (a picture chart): every unassessable entry a
+    checker tagged with ``visual_review``. Formal: such a critical member needs the human's visual judgment before the
+    criterion's status is reported (human decision 2026-11-01)."""
+    out = []
+    for g in grades:
+        ev = g.get("evidence") if isinstance(g.get("evidence"), dict) else {}
+        if g["verdict"] == "cannot_assess" and any(isinstance(u, dict) and u.get("visual_review") for u in (ev.get("unassessable") or [])):
+            out.append(g["item"])
+    return sorted(out)
+
+
 def _score(grades: list[dict], critical_spec: dict, extra: dict | None = None) -> dict:
     """W / E / P over the rubric rows; critical status from each criterion's items (deterministic, judge, visual) and,
     where a task declares them, its non-rubric checks (``extra``: {key: {"verdict": ...}}, e.g. a comparison with the
@@ -211,15 +234,31 @@ def _score(grades: list[dict], critical_spec: dict, extra: dict | None = None) -
     E = sum(g["weight"] for g in graded)
     P = sum(g["weight"] for g in graded if g["verdict"] == "pass")
     by_item = {g["item"]: g["verdict"] for g in grades}
+    visual = set(visual_review_items(grades))
     critical = {}
     for cid, spec in critical_spec.items():
         items = spec["items"] + spec.get("judge_items", []) + spec.get("visual_items", [])  # visual rows stay pending_human until reviewed
         vs = [by_item.get(i, "pending") for i in items] + [((extra or {}).get(k) or {}).get("verdict", "pending") for k in spec.get("extra", [])]
         critical[cid] = {"name": spec["name"], "status": "fail" if "fail" in vs else "pass" if vs and all(v == "pass" for v in vs) else "not_confirmed", "items": items,
-                         "verdicts": {i: by_item.get(i, "pending") for i in items}, **({"extra_checks": {k: ((extra or {}).get(k) or {}).get("verdict", "pending") for k in spec["extra"]}} if spec.get("extra") else {})}
+                         "verdicts": {i: by_item.get(i, "pending") for i in items}, **({"extra_checks": {k: ((extra or {}).get(k) or {}).get("verdict", "pending") for k in spec["extra"]}} if spec.get("extra") else {}),
+                         "visual_review_required": sorted(i for i in items if i in visual)}
     return {"W": W, "E": E, "P": P, "P_over_E": (P / E) if E else None, "E_over_W": (E / W) if W else None,
+            "judge_infrastructure": {k: sorted(g["item"] for g in grades if g["verdict"] == k) for k in ("provider_error", "not_run")},
+            "visual_review_required": sorted(visual),
             "ungraded": [{"item": g["item"], "verdict": g["verdict"], "reason": g.get("note") or g.get("rationale") or g.get("parse_error")} for g in grades if g["verdict"] not in ("pass", "fail")],
             "critical": critical, "critical_overall": "fail" if any(c["status"] == "fail" for c in critical.values()) else "pass" if all(c["status"] == "pass" for c in critical.values()) else "not_confirmed"}
+
+
+def score_rows(grades: list[dict], mod: dict, extra: dict | None = None) -> dict:
+    """The pass score from its rows: the current critical definition and, where a task revised it (approved 2026-11-01),
+    the preregistered one on the same item verdicts. Shared by grade_run and the judge item-recovery pass."""
+    score = _score(grades, mod["critical"], extra=extra)
+    if mod.get("critical_preregistered"):
+        pre = _score(grades, mod["critical_preregistered"], extra=extra)
+        score.update({"critical_preregistered": pre["critical"], "critical_overall_preregistered": pre["critical_overall"],
+                      "critical_definitions": "revised (current) and preregistered (original) on the same item verdicts",
+                      "critical_conclusion_differs": pre["critical_overall"] != score["critical_overall"]})
+    return score
 
 
 def grade_run(host_dir: str, log, sample_uuid: str, *, task_id: str, rubric: list[dict], task_prompt: str, reference: dict, out_dir: str,
@@ -301,7 +340,7 @@ def grade_run(host_dir: str, log, sample_uuid: str, *, task_id: str, rubric: lis
         v = vb.get(i)
         grades.append({"run_uuid": binding["uuid"], "task_id": task_id, "item": i, "weight": rubric[i - 1]["score"], "criterion": rubric[i - 1]["criterion"], "source": "J",
                        **({"routed_from_deterministic": {"note": routed[i]["note"], "evidence": routed[i]["evidence"]}} if i in routed else {}),
-                       "verdict": v["verdict"] if v else "pending_judge", "evidence": v["evidence"] if v else [], "rationale": v["rationale"] if v else "", "judge_id": v["judge_id"] if v else None,
+                       "verdict": judge_row_verdict(v), "evidence": v["evidence"] if v else [], "rationale": v["rationale"] if v else "", "judge_id": v["judge_id"] if v else None,
                        "parse_error": v["parse_error"] if v else None, "error_class": v.get("error_class") if v else None, "call_status": v.get("call_status") if v else None,
                        "usage_status": v.get("usage_status") if v else None, "grader_version": grader_version, "grading_pass": rec["grading_pass"]})
     for i in mod.get("visual_items", []):  # visual criteria: never judged from text; stay in W as ungraded until the human review records a verdict
@@ -311,12 +350,7 @@ def grade_run(host_dir: str, log, sample_uuid: str, *, task_id: str, rubric: lis
     with open(os.path.join(out_dir, "grades.jsonl"), "a", encoding="utf-8") as f:
         for g in grades:
             f.write(json.dumps(g, default=str) + "\n")
-    score = _score(grades, mod["critical"], extra=checks.get("critical_extra"))
-    if mod.get("critical_preregistered"):  # approved 2026-11-01: a revised critical composition is reported under both definitions
-        pre = _score(grades, mod["critical_preregistered"], extra=checks.get("critical_extra"))
-        score.update({"critical_preregistered": pre["critical"], "critical_overall_preregistered": pre["critical_overall"],
-                      "critical_definitions": "revised (current) and preregistered (original) on the same item verdicts",
-                      "critical_conclusion_differs": pre["critical_overall"] != score["critical_overall"]})
+    score = score_rows(grades, mod, checks.get("critical_extra"))
     review = write_review_materials(os.path.join(out_dir, "review"), binding["uuid"], rubric, checks, units, verdicts, extraction, reference=reference, task_id=task_id, grading_pass=rec["grading_pass"])
     rec.update({"graded": True, "deliverables": [i["path"] for i in extraction["inventory"]], "rejected_files_not_delivered": rejected_files,
                 "transfer_integrity": integrity, "originals_unchanged": extraction.get("originals_unchanged"), "working_copies": provenance, "extraction_status": checks.get("extraction_status"),

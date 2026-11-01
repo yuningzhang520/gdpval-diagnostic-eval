@@ -40,6 +40,11 @@ REGISTRY = os.path.join(VDIR, "registry.jsonl")
 PLAN = os.path.join(ROOT, "grading", "judge_validation", "plan.json")
 MANIFEST = os.path.join(ROOT, "grading", "freeze", "v1_manifest.json")
 FREEZE_TAG = "v1-calibration-freeze"
+# Immutable code-version tags, oldest first, each with its freeze record. The gate holds the code to the latest tag that
+# exists; v1-calibration-freeze is never moved. V1.1 (2026-11-01, approved): per-item judge recovery, inferred ledger
+# resolutions, provider_error / not_run judge verdicts, picture-chart visual-review flags; judge prompt, model, settings
+# and evidence builders byte-identical to V1 (checked by grading.freeze_manifest judge-surface).
+VERSION_TAGS = ((FREEZE_TAG, MANIFEST), ("v1.1-judge-item-recovery", os.path.join(ROOT, "grading", "freeze", "v1.1_manifest.json")))
 PASS_ID = "judge-validation-pass-1"
 FROZEN_PATHS = ("grading", "harness", "config.json")
 AUTH_REF = "docs/status.md decision 2026-11-01: Judge Validation authorized (one pass, frozen judge, separate ledger, 15 USD, concurrency 1, Dev project key)"
@@ -90,19 +95,25 @@ def validation_runs() -> list[dict]:
 
 
 def frozen_state() -> dict:
-    """The freeze gate: code identical to the tag, no uncommitted change, manifest consistent with the code."""
+    """The freeze gate: code identical to the latest existing version tag, no uncommitted change, that tag's freeze
+    record consistent with the code."""
     from grading.freeze_manifest import verify
-    tag = subprocess.run(["git", "rev-parse", "--verify", "--quiet", f"{FREEZE_TAG}^{{commit}}"], cwd=ROOT, capture_output=True, text=True).stdout.strip()
-    if not tag:
+    found = []
+    for name, manifest in VERSION_TAGS:
+        c = subprocess.run(["git", "rev-parse", "--verify", "--quiet", f"{name}^{{commit}}"], cwd=ROOT, capture_output=True, text=True).stdout.strip()
+        if c:
+            found.append((name, c, manifest))
+    if not found:
         return {"ok": False, "reason": f"tag {FREEZE_TAG} does not exist"}
+    name, tag, manifest = found[-1]
     diff = subprocess.run(["git", "diff", "--name-only", tag, "--", *FROZEN_PATHS], cwd=ROOT, capture_output=True, text=True).stdout.strip()
     dirty = subprocess.run(["git", "status", "--porcelain", "--untracked-files=all", "--", *FROZEN_PATHS], cwd=ROOT, capture_output=True, text=True).stdout.strip()
     if diff or dirty:
-        return {"ok": False, "reason": f"frozen paths differ from {FREEZE_TAG}: {(diff or dirty).splitlines()[:6]}"}
-    problems = verify(json.load(open(MANIFEST, encoding="utf-8")))
+        return {"ok": False, "reason": f"frozen paths differ from {name}: {(diff or dirty).splitlines()[:6]}"}
+    problems = verify(json.load(open(manifest, encoding="utf-8")))
     if problems:
         return {"ok": False, "reason": f"freeze manifest does not match the code: {problems[:4]}"}
-    return {"ok": True, "tag_commit": tag}
+    return {"ok": True, "tag": name, "tag_commit": tag, "manifest": os.path.relpath(manifest, ROOT)}
 
 
 def ensure_ledger() -> dict:
@@ -137,7 +148,7 @@ def make_guard(holder: dict, max_tokens: int, base_total: Decimal, ceiling: Deci
     return guard
 
 
-def grade_run(spec: dict, r: dict, log) -> dict:
+def grade_run(spec: dict, r: dict, log, extra_argv: list | None = None) -> dict:
     from grading import run_grading as RG
     from grading.judge import ProviderJudge
     c = cfg()["judge"]
@@ -158,6 +169,7 @@ def grade_run(spec: dict, r: dict, log) -> dict:
             return j
         argv += ["--judge", "--judge-model", c["model"], "--judge-estimate-usd", str(est), "--confirm-judge", f"{r['run_uuid']}|{c['model']}|{est}",
                  "--authorized-by", "Yuning Zhang (approved in chat 2026-11-01)", "--authorization-ref", AUTH_REF, "--env-file", os.path.join(ROOT, ".env"), "--judge-ledger", LEDGER]
+        argv += list(extra_argv or [])
     with contextlib.redirect_stdout(log):
         rc = RG.main(argv, judge_factory=factory) if factory else RG.main(argv)
     j = holder.get("judge")
@@ -185,7 +197,7 @@ def run() -> int:
     ensure_ledger()
     os.environ.pop("GOOGLE_API_KEY_VALIDATION", None)
     log = open(os.path.join(VDIR, f"{PASS_ID}_{dt.datetime.now(dt.timezone.utc).strftime('%Y%m%dT%H%M%SZ')}.log"), "a", encoding="utf-8")
-    registry({"kind": "pass_start", "plan_sha256": hashlib.sha256(open(PLAN, "rb").read()).hexdigest(), "freeze_tag_commit": ck["freeze"]["tag_commit"],
+    registry({"kind": "pass_start", "plan_sha256": hashlib.sha256(open(PLAN, "rb").read()).hexdigest(), "freeze_tag_commit": ck["freeze"]["tag_commit"], "code_tag": ck["freeze"].get("tag"),
               "spent": {k: str(v) for k, v in spent().items() if k != "snapshot"}})
     runs = {r["run_uuid"]: r for r in validation_runs()}
     done = {e["run_uuid"] for e in registry_events() if e.get("kind") in ("run_done", "run_error")}
@@ -207,6 +219,47 @@ def run() -> int:
         if out.get("halted"):
             registry({"kind": "halted", "run_uuid": u, "reason": out["halted"]}); break
     registry({"kind": "pass_end", "spent": {k: str(v) for k, v in spent().items() if k != "snapshot"}})
+    return 0
+
+
+def recover(run_uuid: str, items: list[int]) -> int:
+    """Per-item judge infrastructure recovery of one interrupted Validation run (approved 2026-11-01; see
+    grading.judge_recovery): the listed items of the run's latest judged pass, under the same gates, guard and ceiling."""
+    from grading import judge_recovery as JR
+    from grading import run_grading as RG
+    ck = check()
+    if not ck["plan_committed"]:
+        raise SystemExit("the Judge Validation plan must be committed before any paid call")
+    if not ck["freeze"]["ok"]:
+        raise SystemExit(f"freeze gate: {ck['freeze']['reason']}")
+    snap = spent()["snapshot"]
+    if snap.get("review_pending_units") or snap.get("open_reservations") or snap.get("stops"):
+        raise SystemExit(f"ledger not clear: hold {snap.get('review_pending_units')}, open {snap.get('open_reservations')}, stops {snap.get('stops')}")
+    r = {x["run_uuid"]: x for x in validation_runs()}.get(run_uuid)
+    if r is None:
+        raise SystemExit(f"{run_uuid} is not a canonical Validation run")
+    judged = [p for p in RG.grading_passes(r["grading_out"], run_uuid) if p.get("judge_mode") == "real"]
+    if not judged:
+        raise SystemExit("no judged pass to recover")
+    base = judged[-1]["grading_pass"]
+    plan = JR.recovery_plan(r["grading_out"], run_uuid, base, items)
+    refused = {i: d["reason"] for i, d in plan["decision"].items() if not d["eligible"]}
+    if refused:
+        raise SystemExit(f"not recoverable: {refused}")
+    c = cfg()["judge"]
+    est = sum((worst_case_usd(len(JR.J.JUDGE_SYSTEM_PROMPT) + len(JR.J.render_unit(plan["units"][i])), c["max_tokens"], "long") for i in items), Decimal(0)).quantize(Decimal("0.01"), rounding=ROUND_CEILING)
+    log = open(os.path.join(VDIR, f"{PASS_ID}_recovery_{dt.datetime.now(dt.timezone.utc).strftime('%Y%m%dT%H%M%SZ')}.log"), "a", encoding="utf-8")
+    registry({"kind": "recovery_start", "run_uuid": run_uuid, "task_id": r["task_id"], "base_pass": base, "items": items, "reservation_usd": str(est),
+              "decision": plan["decision"], "code_tag": ck["freeze"].get("tag"), "code_tag_commit": ck["freeze"]["tag_commit"]})
+    try:
+        out = grade_run({"reservation_usd": str(est)}, r, log, extra_argv=["--judge-recover", ",".join(str(i) for i in items), "--base-pass", base])
+    except Exception as ex:  # recorded, never retried automatically
+        registry({"kind": "recovery_error", "run_uuid": run_uuid, "error": f"{type(ex).__name__}: {str(ex)[:300]}"})
+        return 1
+    rec = [p for p in RG.grading_passes(r["grading_out"], run_uuid)][-1]
+    registry({"kind": "recovery_done", "run_uuid": run_uuid, "task_id": r["task_id"], "unit_id": out.get("judge_unit"), "recovery_pass": out.get("grading_pass"),
+              "pass_kind": rec.get("pass_kind"), "judge_completeness": rec.get("judge_completeness"), "calls": out.get("calls"), "calls_ok": out.get("calls_ok"),
+              "provider_error": out.get("provider_error"), "not_attempted": out.get("not_attempted"), "cost_from_calls_usd": out.get("cost_from_calls_usd"), "halted": out.get("halted")})
     return 0
 
 
@@ -247,7 +300,9 @@ def write_plan() -> dict:
 
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description="Judge Validation (one pass, frozen judge)")
-    ap.add_argument("command", choices=("plan", "check", "run", "status"))
+    ap.add_argument("command", choices=("plan", "check", "run", "status", "recover"))
+    ap.add_argument("--run-uuid", default=None, help="recover: the interrupted Validation run")
+    ap.add_argument("--items", default=None, help="recover: comma-separated judge items")
     a = ap.parse_args(argv)
     if a.command == "plan":
         p = write_plan()
@@ -256,6 +311,10 @@ def main(argv=None) -> int:
         print(json.dumps(check(), indent=1))
     elif a.command == "run":
         return run()
+    elif a.command == "recover":
+        if not (a.run_uuid and a.items):
+            raise SystemExit("recover needs --run-uuid and --items")
+        return recover(a.run_uuid, sorted({int(x) for x in a.items.split(",") if x.strip()}))
     else:
         print(json.dumps(status(), indent=1, default=str))
     return 0

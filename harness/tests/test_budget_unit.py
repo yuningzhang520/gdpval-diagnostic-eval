@@ -376,6 +376,30 @@ class ManualResolutionTests(unittest.TestCase):
         with self.assertRaises(b.LedgerConflict):
             lg.resolve_manually("held", resolution="settled_amount", by="reviewer", basis="twice", amount_usd="0.70")
 
+    def test_inferred_settled_amount_lifts_the_hold_but_stays_an_estimate(self):
+        """Approved 2026-11-01 (Judge Validation recovery): an inferred amount (known metered usage plus a buffer, not
+        provider-confirmed) replaces the reservation-level settlement, lifts that unit's hold, stays estimated and
+        flagged inferred, keeps its calculation; the original events stay untouched."""
+        lg = b.BudgetLedger(self.path, 15, self.prices)
+        lg.reserve("j", "judge", 7.06, {})
+        lg.settle("j", {"m/x": {"input_tokens": 1000, "output_tokens": 0}}, incomplete=True)
+        self.assertEqual(lg.snapshot()["review_pending_units"], ["j"])
+        with self.assertRaises(b.LedgerConflict):
+            lg.resolve_manually("j", resolution="unresolvable", by="h", basis="x", inferred={"basis": "x"})  # inferred only on settled_amount
+        with self.assertRaises(b.LedgerConflict):
+            lg.resolve_manually("j", resolution="settled_amount", by="h", basis="x", amount_usd="0.86", inferred={})  # a calculation basis is required
+        calc = {"basis": "known 0.80 + 4 x 0.0138", "known_usd": "0.801080", "buffer_usd": "0.055247", "reconciliation_required": "provider billing"}
+        lg.resolve_manually("j", resolution="settled_amount", by="human", basis="inferred; authorized", amount_usd="0.856327", inferred=calc)
+        snap = lg.snapshot()
+        self.assertEqual((snap["review_pending_units"], snap["settled_usd"], snap["estimated_portion_usd"]), ([], "0.856327", "0.856327"))
+        eff = lg.effective_settlement("j")["effective"]
+        self.assertEqual((eff["estimated"], eff["inferred"], eff["previous_cost_usd"]), (True, calc, "7.060000"))
+        self.assertIn("manual_resolution: inferred amount, not provider-confirmed", eff["flags"])
+        self.assertEqual(lg.stop_reasons(), [])
+        entries = json.load(open(self.path))["entries"]
+        self.assertEqual([e["type"] for e in entries], ["reservation", "settlement", "manual_resolution"])
+        self.assertEqual((entries[1]["cost_usd"], entries[1]["manual_review_required"]), ("7.060000", True))  # the original settlement and its hold flag are untouched
+
     def test_unresolvable_changes_nothing_and_malformed_resolutions_are_refused(self):
         lg = b.BudgetLedger(self.path, 10, self.prices)
         lg.reserve("u", "sample", 1, {"model": "m/x", "task": "t"})
