@@ -2918,6 +2918,27 @@ Decisions needed (paid-run blocker; the human owns the provider account):
 4. Resume the chain only after 1-3: `scripts/run_authorized_batches_2026-11-01.sh "dev compat validation"` with
    `CFG_OVERRIDE` set to the same snapshot (the batch runner skips `b5d2e6f1…` unless `--allow-repeat`).
 
+## Gemini key investigation (2026-11-01; read-only; no API call, no credential change)
+
+The human reported the Default Gemini Project on Paid Tier 1 (prepaid credit) with an AI Studio key whose last four
+characters were given. Finding: the project `.env` holds exactly one Google variable, `GOOGLE_API_KEY`, and its last
+four characters differ from the AI Studio key (compared by suffix only; no key value printed or recorded). No Google or
+Gemini variable is set in the shell environment or the profile files, no `GEMINI_API_KEY` or Vertex flag exists, the
+launcher loads `.env` without overriding existing variables, Inspect's Google provider reads `GOOGLE_API_KEY`, and
+Inspect's own dotenv lookup finds the same file. Both dev attempts (and the model-list query of 2026-10-30) therefore
+used the `.env` key. Gemini rate limits are per project and a key inherits its project's tier (official rate-limits
+and billing pages, fetched 2026-11-01); the provider counted the requests against the free-tier metric, so the `.env`
+key's project was on the free tier at 10:10Z. Free to Tier 1 upgrades "typically take effect instantly", so the
+probable cause is a key from another (free-tier) project, not timing. Per-model paid limits for gemini-3.8-flash are
+not published in the documentation (shown in AI Studio per project); Tier 1 carries a 10 USD spend limit per rolling
+10-minute window and a 250 USD monthly cap; a prepaid balance at 0 stops all keys with HTTP 402.
+
+Smallest corrective action (human, credentials): set `GOOGLE_API_KEY` in the project `.env` to the AI Studio key of the
+Tier 1 project (mode 0600 kept); then a suffix-only check confirms the launcher loads it. Open: reconciliation of the
+second held dev unit (the free-tier project's usage page at 10:10Z is the evidence), authorization of a third
+`b5d2e6f1…` attempt, and the chain resume. Note: the prepaid balance, not the harness ceilings, would bound the Gemini
+batches.
+
 ## Known issues and findings (material check)
 
 - `rubric_json.form_content`: 8,036 items hold `null`, 2,417 items lack the key, zero
