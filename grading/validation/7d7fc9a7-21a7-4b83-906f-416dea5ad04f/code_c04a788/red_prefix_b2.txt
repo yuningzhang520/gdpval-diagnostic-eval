@@ -1,0 +1,9 @@
+pre-fix module blob c5d8dbbc1a19cd27ebbabbc9de30ccd44402915a
+R29_conflicting_totals_row_1250: RED {"11": {"declared": "cannot_assess", "pre_fix": "fail"}, "22": {"declared": "cannot_assess", "pre_fix": "fail"}}
+R30_totals_rows_both_wrong_1250: pre-fix matches (guard variant)
+R31_conflicting_jan_amort_column_1250: RED {"11": {"declared": "cannot_assess", "pre_fix": "fail"}}
+R32_conflicting_totals_row_1251: RED {"11": {"declared": "cannot_assess", "pre_fix": "fail"}, "40": {"declared": "cannot_assess", "pre_fix": "fail"}}
+R33_conflicting_variance_row_1251: RED {"48": {"declared": "cannot_assess", "pre_fix": "fail"}}
+R34_totals_row_first_blank_adds_1250: RED pre-fix raised TypeError: Decision.violation() got multiple values for argument 'kind'
+R35_totals_row_missing_jan_adds_1250: RED pre-fix raised TypeError: Decision.violation() got multiple values for argument 'kind'
+pre-fix: 6 of 7 variants differ from their declarations or raise
