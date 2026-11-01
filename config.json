@@ -522,7 +522,8 @@
       "cache_read_per_mtok_usd": "0.20 / 0.40",
       "price_source": "ai.google.dev/gemini-api/docs/pricing, queried 2026-10-30",
       "risk": "a preview model may be withdrawn or change version without notice; the exact id and version are fixed at freeze and a fallback judge is named then",
-      "status": "candidate, not frozen"
+      "status": "candidate, not frozen: PENDING human approval of the judge model id, generation parameters and per-run reservation",
+      "adapter": "grading.judge.ProviderJudge over inspect_ai.get_model (one call per judge-only criterion; structured call records; write-ahead call log). Reads an optional top-level 'judge' block (temperature, max_tokens, max_retries, timeout); none is set: defaults temperature 0 / max_tokens 1024 apply only once the id is approved and the block is added"
     },
     "provider_server_side_tools": "off (web search, code interpreter, file search disabled)",
     "price_reference": "docs/status.md, section 'Stage 3a', table 'Public prices' (official pricing pages, queried 2026-10-30); not a billing basis",
@@ -688,7 +689,7 @@
         "google": "output_tokens = candidates + thoughts; reasoning_tokens = thoughts; input_tokens = prompt minus cached"
       },
       "stop_reason_evidence": "truncation of a single generation is established only by the provider's stop signal as mapped by Inspect (Anthropic stop_reason 'max_tokens', OpenAI incomplete_details.reason 'max_output_tokens', Google finish_reason MAX_TOKENS -> StopReason 'max_tokens' in the ModelEvent output), never by an output length near the cap",
-      "launcher_wiring": "token_limit: CLI --token-limit (to be read from this config: Blocking); max_tokens: not yet passed by eval_kwargs (Blocking); cost_limit: eval_kwargs passes cost_limit and model_cost_config when numeric and verifies price data"
+      "launcher_wiring": "token_limit: eval_kwargs passes generation.token_limit (CLI --token-limit overrides); max_tokens: eval_kwargs passes generation.max_tokens_per_request; cost_limit: eval_kwargs passes cost_limit and model_cost_config when numeric and verifies price data (implemented; mock-verified 2026-10-31)"
     }
   },
   "sandbox": {
@@ -780,11 +781,12 @@
   },
   "grading": {
     "preregistration": "preregistration.md (draft; frozen at freeze-v1)",
-    "grader_version": "grading-1137e2bb-2026-10-30 (draft; fixed at freeze)",
+    "grader_version": "grading-1137e2bb-2026-10-31",
     "judge_input_manifest": "grading.judge.build_units_1137e2bb (task requirement, criterion, independent reference, deliverable excerpt per unit); other tasks: Stage 3 work",
-    "outcome_gate": "harness.collect.load_run_outcome(for_grading=True); grading entry point integration is a Stage 3b pre-pilot requirement",
-    "entry_point": "grading.grade.grade_run: load_run_outcome(for_grading=False) with identity from the completed Inspect log, terminal-log join, attribution routing, deterministic checks, judge units, grades.jsonl and results.jsonl",
-    "debug_set": "grading/debug_set.json (criteria used with the stub judge; excluded from judge validation)"
+    "outcome_gate": "harness.collect.load_run_outcome through grading.grade.grade_run (identity from the completed Inspect log; integrated 2026-10-31, mock-verified)",
+    "entry_point": "grading.run_grading (one saved run: run.json / .eval / task id binding, host-only materials, grade_run; judged pass behind the judge gate, reserved and settled on the run's bound ledger) -> grading.grade.grade_run: load_run_outcome(for_grading=False) with identity from the completed Inspect log, terminal-log join, attribution routing, deterministic checks, judge units, grades.jsonl and results.jsonl (one results record per grading pass; select_pass picks one pass per run)",
+    "debug_set": "grading/debug_set.json (criteria used with the stub judge; excluded from judge validation)",
+    "grader_version_check": "grading.run_grading refuses to grade when this value differs from grading.grade.GRADER_VERSION"
   },
   "pre_staged_resources": {
     "task_id": "a45bc83b-22f9-4def-8d89-9c5661b2b86f",

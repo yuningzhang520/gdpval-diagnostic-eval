@@ -26,6 +26,7 @@ from .extract import extract_all
 from .review import write_review_materials
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+GRADER_VERSION = "grading-1137e2bb-2026-10-31"  # the version every grade row and results record carries; config.grading.grader_version must equal it (checked by run_grading)
 TASK_MODULES = {CK.TASK: {"checks": CK.run_checks, "units": J.build_units_1137e2bb, "critical": CK.CRITICAL, "judge_items": CK.J_ITEMS}}
 
 
@@ -92,15 +93,68 @@ def grading_passes(out_dir: str, run_uuid: str | None = None) -> list[dict]:
     return out
 
 
-def select_pass(passes: list[dict], prefer: str = "latest_with_judge") -> dict | None:
-    """The one pass of a run that a report uses: ``latest_with_judge`` = the latest graded pass whose judge
-    was real and produced verdicts, else the latest graded pass; ``latest`` = the latest graded pass."""
+def judge_completeness(verdicts: list[dict]) -> str:
+    """complete: every judge-only unit has a protocol-conformant terminal verdict (a protocol-conformant cannot_assess counts);
+    partial: any provider_error, judge_parse_error or not_attempted; none: no judge in this pass. 'unknown' is assigned by
+    the grading CLI to a judge unit whose write-ahead log holds a started event without a terminal event (no results record)."""
+    if not verdicts:
+        return "none"
+    return "partial" if any(v.get("error_class") for v in verdicts) else "complete"
+
+
+def select_pass(passes: list[dict], prefer: str = "latest_with_judge", attempts: list[dict] | None = None) -> dict:
+    """The one pass of a run that a report uses, with the basis, warnings and the full history. ``attempts`` are the
+    run's persisted judge attempts from the ledger and the write-ahead logs ({"unit_id", "state": settled|held|open|unknown,
+    "at", "has_pass"}): when the LATEST attempt has no results record (it is UNKNOWN, still open or otherwise unfinished)
+    the selection is ``blocked`` - no pass is returned as current, the older passes stay in ``history`` for review, and
+    the warning names the attempt. Otherwise ``latest_with_judge`` selects the latest judged pass even when partial
+    (an older complete pass never hides a newer failure); without a judged pass the latest deterministic-only pass."""
     graded = [p for p in passes if p.get("graded")]
-    if prefer == "latest_with_judge":
-        judged = [p for p in graded if p.get("judge_mode") == "real" and p.get("judge_verdicts")]
-        if judged:
-            return judged[-1]
-    return graded[-1] if graded else None
+    history = [{k: p.get(k) for k in ("grading_pass", "pass_kind", "judge_mode", "judge_completeness", "judge_unit", "graded_at")} for p in graded]
+    authoritative = attempts is not None  # without the persisted attempt history this is historical inspection, never the authoritative result
+    latest_attempt = max(attempts, key=lambda a: (a.get("at") or "", a.get("unit_id") or "")) if attempts else None  # reservations carry second stamps; the unit id carries microseconds
+    warnings = [] if authoritative else ["attempt history not loaded: historical view only, not an authoritative selection (use grading.run_grading.report_selection)"]
+    if latest_attempt and not latest_attempt.get("has_pass"):
+        if latest_attempt.get("state") in ("unknown", "open", "held"):
+            return {"pass": None, "blocked": True, "authoritative": True, "history": history,
+                    "basis": f"latest judge attempt {latest_attempt['unit_id']} is {latest_attempt.get('state')} and produced no grading pass; no current pass is selected until it is reconciled",
+                    "warnings": [f"unfinished judge attempt {latest_attempt['unit_id']} ({latest_attempt.get('state')}); {len(graded)} earlier pass(es) are kept for review only"]}
+        warnings.append(f"latest judge attempt {latest_attempt['unit_id']} was reconciled ({latest_attempt.get('state')}) without producing a grading pass; the selection falls back to the latest recorded pass")
+    if not graded:
+        return {"pass": None, "blocked": False, "authoritative": authoritative, "history": history, "basis": "no graded pass", "warnings": warnings + ["no graded pass recorded"]}
+    judged = [p for p in graded if p.get("judge_mode") == "real" and p.get("judge_verdicts")]
+    if prefer == "latest_with_judge" and judged:
+        chosen = judged[-1]
+        basis = f"latest judged pass {chosen.get('grading_pass')} (judge_completeness {chosen.get('judge_completeness')}) of {len(judged)} judged / {len(graded)} graded passes"
+        if chosen.get("judge_completeness") != "complete":
+            warnings.append(f"selected judged pass is {chosen.get('judge_completeness')}: {chosen.get('judge_call_summary')}; earlier passes are not used to hide this")
+        if len(judged) > 1:
+            warnings.append(f"{len(judged)} judged passes exist for this run; only the latest is selected, the others stay recorded")
+    else:
+        chosen = graded[-1]
+        basis = f"latest graded pass {chosen.get('grading_pass')} ({chosen.get('pass_kind')}); no judged pass" if not judged else f"latest graded pass {chosen.get('grading_pass')}"
+        if chosen.get("judge_mode") != "real":
+            warnings.append("judge-only items are pending in the selected pass")
+    return {"pass": chosen, "blocked": False, "authoritative": authoritative, "history": history, "basis": basis, "warnings": warnings}
+
+
+def selected_grades(out_dir: str, run_uuid: str, prefer: str = "latest_with_judge", attempts: list[dict] | None = None) -> dict:
+    """Grade rows of the selected pass only: the statistics input for one model run (never rows of several passes).
+    FAIL-CLOSED: ``attempts`` (the run's persisted judge attempts, an empty list when the history was loaded and holds
+    none) is required; without it the entry returns blocked and no rows, so a caller that skipped the history can never
+    receive an old complete pass as the current result. Blocked selections return no rows."""
+    passes = grading_passes(out_dir, run_uuid)
+    if attempts is None:
+        sel = select_pass(passes, prefer, attempts=None)
+        return {**sel, "pass": None, "blocked": True, "authoritative": False, "grades": [],
+                "basis": "attempt history not supplied; the statistics entry fails closed (use grading.run_grading.authoritative_selection, which resolves the run's bound ledger)"}
+    sel = select_pass(passes, prefer, attempts=attempts)
+    rows = []
+    if sel["pass"] and not sel.get("blocked"):
+        with open(os.path.join(out_dir, "grades.jsonl"), encoding="utf-8") as f:
+            rows = [json.loads(l) for l in f if l.strip()]
+        rows = [r for r in rows if r.get("run_uuid") == run_uuid and r.get("grading_pass") == sel["pass"]["grading_pass"]]
+    return {**sel, "grades": rows}
 
 
 def _score(grades: list[dict], critical_spec: dict) -> dict:
@@ -121,7 +175,7 @@ def _score(grades: list[dict], critical_spec: dict) -> dict:
 
 
 def grade_run(host_dir: str, log, sample_uuid: str, *, task_id: str, rubric: list[dict], task_prompt: str, reference: dict, out_dir: str,
-              judge=None, recalc: bool = True, runner=subprocess.run, grader_version: str = "grading-1137e2bb-2026-10-31",
+              judge=None, recalc: bool = True, runner=subprocess.run, grader_version: str = GRADER_VERSION,
               allow_stub: bool = False) -> dict:
     """Grade one run. ``log`` is a completed Inspect EvalLog (or an object with the same fields).
     A stub judge is refused unless ``allow_stub`` (test mode) is set explicitly. There is no
@@ -141,7 +195,7 @@ def grade_run(host_dir: str, log, sample_uuid: str, *, task_id: str, rubric: lis
            "grading_pass": f"pass-{graded_at.strftime('%Y%m%dT%H%M%S%fZ')}-{os.urandom(2).hex()}",
            "pass_kind": {"none": "deterministic_only", "real": "deterministic_plus_judge", "stub-test-mode": "stub_test"}[judge_mode],
            "supersedes_pass": previous[-1].get("grading_pass") if previous else None, "pass_index": len(previous) + 1,
-           "log_file": redact_path(getattr(log, "location", None)), "graded": False, "judge_mode": judge_mode}
+           "log_file": redact_path(getattr(log, "location", None)), "graded": False, "judge_mode": judge_mode, "judge_unit": getattr(judge, "judge_unit", None) if judge is not None else None}
     try:
         loaded = C.load_run_outcome(host_dir, binding, for_grading=False)
     except C.OutcomeValidationError as ex:
@@ -199,7 +253,9 @@ def grade_run(host_dir: str, log, sample_uuid: str, *, task_id: str, rubric: lis
                 "recalc_comparison": {k: {kk: vv for kk, vv in v.get("recalc_comparison", {}).items() if kk != "details"} for k, v in extraction["xlsx"].items()},
                 "score": score, "judge_units": len(units), "judge_verdicts": len(verdicts),
                 "judge_call_summary": {"ok": sum(1 for v in verdicts if v.get("call_status") == "ok"), "provider_error": sum(1 for v in verdicts if v.get("error_class") == "provider_error"),
-                                       "judge_parse_error": sum(1 for v in verdicts if v.get("error_class") == "judge_parse_error"), "usage_uncertain": sum(1 for v in verdicts if v.get("usage_uncertain"))} if verdicts else None,
+                                       "judge_parse_error": sum(1 for v in verdicts if v.get("error_class") == "judge_parse_error"), "not_attempted": sum(1 for v in verdicts if v.get("error_class") == "not_attempted"),
+                                       "usage_uncertain": sum(1 for v in verdicts if v.get("usage_uncertain"))} if verdicts else None,
+                "judge_completeness": judge_completeness(verdicts) if judge is not None else "none",
                 "review_materials": review})
     return _append(out_dir, rec)
 

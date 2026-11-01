@@ -122,7 +122,8 @@ class DispatchTests(_Base):
             self.assertEqual(kw["cost_limit"], float(g["cost_limit_usd"])); self.assertIn(m, kw["model_cost_config"])
             self.assertTrue(kw["sandbox_prebuilt"]); self.assertTrue(kw["log_images"])
             self.assertEqual((kw["max_samples"], kw["max_tasks"], kw["max_sandboxes"], kw["max_connections"]), (c["max_samples"], c["max_tasks"], c["max_sandboxes"], c["max_connections"]))
-            self.assertEqual(kw["log_dir"], launcher.log_dir)
+            # the execution gets its own directory under the launcher's log root (the binding usage recovery relies on)
+            self.assertEqual(os.path.dirname(kw["log_dir"]), launcher.log_dir); self.assertTrue(os.path.basename(kw["log_dir"])); self.assertTrue(os.path.isdir(kw["log_dir"]))
 
     def test_missing_execution_settings_refuse_before_any_ledger_change(self):
         for path in (("generation", "max_tokens_per_request"), ("retries", "layer_1_inspect_model_request", "attempt_timeout_s"), ("generation", "token_limit")):
@@ -148,36 +149,24 @@ class DispatchTests(_Base):
 # ------------------------------------------------------------------------------------------ B6
 class EngineeringFailureStopTests(_Base):
     def test_returned_error_logs_are_counted_and_the_third_start_is_refused(self):
-        starts = []
-
-        def error_return(task, **kw):
-            starts.append(kw["model"])
-            return returned_error_log()
-        launcher, ledger = self.make(30, error_return)
-        results = []
-        for i in range(3):
-            try:
-                results.append(launcher.run_sample(task=SimpleNamespace(name="synthetic"), model="anthropic/claude-opus-5-5", unit_id=f"err{i}", estimate_usd=1)["settlement"]["cost_usd"])
-            except b.BudgetExhausted as ex:
-                results.append("refused: " + str(ex))
-        self.assertEqual(len(starts), 2)
-        self.assertEqual(results[:2], ["1.000000", "1.000000"])  # no usage → settled at the reservation (estimated), never zero
-        self.assertTrue(results[2].startswith("refused") and "ProviderError" in results[2], results[2])
+        """B1 (returned error logs): fail_on_error=False returns an error log; each is an engineering failure settled at the
+        reservation (no usage). B2-1 approved policy (2026-10-31): a settlement without usage also HOLDS further paid
+        starts, so the second start is refused by the hold before the failure-count rule can apply; after a recorded
+        reconciliation of the first unit the second start runs, and the third is refused by both the hold and the
+        second-occurrence rule. Old expectation: two starts settled, third refused by the failure count only."""
+        launcher, ledger = self.make(100, lambda task, **kw: returned_error_log())
+        s1 = launcher.run_sample(task=SimpleNamespace(name="t"), model="anthropic/claude-opus-5-5", unit_id="u1", estimate_usd=1)["settlement"]
+        self.assertEqual((s1["cost_usd"], s1["estimated"], s1["manual_review_required"]), ("1.000000", True, True))  # no usage -> reservation, estimated, hold
+        with self.assertRaisesRegex(b.BudgetExhausted, "manual review"):
+            launcher.run_sample(task=SimpleNamespace(name="t"), model="anthropic/claude-opus-5-5", unit_id="u2", estimate_usd=1)
+        ledger.resolve_manually("u1", resolution="settled_amount", by="tester", basis="synthetic account check", amount_usd="0.30")
+        s2 = launcher.run_sample(task=SimpleNamespace(name="t"), model="anthropic/claude-opus-5-5", unit_id="u2", estimate_usd=1)["settlement"]
+        self.assertEqual((s2["cost_usd"], s2["manual_review_required"]), ("1.000000", True))
         self.assertEqual(launcher.engineering_failures, {"ProviderError": 2})
+        with self.assertRaisesRegex(b.BudgetExhausted, "occurred 2 times"):
+            launcher.run_sample(task=SimpleNamespace(name="t"), model="anthropic/claude-opus-5-5", unit_id="u3", estimate_usd=1)
         snap = ledger.snapshot()
-        self.assertEqual((snap["settled_units"], snap["open_reservations"], snap["settled_usd"]), (["err0", "err1"], [], "2.000000"))
-        entries = self.entries(ledger)
-        self.assertEqual([e["type"] for e in entries], ["reservation", "settlement", "engineering_failure"] * 2)  # the refusal added nothing
-        self.assertTrue(all(e["estimated"] and e["manual_review_required"] is False for e in entries if e["type"] == "settlement"))
-        self.assertTrue(all("synthetic provider failure" in e["detail"] for e in entries if e["type"] == "engineering_failure"))
-        refused = [v for k, v in self.records(launcher).items() if "_refused_" in k]
-        self.assertEqual(len(refused), 1); self.assertIn("ProviderError", refused[0])
-        # a restart keeps the stop condition
-        launcher2, ledger2 = L.PilotLauncher(self.cfg, runs_root=self.root, ledger=b.BudgetLedger(ledger.path, 30, PRICES), eval_fn=error_return), None
-        with self.assertRaises(b.BudgetExhausted):
-            launcher2.run_sample(task=SimpleNamespace(name="synthetic"), model="anthropic/claude-opus-5-5", unit_id="err3", estimate_usd=1)
-        self.assertEqual(len(starts), 2)
-        self.assertEqual(self.entries(launcher2.ledger)[:6], entries)  # original outcomes unchanged
+        self.assertEqual((snap["settled_usd"], snap["review_pending_units"], snap["resolved_units"]), ("1.300000", ["u2"], ["u1"]))  # u1 adjusted to the verified 0.30
 
     def test_cost_above_twice_the_estimate_records_a_stop_that_survives_restart(self):
         def eval_fn(task, **kw):
@@ -565,23 +554,183 @@ class JudgeBatchSettlementTests(_Base):
     """U3: run_judge_batch with a ProviderJudge-style dict result. Incomplete usage is never priced as if complete:
     the settlement is the larger of the priced known part and the reservation, flagged estimated."""
 
-    def test_incomplete_usage_settles_at_the_reservation_floor_or_the_larger_priced_part(self):
+    def test_incomplete_usage_settles_conservatively_and_holds_until_reconciled(self):
+        """Approved policy (2026-10-31): incomplete usage -> larger of priced known part and reservation, estimated AND a
+        persistent manual hold; the next paid unit is refused until a verified-amount reconciliation; unresolvable keeps
+        the hold; complete usage never triggers it; legacy tuple results keep the old behaviour."""
         launcher, ledger = self.make(100, None)
         small = {"usage": {"anthropic/claude-opus-5-5": {"input_tokens": 1000, "output_tokens": 0, "cache_read_tokens": 0, "cache_write_tokens": 0}}, "retries": {}, "usage_incomplete": True, "note": "1 call uncertain"}
         r1 = launcher.run_judge_batch(unit_id="j1", estimate_usd=Decimal("0.50"), batch_fn=lambda: small)
-        self.assertEqual((r1["settlement"]["cost_usd"], r1["settlement"]["estimated"], r1["usage_incomplete"]), ("0.500000", True, True)); self.assertIn("1000", r1["settlement"]["note"])
+        self.assertEqual((r1["settlement"]["cost_usd"], r1["settlement"]["estimated"], r1["settlement"]["manual_review_required"], r1["usage_incomplete"]), ("0.500000", True, True, True))
+        self.assertEqual(r1["settlement"]["raw_usage"]["anthropic/claude-opus-5-5"]["input_tokens"], 1000)  # the known usage stays in the settlement
+        self.assertTrue(any(f.startswith("hold:") for f in r1["settlement"]["flags"]) and any(f.startswith("incomplete usage: priced known part") for f in r1["settlement"]["flags"]), r1["settlement"]["flags"])
         complete = {**small, "usage_incomplete": False}
+        with self.assertRaisesRegex(b.BudgetExhausted, "manual review"):
+            launcher.run_judge_batch(unit_id="j3", estimate_usd=Decimal("0.50"), batch_fn=lambda: complete)  # hold persists across starts
+        ledger2 = b.BudgetLedger(ledger.path, 100, PRICES)  # restart: the hold is ledger state
+        self.assertEqual(ledger2.snapshot()["review_pending_units"], ["j1"])
+        ledger2.resolve_manually("j1", resolution="unresolvable", by="tester", basis="synthetic: account statement not available")
+        with self.assertRaisesRegex(b.BudgetExhausted, "manual review"):
+            launcher.run_judge_batch(unit_id="j3", estimate_usd=Decimal("0.50"), batch_fn=lambda: complete)  # unresolvable lifts nothing
+        ledger2.resolve_manually("j1", resolution="settled_amount", by="tester", basis="synthetic: statement shows 0.41", amount_usd="0.41")
         r3 = launcher.run_judge_batch(unit_id="j3", estimate_usd=Decimal("0.50"), batch_fn=lambda: complete)
-        self.assertEqual((r3["settlement"]["cost_usd"], r3["settlement"]["estimated"]), ("0.004000", False))
-        r4 = launcher.run_judge_batch(unit_id="j4", estimate_usd=Decimal("0.50"), batch_fn=lambda: ({}, {}))  # legacy tuple, no usage -> reservation
+        self.assertEqual((r3["settlement"]["cost_usd"], r3["settlement"]["estimated"], r3["settlement"]["manual_review_required"]), ("0.004000", False, False))
+        r4 = launcher.run_judge_batch(unit_id="j4", estimate_usd=Decimal("0.50"), batch_fn=lambda: ({}, {}))  # legacy tuple, no usage -> reservation (no hold in the legacy path)
         self.assertEqual((r4["settlement"]["cost_usd"], r4["settlement"]["estimated"]), ("0.500000", True))
         big = {**small, "usage": {"anthropic/claude-opus-5-5": {"input_tokens": 1_000_000, "output_tokens": 0, "cache_read_tokens": 0, "cache_write_tokens": 0}}}
         r2 = launcher.run_judge_batch(unit_id="j2", estimate_usd=Decimal("0.50"), batch_fn=lambda: big)
-        self.assertEqual((r2["settlement"]["cost_usd"], r2["settlement"]["estimated"]), ("4.000000", True))  # priced known part above the reservation wins ...
-        self.assertTrue(r2["post_run"]["stop_recorded"])  # ... and exceeds 2x the estimate: a stop is recorded
-        with self.assertRaisesRegex(b.BudgetExhausted, "2x its estimate"):
-            launcher.run_judge_batch(unit_id="j5", estimate_usd=Decimal("0.50"), batch_fn=lambda: complete)  # refused before any call
-        self.assertEqual([e["type"] for e in self.entries(ledger)], ["reservation", "settlement"] * 4 + ["stop"])
+        self.assertEqual((r2["settlement"]["cost_usd"], r2["settlement"]["estimated"], r2["settlement"]["manual_review_required"]), ("4.000000", True, True))  # priced known part wins, still held
+        self.assertTrue(r2["post_run"]["stop_recorded"])
+        snap = ledger.snapshot()
+        self.assertEqual((snap["settled_usd"], snap["resolved_units"], snap["review_pending_units"]), ("4.914000", ["j1"], ["j2"]))  # 0.41 + 0.004 + 0.50 + 4.00
+        self.assertEqual([e["type"] for e in self.entries(ledger)], ["reservation", "settlement", "manual_resolution", "manual_resolution", "reservation", "settlement", "reservation", "settlement", "reservation", "settlement", "stop"])
+
+    def test_open_reservation_of_another_unit_blocks_new_paid_starts(self):
+        """B2-1: a reservation never settled, voided or resolved (an earlier process died) refuses every new paid unit
+        before any call; a void or a verified-amount resolution releases it; the unit's own idempotent reservation is fine."""
+        launcher, ledger = self.make(100, lambda task, **kw: usage_log(kw["model"], ModelUsage(input_tokens=1000, output_tokens=0)))
+        ledger.reserve("stale-unit", "sample", 2, {"model": "m", "task": "t"})  # left open by a crashed process
+        with self.assertRaisesRegex(b.BudgetExhausted, "open reservation"):
+            launcher.run_sample(task=SimpleNamespace(name="t"), model="anthropic/claude-opus-5-5", unit_id="u1", estimate_usd=1)
+        with self.assertRaisesRegex(b.BudgetExhausted, "open reservation"):
+            launcher.run_judge_batch(unit_id="j1", estimate_usd=Decimal("0.2"), batch_fn=lambda: ({}, {}))
+        self.assertEqual([e["type"] for e in self.entries(ledger)], ["reservation"])  # nothing else happened
+        ledger.resolve_manually("stale-unit", resolution="settled_amount", by="tester", basis="synthetic: provider statement 0.00", amount_usd="0")
+        meta = launcher.run_sample(task=SimpleNamespace(name="t"), model="anthropic/claude-opus-5-5", unit_id="u1", estimate_usd=1)
+        self.assertEqual(meta["settlement"]["cost_usd"], "0.004000")
+        self.assertTrue(meta["ledger_binding"]["written"]); self.assertEqual(meta["ledger_binding"]["ledger_id"], ledger.snapshot()["ledger_id"])
+        self.assertTrue(os.path.exists(os.path.join(self.root, "u1", "ledger_binding.json")))  # runs_root/<sample uuid>/ledger_binding.json
+
+
+class ExecutionClaimAndRecoveryTests(_Base):
+    """Codex B2 review counter-examples (logs/b2-review-76gawzsc): check_reserve_race, same_unit_reexecution,
+    generation_partial_usage, generation_exception, post_response_failure."""
+    M = "anthropic/claude-opus-5-5"
+
+    def test_two_concurrent_executors_on_one_ledger_admit_exactly_one_paid_call(self):
+        import threading
+        ledger = b.BudgetLedger(os.path.join(self.root, "ledger.json"), 100, PRICES)
+        entered, gate = [], threading.Barrier(2)
+        def eval_fn(task, **kw):
+            entered.append(kw["model"]); return usage_log(kw["model"], ModelUsage(input_tokens=1000, output_tokens=0))
+        outcomes = {}
+        def worker(uid):
+            launcher = L.PilotLauncher(self.cfg, runs_root=os.path.join(self.root, uid), ledger=b.BudgetLedger(ledger.path, 100, PRICES), eval_fn=eval_fn)
+            gate.wait()
+            try:
+                launcher.run_sample(task=SimpleNamespace(name="t"), model=self.M, unit_id=uid, estimate_usd=1); outcomes[uid] = "ran"
+            except (b.BudgetExhausted, b.LedgerConflict) as ex:
+                outcomes[uid] = "refused"
+        ts = [threading.Thread(target=worker, args=(u,)) for u in ("race-a", "race-b")]
+        [t.start() for t in ts]; [t.join() for t in ts]
+        self.assertEqual((sorted(outcomes.values()), len(entered)), (["ran", "refused"], 1), outcomes)
+        snap = ledger.snapshot(); self.assertEqual((len(snap["settled_units"]), snap["open_reservations"]), (1, []))
+
+    def test_a_unit_with_an_open_reservation_is_never_re_executed(self):
+        entered = []
+        launcher, ledger = self.make(100, lambda task, **kw: entered.append(1) or usage_log(kw["model"], ModelUsage(input_tokens=1000, output_tokens=0)))
+        ledger.reserve("u1", "sample", 1, {"model": self.M, "task": "t"})  # an earlier executor claimed u1 and died
+        with self.assertRaises((b.BudgetExhausted, b.LedgerConflict)):
+            launcher.run_sample(task=SimpleNamespace(name="t"), model=self.M, unit_id="u1", estimate_usd=1)
+        self.assertEqual(entered, []); self.assertEqual([e["type"] for e in self.entries(ledger)], ["reservation"])
+
+    def test_partial_usage_across_model_events_is_estimated_and_held(self):
+        log = usage_log(self.M, ModelUsage(input_tokens=1000, output_tokens=100), calls=[ModelUsage(input_tokens=1000, output_tokens=100)])
+        log[0].samples[0].events.append(SimpleNamespace(event="model", model=self.M, retries=None, output=SimpleNamespace(usage=None)))  # a second call whose usage was not reported
+        launcher, ledger = self.make(100, lambda task, **kw: log)
+        s = launcher.run_sample(task=SimpleNamespace(name="t"), model=self.M, unit_id="u", estimate_usd=1)["settlement"]
+        self.assertEqual((s["cost_usd"], s["estimated"], s["manual_review_required"]), ("1.000000", True, True))  # priced 0.006 < reservation; not 0.006 exact
+        self.assertTrue(any("unknown" in f or "incomplete" in f for f in s["flags"]), s["flags"])
+        with self.assertRaisesRegex(b.BudgetExhausted, "manual review"):
+            launcher.run_sample(task=SimpleNamespace(name="t"), model=self.M, unit_id="u2", estimate_usd=1)
+        # the same two calls with both usages reported settle exactly and hold nothing
+        full = usage_log(self.M, ModelUsage(input_tokens=2000, output_tokens=200), calls=[ModelUsage(input_tokens=1000, output_tokens=100)] * 2)
+        launcher2, ledger2 = self.make(100, lambda task, **kw: full, name="ledger2.json")
+        s2 = launcher2.run_sample(task=SimpleNamespace(name="t"), model=self.M, unit_id="u", estimate_usd=1)["settlement"]
+        self.assertEqual((s2["cost_usd"], s2["estimated"], s2["manual_review_required"]), ("0.012000", False, False))
+
+    def test_eval_exception_settles_conservatively_holds_and_records_the_recovery_limit(self):
+        def boom(task, **kw):
+            raise RuntimeError("synthetic transport failure")
+        launcher, ledger = self.make(100, boom)
+        with self.assertRaises(RuntimeError):
+            launcher.run_sample(task=SimpleNamespace(name="t"), model=self.M, unit_id="u", estimate_usd=1)
+        s = ledger.effective_settlement("u")["effective"]
+        self.assertEqual((s["cost_usd"], s["estimated"], s["manual_review_required"]), ("1.000000", True, True))
+        rec = next(v for k, v in self.records(launcher).items() if "_sample_error_" in k)
+        self.assertIn("usage_recovery", rec); self.assertIn("recovered", json.loads(rec)["usage_recovery"]) if isinstance(rec, str) else None
+        with self.assertRaisesRegex(b.BudgetExhausted, "manual review"):
+            launcher.run_sample(task=SimpleNamespace(name="t"), model=self.M, unit_id="u2", estimate_usd=1)
+
+    def test_judge_failure_after_known_usage_keeps_the_known_cost_and_stops(self):
+        launcher, ledger = self.make(100, None)
+        known = {self.M: {"input_tokens": 1_000_000, "output_tokens": 150_000, "cache_read_tokens": 0, "cache_write_tokens": 0}}  # 4 + 3 = 7 USD known
+        def batch_fn():
+            raise OSError("synthetic review-material write failure")
+        with self.assertRaises(OSError):
+            launcher.run_judge_batch(unit_id="j", estimate_usd=Decimal("1"), batch_fn=batch_fn, recover_usage=lambda: {"usage": known, "unknown_calls": 0, "source": "write-ahead log"})
+        s = ledger.effective_settlement("j")["effective"]
+        self.assertEqual((s["cost_usd"], s["estimated"], s["manual_review_required"]), ("7.000000", True, True))  # never the 1 USD reservation
+        self.assertTrue(any("exceeds 2x" in r for r in ledger.stop_reasons()))
+        self.assertEqual([e["type"] for e in self.entries(ledger)], ["reservation", "engineering_failure", "settlement", "stop"])  # one settlement, no duplicate
+
+
+def write_inspect_log(path, *, eval_id, run_id, task, model, sample_uuid, input_tokens, status="success"):
+    """A real Inspect EvalLog file (read back by read_eval_log), standing in for what Inspect writes under log_dir."""
+    from inspect_ai.log import EvalConfig, EvalDataset, EvalLog, EvalSample, EvalSpec, write_eval_log
+    spec = EvalSpec(task=task, task_id=f"T-{eval_id}", run_id=run_id, created="2026-10-31T00:00:00+00:00", dataset=EvalDataset(), model=model, config=EvalConfig(), eval_id=eval_id)
+    sample = EvalSample(id="1137e2bb-bdf9-4876-b572-f29b7de5e595", epoch=1, input="x", target="", uuid=sample_uuid, model_usage={model: ModelUsage(input_tokens=input_tokens, output_tokens=0)})
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    write_eval_log(EvalLog(eval=spec, samples=[sample], status=status), path)
+
+
+class ExecutionBoundRecoveryTests(_Base):
+    """Codex closure review (logs/b2-closure-review-tf6xtnn5, foreign_recovery): usage recovered after an eval exception
+    must belong to THIS execution and count each billable event once. The binding is the per-unit log directory the
+    launcher hands to eval(); logs anywhere else, or logs whose eval identity does not match, never contribute."""
+    M = "anthropic/claude-opus-5-5"  # priced in the config (the cost-limit check refuses an unpriced model before eval) and in PRICES: 4 USD per 1M input tokens
+    PRICED = PRICES
+
+    def make_priced(self, eval_fn):
+        ledger = b.BudgetLedger(os.path.join(self.root, "ledger.json"), 100, self.PRICED)
+        return L.PilotLauncher(self.cfg, runs_root=self.root, ledger=ledger, eval_fn=eval_fn), ledger
+
+    def test_only_this_executions_log_counts_and_only_once(self):
+        seen = {}
+        def eval_fn(task, **kw):
+            seen["log_dir"] = kw["log_dir"]
+            # Inspect wrote this execution's log (twice: a duplicate representation) ...
+            write_inspect_log(os.path.join(kw["log_dir"], "own.eval"), eval_id="EID-own", run_id="RID-own", task=task.name, model=kw["model"], sample_uuid="SU-own", input_tokens=1_000_000)
+            write_inspect_log(os.path.join(kw["log_dir"], "own-copy.json"), eval_id="EID-own", run_id="RID-own", task=task.name, model=kw["model"], sample_uuid="SU-own", input_tokens=1_000_000)
+            raise RuntimeError("synthetic failure after the log was written")
+        launcher, ledger = self.make_priced(eval_fn)
+        # ... while another run's $28 of usage sits next to it in two representations (same task, model, fresh mtime)
+        for name in ("foreign-a.eval", "foreign-b.json"):
+            write_inspect_log(os.path.join(launcher.log_dir, name), eval_id="EID-other", run_id="RID-other", task="pilot_1137e2bb", model=self.M, sample_uuid="SU-other", input_tokens=7_000_000)
+        with self.assertRaises(RuntimeError):
+            launcher.run_sample(task=SimpleNamespace(name="pilot_1137e2bb"), model=self.M, unit_id="CURRENT-UNIT", estimate_usd=1)
+        s = ledger.effective_settlement("CURRENT-UNIT")["effective"]
+        self.assertEqual((s["cost_usd"], s["estimated"], s["manual_review_required"]), ("4.000000", True, True))  # 1M tokens x 4 USD once; never 8 (duplicate) nor 32/60 (foreign)
+        self.assertEqual(s["raw_usage"][self.M]["input_tokens"], 1_000_000)
+        self.assertNotEqual(seen["log_dir"], launcher.log_dir)  # the execution got its own directory under the launcher's log root
+        rec = json.loads(next(v for k, v in self.records(launcher).items() if "_sample_error_" in k))
+        r = rec["usage_recovery"]
+        self.assertEqual((r["recovered"], r["counted_events"], r["duplicate_events_skipped"], r["attribution_uncertain"]), (True, 1, 1, False))
+        self.assertTrue(all(l["log"] in ("own.eval", "own-copy.json") for l in r["logs"]))  # foreign files were never considered
+
+    def test_unattributable_log_in_the_unit_directory_is_uncertain_not_counted(self):
+        def eval_fn(task, **kw):
+            write_inspect_log(os.path.join(kw["log_dir"], "mine.eval"), eval_id="EID-1", run_id="RID-1", task=task.name, model=kw["model"], sample_uuid="SU-1", input_tokens=500_000)
+            write_inspect_log(os.path.join(kw["log_dir"], "stray.eval"), eval_id="EID-2", run_id="RID-2", task="some_other_task", model=kw["model"], sample_uuid="SU-2", input_tokens=7_000_000)
+            raise RuntimeError("synthetic failure")
+        launcher, ledger = self.make_priced(eval_fn)
+        with self.assertRaises(RuntimeError):
+            launcher.run_sample(task=SimpleNamespace(name="pilot_1137e2bb"), model=self.M, unit_id="u", estimate_usd=1)
+        s = ledger.effective_settlement("u")["effective"]
+        self.assertEqual((s["cost_usd"], s["estimated"], s["manual_review_required"]), ("2.000000", True, True))  # the attributable 0.5M tokens (2 USD) are kept; the stray log is not
+        r = json.loads(next(v for k, v in self.records(launcher).items() if "_sample_error_" in k))["usage_recovery"]
+        self.assertTrue(r["attribution_uncertain"]); self.assertEqual([l["log"] for l in r["logs"] if l.get("excluded")], ["stray.eval"])
+        self.assertTrue(ledger.snapshot()["review_pending_units"] == ["u"])
 
 
 class RealRunCliTests(_Base):
@@ -637,7 +786,8 @@ class RealRunCliTests(_Base):
         task, kw = seen[0]
         self.assertEqual((task.name, kw["model"], kw["max_tokens"], kw["token_limit"], kw["time_limit"], kw["retry_on_error"], kw["fail_on_error"], kw["task_retry_attempts"]),
                          ("pilot_1137e2bb", self.MODEL, self.cfg["generation"]["max_tokens_per_request"], self.cfg["generation"]["token_limit"], self.cfg["generation"]["time_limit_s"], 0, False, 0))
-        self.assertEqual(kw["log_dir"], os.path.join(self.runs, "inspect_logs")); self.assertEqual(env.get("ANTHROPIC_API_KEY"), "dummy-test-key-not-real-0003")
+        self.assertEqual(os.path.dirname(kw["log_dir"]), os.path.join(self.runs, "inspect_logs")); self.assertTrue(os.path.isdir(kw["log_dir"]))  # per-execution log directory
+        self.assertEqual(env.get("ANTHROPIC_API_KEY"), "dummy-test-key-not-real-0003")
         records = {f: json.loads(Path(self.runs, "launcher_records", f).read_text()) for f in os.listdir(os.path.join(self.runs, "launcher_records"))}
         prov = next(v for k, v in records.items() if "_real_run_provenance_" in k)
         self.assertEqual((prov["task_id"], prov["model"], prov["sample_ids"], prov["prompt"]["matched_form"], prov["image_id"], prov["authorization"]["by"], prov["authorization"]["ref"]),

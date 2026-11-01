@@ -27,9 +27,10 @@ def check(name, ok, detail=None):
     print(f"  [{'PASS' if ok else 'FAIL'}] {name}" + (f" -- {str(detail)[:300]}" if detail is not None and not ok else ""))
 
 
-def main():
-    ap = argparse.ArgumentParser(); ap.add_argument("--output-root", required=True); args = ap.parse_args()
-    out = os.path.realpath(args.output_root); os.makedirs(out, exist_ok=False)
+def run_pilot_cli(output_root: str) -> dict:
+    """Run the real-run CLI path with the real Inspect eval, the docker sandbox and mockllm into output_root; returns the
+    manifest (run dir, eval log, ledger, unit id). Reused by grading.tests.regress_grading_cli to obtain a fresh, bound run."""
+    out = os.path.realpath(output_root); os.makedirs(out, exist_ok=False)
     runs = os.path.join(out, "runs"); os.makedirs(runs)
     env_file = os.path.join(out, "env.test")
     with open(env_file, "w", encoding="utf-8") as f:
@@ -49,8 +50,9 @@ def main():
             "--real-run", "--confirm", f"{TASK}|{M}|1", "--authorized-by", "mock-regression", "--authorization-ref", "harness/tests/regress_pilot_cli.py"]
     rc = H.main(argv, eval_fn=mock_eval, environ=env)
     check("main --real-run returned 0 through the real Inspect eval with mockllm", rc == 0 and len(calls) == 1, (rc, calls))
-    evals = sorted(f for f in os.listdir(os.path.join(runs, "inspect_logs")) if f.endswith(".eval")) if os.path.isdir(os.path.join(runs, "inspect_logs")) else []
-    check("exactly one .eval written under runs_root/inspect_logs", len(evals) == 1, evals)
+    evals = sorted(os.path.join(dp, f) for dp, _, fs in os.walk(os.path.join(runs, "inspect_logs")) for f in fs if f.endswith(".eval")) if os.path.isdir(os.path.join(runs, "inspect_logs")) else []
+    unit_dirs = sorted(d for d in os.listdir(os.path.join(runs, "inspect_logs")) if os.path.isdir(os.path.join(runs, "inspect_logs", d))) if os.path.isdir(os.path.join(runs, "inspect_logs")) else []
+    check("exactly one .eval written, inside this unit's own log directory under runs_root/inspect_logs (the execution binding for usage recovery)", len(evals) == 1 and len(unit_dirs) == 1 and evals[0].startswith(os.path.join(runs, "inspect_logs", unit_dirs[0])), (evals, unit_dirs))
     run_dirs = [d for d in os.listdir(runs) if d not in ("inspect_logs", "launcher_records") and os.path.isdir(os.path.join(runs, d))]
     check("exactly one run directory (TaskState uuid)", len(run_dirs) == 1, run_dirs)
     run_dir = os.path.join(runs, run_dirs[0]) if run_dirs else None
@@ -70,13 +72,20 @@ def main():
     check("no synthetic key value in any produced file (the test's own env file is the only holder)", leaked == [], leaked)
     ledger = json.load(open(os.path.join(out, "ledger.json")))
     check("ledger: one reservation and one settlement for the unit", [e["type"] for e in ledger["entries"]] == ["reservation", "settlement"], [e["type"] for e in ledger["entries"]])
-    manifest = {"run_dir": run_dir, "eval_log": os.path.join(runs, "inspect_logs", evals[0]) if evals else None, "ledger": os.path.join(out, "ledger.json"), "unit_id": (sample or {}).get("unit_id"), "task_id": TASK, "model": M}
+    manifest = {"run_dir": run_dir, "eval_log": evals[0] if evals else None, "unit_log_dir": os.path.join(runs, "inspect_logs", unit_dirs[0]) if unit_dirs else None, "ledger": os.path.join(out, "ledger.json"), "unit_id": (sample or {}).get("unit_id"), "task_id": TASK, "model": M}
     with open(os.path.join(out, "pilot_cli_manifest.json"), "w", encoding="utf-8") as f:
         json.dump(manifest, f, indent=1)
     with open(os.path.join(out, "results.json"), "w", encoding="utf-8") as f:
         json.dump({"checks": CHECKS, "manifest": manifest, "eval_calls": calls}, f, indent=1, default=str)
+    H.model_cost_config = original_cost_config
+    return manifest
+
+
+def main():
+    ap = argparse.ArgumentParser(); ap.add_argument("--output-root", required=True); args = ap.parse_args()
+    manifest = run_pilot_cli(args.output_root)
     failed = [c for c in CHECKS if c["result"] != "PASS"]
-    print(f"\n==== PILOT CLI {len(CHECKS) - len(failed)} PASS, {len(failed)} FAIL; results {os.path.join(out, 'results.json')}")
+    print(f"\n==== PILOT CLI {len(CHECKS) - len(failed)} PASS, {len(failed)} FAIL; results {os.path.join(os.path.realpath(args.output_root), 'results.json')}")
     raise SystemExit(1 if failed else 0)
 
 

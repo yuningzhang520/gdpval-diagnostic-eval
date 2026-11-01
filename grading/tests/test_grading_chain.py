@@ -18,7 +18,7 @@ from harness.tests.test_collect_unit import RUN, FakeSandbox
 from harness.tests.test_collect_limits_unit import SlowSandbox
 from grading import checks_1137e2bb as CK, extract as X, judge as J, costs as CO
 from grading.fixtures_1137e2bb import NEGATIVES, TASK, build_fixture
-from grading.grade import grade_run, grading_passes, select_pass
+from grading.grade import grade_run, grading_passes, judge_completeness, select_pass, selected_grades
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 RUBRIC = json.load(open(os.path.join(ROOT, "private", "rubric", f"{TASK}.json"), encoding="utf-8"))
@@ -97,8 +97,17 @@ class GradingChainTests(unittest.TestCase):
         self.assertEqual((rec1["pass_kind"], rec2["pass_kind"], rec1["pass_index"], rec2["pass_index"]), ("deterministic_only", "deterministic_plus_judge", 1, 2))
         self.assertNotEqual(rec1["grading_pass"], rec2["grading_pass"]); self.assertEqual(rec2["supersedes_pass"], rec1["grading_pass"]); self.assertIsNone(rec1["supersedes_pass"])
         passes = grading_passes(out, b["uuid"])
-        self.assertEqual([p["grading_pass"] for p in passes], [rec1["grading_pass"], rec2["grading_pass"]]); self.assertEqual(select_pass(passes)["grading_pass"], rec2["grading_pass"])
-        self.assertEqual(select_pass(passes[:1])["grading_pass"], rec1["grading_pass"])  # with only a D-only pass, that pass is selected
+        self.assertEqual([p["grading_pass"] for p in passes], [rec1["grading_pass"], rec2["grading_pass"]])
+        blind = selected_grades(out, b["uuid"])  # Codex closure review (attempt_selection): without the attempt history the statistics entry must fail closed
+        self.assertEqual((blind["blocked"], len(blind["grades"])), (True, 0))  # pre-fix: (False, one row per rubric item of the old pass)
+        self.assertFalse(blind["authoritative"]); self.assertIn("attempt history", blind["basis"])
+        self.assertFalse(select_pass(passes)["authoritative"])  # the low-level view without attempts is historical inspection only
+        sel = select_pass(passes, attempts=[])  # attempt history loaded (none recorded): authoritative selection, no warning
+        self.assertEqual((sel["pass"]["grading_pass"], sel["warnings"], sel["authoritative"]), (rec2["grading_pass"], [], True)); self.assertIn("complete", sel["basis"])
+        self.assertEqual(select_pass(passes[:1])["pass"]["grading_pass"], rec1["grading_pass"])  # with only a D-only pass, that pass is selected (with a pending-judge warning)
+        self.assertEqual(rec2["judge_completeness"], "complete"); self.assertEqual(rec1["judge_completeness"], "none")
+        sg = selected_grades(out, b["uuid"], attempts=[])  # attempt history loaded (none): authoritative
+        self.assertEqual(({r["grading_pass"] for r in sg["grades"]}, len(sg["grades"]), sg["authoritative"]), ({rec2["grading_pass"]}, len(RUBRIC), True))  # statistics input: one pass, one row per item
         rows = [json.loads(l) for l in open(os.path.join(out, "grades.jsonl"))]
         self.assertEqual({r["grading_pass"] for r in rows}, {rec1["grading_pass"], rec2["grading_pass"]}); self.assertEqual(len(rows), 2 * len(RUBRIC))
         d1 = {r["item"]: r["verdict"] for r in rows if r["grading_pass"] == rec1["grading_pass"] and r["source"] == "D"}
@@ -106,7 +115,7 @@ class GradingChainTests(unittest.TestCase):
         self.assertEqual(d1, d2)  # the deterministic verdicts are unchanged by the judge pass
         j2 = [r for r in rows if r["grading_pass"] == rec2["grading_pass"] and r["source"] == "J"]
         self.assertEqual({r["verdict"] for r in j2}, {"pass"}); self.assertTrue(all(r["error_class"] is None and r["call_status"] == "ok" and r["usage_status"] == "ok" for r in j2))
-        self.assertEqual(rec2["judge_call_summary"], {"ok": 7, "provider_error": 0, "judge_parse_error": 0, "usage_uncertain": 0}); self.assertEqual(rec2["score"]["E"], rec2["score"]["W"])
+        self.assertEqual(rec2["judge_call_summary"], {"ok": 7, "provider_error": 0, "judge_parse_error": 0, "not_attempted": 0, "usage_uncertain": 0}); self.assertEqual(rec2["score"]["E"], rec2["score"]["W"])
         self.assertEqual(len({p["run"]["uuid"] for p in passes}), 1)
         self.assertNotEqual(rec1["review_materials"]["judge_verdicts"], rec2["review_materials"]["judge_verdicts"]); self.assertEqual(rec1["review_materials"]["independent_template"], rec2["review_materials"]["independent_template"])
 
@@ -367,12 +376,8 @@ class GradingChainTests(unittest.TestCase):
         self.assertTrue(g["estimated"])
         j = CO.grading_cost({"google/gemini-3.1-pro-preview": {"input_tokens": 10}}, prices)
         self.assertEqual(j["per_model"]["google/gemini-3.1-pro-preview"]["status"], "unknown_price")
-        p = CO.human_time_template(os.path.join(self.base, "human_time.csv"))
-        self.assertTrue(os.path.exists(p))
-
-
-if __name__ == "__main__":
-    unittest.main()
+        rec = CO.run_cost_record("run-x", g, j, None)
+        self.assertEqual((rec["run_uuid"], rec["human_minutes_source"]), ("run-x", "not recorded"))  # human time is recorded by the reviewer, no template is generated (B2-2)
 
 
 class JudgeAdapterTests(unittest.TestCase):
@@ -389,31 +394,123 @@ class JudgeAdapterTests(unittest.TestCase):
             o.error = error
         return o
 
-    def test_call_records_and_error_classes(self):
+    def test_call_records_error_classes_and_the_halt_after_uncertain_usage(self):
+        """Error classes are kept apart: a protocol breach is judge_parse_error (usage ok), a provider exception is
+        provider_error with uncertain usage. Approved policy (2026-10-31): after the first call whose usage cannot be
+        accounted (provider error or missing usage) no further request is sent; the remaining units are not_attempted,
+        never judged, never charged. Completed verdicts and usage stay."""
         good = json.dumps({"verdict": "fail", "evidence": [{"file": "x.docx", "location": "p3", "quote": "q"}], "rationale": "r"})
-        scripted = [self.out(good), self.out("Sure! The deliverable looks fine."), RuntimeError("synthetic connection reset"), self.out(good, usage=False), self.out(good, error="synthetic provider refusal")]
+        scripted = [self.out(good), self.out("Sure! The deliverable looks fine."), RuntimeError("synthetic connection reset"), self.out(good), self.out(good)]
+        sent = []
         def generate(messages):
-            nxt = scripted.pop(0)
+            nxt = scripted.pop(0); sent.append(1)
             if isinstance(nxt, Exception):
                 raise nxt
             return nxt
-        judge = J.ProviderJudge("google/judge-test", generate=generate, judge_id="test-judge")
+        log = os.path.join(tempfile.mkdtemp(prefix="judge_log_"), "calls.jsonl")
+        judge = J.ProviderJudge("google/judge-test", generate=generate, judge_id="test-judge", log_path=log, run_uuid="RUN", judge_unit="RUN:judge:t")
         verdicts = J.judge_units([self.unit(i) for i in (23, 24, 27, 28, 29)], judge)
         by = {v["item"]: v for v in verdicts}
         self.assertEqual((by[23]["verdict"], by[23]["call_status"], by[23]["error_class"], by[23]["usage_status"], by[23]["usage_uncertain"]), ("fail", "ok", None, "ok", False))
         self.assertEqual((by[24]["verdict"], by[24]["error_class"], by[24]["usage_status"]), ("cannot_assess", "judge_parse_error", "ok")); self.assertIn("JSON", by[24]["parse_error"] or "parse")
         self.assertEqual((by[27]["verdict"], by[27]["error_class"], by[27]["call_status"], by[27]["usage_status"], by[27]["usage_uncertain"]), ("cannot_assess", "provider_error", "provider_error", "uncertain", True))
         self.assertEqual((by[27]["error"]["class"], by[27]["raw_response"]), ("RuntimeError", None))
-        self.assertEqual((by[28]["verdict"], by[28]["error_class"], by[28]["usage_status"], by[28]["usage_uncertain"]), ("fail", None, "missing", True))  # verdict stands; cost uncertain
-        self.assertEqual((by[29]["verdict"], by[29]["error_class"], by[29]["error"]["class"]), ("cannot_assess", "provider_error", "ModelOutputError"))
-        self.assertTrue(all(v["verdict"] != "pass" for v in verdicts if v["error_class"]))
+        self.assertEqual([(by[i]["verdict"], by[i]["error_class"], by[i]["call_status"]) for i in (28, 29)], [("cannot_assess", "not_attempted", "not_attempted")] * 2)
+        self.assertEqual(len(sent), 3)  # calls 4 and 5 were never sent
         batch = judge.batch_result()
-        self.assertEqual((batch["calls"], batch["calls_ok"], batch["calls_provider_error"], batch["calls_usage_missing_or_uncertain"], batch["usage_incomplete"]), (5, 3, 2, 2, True))
-        self.assertEqual(batch["usage"], {"google/judge-test": {"input_tokens": 3000, "output_tokens": 300, "cache_read_tokens": 150, "cache_write_tokens": 0}})  # 3 responses carried usage (calls 1, 2, 5); the exception and the usage-less response carry none
-        self.assertEqual(len(judge.calls), 5); self.assertTrue(all(c["request_sha256"] and c["unit_id"] for c in judge.calls))
-        self.assertNotIn("synthetic connection reset", json.dumps(judge.calls).replace("synthetic connection reset", "")) ; self.assertEqual(judge.calls[2]["error"]["message"], "synthetic connection reset")
-        self.assertFalse(getattr(judge, "is_stub", False))
+        self.assertEqual((batch["calls"], batch["calls_ok"], batch["calls_provider_error"], batch["calls_not_attempted"], batch["usage_incomplete"]), (5, 2, 1, 2, True))
+        self.assertEqual(batch["usage"], {"google/judge-test": {"input_tokens": 2000, "output_tokens": 200, "cache_read_tokens": 100, "cache_write_tokens": 0}})
+        self.assertIn("RuntimeError", batch["halted"])
+        self.assertEqual(J.judge_completeness(verdicts) if hasattr(J, "judge_completeness") else judge_completeness(verdicts), "partial")
+        # write-ahead log: started before each sent request, a terminal event after; not_attempted recorded too
+        events = [json.loads(l) for l in open(log)]
+        self.assertEqual([e["phase"] for e in events], ["started", "finished", "started", "finished", "started", "finished", "not_attempted", "not_attempted"])
+        self.assertTrue(all(e["run_uuid"] == "RUN" and e["judge_unit"] == "RUN:judge:t" for e in events))
+        self.assertEqual(J.scan_judge_log(log)["unknown"], [])
+        self.assertEqual(events[1]["raw_response"], good); self.assertIsNone(events[5]["raw_response"])
+
+    def test_missing_usage_halts_the_batch_but_keeps_the_verdict_of_that_call(self):
+        good = json.dumps({"verdict": "pass", "evidence": [{"file": "x", "location": "p1", "quote": "q"}], "rationale": "r"})
+        scripted = [self.out(good), self.out(good, usage=False), self.out(good)]
+        sent = []
+        def generate(messages):
+            sent.append(1); return scripted.pop(0)
+        judge = J.ProviderJudge("google/judge-test", generate=generate)
+        v = {x["item"]: x for x in J.judge_units([self.unit(i) for i in (23, 24, 27)], judge)}
+        self.assertEqual((v[23]["verdict"], v[24]["verdict"], v[24]["usage_status"], v[24]["usage_uncertain"], v[24]["error_class"]), ("pass", "pass", "missing", True, None))  # a protocol-conformant answer is a verdict; its cost is uncertain
+        self.assertEqual((v[27]["verdict"], v[27]["error_class"]), ("cannot_assess", "not_attempted")); self.assertEqual(len(sent), 2)
+        self.assertTrue(judge.batch_result()["usage_incomplete"]); self.assertIn("no usage", judge.halted)
+        # the same scripted outputs with the halt disabled (test-only) send every call
+        scripted[:] = [self.out(good), self.out(good, usage=False), self.out(good)]; sent.clear()
+        judge2 = J.ProviderJudge("google/judge-test", generate=generate, stop_on_uncertain_usage=False)
+        J.judge_units([self.unit(i) for i in (23, 24, 27)], judge2); self.assertEqual(len(sent), 3)
+
+    def test_crash_after_started_is_unknown_and_a_log_failure_prevents_the_request(self):
+        class Crash(BaseException):  # not an Exception: the adapter does not swallow it (process death stand-in)
+            pass
+        good = json.dumps({"verdict": "pass", "evidence": [{"file": "x", "location": "p1", "quote": "q"}], "rationale": "r"})
+        scripted = [self.out(good), self.out(good), Crash()]
+        def generate(messages):
+            nxt = scripted.pop(0)
+            if isinstance(nxt, BaseException):
+                raise nxt
+            return nxt
+        log = os.path.join(tempfile.mkdtemp(prefix="judge_log_"), "calls.jsonl")
+        judge = J.ProviderJudge("google/judge-test", generate=generate, log_path=log, run_uuid="RUN", judge_unit="RUN:judge:crash")
+        with self.assertRaises(Crash):
+            J.judge_units([self.unit(i) for i in (23, 24, 27)], judge)
+        scan = J.scan_judge_log(log)
+        self.assertEqual([e["phase"] for e in (json.loads(l) for l in open(log))], ["started", "finished", "started", "finished", "started"])
+        self.assertEqual((scan["unknown"], scan["calls"]["t:item27"]["state"], scan["calls"]["t:item23"]["state"]), (["t:item27"], "UNKNOWN", "ok"))
+        self.assertEqual(len(judge.calls), 2)  # the crashed call never reached the in-memory record; the log is the evidence
+        # a log that cannot be written stops the request before it is sent
+        sent = []
+        bad = J.ProviderJudge("google/judge-test", generate=lambda m: sent.append(1) or self.out(good), log_path=os.path.join(log, "impossible", "calls.jsonl"))  # parent is a file
+        with self.assertRaises(OSError):
+            bad(self.unit(23))
+        self.assertEqual(sent, [])
 
     def test_stub_string_responses_still_work_and_are_not_reported_usage(self):
         v = J.judge_units([self.unit(23)], J.StubJudge())
         self.assertEqual((v[0]["call_status"], v[0]["usage_status"], v[0]["usage_uncertain"]), ("ok", "not_reported", False))
+
+
+class GradingCliVersionTests(unittest.TestCase):
+    def test_config_grader_version_must_equal_the_code_version(self):
+        from grading import run_grading as RG
+        from grading.grade import GRADER_VERSION
+        cfg = json.load(open(os.path.join(ROOT, "config.json")))
+        self.assertEqual(cfg["grading"]["grader_version"], GRADER_VERSION)
+        with tempfile.TemporaryDirectory() as d:
+            bad = os.path.join(d, "config.json"); cfg["grading"]["grader_version"] = "grading-1137e2bb-2026-10-30"
+            json.dump(cfg, open(bad, "w"))
+            with self.assertRaisesRegex(RG.GradingCliError, "grader_version"):
+                RG.load_materials(TASK, bad)
+
+
+class AttemptAwareSelectionTests(unittest.TestCase):
+    """Codex B2 review (unknown_pass_selection): a newer judge attempt that is UNKNOWN or still open must not be hidden
+    behind an older complete pass."""
+
+    def passes(self):
+        return [{"graded": True, "grading_pass": "p1", "pass_kind": "deterministic_only", "judge_mode": "none", "judge_verdicts": 0, "judge_completeness": "none", "judge_unit": None},
+                {"graded": True, "grading_pass": "p2", "pass_kind": "deterministic_plus_judge", "judge_mode": "real", "judge_verdicts": 7, "judge_completeness": "complete", "judge_unit": "RUN:judge:old"}]
+
+    def test_newer_unknown_attempt_blocks_selection_and_is_reported(self):
+        attempts = [{"unit_id": "RUN:judge:old", "state": "settled", "at": "2026-10-31T10:00:00+00:00", "has_pass": True},
+                    {"unit_id": "RUN:judge:new", "state": "unknown", "at": "2026-10-31T11:00:00+00:00", "has_pass": False}]
+        sel = select_pass(self.passes(), attempts=attempts)
+        self.assertTrue(sel["blocked"]); self.assertIsNone(sel["pass"]); self.assertIn("RUN:judge:new", sel["basis"]); self.assertTrue(sel["warnings"])
+        self.assertEqual([p["grading_pass"] for p in sel["history"]], ["p1", "p2"])  # history kept for review
+        ok = select_pass(self.passes(), attempts=attempts[:1])
+        self.assertFalse(ok["blocked"]); self.assertEqual(ok["pass"]["grading_pass"], "p2")
+        held = select_pass(self.passes(), attempts=attempts[:1] + [{"unit_id": "RUN:judge:held", "state": "held", "at": "2026-10-31T12:00:00+00:00", "has_pass": True}])
+        self.assertFalse(held["blocked"])  # a settled-but-held attempt that produced a pass is selectable, with the accounting warning left to the cost record
+        held_no_pass = select_pass(self.passes(), attempts=attempts[:1] + [{"unit_id": "RUN:judge:crash", "state": "held", "at": "2026-10-31T12:00:00+00:00", "has_pass": False}])
+        self.assertTrue(held_no_pass["blocked"])  # failed after the calls, settled conservatively and held: still blocks until reconciled
+        reconciled = select_pass(self.passes(), attempts=attempts[:1] + [{"unit_id": "RUN:judge:crash", "state": "settled", "at": "2026-10-31T12:00:00+00:00", "has_pass": False}])
+        self.assertFalse(reconciled["blocked"]); self.assertEqual(reconciled["pass"]["grading_pass"], "p2"); self.assertTrue(any("reconciled" in w for w in reconciled["warnings"]))
+
+
+if __name__ == "__main__":
+    unittest.main()

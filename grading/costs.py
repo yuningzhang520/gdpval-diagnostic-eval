@@ -1,7 +1,7 @@
 """Cost accounting: generation cost per run from recorded usage x unit prices (the ledger's
-settlement when available), grading cost from judge usage, and a human-time record template.
-Everything is labelled by its source; nothing here estimates what was not measured."""
-import csv
+settlement when available) and grading cost from judge usage. Everything is labelled by its source;
+nothing here estimates what was not measured. Human review time is recorded by the reviewer in the
+run's cost record (run_cost_record human_minutes), not generated here."""
 import datetime as dt
 import os
 
@@ -37,16 +37,6 @@ def grading_cost(judge_usage_by_model: dict, prices: dict) -> dict:
     c = generation_cost(judge_usage_by_model, prices)
     c["kind"] = "judge"
     return c
-
-
-def human_time_template(path: str) -> str:
-    """CSV for recording human review time per run and activity."""
-    new = not os.path.exists(path)
-    with open(path, "a", newline="", encoding="utf-8") as f:
-        w = csv.writer(f)
-        if new:
-            w.writerow(["run_uuid", "activity (open deliverables / critical check / disagreement / independent judgments / adjudication)", "started_utc", "ended_utc", "minutes", "reviewer", "note"])
-    return path
 
 
 def run_cost_record(run_uuid: str, generation: dict, grading: dict | None, human_minutes: float | None = None) -> dict:

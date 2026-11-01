@@ -25,7 +25,7 @@ import sys
 import time
 from decimal import Decimal
 
-from .budget import BudgetExhausted, BudgetLedger, calls_from_eval_sample, usage_from_eval_sample
+from .budget import BudgetExhausted, BudgetLedger, LedgerConflict, model_events_usage, usage_from_eval_sample
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 KEY_ENV_BY_PROVIDER = {"anthropic": "ANTHROPIC_API_KEY", "openai": "OPENAI_API_KEY", "google": "GOOGLE_API_KEY"}
@@ -331,7 +331,13 @@ class PilotLauncher:
         return self.ledger.snapshot()["engineering_failures"]
 
     def _refuse_if_stopped(self, *, unit_id: str, model: str | None, estimate_usd, kind: str) -> None:
+        """Approved stop conditions plus (B2-1) any open reservation of another unit: a reservation that was never
+        settled, voided or manually resolved means a unit of unknown outcome and cost; no new paid unit starts until a
+        human reconciles it (ledger_admin resolve / void). The unit's own idempotent re-reservation is not a reason."""
         reasons = self.ledger.stop_reasons(next_estimate_usd=estimate_usd)
+        open_units = self.ledger.snapshot()["open_reservations"]
+        if open_units:  # including this unit: an open reservation of the same unit means an earlier claim of unknown outcome
+            reasons.append(f"open reservation(s) of unknown outcome must be reconciled before a new paid unit starts: {open_units}")
         if reasons:
             self.record("refused", {"unit_id": unit_id, "kind": kind, "model": model, "reasons": reasons, "ledger": self.ledger.snapshot()})
             raise BudgetExhausted("; ".join(reasons))
@@ -368,21 +374,24 @@ class PilotLauncher:
         conservatively at the reserved amount (estimated) so nothing is released without a record."""
         # Fail closed on the execution settings before the ledger is touched: a configuration
         # defect must not create a reservation or a conservative settlement.
-        kw = eval_kwargs(self.cfg, log_dir=self.log_dir, token_limit=token_limit, model=model)
+        unit_log_dir = os.path.join(self.log_dir, unit_id.replace("/", "_").replace(":", "_"))  # this execution's own log directory: the binding usage recovery relies on
+        kw = eval_kwargs(self.cfg, log_dir=unit_log_dir, token_limit=token_limit, model=model)
         # Single-task contract, before any call: the unit is one Task object. A list, tuple or set of
         # tasks (even of length 1) is refused here, before the stop check and the reservation.
         if task is None or isinstance(task, (list, tuple, set, frozenset, dict, str, bytes)):
             self.record("refused", {"unit_id": unit_id, "kind": "sample", "model": model, "reasons": [f"single-task contract: run_sample takes exactly one Task object, got {type(task).__name__}"
                                                                                                    + (f" of length {len(task)}" if hasattr(task, "__len__") else "")]})
             raise LauncherError(f"single-task contract: run_sample takes exactly one Task object, got {type(task).__name__}; refusing before any call")
-        self._refuse_if_stopped(unit_id=unit_id, model=model, estimate_usd=estimate_usd, kind="sample")
+        self._refuse_if_stopped(unit_id=unit_id, model=model, estimate_usd=estimate_usd, kind="sample")  # pre-check for a friendly record only
         try:
-            reservation = self.ledger.reserve(unit_id, "sample", estimate_usd, {"model": model, "task": getattr(task, "name", str(task))})
-        except BudgetExhausted as ex:
+            # The atomic claim (inside the ledger lock): no other open reservation, this unit not already claimed, stop conditions.
+            reservation = self.ledger.reserve(unit_id, "sample", estimate_usd, {"model": model, "task": getattr(task, "name", str(task))}, claim=True)
+        except (BudgetExhausted, LedgerConflict) as ex:
             self.record("refused", {"unit_id": unit_id, "model": model, "reasons": [redact(ex)], "ledger": self.ledger.snapshot()})
             raise
-        meta = {"unit_id": unit_id, "model": model, "entry_point": "inspect_ai.eval", "eval_kwargs": kw, "reservation": reservation,
-                "config_status": self.cfg["_status"][:5], "started_at": _now()}
+        os.makedirs(unit_log_dir, exist_ok=True)
+        meta = {"unit_id": unit_id, "model": model, "entry_point": "inspect_ai.eval", "eval_kwargs": kw, "reservation": reservation, "log_dir": unit_log_dir,
+                "ledger": self.ledger.identity(), "config_status": self.cfg["_status"][:5], "started_at": _now()}
         if dry_run:
             meta["dry_run"] = True
             self.ledger.void(unit_id, "dry run: eval() not called")
@@ -413,64 +422,159 @@ class PilotLauncher:
             log = logs[0]
             sample = samples[0]
             usage, retries = usage_from_eval_sample(sample) if sample else ({}, {})
-            calls = calls_from_eval_sample(sample) if sample else {}
-            scope = {"same_sample": True, "sample_uuid": getattr(sample, "uuid", None), "samples_in_log": 1,
+            events = model_events_usage(sample) if sample else {"calls": {}, "unknown_calls": 0, "total_calls": 0}
+            incomplete = (not usage) or events["unknown_calls"] > 0  # any model call whose usage is unknown makes the unit's cost incomplete
+            scope = {"same_sample": True, "sample_uuid": getattr(sample, "uuid", None), "samples_in_log": 1, "model_calls": events["total_calls"], "calls_without_usage": events["unknown_calls"],
                      "aggregate_source": "EvalSample.model_usage", "calls_source": "EvalSample.events[model].output.usage"}
-            settlement = self.ledger.settle(unit_id, usage, retries_by_model=retries, calls_by_model=calls, scope=scope, note=f"inspect status {log.status}",
-                                            fallback_to_reservation=not usage)
+            note = f"inspect status {log.status}" + (f"; {events['unknown_calls']} of {events['total_calls']} model call(s) reported no usage (cost unknown)" if events["unknown_calls"] else "")
+            settlement = self.ledger.settle(unit_id, usage, retries_by_model=retries, calls_by_model=events["calls"], scope=scope, note=note,
+                                            fallback_to_reservation=not usage, incomplete=incomplete)  # approved 2026-10-31: missing/incomplete usage -> conservative estimate + persistent hold
             post = self._after_unit(unit_id=unit_id, settlement=settlement, estimate_usd=estimate_usd, log=log)
+            binding = self.write_ledger_binding(sample, unit_id=unit_id, model=model, task=task)
             meta.update({"inspect_status": log.status, "log_file": getattr(log, "location", None), "usage": usage, "retries": retries,
-                         "settlement": settlement, "post_run": post, "ledger_after": self.ledger.snapshot(), "finished_at": _now()})
+                         "settlement": settlement, "post_run": post, "ledger_binding": binding, "ledger_after": self.ledger.snapshot(), "finished_at": _now()})
             self.record("sample", meta)
             return meta
         except Exception as ex:
             cls = type(ex).__name__
             self.ledger.record_engineering_failure(cls, unit_id, redact(ex))
-            settlement = self.ledger.settle(unit_id, {}, note=f"eval failed: {cls}", estimated=True, fallback_to_reservation=True)
+            # Correction A: recover whatever usage Inspect persisted before the exception (an .eval written under the unit's
+            # log_dir for this task since the start) and keep it; everything else is unknown. One conservative settlement:
+            # max(priced recovered part, reservation), estimated, persistent hold. The recovery limit is recorded, not hidden.
+            recovery = self.recover_usage_from_logs(unit_log_dir, unit_id=unit_id, task_name=getattr(task, "name", None), model=model)
+            settlement = self.ledger.settle(unit_id, recovery["usage"], note=f"eval failed: {cls}; usage recovery: {recovery['summary']}", estimated=True,
+                                            fallback_to_reservation=not recovery["usage"], incomplete=True)
             post = self._after_unit(unit_id=unit_id, settlement=settlement, estimate_usd=estimate_usd)
-            meta.update({"error": f"{cls}: {redact(ex)}", "settlement": settlement, "post_run": post, "ledger_after": self.ledger.snapshot(), "finished_at": _now()})
+            meta.update({"error": f"{cls}: {redact(ex)}", "settlement": settlement, "usage_recovery": recovery, "post_run": post, "ledger_after": self.ledger.snapshot(), "finished_at": _now()})
             self.record("sample_error", meta)
             raise
 
-    def run_judge_batch(self, *, unit_id: str, estimate_usd, batch_fn, dry_run: bool = False) -> dict:
-        """One independent judge batch (the judge calls of one grading pass): same reserve → run → settle
-        contract. ``batch_fn`` returns ({model: usage}, {model: retries}) or a dict from
-        ProviderJudge.batch_result() carrying ``usage_incomplete``; an exception inside batch_fn is
-        recorded as an engineering failure and settled at the reservation (estimated)."""
-        self._refuse_if_stopped(unit_id=unit_id, model=None, estimate_usd=estimate_usd, kind="judge")
-        reservation = self.ledger.reserve(unit_id, "judge", estimate_usd, {"kind": "judge"})
+    def recover_usage_from_logs(self, unit_log_dir: str, *, unit_id: str, task_name: str | None, model: str | None, read_log=None) -> dict:
+        """Execution-bound recovery of usage after an eval exception. Invariant: only usage that verifiably belongs to THIS
+        execution contributes, and every billable event counts once. Binding: ``unit_log_dir`` is the directory this
+        launcher created for this unit alone and handed to eval(log_dir=...); nothing outside it is read, and no mtime or
+        name heuristics are used. Cross-checks inside: the log's eval.task and eval.model must equal the unit's; a log
+        that fails them is excluded and marked ``attribution_uncertain`` (never counted). Dedup: a billable event is one
+        (eval_id, sample uuid, epoch); a second representation of the same event (e.g. .eval and .json copies) is
+        skipped. The aggregate EvalSample.model_usage is used, per-call events are not added on top. The limit stays
+        recorded: Inspect writes the log at the end of eval, so an exception raised earlier leaves nothing to recover."""
+        out = {"unit_id": unit_id, "log_dir": unit_log_dir, "usage": {}, "logs": [], "recovered": False, "counted_events": 0, "duplicate_events_skipped": 0,
+               "attribution_uncertain": False, "summary": ""}
+        try:
+            if read_log is None:
+                from inspect_ai.log import read_eval_log as read_log
+            names = sorted(f for f in os.listdir(unit_log_dir) if f.endswith((".eval", ".json"))) if os.path.isdir(unit_log_dir) else []
+            seen_events = set()
+            for name in names:
+                path = os.path.join(unit_log_dir, name)
+                try:
+                    log = read_log(path)
+                except Exception as ex:  # unreadable or partial log: recorded, never counted
+                    out["logs"].append({"log": name, "readable": False, "error": type(ex).__name__, "excluded": True, "reason": "unreadable"})
+                    out["attribution_uncertain"] = True
+                    continue
+                ev = getattr(log, "eval", None)
+                log_task, log_model, eval_id = getattr(ev, "task", None), getattr(ev, "model", None), getattr(ev, "eval_id", None)
+                mismatch = [k for k, want, got in (("task", task_name, log_task), ("model", model, log_model)) if want is not None and got != want]
+                if mismatch or not eval_id:
+                    out["logs"].append({"log": name, "readable": True, "excluded": True, "reason": f"identity mismatch on {mismatch}" if mismatch else "no eval_id", "eval_id": eval_id, "task": log_task, "model": log_model})
+                    out["attribution_uncertain"] = True
+                    continue
+                found, counted, dup = {}, 0, 0
+                for s_ in list(getattr(log, "samples", None) or []):
+                    key = (eval_id, str(getattr(s_, "uuid", None)), getattr(s_, "epoch", None))
+                    if key in seen_events:
+                        dup += 1
+                        continue
+                    seen_events.add(key)
+                    counted += 1
+                    u, _ = usage_from_eval_sample(s_)
+                    for m, v in u.items():
+                        acc = found.setdefault(m, {"input_tokens": 0, "output_tokens": 0, "cache_read_tokens": 0, "cache_write_tokens": 0})
+                        for k in acc:
+                            acc[k] += int(v.get(k, 0) or 0)
+                out["logs"].append({"log": name, "readable": True, "excluded": False, "eval_id": eval_id, "status": getattr(log, "status", None), "events_counted": counted, "duplicates_skipped": dup, "usage": found})
+                out["counted_events"] += counted
+                out["duplicate_events_skipped"] += dup
+                for m, v in found.items():
+                    acc = out["usage"].setdefault(m, {"input_tokens": 0, "output_tokens": 0, "cache_read_tokens": 0, "cache_write_tokens": 0})
+                    for k in acc:
+                        acc[k] += v[k]
+            out["recovered"] = bool(out["usage"])
+            out["summary"] = ((f"recovered aggregate usage of {out['counted_events']} event(s) from this execution's log directory ({out['duplicate_events_skipped']} duplicate representation(s) skipped): {json.dumps(out['usage'], sort_keys=True)}"
+                               if out["recovered"] else "no attributable Inspect log with usage in this execution's log directory (Inspect writes the .eval at the end of eval); nothing recovered, settled at the reservation")
+                              + ("; some log(s) could not be attributed to this execution and were excluded (attribution uncertain)" if out["attribution_uncertain"] else ""))
+        except Exception as ex:
+            out["attribution_uncertain"] = True
+            out["summary"] = f"usage recovery itself failed ({type(ex).__name__}); nothing recovered, settled at the reservation"
+        return out
+
+    def write_ledger_binding(self, sample, *, unit_id: str, model: str, task) -> dict:
+        """Persist the run <-> ledger binding next to the collected run (runs_root/<uuid>/ledger_binding.json): run uuid,
+        generation unit id, ledger real path and ledger id, task and model. Written once (never overwritten); a later
+        grading or judge pass must present this ledger, so a second cost history for the same run cannot be created by
+        pointing at another ledger. The run uuid is only known after the sample ran, so the pre-call record carries
+        the ledger identity and the unit id, and this file links the uuid to them."""
+        uuid = getattr(sample, "uuid", None)
+        if not uuid:
+            return {"written": False, "reason": "sample has no uuid"}
+        host_dir = os.path.join(self.runs_root, str(uuid))
+        os.makedirs(host_dir, exist_ok=True)
+        path = os.path.join(host_dir, "ledger_binding.json")
+        binding = {"record_version": 1, "run_uuid": str(uuid), "generation_unit_id": unit_id, **self.ledger.identity(), "task": getattr(task, "name", str(task)),
+                   "model": model, "sample_id": getattr(sample, "id", None), "written_at": _now()}
+        if os.path.exists(path):
+            with open(path, encoding="utf-8") as f:
+                existing = json.load(f)
+            same = all(existing.get(k) == binding[k] for k in ("run_uuid", "generation_unit_id", "ledger_path", "ledger_id"))
+            return {"written": False, "path": path, "conflict": not same, "existing": existing}
+        tmp = f"{path}.{os.urandom(4).hex()}.tmp"
+        with open(tmp, "w", encoding="utf-8") as f:
+            json.dump(binding, f, indent=1)
+            f.flush()
+            os.fsync(f.fileno())
+        os.replace(tmp, path)
+        return {"written": True, "path": path, **binding}
+
+    def run_judge_batch(self, *, unit_id: str, estimate_usd, batch_fn, dry_run: bool = False, recover_usage=None) -> dict:
+        """One independent judge batch (the judge calls of one grading pass): atomic claim → run → settle. ``batch_fn``
+        returns ({model: usage}, {model: retries}) or a dict from ProviderJudge.batch_result() carrying
+        ``usage_incomplete``. ``recover_usage`` (correction B) is called when batch_fn raises: it must return the
+        usage recoverable from DURABLE evidence (the write-ahead judge call log: finished events with usage; started
+        events without a terminal event stay UNKNOWN) as {"usage", "unknown_calls", "source", ...}; the unit is then
+        settled once at max(priced known part, reservation), estimated, held, and the 2x stop rule applies."""
+        self._refuse_if_stopped(unit_id=unit_id, model=None, estimate_usd=estimate_usd, kind="judge")  # pre-check for a friendly record only
+        reservation = self.ledger.reserve(unit_id, "judge", estimate_usd, {"kind": "judge"}, claim=True)
         if dry_run:
             self.ledger.void(unit_id, "dry run: judge batch not called")
             return {"unit_id": unit_id, "dry_run": True, "reservation": reservation}
         try:
             result = batch_fn()
-            if isinstance(result, dict):  # ProviderJudge.batch_result(): usage, retries, usage_incomplete, note
-                usage, retries, incomplete, note = result.get("usage") or {}, result.get("retries") or {}, bool(result.get("usage_incomplete")), str(result.get("note") or "")
-            else:
-                usage, retries = result
-                incomplete, note = False, ""
-            if incomplete:
-                # At least one call's usage is missing or uncertain: the known part is never priced as if it were the whole.
-                # Settle at the larger of the priced known part and the reservation (estimated); the known usage stays in the note
-                # and in the judge call log. Whether such a settlement must also hold further starts is a pending policy decision.
-                from .budget import usage_cost
-                priced = sum((Decimal(str(usage_cost(u, self.ledger.prices[m])["total"])) for m, u in usage.items() if m in self.ledger.prices), Decimal(0))
-                if priced > Decimal(str(estimate_usd)):
-                    settlement = self.ledger.settle(unit_id, usage, retries_by_model=retries, estimated=True,
-                                                    note=f"judge batch: usage incomplete ({note}); priced known part {priced} USD exceeds the reservation and is settled as an estimate")
-                else:
-                    settlement = self.ledger.settle(unit_id, {}, estimated=True, fallback_to_reservation=True,
-                                                    note=f"judge batch: usage incomplete ({note}); known usage {json.dumps(usage, sort_keys=True)} priced {priced} USD kept here and in the judge call log; settled at the reservation (conservative)")
-            else:
-                settlement = self.ledger.settle(unit_id, usage, retries_by_model=retries, note=f"judge batch {note}".strip(), fallback_to_reservation=not usage)
-            post = self._after_unit(unit_id=unit_id, settlement=settlement, estimate_usd=estimate_usd)
-            return {"unit_id": unit_id, "settlement": settlement, "post_run": post, "ledger_after": self.ledger.snapshot(), "usage_incomplete": incomplete, "batch_note": note}
         except Exception as ex:
             cls = type(ex).__name__
             self.ledger.record_engineering_failure(cls, unit_id, redact(ex))
-            settlement = self.ledger.settle(unit_id, {}, note=f"judge batch failed: {cls}", estimated=True, fallback_to_reservation=True)
+            recovered = {}
+            try:
+                recovered = recover_usage() if recover_usage is not None else {}
+            except Exception as rex:  # recovery must never hide the original failure or create a second settlement
+                recovered = {"usage": {}, "error": f"recovery failed: {type(rex).__name__}"}
+            known = recovered.get("usage") or {}
+            note = (f"judge batch failed: {cls}; known usage recovered from {recovered.get('source', 'nothing')}: {json.dumps(known, sort_keys=True)}; "
+                    f"{recovered.get('unknown_calls', 'n/a')} call(s) without a reliable terminal state stay UNKNOWN" + (f"; {recovered['error']}" if recovered.get("error") else ""))
+            settlement = self.ledger.settle(unit_id, known, note=note, estimated=True, fallback_to_reservation=not known, incomplete=True)
             self._after_unit(unit_id=unit_id, settlement=settlement, estimate_usd=estimate_usd)
             raise
+        if isinstance(result, dict):  # ProviderJudge.batch_result(): usage, retries, usage_incomplete, note
+            usage, retries, incomplete, note = result.get("usage") or {}, result.get("retries") or {}, bool(result.get("usage_incomplete")), str(result.get("note") or "")
+        else:
+            usage, retries = result
+            incomplete, note = False, ""
+        # Approved policy (2026-10-31): incomplete usage -> the ledger settles at max(priced known part, reservation), estimated,
+        # with a persistent hold (one rule, in BudgetLedger.settle); the known usage stays in the settlement and the call log.
+        settlement = self.ledger.settle(unit_id, usage, retries_by_model=retries, note=f"judge batch {note}".strip() + ("; usage incomplete" if incomplete else ""),
+                                        fallback_to_reservation=not usage, incomplete=incomplete)
+        post = self._after_unit(unit_id=unit_id, settlement=settlement, estimate_usd=estimate_usd)
+        return {"unit_id": unit_id, "settlement": settlement, "post_run": post, "ledger_after": self.ledger.snapshot(), "usage_incomplete": incomplete, "batch_note": note}
 
     def open_reservations_after_restart(self) -> list[str]:
         """Units reserved by an earlier process that never settled. They stay reserved (budget is
@@ -581,7 +685,7 @@ def main(argv=None, *, eval_fn=None, environ: dict | None = None, docker_runner=
     image = preflight_sandbox(cfg, runner=docker_runner)  # by full image ID; compose and config must agree
     ledger = BudgetLedger(args.ledger, cfg["pilot"]["budget_ceiling_usd"], prices_from_config(cfg))
     unit = build_unit(cfg, task_id=args.task_id, model=args.model, runs_root=runs_root, config_path=args.config)
-    provenance = {"code": git_provenance(), "config_path": args.config, "config_sha256": config_sha256(args.config), "config_status": cfg["_status"][:5],
+    provenance = {"code": git_provenance(), "config_path": args.config, "config_sha256": config_sha256(args.config), "config_status": cfg["_status"][:5], "ledger": ledger.identity(),
                   "prompt": unit["prompt"], "image_id": image.get("daemon_id"), "image_platform": (image.get("os"), image.get("architecture")),
                   "image_tags_informational": image.get("repo_tags"), "runs_root": runs_root, "task_id": args.task_id, "model": args.model,
                   "sample_ids": unit["sample_ids"], "staging_verified": unit["staging_verified"], "tool_timeout_s": unit["tool_timeout_s"],

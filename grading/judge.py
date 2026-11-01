@@ -16,6 +16,7 @@ import os
 import re
 import time
 
+from harness.budget import model_usage_to_dict
 from harness.redact import redact
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -232,16 +233,13 @@ class StubBatchJudge:
         return json.dumps(items)
 
 
-JUDGE_ERROR_CLASSES = ("judge_parse_error", "provider_error")
+JUDGE_ERROR_CLASSES = ("judge_parse_error", "provider_error", "not_attempted")
 USAGE_STATUSES = ("ok", "missing", "uncertain", "not_reported")
 
 
 def usage_dict(usage) -> dict | None:
-    """Inspect ModelUsage -> the ledger's usage dict (uncached input, output, cache read, cache write)."""
-    if usage is None:
-        return None
-    return {"input_tokens": int(getattr(usage, "input_tokens", 0) or 0), "output_tokens": int(getattr(usage, "output_tokens", 0) or 0),
-            "cache_read_tokens": int(getattr(usage, "input_tokens_cache_read", 0) or 0), "cache_write_tokens": int(getattr(usage, "input_tokens_cache_write", 0) or 0)}
+    """Inspect ModelUsage -> the ledger's usage dict (the shared mapping in harness.budget)."""
+    return model_usage_to_dict(usage)
 
 
 class ProviderJudge:
@@ -258,7 +256,8 @@ class ProviderJudge:
     is_stub = False
 
     def __init__(self, model_name: str, *, temperature: float = 0.0, max_tokens: int = 1024, max_retries: int | None = None, timeout: int | None = None,
-                 generate=None, judge_id: str | None = None, **model_args):
+                 generate=None, judge_id: str | None = None, log_path: str | None = None, run_uuid: str | None = None, judge_unit: str | None = None,
+                 stop_on_uncertain_usage: bool = True, **model_args):
         self.model_name = model_name
         self.judge_id = judge_id or f"{model_name}@{dt.datetime.now(dt.timezone.utc).strftime('%Y-%m-%d')}"
         self.generate_params = {"temperature": temperature, "max_tokens": max_tokens, "max_retries": max_retries, "timeout": timeout}
@@ -269,6 +268,23 @@ class ProviderJudge:
         self.usage_by_model: dict[str, dict] = {}
         self.retries_by_model: dict[str, int] = {}  # Inspect retries inside generate are not observable at this layer
         self.usage_incomplete = False
+        # Write-ahead call log (B2-1): a 'started' event is fsynced BEFORE every provider request and a terminal event right
+        # after it; a started event without a terminal one is UNKNOWN after a crash (never success, failure, free or retryable).
+        self.log_path, self.run_uuid, self.judge_unit = log_path, run_uuid, judge_unit
+        self.stop_on_uncertain_usage = stop_on_uncertain_usage
+        self.halted: str | None = None  # set after a call whose usage is missing/uncertain: later units are not sent (approved policy)
+
+    def _persist(self, event: dict) -> None:
+        """Append one JSON line and fsync. A failure here must stop the request from being sent."""
+        if not self.log_path:
+            return
+        os.makedirs(os.path.dirname(self.log_path), exist_ok=True)
+        line = json.dumps({**event, "run_uuid": self.run_uuid, "judge_unit": self.judge_unit, "model": self.model_name, "judge_id": self.judge_id,
+                           "at": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds")}, default=str)
+        with open(self.log_path, "a", encoding="utf-8") as f:
+            f.write(line + "\n")
+            f.flush()
+            os.fsync(f.fileno())
 
     def _call(self, messages):
         if self._generate is not None:
@@ -285,6 +301,13 @@ class ProviderJudge:
         messages = [ChatMessageSystem(content=JUDGE_SYSTEM_PROMPT), ChatMessageUser(content=user)]
         rec = {"unit_id": unit["unit_id"], "item": unit["item"], "model": self.model_name, "judge_id": self.judge_id, "started_at": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
                "request_sha256": hashlib.sha256((JUDGE_SYSTEM_PROMPT + "\n" + user).encode("utf-8")).hexdigest(), "request_chars": len(JUDGE_SYSTEM_PROMPT) + len(user)}
+        if self.halted:
+            # Approved policy: after a call whose usage could not be accounted, no further paid request is sent in this batch.
+            rec.update({"status": "not_attempted", "error": {"class": "halted_after_usage_uncertain", "message": self.halted}, "raw_response": None, "usage": None, "usage_status": "not_attempted", "seconds": 0.0})
+            self._persist({"phase": "not_attempted", **{k: rec[k] for k in ("unit_id", "item", "request_sha256", "error")}})
+            self.calls.append(rec)
+            return rec
+        self._persist({"phase": "started", **{k: rec[k] for k in ("unit_id", "item", "request_sha256", "request_chars", "started_at")}})  # raises -> request never sent
         t0 = time.monotonic()
         try:
             out = self._call(messages)
@@ -292,6 +315,9 @@ class ProviderJudge:
             rec.update({"status": "provider_error", "error": {"class": type(ex).__name__, "message": redact(str(ex))}, "raw_response": None, "usage": None, "usage_status": "uncertain",
                         "seconds": round(time.monotonic() - t0, 3)})
             self.usage_incomplete = True
+            if self.stop_on_uncertain_usage:
+                self.halted = f"call for {unit['unit_id']} failed with {type(ex).__name__}; its cost is unknown"
+            self._persist({"phase": "finished", **{k: rec[k] for k in ("unit_id", "item", "status", "error", "raw_response", "usage", "usage_status", "seconds")}})
             self.calls.append(rec)
             return rec
         raw = getattr(out, "completion", None)
@@ -307,7 +333,10 @@ class ProviderJudge:
                 acc[k] += usage[k]
         else:
             self.usage_incomplete = True
+            if self.stop_on_uncertain_usage:
+                self.halted = f"call for {unit['unit_id']} returned no usage; its cost cannot be accounted"
         rec["seconds"] = round(time.monotonic() - t0, 3)
+        self._persist({"phase": "finished", **{k: rec[k] for k in ("unit_id", "item", "status", "error", "raw_response", "usage", "usage_status", "seconds")}})
         self.calls.append(rec)
         return rec
 
@@ -316,10 +345,53 @@ class ProviderJudge:
         call's usage is missing or uncertain (then the ledger never prices the known part alone)."""
         statuses = [c["status"] for c in self.calls]
         return {"usage": self.usage_by_model, "retries": self.retries_by_model, "usage_incomplete": self.usage_incomplete, "calls": len(self.calls),
-                "calls_ok": statuses.count("ok"), "calls_provider_error": statuses.count("provider_error"),
-                "calls_usage_missing_or_uncertain": sum(1 for c in self.calls if c.get("usage_status") in ("missing", "uncertain")),
-                "note": f"{len(self.calls)} judge call(s): {statuses.count('ok')} ok, {statuses.count('provider_error')} provider_error, "
+                "calls_ok": statuses.count("ok"), "calls_provider_error": statuses.count("provider_error"), "calls_not_attempted": statuses.count("not_attempted"),
+                "calls_usage_missing_or_uncertain": sum(1 for c in self.calls if c.get("usage_status") in ("missing", "uncertain")), "halted": self.halted,
+                "note": f"{len(self.calls)} judge call(s): {statuses.count('ok')} ok, {statuses.count('provider_error')} provider_error, {statuses.count('not_attempted')} not_attempted, "
                         f"{sum(1 for c in self.calls if c.get('usage_status') in ('missing', 'uncertain'))} with missing/uncertain usage"}
+
+
+def scan_judge_log(log_path: str) -> dict:
+    """Terminal state of every judge call recorded in a write-ahead log: ok / provider_error / not_attempted, or UNKNOWN
+    when a 'started' event has no terminal event (the request may have reached the provider; it is neither a success,
+    a failure, free nor retryable until a human reconciles the unit)."""
+    units: dict[str, dict] = {}
+    if not os.path.exists(log_path):
+        return {"path": log_path, "calls": {}, "unknown": [], "events": 0}
+    n = 0
+    with open(log_path, encoding="utf-8") as f:
+        for line in f:
+            if not line.strip():
+                continue
+            e = json.loads(line); n += 1
+            u = units.setdefault(e["unit_id"], {"started": None, "terminal": None})
+            if e.get("phase") == "started":
+                u["started"] = e
+            elif e.get("phase") in ("finished", "not_attempted"):
+                u["terminal"] = e
+    for uid, u in units.items():
+        u["state"] = "UNKNOWN" if u["started"] and not u["terminal"] else (u["terminal"] or {}).get("status", "not_attempted" if u["terminal"] else "UNKNOWN")
+    return {"path": log_path, "calls": units, "unknown": sorted(uid for uid, u in units.items() if u["state"] == "UNKNOWN"), "events": n}
+
+
+def usage_from_judge_log(log_path: str) -> dict:
+    """Durable recovery (correction B): the usage of every call whose terminal event is on disk, summed per model; calls
+    with a started event and no terminal event are UNKNOWN (counted, never priced, never retried); finished calls without
+    usage are counted too. Source of truth after a crash - the in-memory adapter state is only a cross-check."""
+    scan = scan_judge_log(log_path)
+    usage: dict[str, dict] = {}
+    without_usage = 0
+    for uid, c in scan["calls"].items():
+        term = c.get("terminal") or {}
+        u = term.get("usage")
+        if term.get("phase") == "finished" and u:
+            acc = usage.setdefault(term.get("model") or "unknown", {"input_tokens": 0, "output_tokens": 0, "cache_read_tokens": 0, "cache_write_tokens": 0})
+            for k in acc:
+                acc[k] += int(u.get(k, 0) or 0)
+        elif term.get("phase") == "finished":
+            without_usage += 1
+    return {"usage": usage, "unknown_calls": len(scan["unknown"]), "unknown_units": scan["unknown"], "finished_without_usage": without_usage, "calls": len(scan["calls"]),
+            "source": f"write-ahead log {os.path.basename(log_path)}" if os.path.exists(log_path) else "no write-ahead log on disk"}
 
 
 def judge_units(units: list[dict], judge, *, judge_id: str | None = None) -> list[dict]:
@@ -336,7 +408,9 @@ def judge_units(units: list[dict], judge, *, judge_id: str | None = None) -> lis
         base = {"unit_id": u["unit_id"], "item": u["item"], "weight": u["weight"], "judge_id": judge_id or getattr(judge, "judge_id", "unknown"),
                 "raw_response": call.get("raw_response"), "call_status": call.get("status"), "usage": call.get("usage"), "usage_status": call.get("usage_status"),
                 "request_sha256": call.get("request_sha256"), "judged_at": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"), "source": "J"}
-        if call.get("status") != "ok":
+        if call.get("status") == "not_attempted":
+            rec = {"verdict": "cannot_assess", "evidence": [], "rationale": "", "parse_error": None, "error_class": "not_attempted", "error": call.get("error")}
+        elif call.get("status") != "ok":
             rec = {"verdict": "cannot_assess", "evidence": [], "rationale": "", "parse_error": None, "error_class": "provider_error", "error": call.get("error")}
         else:
             try:

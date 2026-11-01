@@ -1,9 +1,23 @@
 # Status
 
-Current stage: **Pilot A wiring U1–U3 implemented and mock-verified (2026-10-31): real-generation
-CLI path, offline grading CLI, judge adapter with gated judged pass; no provider call; config
-`judge` block, judge id, reservations, missing-usage hold and paid authorization PENDING; hard
-stop before any paid run.** See sections "Pilot A wiring U1/U2" and "Pilot A wiring U3".
+Current stage: **B2 Architecture Cleanup and Engineering Review CLOSED by Codex's final independent
+verification (2026-11-01: "READY FOR B2 COMMIT"; the two remaining Blockings closed, section "B2 closure
+fix"; the three earlier fixes confirmed). The B2 checkpoint commit (this commit, on top of the Wiring
+Checkpoint `bcb888771c9b798e4fc237634a5da76ce6442e61`) was approved by the human after a staged
+safety verification; hash reported in chat and recorded in the next status update. No provider call.
+Next: Pilot A configuration, preflight and paid authorization, handled separately.** Earlier header,
+kept for the record: B2 remediation of the independent review's four P0 and one P1 findings
+implemented and mock-verified (2026-11-01; section "B2 remediation"), on top of the B2
+stabilization and the Wiring Checkpoint; awaiting the Codex closure review. Earlier header, kept for the record: B2
+pre-pilot architecture stabilization implemented and mock-verified (2026-10-31) on top of the
+Wiring Checkpoint `bcb888771c9b798e4fc237634a5da76ce6442e61`: B2-1
+cost-safety and audit integrity (write-ahead judge log, UNKNOWN, open-reservation gate, run ↔
+ledger binding, ledger-based duplicate-judge gate, manual reconciliation, grading-pass
+completeness and selection, approved missing-usage hold, grader-version check), B2-2 equivalent
+cleanup, B2-3 README and config text; uncommitted, awaiting the independent Codex review; no
+provider call; hard stop before any paid run.** See section "B2 — pre-pilot architecture
+stabilization". Earlier header, kept for the record: Pilot A wiring U1–U3 implemented and
+mock-verified (2026-10-31).
 Earlier header, kept for the record: U1 + U2 implemented and mock-verified (2026-10-31). Baseline commit
 `6761f0d52d145a7aa103cdef01171cddda956cd2`. Earlier header, kept for the record: Stage 3b
 deterministic grader CLOSED by the independent final review (2026-10-31; 57/57 layout, 21/21
@@ -2513,6 +2527,131 @@ possible without refactoring); `run_judge_batch` prices the incomplete-usage cas
 `budget.settle`; `usage_from_eval_sample`/`usage_dict` are two ModelUsage mappings; the review file versioning and the pass
 identity are linked only by timestamps in the results record.
 
+## B2 — pre-pilot architecture stabilization (2026-10-31; after Wiring Checkpoint `bcb8887`; mock-verified; no model, judge or paid call; logs under `logs/b2-20261031T224741Z/`)
+
+### Wiring Checkpoint
+Commit `bcb888771c9b798e4fc237634a5da76ce6442e61` ("feat: wire Pilot A real-run CLI, offline grading CLI and gated judge pass"),
+9 files, +1076/−44; staged set verified against the approved list, `--check` clean, no forbidden path, secret scan clean;
+pushed to `origin/main` (6761f0d..bcb8887). B2 changes below (B2-1/2/3, B2 remediation, B2 closure fix) are committed together as the B2 checkpoint on 2026-11-01.
+
+### B2-1 — correctness, cost safety, audit integrity (intentional new refusals)
+| Item | Where | Behaviour |
+|---|---|---|
+| Write-ahead judge call log | `judge.ProviderJudge._persist` / `__call__`; `run_grading.judge_log_path` | Before every provider request a `started` event (run uuid, judge unit, criterion, model, request sha256, time) is appended and fsynced to `<ledger dir>/judge_logs/<run uuid>/<unit>.jsonl`; a write failure raises before the request is sent; after the request a `finished` (status, raw response, usage, usage_status, error, seconds) or `not_attempted` event follows. `scan_judge_log`: started without terminal event = UNKNOWN. |
+| Approved policy: missing / incomplete usage | `budget.settle(hold=True)`, `launcher.run_sample` (no usage), `launcher.run_judge_batch` (incomplete), `ProviderJudge.halted` | Known usage priced; unknown never zero; settlement = max(priced known part, reservation), `estimated` + `manual_review_required` (persistent hold, survives restarts); after the first judge call whose usage is missing or uncertain the remaining criteria are `not_attempted` (verdict `cannot_assess`, error_class `not_attempted`); provider_error / judge_parse_error / usage uncertainty recorded separately; a protocol-conformant answer with missing usage keeps its verdict and flags the cost. |
+| Open-reservation gate | `launcher._refuse_if_stopped` | Any open reservation of another unit refuses a new paid unit (generation and judge) before any call; released only by `void` or a verified-amount `manual_resolution`. |
+| Run ↔ ledger binding | `budget.BudgetLedger.identity` (persistent `ledger_id`, backfilled once for older ledgers), `launcher.write_ledger_binding` → `runs_root/<uuid>/ledger_binding.json` (written once, never overwritten; the pre-call provenance record already carries the ledger identity and unit id) | `run_grading --judge` requires the binding and refuses another ledger path or id; a run without a binding is refused (no binding is guessed or created). |
+| Ledger-based duplicate-judge gate | `run_grading.judge_history_gate`, `budget.units_for_run` | Judge units are `<run uuid>:judge:<µs stamp>-<hex>`; a prior judged unit refuses unless `--rejudge` (new unit, new reservation, `rejudge_of` and superseded passes recorded); open reservations, holds, unresolvable units and UNKNOWN calls (until reconciled with a verified amount) refuse and are not bypassable by `--rejudge`; the out_dir results are a secondary signal only. |
+| Manual reconciliation | `budget.resolve_manually`, `harness/ledger_admin.py resolve|status` | Append-only `manual_resolution` event (unit_id, resolution, by, basis, at, amount_usd + currency for settled_amount). settled_amount closes an open reservation at the verified amount or adjusts an estimated settlement (original events untouched, totals adjusted, that unit's hold lifted); unresolvable changes nothing. Blocking is recomputed from the whole ledger. |
+| Grading pass completeness and selection | `grade.judge_completeness`, `select_pass` → `{pass, basis, warnings}`, `selected_grades`; `run_grading` records `accounting_status` (reliably_accounted / estimated / manual_review_required) | complete / partial / none per results record (UNKNOWN from the write-ahead scan); the latest judged pass is selected even when partial, with a warning, never hidden by an older complete pass; statistics take one pass per run. |
+| Grader version | `grade.GRADER_VERSION`, `run_grading.load_materials`, `config.grading.grader_version` = `grading-1137e2bb-2026-10-31` | Mismatch refuses grading; old passes keep their recorded version. |
+
+Changed test expectations (recorded): `test_returned_error_logs_are_counted_and_the_third_start_is_refused` (second start now refused by the hold; reconciliation then failure-count rule) and the judge-batch settlement test (hold + reconciliation) follow the approved policy; `judge_call_summary` gained `not_attempted`; `select_pass` returns a dict.
+
+### B2-2 — equivalent cleanup
+`budget.model_usage_to_dict` is the one ModelUsage mapping (used by `usage_from_eval_sample`, `calls_from_eval_sample`, `judge.usage_dict`; same fields and None handling); removed `line_absent_fails`, `ATTRIBUTION["not_located"]`, the unused item-7 reference predicate and `costs.human_time_template` (no consumer). Equivalence: `layout_table.json` 84/84 cases identical to `logs/stage3b-closeout3-20261031T205035Z/`; layout 57/57; ledger settlements in the launcher/budget suites unchanged.
+
+### B2-3 — README and config
+README gains architecture overview, workflow, commands (paid ones as placeholder examples), artifacts, grading interpretation, pass versioning, budget and safety, reproducibility, limitations. `config.json`: only status text corrected (`launcher_wiring`, `outcome_gate`, `entry_point`, `grader_version_check`, judge candidate status/adapter) plus the approved `grader_version`; every model id, generation parameter, prompt, tool, retry, ceiling and sandbox field unchanged (asserted by a structural comparison). New `harness/tests/test_docs_consistency.py`.
+
+### Verification (first execution captured unless a defect required a rerun)
+| Command (`run_isolated.sh`, `/usr/bin/time -p`) | Wall clock | Exit | Result |
+|---|---|---|---|
+| `unittest harness.tests.test_budget_unit` (+ `ManualResolutionTests`) | 1.33 / 1.30 / 1.15 s | 0 / 1 / 0 | 29/29 (two test-fixture defects: wrong exception class, reservation after a hold) |
+| `unittest harness.tests.test_launcher_regressions` (+ open-reservation gate, hold + reconciliation) | 5.98 / 7.25 / 5.51 s | 1 / 0 / 0 | 35/35 (first run: the two policy-dependent expectations; one leftover block from a test rewrite) |
+| `unittest grading.tests.test_grading_chain` (+ halt, write-ahead log, UNKNOWN, log failure, pass selection, version check) | 2.20 / 2.66 / 2.44 / 2.55 / 2.53 s | 1 / 1 / 0 / 1 / 0 | 27/27 (dict return of `select_pass`, `not_attempted` in the summary; a stale reference to the removed helper) |
+| `unittest grading.tests.test_layout_regressions` (B2-2 equivalence) | 4.09 s | 0 | 57/57, table identical |
+| `unittest harness.tests.test_docs_consistency` | 0.91 s ×2 | 1 / 0 | 3/3 (the placeholder check first matched prose) |
+| `harness.tests.regress_pilot_cli` (real-run CLI, Inspect + mockllm + docker; ledger binding written) | 8.70 s | 0 | 10/10 |
+| `grading.tests.regress_grading_cli` (self-provisions a fresh bound run through the real-run CLI; D-only pass; gate refusals incl. wrong ledger, missing binding, open reservation, hold; crash after call 3 → UNKNOWN → refused incl. `--rejudge` → unresolvable keeps refusal → verified amount → missing-usage rejudge: halt, not_attempted, estimated + hold → reconciled → complete mockllm rejudge; selection; immutability) | 1.37 / 1.41 / 8.84 / 7.07 / 6.37 s; final E2E after B2-2/B2-3: 6.42 s | 2 / 1 / 1 / 1 / 0 / 0 | 45/45 (probe defects: argv construction, stale ledger reuse → self-provisioning, expected token count; one code defect found and fixed: judge unit ids collided within one second) |
+
+Not run (unchanged modules): limits / closeout / tools / compose / recalc / cost-limit regressions, staging/collect/image unit suites.
+
+### Pending human decisions (unchanged)
+Judge model id and the config `judge` block; judge reservation per run; Model A final approval; real-run and judge paid authorizations; real provider compatibility remains unverified by design.
+
+## B2 remediation (2026-11-01; Codex review `logs/b2-review-76gawzsc/`: 4 P0 + 1 P1; mock-verified; no model, judge or paid call; logs under `logs/b2-remediation-20261031T235837Z/`)
+
+Reproduced first: the five counter-examples were encoded as tests and failed on the unfixed code (10 failing tests across
+`test_budget_unit`, `test_launcher_regressions`, `test_grading_chain`; `repro_*.log`).
+
+| Finding | Root cause | Fix (R1 ledger / R2 launcher / R3 grading) | Status |
+|---|---|---|---|
+| P0-1 race / same-unit re-execution | gate outside the ledger lock; `reserve` idempotent for an open same-unit reservation; launcher treated "reservation obtained" as "may call" | `BudgetLedger.reserve(claim=True)`: inside the lock refuses any other open reservation and an already-open same-unit reservation; every paid path (`run_sample`, `run_judge_batch`) reserves with `claim=True`; `_refuse_if_stopped` is a pre-check only | CLOSED |
+| P0-2 partial usage / exceptions under-count and do not hold | model events without usage skipped; hold decided on the aggregate only; exception paths settled at the reservation without hold and without known usage | `model_events_usage` counts calls without usage; `settle(incomplete=True)` is the one rule: max(priced known part, reservation), `estimated`, `manual_review_required`; `run_sample` marks incomplete when any call lacks usage; generation exception → `recover_usage_from_logs` (Inspect logs written under the unit's log_dir since start; aggregate only, no double count; limit recorded when nothing is readable) then one conservative held settlement; `run_judge_batch(recover_usage=...)` recovers from the write-ahead log (`usage_from_judge_log`: finished events with usage; started-without-terminal stay UNKNOWN; memory only cross-checks) then one settlement ≥ known cost with hold and the 2× stop | CLOSED (recovery limit: an eval exception raised before Inspect writes its `.eval` leaves no usage to recover; the settlement is then the reservation, estimated and held - recorded in `usage_recovery.summary`) |
+| P0-3 manual amount not propagated | `settlement_for` read the first raw settlement event | `BudgetLedger.effective_settlement(unit_id)` (derived state: adjusted amount, `previous_cost_usd`, `resolved_from`, resolution, raw events); `run_grading.settlement_for` uses it for the generation and the judge unit; cost records carry the provenance fields | CLOSED |
+| P0-4 UNKNOWN attempt hidden by an old complete pass | selection saw only `results.jsonl`; results did not name the judge unit | results record `judge_unit`; `run_grading.judge_attempts` (ledger units + write-ahead logs → state settled / held / open / unknown, `has_pass`); `select_pass(attempts=...)` is `blocked` when the latest attempt is unknown / open / held without a pass (history kept, warning names the unit); a reconciled attempt without a pass falls back with a warning; `selected_grades` returns no rows while blocked; `run_grading.report_selection` is the entry a report uses and the provenance records it | CLOSED |
+| P1 negative amount quantized to zero | `_d` quantized before validation | `_money_in`: finite and non-negative before quantization; used by `reserve` and `resolve_manually` (NaN, Infinity, −0.0000001 refused; 0 accepted) | CLOSED |
+
+Approved semantics applied: claim refuses re-execution of a claimed unit; exceptions → conservative estimate + persistent
+hold; blocked selection. Normal complete executions settle exactly as before (`layout_table` untouched; exact settlements
+in the launcher and budget suites unchanged); two older tests were adjusted to the approved hold policy and one fixture
+to carry per-call usage (recorded in the test docstrings).
+
+### Verification (first execution captured unless a defect required a rerun)
+| Command (`run_isolated.sh`, `/usr/bin/time -p`) | Wall clock | Exit | Result |
+|---|---|---|---|
+| `unittest harness.tests.test_budget_unit` (+ claim race, money validation, effective settlement, incomplete floor) | 1.25 → 1.24 → 1.66 s | 1 / 1 / 0 | 33/33 (repro red; then the approved-policy adjustments of two older tests) |
+| `unittest harness.tests.test_launcher_regressions` (+ concurrent executors, open-unit re-execution, partial usage, eval exception, judge $7 recovery) | 5.63 → 6.15 → 5.95 s | 1 / 1 / 0 | 40/40 (repro red; then the known-usage-in-raw_usage expectation) |
+| `unittest grading.tests.test_grading_chain` (+ attempt-aware selection) | 2.16 → 2.60 → 2.49 → 3.07 s | 1 / 0 / 0 / 0 | 28/28 |
+| `grading.tests.regress_grading_cli` (fresh real-run CLI + docker + mockllm; effective settlement in the cost record; blocked selection after a crash; post-response failure recovered from the write-ahead log, held, then reconciled; complete rejudge; final selection) | 9.18 → 7.31 → 7.74 s | 1 / 1 / 0 | 53/53 (probe expectations: cost-record field, unpriced-model flag; one code defect found: attempts within one second tied on the reservation stamp → tie-break by unit id) |
+| `unittest harness.tests.test_docs_consistency` | 1.07 s | 0 | 3/3 |
+
+Not run (unchanged): layout, limits / closeout / tools / compose / recalc, staging / collect / image unit suites.
+
+## B2 closure fix (2026-11-01; Codex closure review `logs/b2-closure-review-tf6xtnn5/`: 2 Blocking; mock-verified; no model, judge, provider or paid call; logs under `logs/b2-closure-fix-20261101T001947Z/`)
+
+Reproduced first. The first red run (`repro_*.log`) was not a valid reproduction and is recorded as such: the launcher
+counter-example used an unpriced mock model, which the cost-limit check refuses before `eval()` is called, and the chain
+counter-example tripped on a not-yet-existing key before reaching the Codex assertion. The corrected tests were then run
+against a scratch copy of the pre-fix launcher and grading selection (reconstructed from the session transcript, outside
+the repository, with `private/` and `data/` linked read-only): `red2_prefix_launcher_counterexamples.log` settles the
+current unit at 64.000000 USD (its own 1M tokens counted twice from two representations of one log, plus another run's
+7M tokens counted twice) instead of 4.000000; `red4_prefix_chain_counterexample.log` returns (blocked False, 62 rows of
+the old pass) from `selected_grades` without the attempt history instead of (True, 0). The actual CLI without `--ledger`
+reporting `blocked: false` before the fix is Codex's own evidence (`independent-results.json`, attempt_selection).
+
+| Finding | Root cause | Fix | Status |
+|---|---|---|---|
+| Blocking 1 `foreign_recovery`: usage of another execution settled as this unit's known cost, twice | `recover_usage_from_logs` read the shared `inspect_logs/` root with an mtime + task-name filter: any same-task log written after the unit started counted, and each representation of one log (`.eval` and `.json`) counted again | `run_sample` creates one log directory per execution, `inspect_logs/<unit id>/`, hands it to `eval(log_dir=...)` and records it (`log_dir` in the launcher record). `recover_usage_from_logs(unit_log_dir, unit_id=, task_name=, model=)` reads only that directory, requires the log's `eval.task` and `eval.model` to equal the unit's, counts each billable event (`eval_id`, sample uuid, epoch) once from the aggregate `EvalSample.model_usage` (per-call events never added on top), excludes unreadable, mismatched or id-less logs with a reason and sets `attribution_uncertain`. The record carries `counted_events`, `duplicate_events_skipped`, `attribution_uncertain` and per-log `excluded`. An unattributable log is never counted; the settlement stays the approved incomplete rule (max of priced known part and reservation, `estimated`, persistent hold). No mtime heuristics, no second log index. | CLOSED |
+| Blocking 2 `attempt_selection`: an old complete pass reported as current while a newer judge attempt is UNKNOWN | `report_selection(ledger, ...)` built the attempt history only when a ledger was passed and matched the binding; otherwise `attempts=None` reached `select_pass`, which selected the latest complete pass; `selected_grades` behaved the same | `report_selection(cfg, host_dir, out_dir, run_uuid, ledger=None)` resolves `ledger_binding.json` itself, opens the bound ledger from the config (ceiling, prices), checks the `ledger_id`, and returns `blocked` with `authoritative: False` and the reason when the binding is missing, names another run, the bound ledger is unreadable, or a supplied ledger is not the bound one. `authoritative_selection` is the statistics entry (selection plus the selected pass's rows, none while blocked). `selected_grades(attempts=None)` fails closed (blocked, no rows, `authoritative: False`); `attempts=[]` (history loaded, none recorded) stays authoritative. `select_pass` carries `authoritative` (False without attempts, with a warning): low-level inspection, never a report input. The CLI provenance `selected_pass_for_report` uses the resolving entry, with or without `--ledger`. The reconciled-attempt fallback keeps its warning; historical (D-only) inspection stays legal. | CLOSED |
+
+Unchanged, verified by the unchanged exact expectations in the suites: atomic claim, manual and effective settlement,
+monetary validation, rubric / critical / attribution rules, the model-visible prompt, tools, sandbox and generation
+parameters. Two older launcher assertions that pinned `log_dir == inspect_logs/` now assert the per-execution directory
+under it (a contract change, not a weakened check).
+
+Test infrastructure defect found and repaired (same class twice → common cause): `test_grading_chain.py` and
+`test_budget_unit.py` had their `if __name__ == "__main__"` block mid-file, so `python -m <module>` ran only the classes
+defined above it (22 of 28 and 25 of 33) while `python -m unittest <module>` ran all; both blocks moved to the end.
+
+### Verification (first execution captured; reruns listed where a test defect or a code change required one)
+| Command (`run_isolated.sh`, `/usr/bin/time -p`) | Wall clock | Exit | Result |
+|---|---|---|---|
+| `harness.tests.test_launcher_regressions` (+ `ExecutionBoundRecoveryTests`: own log once, foreign logs never; unattributable log uncertain) | 5.87 (invalid repro) → 6.03 → 6.36 s | 1 / 0 / 0 | 42/42 |
+| pre-fix scratch copy, `ExecutionBoundRecoveryTests` only (expected red) | 1.67 s | 1 | 0/2: `('64.000000', True, True) != ('4.000000', True, True)`; `attribution_uncertain` absent |
+| `grading.tests.test_grading_chain` (+ blind `selected_grades` fails closed; `select_pass` non-authoritative without attempts) | 2.18 → 2.22 → 3.07 → 2.51 s | 1 / 0 / 0 / 0 | 28/28 (the 22-test runs were the main-block defect) |
+| pre-fix scratch copy, chain counter-example only (expected red) | 1.89 s | 1 | 0/1: `(False, 62) != (True, 0)` |
+| `harness.tests.test_budget_unit` (`eval_kwargs` consumers; untouched code) | 0.96 (25 tests, module entry before the main-block repair) → 1.24 (`unittest`) → 1.27 s (module entry after the repair) | 0 / 0 / 0 | 33/33 |
+| `grading.tests.regress_grading_cli` (fresh real-run CLI + docker + mockllm; + execution-bound recovery on the real `.eval`: once, duplicate copy skipped, other-task identity rejected, empty directory; official CLI without `--ledger` BLOCKED; authoritative entry 0 rows while blocked; blind helper fails closed; missing binding and foreign ledger fail closed; statistics through the authoritative entry; pilot CLI: the single `.eval` sits inside the unit's own directory) | 9.32 s | 0 | 71 PASS / 0 FAIL |
+| `harness.tests.test_docs_consistency` (README flags, modules, grader version) | 1.13 s | 0 | 3/3 |
+
+Not run (unchanged): layout, limits / closeout / tools / compose / recalc, staging / collect / image unit suites;
+standalone `regress_pilot_cli` (exercised through the self-provisioning regression above).
+
+Interface changes (direct consumers inspected and updated): `PilotLauncher.recover_usage_from_logs` signature and
+record fields; Inspect logs now at `runs_root/inspect_logs/<unit>/`; launcher record `log_dir`;
+`run_grading.report_selection` signature (config first, ledger optional) and new `authoritative_selection`;
+`grade.select_pass` key `authoritative`; `grade.selected_grades` fail-closed without attempts. Consumers: `run_grading.main`
+provenance, both regression scripts, README (log path, selection, recovery statements). `ledger_admin.py` unaffected.
+
+Status: both Blockings CLOSED. Codex's final independent verification (2026-11-01) returned "READY FOR B2 COMMIT" (the
+two Blockings closed, the three earlier fixes still correct) and formally ended the B2 Architecture Cleanup and
+Engineering Review. The human then approved the B2 checkpoint commit and push after a staged safety verification
+(explicit file list of 15 modified and 2 new files, cached diff review, whitespace check, credential scan, protected
+paths not staged, model-visible prompt / tools / sandbox / generation parameters and approved rubric unchanged). No
+paid call was made.
+
 ## Known issues and findings (material check)
 
 - `rubric_json.form_content`: 8,036 items hold `null`, 2,417 items lack the key, zero
@@ -2565,10 +2704,20 @@ identity are linked only by timestamps in the results record.
 
 ## In flight
 
-Nothing. Waiting for the human's decisions listed under "Next stage".
+Nothing. B2 is closed and committed as the B2 checkpoint. Pilot A configuration, preflight and paid authorization
+are the next, separately run stage (pending human decisions: judge model id and config `judge` block, judge
+reservation per run, Model A final approval, real-run and judge paid authorizations).
 
 ## Decisions taken (date · what · commit)
 
+- 2026-11-01 · Codex closure fix: usage recovery after an eval exception is bound to the execution
+  (per-execution Inspect log directory `inspect_logs/<unit>/`, task/model identity check, one count per
+  eval id / sample / epoch, unattributable logs excluded and flagged); report selection fails closed
+  (`report_selection` resolves the run's bound ledger itself; `selected_grades` requires the attempt
+  history; `authoritative_selection` is the statistics entry) · B2 checkpoint commit (2026-11-01)
+- 2026-11-01 · Codex final independent verification: READY FOR B2 COMMIT; B2 Architecture Cleanup and
+  Engineering Review formally closed. Human approved the B2 checkpoint commit + push to `origin/main`
+  after the staged safety verification · B2 checkpoint commit (hash in chat; recorded in the next update)
 - 2026-10-31 · Close-out review remediation: 1137e2bb extraction layer rebuilt as the pipeline
   identify_tables → map_columns → parse_rows → evaluate_dependencies → checks (table identity
   from structure, coverage only disambiguates; confirmed_missing vs unmapped; unidentified rows
@@ -2771,6 +2920,21 @@ Nothing. Waiting for the human's decisions listed under "Next stage".
   `run_grading.py` through `run_judge_batch` (conservative settlement of incomplete usage), grading
   pass identity and `select_pass` rule; mock-verified; config `judge` block and all paid decisions
   PENDING · (uncommitted)
+
+- 2026-10-31 · Wiring Checkpoint committed (`bcb8887`, pushed). B2 implemented on top: approved
+  missing/incomplete-usage policy (conservative estimate + persistent hold; judge batch halts after
+  the first unaccountable call), write-ahead judge call log with UNKNOWN, open-reservation gate,
+  run ↔ ledger binding and ledger-based duplicate-judge gate, append-only manual reconciliation
+  (`harness.ledger_admin`), grading-pass completeness and explicit selection, grader-version
+  check with `config.grading.grader_version` set to `grading-1137e2bb-2026-10-31`; equivalent
+  cleanup (shared usage mapping, dead keys/helper removed); README and config status text ·
+  (uncommitted, awaiting Codex review)
+
+- 2026-11-01 · B2 remediation of the Codex findings: atomic paid-execution claim in the ledger,
+  per-call usage completeness and durable-evidence recovery with one conservative held settlement
+  on exceptions, effective settlement as the cost-record source, attempt-aware (blocked) pass
+  selection wired into run_grading, money validation before quantization · (uncommitted, awaiting
+  Codex closure review)
 
 ## Next stage (not started)
 

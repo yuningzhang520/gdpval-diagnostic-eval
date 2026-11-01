@@ -23,7 +23,7 @@ PRICES = {"anthropic/claude-opus-5-5": {"input": 4, "output": 20, "cache_read": 
 
 
 def fake_log(model, usage: ModelUsage, retries: int = 0, status="success"):
-    ev = SimpleNamespace(event="model", model=model, retries=retries or None)
+    ev = SimpleNamespace(event="model", model=model, retries=retries or None, output=SimpleNamespace(usage=usage))
     sample = SimpleNamespace(model_usage={model: usage}, events=[ev], uuid="u1")
     return [SimpleNamespace(status=status, samples=[sample], location="/dev/null/log.eval")]
 
@@ -232,10 +232,15 @@ class LauncherBudgetTests(unittest.TestCase):
         snap = ledger.snapshot()
         self.assertEqual((snap["settled_usd"], snap["reserved_usd"], snap["estimated_portion_usd"]), ("4.000000", "0.000000", "4.000000"))
         self.assertEqual(launcher.engineering_failures, {"TimeoutError": 1})  # persisted in the ledger, not in memory
+        self.assertEqual(snap["review_pending_units"], ["u1"])  # B2 remediation: an exception leaves the cost unknown -> persistent hold
+        with self.assertRaisesRegex(b.BudgetExhausted, "manual review"):
+            launcher.run_sample(task=SimpleNamespace(name="t"), model="openai/gpt-6.1-sol", unit_id="u2", estimate_usd=4)
+        ledger.resolve_manually("u1", resolution="settled_amount", by="tester", basis="synthetic: provider statement shows no charge", amount_usd="0")
         with self.assertRaises(TimeoutError):
             launcher.run_sample(task=SimpleNamespace(name="t"), model="openai/gpt-6.1-sol", unit_id="u2", estimate_usd=4)
-        with self.assertRaises(b.BudgetExhausted):  # second failure of the same class is a stop condition
+        with self.assertRaises(b.BudgetExhausted):  # second failure of the same class is a stop condition (and u2 is held)
             launcher.run_sample(task=SimpleNamespace(name="t"), model="openai/gpt-6.1-sol", unit_id="u3", estimate_usd=4)
+        self.assertEqual(launcher.engineering_failures, {"TimeoutError": 2})
 
     def test_interrupted_unit_stays_reserved_after_restart(self):
         launcher, ledger = self.make(25, lambda *a, **k: None)
@@ -322,6 +327,141 @@ class LauncherPreflightTests(unittest.TestCase):
         prices = L.prices_from_config(cfg)
         self.assertEqual(prices["anthropic/claude-opus-5-5"]["output"], 20)
         self.assertEqual(prices["openai/gpt-6.1-sol"]["cache_read"], 0.10)
+
+
+class ManualResolutionTests(unittest.TestCase):
+    """B2-1: ledger identity, settle(hold=True), manual_resolution events and their derived effects."""
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory(prefix="ledger_resolution_")
+        self.path = os.path.join(self.tmp.name, "ledger.json")
+        self.prices = {"m/x": {"input": 4, "output": 20, "cache_read": 0.2, "cache_write": 8}}
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def test_ledger_id_is_persistent_and_backfilled(self):
+        lg = b.BudgetLedger(self.path, 10, self.prices)
+        ident = lg.identity()
+        self.assertEqual(ident["ledger_path"], os.path.realpath(self.path)); self.assertEqual(len(ident["ledger_id"]), 32)
+        self.assertEqual(b.BudgetLedger(self.path, 10, self.prices).identity(), ident)
+        state = json.load(open(self.path)); state.pop("ledger_id"); json.dump(state, open(self.path, "w"))  # a ledger written before the identity existed
+        new_id = b.BudgetLedger(self.path, 10, self.prices).identity()["ledger_id"]
+        self.assertEqual(len(new_id), 32); self.assertEqual(b.BudgetLedger(self.path, 10, self.prices).identity()["ledger_id"], new_id)
+
+    def test_settled_amount_closes_an_open_reservation_and_adjusts_an_estimated_settlement(self):
+        lg = b.BudgetLedger(self.path, 10, self.prices)
+        lg.reserve("unknown-outcome", "judge", 0.5, {})
+        lg.reserve("held", "sample", 1, {"model": "m/x", "task": "t"})
+        held = lg.settle("held", {}, fallback_to_reservation=True, hold=True)
+        self.assertEqual((held["cost_usd"], held["estimated"], held["manual_review_required"]), ("1.000000", True, True))
+        snap = lg.snapshot()
+        self.assertEqual((snap["open_reservations"], snap["review_pending_units"], snap["settled_usd"], snap["reserved_usd"]), (["unknown-outcome"], ["held"], "1.000000", "0.500000"))
+        self.assertTrue(lg.stop_reasons())
+        lg.resolve_manually("unknown-outcome", resolution="settled_amount", by="reviewer", basis="statement line 12", amount_usd="0.12")
+        snap = lg.snapshot()
+        self.assertEqual((snap["open_reservations"], snap["settled_usd"], snap["reserved_usd"], snap["resolved_units"]), ([], "1.120000", "0.000000", ["unknown-outcome"]))
+        self.assertTrue(lg.stop_reasons())  # the held unit still blocks
+        lg.resolve_manually("held", resolution="settled_amount", by="reviewer", basis="statement line 13", amount_usd="0.70")
+        snap = lg.snapshot()
+        self.assertEqual((snap["review_pending_units"], snap["settled_usd"], snap["estimated_portion_usd"]), ([], "0.820000", "0.000000"))  # 0.12 + 0.70; the estimate is replaced, not added
+        self.assertEqual(lg.stop_reasons(), [])
+        entries = json.load(open(self.path))["entries"]
+        self.assertEqual([e["type"] for e in entries], ["reservation", "reservation", "settlement", "manual_resolution", "manual_resolution"])
+        self.assertEqual(entries[2]["cost_usd"], "1.000000")  # the original estimated settlement event is untouched
+        with self.assertRaises(b.LedgerConflict):
+            lg.resolve_manually("held", resolution="settled_amount", by="reviewer", basis="twice", amount_usd="0.70")
+
+    def test_unresolvable_changes_nothing_and_malformed_resolutions_are_refused(self):
+        lg = b.BudgetLedger(self.path, 10, self.prices)
+        lg.reserve("u", "sample", 1, {"model": "m/x", "task": "t"})
+        lg.settle("u", {}, fallback_to_reservation=True, hold=True)
+        lg.resolve_manually("u", resolution="unresolvable", by="reviewer", basis="no statement available")
+        snap = lg.snapshot()
+        self.assertEqual((snap["review_pending_units"], snap["unresolvable_units"], snap["settled_usd"]), (["u"], ["u"], "1.000000"))
+        self.assertTrue(any("manual review" in r for r in lg.stop_reasons()))
+        with self.assertRaises(b.LedgerConflict):
+            lg.resolve_manually("u", resolution="settled_amount", by="reviewer", basis="no amount")
+        with self.assertRaises(b.LedgerConflict):
+            lg.resolve_manually("nonexistent", resolution="unresolvable", by="reviewer", basis="x")
+        state = json.load(open(self.path)); state["entries"].append({"type": "manual_resolution", "unit_id": "u", "resolution": "settled_amount", "by": "x", "basis": "y", "at": "t"})
+        json.dump(state, open(self.path, "w"))
+        with self.assertRaises(b.LedgerCorrupt):
+            b.BudgetLedger(self.path, 10, self.prices).snapshot()  # amount missing -> the whole ledger is refused (schema violation)
+
+    def test_units_for_run_groups_judge_units_and_the_bound_generation_unit(self):
+        lg = b.BudgetLedger(self.path, 10, self.prices)
+        lg.reserve("task:model:ts", "sample", 1, {"model": "m/x", "task": "t"}); lg.settle("task:model:ts", {"m/x": {"input_tokens": 1000, "output_tokens": 0}})
+        lg.reserve("RUN1:judge:a", "judge", 0.2, {}); lg.reserve("RUN1:judge:b", "judge", 0.2, {}); lg.reserve("RUN2:judge:a", "judge", 0.2, {})
+        lg.settle("RUN1:judge:a", {}, fallback_to_reservation=True, hold=True)  # a hold blocks NEW reservations, so the others were reserved first
+        r = lg.units_for_run("RUN1", "task:model:ts")
+        self.assertEqual((r["judge_units"], r["open"], r["review_pending"], sorted(r["units"])), (["RUN1:judge:a", "RUN1:judge:b"], ["RUN1:judge:b"], ["RUN1:judge:a"], ["RUN1:judge:a", "RUN1:judge:b", "task:model:ts"]))
+
+
+class ClaimAndEffectiveSettlementTests(unittest.TestCase):
+    """Codex B2 review (logs/b2-review-76gawzsc): atomic claim, same-unit re-execution, money validation,
+    effective settlement after manual resolution, incomplete-usage floor + hold inside the ledger."""
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory(prefix="ledger_claim_")
+        self.path = os.path.join(self.tmp.name, "ledger.json")
+        self.prices = {"m/x": {"input": 4, "output": 20, "cache_read": 0.2, "cache_write": 8}}
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def test_claim_admits_exactly_one_executor_and_never_reexecutes_an_open_unit(self):
+        import threading
+        lg = b.BudgetLedger(self.path, 100, self.prices)
+        outcomes = {}
+        gate = threading.Barrier(2)
+        def worker(uid):
+            gate.wait()
+            try:
+                lg.reserve(uid, "sample", 1, {"model": "m/x", "task": "t"}, claim=True); outcomes[uid] = "claimed"
+            except b.BudgetExhausted as ex:
+                outcomes[uid] = "refused: " + str(ex)[:60]
+        ts = [threading.Thread(target=worker, args=(u,)) for u in ("race-a", "race-b")]
+        [t.start() for t in ts]; [t.join() for t in ts]
+        self.assertEqual(sorted(v.split(":")[0] for v in outcomes.values()), ["claimed", "refused"], outcomes)  # exactly one executor
+        claimed = next(u for u, v in outcomes.items() if v == "claimed")
+        with self.assertRaisesRegex(b.LedgerConflict, "open reservation"):
+            lg.reserve(claimed, "sample", 1, {"model": "m/x", "task": "t"}, claim=True)  # the same unit cannot be re-executed through an idempotent return
+        self.assertEqual(lg.reserve(claimed, "sample", 1, {"model": "m/x", "task": "t"})["unit_id"], claimed)  # the non-claim (bookkeeping) path keeps its idempotent contract
+        self.assertEqual(lg.snapshot()["open_reservations"], [claimed])
+
+    def test_money_inputs_are_validated_before_quantization(self):
+        lg = b.BudgetLedger(self.path, 100, self.prices)
+        lg.reserve("u", "sample", 1, {}); lg.settle("u", {}, fallback_to_reservation=True, hold=True)
+        for bad in ("-0.0000001", "-1", "NaN", "Infinity", "-Infinity"):
+            with self.assertRaises(b.LedgerConflict, msg=bad):
+                lg.resolve_manually("u", resolution="settled_amount", by="r", basis="x", amount_usd=bad)
+        for bad in ("-0.0000001", "NaN", "Infinity"):
+            with self.assertRaises(b.LedgerConflict, msg=bad):
+                lg.reserve(f"r{bad}", "sample", bad, {})
+        lg.resolve_manually("u", resolution="settled_amount", by="r", basis="statement", amount_usd="0")  # a legitimate zero is accepted
+        self.assertEqual(lg.snapshot()["settled_usd"], "0.000000")
+        lg.reserve("v", "sample", "0.5", {}); self.assertEqual(lg.snapshot()["reserved_usd"], "0.500000")
+
+    def test_effective_settlement_reflects_manual_resolution_and_resolved_open_units(self):
+        lg = b.BudgetLedger(self.path, 100, self.prices)
+        lg.reserve("gen", "sample", 5, {"model": "m/x", "task": "t"}); lg.settle("gen", {}, fallback_to_reservation=True, hold=True)
+        self.assertEqual(lg.effective_settlement("gen")["effective"]["cost_usd"], "5.000000")
+        lg.resolve_manually("gen", resolution="settled_amount", by="r", basis="statement", amount_usd="2")
+        eff = lg.effective_settlement("gen")
+        self.assertEqual((eff["effective"]["cost_usd"], eff["effective"]["previous_cost_usd"], eff["effective"]["resolved_from"], eff["resolution"]["amount_usd"], [e["type"] for e in eff["events"]]),
+                         ("2.000000", "5.000000", "estimated_settlement", "2.000000", ["reservation", "settlement", "manual_resolution"]))
+        lg.reserve("open", "judge", 0.5, {}); lg.resolve_manually("open", resolution="settled_amount", by="r", basis="statement", amount_usd="0.12")
+        self.assertEqual((lg.effective_settlement("open")["effective"]["cost_usd"], lg.effective_settlement("open")["effective"]["resolved_from"]), ("0.120000", "open_reservation"))
+        self.assertIsNone(lg.effective_settlement("never")["effective"])
+
+    def test_incomplete_settlement_floors_at_the_reservation_and_holds(self):
+        lg = b.BudgetLedger(self.path, 100, self.prices)
+        lg.reserve("a", "judge", 1, {}); lg.reserve("b", "judge", 1, {})
+        small = lg.settle("a", {"m/x": {"input_tokens": 1000, "output_tokens": 0}}, incomplete=True)
+        self.assertEqual((small["cost_usd"], small["estimated"], small["manual_review_required"]), ("1.000000", True, True))  # priced 0.004 < reservation 1 -> floor
+        big = lg.settle("b", {"m/x": {"input_tokens": 1_000_000, "output_tokens": 100_000}}, incomplete=True)
+        self.assertEqual((big["cost_usd"], big["estimated"], big["manual_review_required"]), ("6.000000", True, True))  # known 4 + 2 above the reservation is kept
 
 
 if __name__ == "__main__":

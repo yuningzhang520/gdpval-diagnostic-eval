@@ -28,11 +28,12 @@ import fcntl
 import json
 import os
 import secrets
-from decimal import Decimal, ROUND_HALF_UP
+from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 
 MONEY = Decimal("0.000001")
 CATEGORIES = ("input", "output", "cache_read", "cache_write")
-EVENT_TYPES = ("reservation", "settlement", "void", "engineering_failure", "stop", "review_cleared")
+EVENT_TYPES = ("reservation", "settlement", "void", "engineering_failure", "stop", "review_cleared", "manual_resolution")
+RESOLUTIONS = ("settled_amount", "unresolvable")
 LEDGER_VERSION = 2
 
 
@@ -58,6 +59,20 @@ def _now() -> str:
 
 def _d(x) -> Decimal:
     return Decimal(str(x)).quantize(MONEY, rounding=ROUND_HALF_UP)
+
+
+def _money_in(x, what: str = "amount") -> Decimal:
+    """Validate a money input BEFORE quantization: a finite, non-negative Decimal (so -0.0000001, NaN and
+    Infinity are refused instead of rounding to a legal zero). Returns the quantized value."""
+    try:
+        raw = Decimal(str(x))
+    except (InvalidOperation, ValueError, TypeError):
+        raise LedgerConflict(f"{what} is not a decimal number: {x!r}")
+    if not raw.is_finite():
+        raise LedgerConflict(f"{what} must be finite: {x!r}")
+    if raw < 0:
+        raise LedgerConflict(f"{what} must not be negative: {x!r}")
+    return _d(raw)
 
 
 # ----------------------------------------------------------------------------- pricing
@@ -176,6 +191,12 @@ def validate_event(e: dict, index: int) -> None:
         _require(isinstance(e.get("reasons"), list) and e["reasons"] and all(isinstance(r, str) for r in e["reasons"]), f"event {index}: stop reasons invalid")
     elif t == "review_cleared":
         _require(isinstance(e.get("by"), str) and e["by"] and isinstance(e.get("basis"), str) and e["basis"], f"event {index}: review clearance needs by and basis")
+    elif t == "manual_resolution":
+        _require(isinstance(e.get("unit_id"), str) and e["unit_id"], f"event {index} (manual_resolution) lacks unit_id")
+        _require(e.get("resolution") in RESOLUTIONS, f"event {index}: resolution must be one of {RESOLUTIONS}")
+        _require(isinstance(e.get("by"), str) and e["by"] and isinstance(e.get("basis"), str) and e["basis"], f"event {index}: manual resolution needs by and basis")
+        if e["resolution"] == "settled_amount":
+            _require(_is_money(e.get("amount_usd")) and Decimal(e["amount_usd"]) >= 0 and e.get("currency") == "USD", f"event {index}: settled_amount needs amount_usd (string) and currency USD")
 
 
 class BudgetLedger:
@@ -188,11 +209,18 @@ class BudgetLedger:
         os.makedirs(os.path.dirname(self.path), exist_ok=True)
         with self._locked():  # first creation and the ceiling check happen under the inter-process lock
             if not os.path.exists(self.path):
-                self._write({"version": LEDGER_VERSION, "label": label, "ceiling_usd": str(self.ceiling), "created_at": _now(), "entries": []})
+                self._write({"version": LEDGER_VERSION, "label": label, "ceiling_usd": str(self.ceiling), "created_at": _now(), "ledger_id": secrets.token_hex(16), "entries": []})
             else:
                 state = self._read()
                 if _d(state["ceiling_usd"]) != self.ceiling:
                     raise LedgerConflict(f"ledger ceiling {state['ceiling_usd']} differs from configured {self.ceiling}; refuse to continue silently")
+                if not state.get("ledger_id"):  # ledgers created before the identity existed: assign one persistent id once (identity metadata, not an event)
+                    state["ledger_id"] = secrets.token_hex(16)
+                    self._write(state)
+
+    def identity(self) -> dict:
+        """Canonical identity a run binds to: the real path of the ledger file and its persistent id."""
+        return {"ledger_path": self.path, "ledger_id": self._read().get("ledger_id")}
 
     # ------------------------------------------------------------------ persistence
     def _read(self) -> dict:
@@ -235,6 +263,8 @@ class BudgetLedger:
         failure_events: list[dict] = []
         stops: list[dict] = []
         review_pending: dict[str, dict] = {}
+        resolutions: dict[str, dict] = {}
+        unresolvable: dict[str, dict] = {}
         for i, e in enumerate(entries):
             t = e["type"]
             uid = e.get("unit_id")
@@ -269,10 +299,41 @@ class BudgetLedger:
             elif t == "review_cleared":
                 _require(uid in review_pending, f"event {i}: review clearance for a unit not awaiting review ({uid})")
                 review_pending.pop(uid)
+            elif t == "manual_resolution":
+                # Human reconciliation of one unit after investigation. settled_amount on an OPEN reservation (an unknown-outcome
+                # unit) closes it at the verified amount; on an estimated settlement it adjusts that unit's cost to the verified
+                # amount and lifts its review hold. The original reservation / settlement events stay in the ledger untouched.
+                # unresolvable records the investigation only: the reservation stays open, the hold stays, nothing is released.
+                _require(uid in open_res or uid in settled, f"event {i}: manual resolution for an unknown unit {uid}")
+                resolutions[uid] = e
+                if e["resolution"] == "settled_amount":
+                    amount = Decimal(e["amount_usd"])
+                    if uid in open_res:
+                        res = open_res.pop(uid)
+                        settled[uid] = {"type": "settlement", "unit_id": uid, "kind": res["kind"], "cost_usd": str(_d(amount)), "breakdown": {c: "0" for c in CATEGORIES},
+                                        "retry_estimate_usd": "0", "estimated": False, "manual_review_required": False, "flags": ["manual_resolution: verified amount"],
+                                        "raw_usage": {}, "note": f"manual resolution by {e['by']}: {e['basis']}", "reserved_usd": res["estimated_usd"], "at": e["at"], "resolved_from": "open_reservation"}
+                        settled_total += amount
+                        if res["kind"] == "judge":
+                            by_cat["judge"] += amount
+                    else:
+                        prev = settled[uid]
+                        delta = amount - Decimal(prev["cost_usd"])
+                        settled_total += delta
+                        if prev.get("estimated"):
+                            estimated_total -= Decimal(prev["cost_usd"])
+                        if prev["kind"] == "judge":
+                            by_cat["judge"] += delta
+                        settled[uid] = {**prev, "cost_usd": str(_d(amount)), "estimated": False, "manual_review_required": False, "resolved_from": "estimated_settlement",
+                                        "previous_cost_usd": prev["cost_usd"], "flags": list(prev.get("flags", [])) + ["manual_resolution: verified amount"]}
+                        review_pending.pop(uid, None)
+                else:
+                    unresolvable[uid] = e
         reserved_total = sum((Decimal(r["estimated_usd"]) for r in open_res.values()), Decimal(0))
         return {"open_reservations": open_res, "settled": settled, "voided": voided, "settled_total": settled_total,
                 "reserved_total": reserved_total, "estimated_total": estimated_total, "by_category": by_cat,
-                "engineering_failures": failures, "failure_events": failure_events, "stops": stops, "review_pending": review_pending}
+                "engineering_failures": failures, "failure_events": failure_events, "stops": stops, "review_pending": review_pending,
+                "resolutions": resolutions, "unresolvable": unresolvable}
 
     def snapshot(self) -> dict:
         state = self._read()
@@ -283,7 +344,8 @@ class BudgetLedger:
                 "by_category_usd": {k: str(_d(v)) for k, v in d["by_category"].items()},
                 "open_reservations": sorted(d["open_reservations"]), "settled_units": sorted(d["settled"]), "voided_units": sorted(d["voided"]),
                 "engineering_failures": dict(d["engineering_failures"]), "stops": [s["reasons"] for s in d["stops"]],
-                "review_pending_units": sorted(d["review_pending"]), "entries": len(state["entries"])}
+                "review_pending_units": sorted(d["review_pending"]), "unresolvable_units": sorted(d["unresolvable"]), "resolved_units": sorted(d["resolutions"]),
+                "ledger_id": state.get("ledger_id"), "entries": len(state["entries"])}
 
     def remaining(self) -> Decimal:
         return Decimal(self.snapshot()["remaining_usd"])
@@ -299,16 +361,19 @@ class BudgetLedger:
         self._write(state)
         return entry
 
-    def reserve(self, unit_id: str, kind: str, estimated_usd, meta: dict | None = None) -> dict:
-        """Reserve before a unit starts. Idempotent only for an open reservation of the same unit
-        with the same kind, estimate and binding (model, task, sample); any difference is a
-        conflict. Refuses settled or voided units, a standing stop condition, a pending manual
-        review, and an estimate the remaining budget cannot cover."""
+    def reserve(self, unit_id: str, kind: str, estimated_usd, meta: dict | None = None, *, claim: bool = False) -> dict:
+        """Reserve before a unit starts. Default (bookkeeping) contract unchanged: idempotent for an open
+        reservation of the same unit with the same kind, estimate and binding; any difference is a conflict;
+        refuses settled or voided units, a standing stop condition, a pending manual review, and an
+        estimate the remaining budget cannot cover.
+        ``claim=True`` (B2 remediation, approved 2026-10-31) is the atomic right to make the paid call: inside the
+        same lock it additionally refuses when ANY other unit has an open reservation (unknown outcome) and when
+        this unit already has one (an executor claimed it before and did not settle: reconcile, never re-run);
+        the reservation it writes carries ``claim: true``. Every real paid call path reserves with claim=True;
+        the lock covers only this check-and-write, never a provider request."""
         if kind not in ("sample", "judge"):
             raise LedgerConflict(f"unknown unit kind {kind!r}")
-        est = _d(estimated_usd)
-        if est < 0:
-            raise LedgerConflict("negative estimate")
+        est = _money_in(estimated_usd, "estimate")
         meta = dict(meta or {})
         with self._locked():
             state = self._read()
@@ -319,18 +384,23 @@ class BudgetLedger:
                 raise LedgerConflict(f"unit {unit_id} was voided; use a new unit id")
             existing = d["open_reservations"].get(unit_id)
             if existing:
+                if claim:
+                    raise LedgerConflict(f"unit {unit_id} already has an open reservation (claimed earlier, outcome unknown); reconcile it (void or manual resolution) before any re-run")
                 same = existing["kind"] == kind and _d(existing["estimated_usd"]) == est and all(existing["meta"].get(k) == meta.get(k) for k in ("model", "task", "sample_id", "run"))
                 if not same:
                     raise LedgerConflict(f"unit {unit_id} already reserved with a different kind, estimate or binding")
                 return existing
             reasons = self._stop_reasons(d, next_estimate_usd=est)
+            if claim and d["open_reservations"]:
+                reasons.append(f"open reservation(s) of unknown outcome must be reconciled before a new paid unit starts: {sorted(d['open_reservations'])}")
             if reasons:
                 raise BudgetExhausted("; ".join(reasons))
-            entry = {"type": "reservation", "unit_id": unit_id, "kind": kind, "estimated_usd": str(est), "at": _now(), "meta": meta}
+            entry = {"type": "reservation", "unit_id": unit_id, "kind": kind, "estimated_usd": str(est), "at": _now(), "meta": meta, **({"claim": True} if claim else {})}
             return self._append(state, entry)
 
     def settle(self, unit_id: str, usage_by_model: dict, *, retries_by_model: dict | None = None, note: str = "",
-               estimated: bool = False, fallback_to_reservation: bool = False, calls_by_model: dict | None = None, scope: dict | None = None) -> dict:
+               estimated: bool = False, fallback_to_reservation: bool = False, calls_by_model: dict | None = None, scope: dict | None = None,
+               hold: bool = False, incomplete: bool = False) -> dict:
         """Settle a unit from actual usage ({model: usage dict}); releases its reservation exactly
         once (a repeat returns the first settlement unchanged). ``calls_by_model`` ({model: [per-call
         usage]}) enables exact per-call tier pricing. Each recorded retry adds one more uncached
@@ -423,6 +493,17 @@ class BudgetLedger:
                 total = max(total, Decimal(res["estimated_usd"]))
                 estimated = True
                 flags.append("settled at the reserved amount (no usage available; conservative)")
+            if hold or incomplete:
+                # Approved policy (2026-10-31): missing or incomplete usage (any call whose usage is unknown, or an exception
+                # after calls were made) is accounted conservatively - never below the reservation, never below the known
+                # part - AND holds further paid starts until a human reconciles the unit (manual_resolution settled_amount).
+                floor = Decimal(res["estimated_usd"])
+                if total < floor:
+                    flags.append(f"incomplete usage: priced known part {_d(total)} USD is below the reservation; settled at the reservation {_d(floor)} USD")
+                    total = floor
+                estimated = True
+                manual_review = True
+                flags.append("hold: usage missing or incomplete; conservative estimate; manual reconciliation required before further paid starts")
             entry = {"type": "settlement", "unit_id": unit_id, "kind": res["kind"], "cost_usd": str(_d(total)),
                      "breakdown": {c: str(_d(v)) for c, v in breakdown.items()}, "retry_estimate_usd": str(_d(retry_est)),
                      "per_model": per_model, "raw_usage": usage_by_model or {}, "raw_calls": calls_by_model or {}, "usage_scope": scope,
@@ -453,6 +534,56 @@ class BudgetLedger:
         with self._locked():
             state = self._read()
             return self._append(state, {"type": "stop", "reasons": [str(r)[:300] for r in reasons], "at": _now()})
+
+    def effective_settlement(self, unit_id: str) -> dict:
+        """The authoritative cost of one unit: the ledger's DERIVED settlement (manual resolutions applied: adjusted
+        amount with previous_cost_usd / resolved_from, or the synthetic settlement of a resolved open reservation)
+        plus the unit's raw events and its resolution for provenance. ``effective`` is None for an unsettled unit."""
+        state = self._read()
+        d = self._derive(state["entries"])
+        return {"unit_id": unit_id, "effective": d["settled"].get(unit_id), "open": unit_id in d["open_reservations"], "review_pending": unit_id in d["review_pending"],
+                "resolution": d["resolutions"].get(unit_id), "events": [e for e in state["entries"] if e.get("unit_id") == unit_id]}
+
+    def units_for_run(self, run_uuid: str, generation_unit_id: str | None = None) -> dict:
+        """Every event of the units that belong to one model run: judge units are named '<run_uuid>:judge:<ts>';
+        the generation unit is named by the run's ledger binding. Grouped by unit with its derived state."""
+        state = self._read()
+        d = self._derive(state["entries"])
+        prefix = f"{run_uuid}:judge:"
+        units: dict[str, dict] = {}
+        for e in state["entries"]:
+            uid = e.get("unit_id")
+            if uid and (uid.startswith(prefix) or (generation_unit_id and uid == generation_unit_id)):
+                units.setdefault(uid, {"events": [], "kind": None})["events"].append(e)
+        for uid, u in units.items():
+            u["kind"] = next((e.get("kind") for e in u["events"] if e.get("kind")), None)
+            u["open"] = uid in d["open_reservations"]
+            u["settled"] = uid in d["settled"]
+            u["voided"] = uid in d["voided"]
+            u["review_pending"] = uid in d["review_pending"]
+            u["resolution"] = (d["resolutions"].get(uid) or {}).get("resolution")
+        return {"units": units, "judge_units": sorted(u for u in units if u.startswith(prefix)), "open": sorted(u for u, v in units.items() if v["open"]),
+                "review_pending": sorted(u for u, v in units.items() if v["review_pending"]), "unresolvable": sorted(u for u, v in units.items() if v["resolution"] == "unresolvable")}
+
+    def resolve_manually(self, unit_id: str, *, resolution: str, by: str, basis: str, amount_usd=None, currency: str = "USD") -> dict:
+        """Append a human reconciliation of one unit (never overwrites an event). settled_amount must carry the verified
+        amount; it closes an open reservation at that amount or adjusts an estimated settlement and lifts that unit's hold.
+        unresolvable records the investigation and changes no balance, hold or reservation."""
+        if resolution not in RESOLUTIONS:
+            raise LedgerConflict(f"resolution must be one of {RESOLUTIONS}")
+        with self._locked():
+            state = self._read()
+            d = self._derive(state["entries"])
+            if unit_id not in d["open_reservations"] and unit_id not in d["settled"]:
+                raise LedgerConflict(f"unit {unit_id} has no reservation or settlement to resolve")
+            if unit_id in d["resolutions"] and d["resolutions"][unit_id]["resolution"] == "settled_amount":
+                raise LedgerConflict(f"unit {unit_id} already resolved with a verified amount")
+            entry = {"type": "manual_resolution", "unit_id": unit_id, "resolution": resolution, "by": str(by), "basis": str(basis), "at": _now()}
+            if resolution == "settled_amount":
+                if amount_usd is None:
+                    raise LedgerConflict("settled_amount needs amount_usd")
+                entry.update({"amount_usd": str(_money_in(amount_usd, "amount_usd")), "currency": currency})
+            return self._append(state, entry)
 
     def clear_review(self, unit_id: str, by: str, basis: str) -> dict:
         """Human clearance of an unknown-cost settlement after the account was checked."""
@@ -514,13 +645,20 @@ class _FileLock:
         self.fd = None
 
 
+def model_usage_to_dict(usage) -> dict | None:
+    """The one Inspect ModelUsage -> ledger usage mapping (uncached input, output, cache read, cache write; None -> 0).
+    ModelUsage.input_tokens excludes cached tokens; cache reads and writes are separate fields."""
+    if usage is None:
+        return None
+    return {"input_tokens": int(getattr(usage, "input_tokens", 0) or 0), "output_tokens": int(getattr(usage, "output_tokens", 0) or 0),
+            "cache_read_tokens": int(getattr(usage, "input_tokens_cache_read", 0) or 0), "cache_write_tokens": int(getattr(usage, "input_tokens_cache_write", 0) or 0)}
+
+
 def usage_from_eval_sample(sample) -> tuple[dict, dict]:
-    """({model: aggregated usage}, {model: retries}) from an Inspect EvalSample. ModelUsage.input_tokens
-    excludes cached tokens; cache reads and writes are separate. Retries come from ModelEvent.retries."""
+    """({model: aggregated usage}, {model: retries}) from an Inspect EvalSample. Retries come from ModelEvent.retries."""
     usage = {}
     for model, u in (getattr(sample, "model_usage", None) or {}).items():
-        usage[model] = {"input_tokens": u.input_tokens or 0, "output_tokens": u.output_tokens or 0,
-                        "cache_read_tokens": u.input_tokens_cache_read or 0, "cache_write_tokens": u.input_tokens_cache_write or 0}
+        usage[model] = model_usage_to_dict(u)
     retries: dict[str, int] = {}
     for e in getattr(sample, "events", []) or []:
         if getattr(e, "event", None) == "model" and getattr(e, "retries", None):
@@ -528,19 +666,28 @@ def usage_from_eval_sample(sample) -> tuple[dict, dict]:
     return usage, retries
 
 
-def calls_from_eval_sample(sample) -> dict:
-    """{model: [per-call usage]} from the ModelEvents of an Inspect EvalSample (for per-call tiering)."""
+def model_events_usage(sample) -> dict:
+    """Per-call usage from the ModelEvents of an Inspect EvalSample, with completeness: {"calls": {model: [usage]},
+    "unknown_calls": n, "total_calls": m}. A model event without usage is COUNTED (unknown cost), never skipped."""
     calls: dict[str, list[dict]] = {}
+    unknown, total = 0, 0
     for e in getattr(sample, "events", []) or []:
         if getattr(e, "event", None) != "model":
             continue
+        total += 1
         u = getattr(getattr(e, "output", None), "usage", None)
         if u is None:
+            unknown += 1
             continue
-        rec = {"input_tokens": u.input_tokens or 0, "output_tokens": u.output_tokens or 0,
-               "cache_read_tokens": u.input_tokens_cache_read or 0, "cache_write_tokens": u.input_tokens_cache_write or 0}
+        rec = model_usage_to_dict(u)
         tc = getattr(u, "total_cost", None)
         if isinstance(tc, (int, float)):
             rec["total_cost"] = float(tc)  # Inspect's own pricing of this call (TTL-aware); kept as a floor
         calls.setdefault(e.model, []).append(rec)
-    return calls
+    return {"calls": calls, "unknown_calls": unknown, "total_calls": total}
+
+
+def calls_from_eval_sample(sample) -> dict:
+    """{model: [per-call usage]} from the ModelEvents of an Inspect EvalSample (for per-call tiering); see
+    model_events_usage for the completeness counts."""
+    return model_events_usage(sample)["calls"]
