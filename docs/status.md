@@ -3520,6 +3520,27 @@ official pass before any grader change:
 Labeling batch 1 preflight (`grading.label_batch.check_runs`) passed: the tasks are ready, the tags exist, the runs are
 canonical dev runs and none has a pass yet. The build waits for a Docker-idle window.
 
+### Gemini configuration audit (2026-11-01; requested by the human; read-only, no paid call)
+
+Traced from the eval logs of every canonical Gemini run (dev `b5d2e6f1…`, `f841ddcf…`, `47ef842d…`, `1137e2bb…`;
+validation `b5d2e6f1…`, `f841ddcf…`, `47ef842d…`) and through the Inspect 0.3.286 Google adapter offline (no request is
+recorded in the logs: the API call payload is not logged).
+
+| Setting | Effective value | Pinned? |
+|---|---|---|
+| Model | `google/gemini-3.8-flash`, model_args `{}`, every metered call served as `gemini-3.8-flash` | alias only; no dated revision pinned or reported |
+| Thinking | reasoning_effort `high` -> `ThinkingConfig(thinking_level=HIGH, include_thoughts=True)`; no thinking budget; reasoning_summary `none` unused by the Google adapter | pinned (level) |
+| Sampling | temperature, top_p, top_k None -> omitted from the request | not pinned: provider defaults, values not recorded |
+| Max output tokens | 32,000 (`max_output_tokens`) | pinned |
+| Limits | no message limit; token 20,000,000; time 7,200 s; working 7,200 s; cost 10 USD | pinned |
+| Retries | Inspect max_retries 3 (snapshot `2b267fc18fa2`) or 10 (`357776d587a2`); timeout 2,700 s; attempt timeout 900 s; SDK retries none; retry_on_error 0 | pinned |
+| Safety settings | Inspect adapter default: BLOCK_NONE for all five categories | delegated to the pinned Inspect version |
+
+Model-visible settings (system prompt sha256 `6b539cf9171a…`, tools bash / python / render_document / view_image,
+generation and limits) are identical for dev and validation within and across both canonical snapshots. The two
+snapshots differ only in non-model-visible settings (retry count, per-class credential, recovered-attempt settlement)
+and grader versions. Reproducibility limitation: unpinned sampling parameters and the model alias.
+
 Labeling batch 1 is deferred. Its three ready canonical dev runs (`f841ddcf…`, `47ef842d…`, `1137e2bb…`) carry
 workbooks whose formulas have no cached values (491, 457 and 923 formulas). Their deterministic pass therefore needs the
 LibreOffice recalculation in Docker, which is not started while paid sandboxes are active.
