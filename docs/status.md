@@ -2868,7 +2868,7 @@ Docker-gated suites run once the sandbox was idle (2026-11-01, after the paid un
 its declared map), `test_gold_7d7fc9a7.GoldRecalcDockerTests` 3/3 (3.3 s; expert workbook through LibreOffice on the
 gold baseline; summary hard-coded fails 7 alone; a total prepaid balance added as a formula passes 10),
 `regress_recalc_docker` 16/16 (3.6 s), `regress_grading_cli` 61/61 (7.2 s; corrected 2026-11-01 from a recorded 74/74, a recording error: the results file holds 61 checks). Nothing deferred remains for the Codex
-checkpoint. Codex Review 1 package: `docs/codex_review_1_shared_grading_core.md`. Tag `grader-v0-7d7fc9a7`.
+checkpoint. Codex Review 1 package: `docs/codex_review_1_shared_grading_core.md`. Tag `grader-v0-7d7fc9a7` (then at `bd5713b`; moved 2026-11-01 to `1b92af83`, the old target archived as `grader-v0-7d7fc9a7-superseded-bd5713b`).
 
 Verdict-free review packets (`grading/review.py`, 2026-11-01): the items file carries criteria, locations, source
 material and excerpts only; deterministic and judge verdicts go to the sealed file; `save-labels` checkpoints a filled
@@ -3251,6 +3251,32 @@ instead of the first candidate's details labelled "in every one of N"; verdict s
 unassessable cell kept). `unittest grading.tests.test_gold_7d7fc9a7` 56 + 3 skipped, `test_grading_chain` 29,
 `test_docs_consistency` 3.
 
+## Gemini quota error: Gemini launches stopped (2026-11-01 14:10Z; provider blocker; awaiting the human)
+
+Dev unit `47ef842d…` (run `dGuK7hzr9wLHPPAAARo7bF`, 13:31:18-14:10:56Z): two model attempts at 14:08:22Z and 14:08:27Z
+returned the provider message "You exceeded your current quota, please check your plan and billing details." (no
+output, no usage, not in the transcript; failed attempts inside one turn). The sample then reached the 20 M token limit
+(`limited`, `token`; 20,075,156 tokens; 132 model events, 129 assistant turns, 129 tool calls, 0 tool errors);
+collection complete with 4 structurally checked files; grading-eligible. Because two attempts carry no usage, the
+ledger settled the unit conservatively at the 5.00 reservation (usage-reported part 2.694390 per Inspect) and holds it
+for manual review; the unit gate stopped further Gemini launches in both classes (scheduler `gemini_stop`). This is
+the human's stop condition for a Google billing / quota / payment error: no rerun, no billing change, the hold is not
+cleared. The validation unit `b5d2e6f1…` launched at 13:59:29Z keeps running (not interrupted). Decision needed: the
+quota cause (e.g. prepaid balance / auto-reload, the project's spend or rate limits) and the reconciliation of the held
+unit.
+
+## Task 2 Grader v0 finalized; tag moved (2026-11-01)
+
+`grader-v0-7d7fc9a7` moved from `bd5713b` (task version .1, tag object `ce595d20…`) to `1b92af83` (task version .5:
+Codex Review 1 closure accepted at `a9a1f88`, R36 wording fixed). The old target is preserved as the annotated tag
+`grader-v0-7d7fc9a7-superseded-bd5713b`; old and new targets, tag objects and the reference check are recorded in
+`grading/validation/7d7fc9a7…/tag_provenance.json`. Reference check: no record in the run root names the tag; grading
+passes, inventories and validation records name full commits and task versions; the two narrative status lines that
+name the tag are annotated with the move; the untracked Codex review log names `bd5713b` by commit. Prior commits and
+all earlier records are kept. Code-bound records at the new target (clean tree): `code_1b92af8/` (52 variants).
+`grading/readiness.json` now lists 7d7fc9a7: its development output may be opened under Early Generate, Late Reveal and
+independent human labeling (no 7d7fc9a7 development output exists yet).
+
 ## Known issues and findings (material check)
 
 - `rubric_json.form_content`: 8,036 items hold `null`, 2,417 items lack the key, zero
@@ -3341,7 +3367,7 @@ code-bound records and tag next. Codex Review 1 closure pinned to `2c37d6a`.
 - 2026-11-01 · 1137e2bb grader finalized (item 9 numeric-format rule, business-row rule, roll-up variant; task
   version .2; commit `384721957b6d553825159bb2d2f8225923e3d9c9`, tag `grader-v0-1137e2bb` moved there from
   `a172980…`). Shared engine extracted and Task 2 `7d7fc9a7…` gold-first grader v0 (this entry's commit, tag
-  `grader-v0-7d7fc9a7`); the 7d7fc9a7 development output may be opened at or after that tag.
+  `grader-v0-7d7fc9a7`, then at `bd5713b`; moved 2026-11-01 to `1b92af83` after the Codex Review 1 closure); the 7d7fc9a7 development output may be opened at or after that tag.
 - 2026-11-01 · Recovery actions AUTHORIZED by the human (chat): (1) the failed dev unit
   `b5d2e6f1-62a2-433a-bcdd-95b260cdd860:google/gemini-3.8-flash:20261101T091604Z` is reconciled at 0.00 USD
   (verified client-construction TypeError before any HTTP request, no usage; the human checked the Google

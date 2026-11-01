@@ -90,8 +90,8 @@ class LabelBatchTests(unittest.TestCase):
         v = [("validation",) + self.runs[0][1:]] + self.runs[1:]
         with self.assertRaisesRegex(LB.BatchError, "stay sealed"):
             self.resolved(v)
-        nr = [("dev", "7d7fc9a7-21a7-4b83-906f-416dea5ad04f", self.runs[0][2], None)] + self.runs[1:]
-        with self.assertRaisesRegex(LB.BatchError, "Codex Review 1 closure pending"):
+        nr = [("dev", "b5d2e6f1-62a2-433a-bcdd-95b260cdd860", self.runs[0][2], None)] + self.runs[1:]  # no grader yet
+        with self.assertRaisesRegex(LB.BatchError, "not listed in grading/readiness.json"):
             self.resolved(nr)
         with self.assertRaisesRegex(LB.BatchError, "does not exist"):
             self.resolved(tag_check=lambda tag: False)
@@ -99,10 +99,9 @@ class LabelBatchTests(unittest.TestCase):
         with self.assertRaisesRegex(LB.BatchError, "no sample record"):
             self.resolved(other)
 
-    def test_readiness_file_lists_tagged_tasks_and_keeps_7d7fc9a7_closed(self):
+    def test_readiness_file_lists_only_tagged_tasks(self):
         r = LB.readiness()
-        self.assertEqual(sorted(r["ready"]), sorted(TASKS))
-        self.assertIn("7d7fc9a7-21a7-4b83-906f-416dea5ad04f", r["not_ready"])
+        self.assertEqual(sorted(r["ready"]), sorted(TASKS + ["7d7fc9a7-21a7-4b83-906f-416dea5ad04f"]))  # 7d7fc9a7 after the Codex closure and the tag move
         for t, v in r["ready"].items():
             self.assertTrue(LB.tag_exists(v["tag"]), v["tag"])
 
