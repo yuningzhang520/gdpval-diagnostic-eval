@@ -5,25 +5,36 @@ statement below is to be checked against the code.
 
 ## 1. Pin and setup (read-only)
 
-- Code under review: commit `0c8efcb25c6a3b27100561af07ce04a688aa5a98`, tag `v1-calibration-freeze` (local).
+- Code under review: commit `57e2a25ed4f8166f92e85d21f43148ffb500c7a6`, tag `v1.1-judge-item-recovery` (local).
+  The earlier freeze tag `v1-calibration-freeze` stays at `0c8efcb25c6a3b27100561af07ce04a688aa5a98`; it is part of the
+  history under review, not the pin.
 - Diff baseline: commit `a9a1f88293264d653e4f0ded024eeeedcf1f4636`, the pin of the Codex Review 1 B2 closure
   (`docs/codex_review_1_b2_closure_2.md`).
 - This file was committed after the pin. Before anything else, run:
-  `git -C /Users/yuning/turing-th diff --name-only 0c8efcb HEAD -- grading harness config.json`
+  `git -C /Users/yuning/turing-th diff --name-only 57e2a25 HEAD -- grading harness config.json`
   If it prints anything, stop and report it: the code under review is no longer the code in the working tree.
 - Working tree: `/Users/yuning/turing-th`. Gold deliverables and rubrics live in the untracked `private/` and the tests
   need them, so the review runs in that working tree and does not use an export. Do not modify, add, stage or commit
   anything there. Write any output only under a scratch directory of your own, for example `/tmp/codex-r2/`.
 - Do not read `plan/`, `.env` or any credential. Do not run `grading.judge_dev run|pass2`,
-  `grading.judge_validation run`, `harness.launcher`, `harness.scheduler` or any command that calls a model provider.
-  Network access is not needed.
+  `grading.judge_validation run|recover`, `harness.launcher`, `harness.scheduler` or any command that calls a model
+  provider. Network access is not needed.
+- Validation blind review is in progress. Do not open, print or quote anything under
+  `~/turing-eval-runs/validation/grading/`, `~/turing-eval-runs/labeling/validation-v4/` or `~/turing-eval-runs/qa/`.
+  Cost and coverage registries without verdicts may be read: `~/turing-eval-runs/judge_validation/registry.jsonl` and
+  `ledger.json`. Gold deliverables, rubrics and recalculation references under `private/` may be read.
+- Codex CLI, read-only, from the working tree. For example:
+  `codex --cd /Users/yuning/turing-th --sandbox read-only --ask-for-approval never`
+  (confirm the flags with `codex --help`). In a read-only sandbox, tests that create temporary files may be refused.
+  Then verify the code and the recorded logs listed in section 2E, and list the tests you could not run.
 - Harness tests must run through `harness/tests/run_isolated.sh /Users/yuning/turing-th <module>`, because the
   collector refuses symlinked temporary paths such as macOS `/var`. Grading tests run with
   `.venv/bin/python -m unittest <module>` from the working tree root.
 
-## 2. What changed between `a9a1f88` and `0c8efcb`
+## 2. What changed between `a9a1f88` and `57e2a25`
 
-55 commits. `git diff --stat a9a1f88 0c8efcb -- grading harness config.json` reports 95 files.
+57 commits. `git diff --stat a9a1f88 57e2a25 -- grading harness config.json` reports 100 files. Subsections A-F cover
+the range up to `0c8efcb` (V1); subsection G covers V1.1 (`0c8efcb..57e2a25`).
 
 ### A. Shared grading engine (`grading/grade.py`, `grading/extract.py`, `grading/run_grading.py`)
 
@@ -139,12 +150,49 @@ Gold-first evidence per task:
 | before `e2208d3` | `run_isolated.sh` for each `harness/tests/test_*.py` | 14 modules, 199 tests, OK (first recorded as 214; corrected from the log) | 51 s | `logs/v1-labelled-20261101/harness_isolated.log` |
 | before `0c8efcb` | grading discover (as above) | 426 tests, 5 skipped, OK | 121.97 s | `logs/v1-freeze-20261101/grading_tests.log` |
 | before `0c8efcb` | `run_isolated.sh` for each harness module | 14 modules, 200 tests, OK (first recorded as 215; corrected from the log) | 51 s | `logs/v1-freeze-20261101/harness_isolated.log` |
+| before `57e2a25` | grading discover | 433 tests, 5 skipped, OK | 120.36 s | `logs/v1.1-20261101/grading_tests.log` |
+| before `57e2a25` | `run_isolated.sh` for each harness module | 14 modules, 201 tests, OK | 51 s | `logs/v1.1-20261101/harness_isolated.log` |
+| before `57e2a25` | Docker: `GoldRecalcDockerTests` (`7d7fc9a7…`, `1137e2bb…`) | 3/3, 2/2 | 8.23 s, 10.67 s | `logs/docker-gated-v1.1-221241Z/` |
+| before `57e2a25` | Docker: `regress_recalc_docker` | 16 PASS, 0 FAIL | 3.93 s | `logs/docker-gated-v1.1-221241Z/` |
+| before `57e2a25` | Docker: `regress_grading_cli` | first run 60 PASS, 1 FAIL (the not-attempted expectation); after updating it to `not_run`, 61 PASS, 0 FAIL | 7.25 s, 7.91 s | `logs/docker-gated-v1.1-221241Z/` |
 
 - The five skipped tests are `GoldRecalcDockerTests` in `test_gold_1137e2bb` and `test_gold_7d7fc9a7`, which need
   `GOLD_RECALC_DOCKER=1` and the pinned LibreOffice image.
 - Docker-gated suites: `grading/tests/regress_recalc_docker.py` and `grading/tests/regress_grading_cli.py`. Their
   latest results are in section 4.
 - `logs/` is not tracked; the paths above are local to `/Users/yuning/turing-th`.
+
+### G. V1.1 (`57e2a25`; preregistration 1.20; `docs/status.md` "V1.1")
+
+- `harness/budget.py`:
+  - `resolve_manually(..., inferred=...)`, `validate_event` and `_derive`: an inferred (not provider-confirmed)
+    `settled_amount` lifts the unit's hold and keeps it estimated and flagged.
+  - `harness/launcher.run_judge_batch` settles judge batches per call (from `0c8efcb`).
+- Engine `engine-2026-11-01.7`, `grading/grade.py`:
+  - `judge_row_verdict`: a provider failure gives verdict `provider_error`; an unattempted call gives `not_run`;
+  - `visual_review_items` and `_score` (`judge_infrastructure`, `visual_review_required`, per critical criterion);
+  - `score_rows`.
+- `grading/judge_recovery.py`:
+  - `recovery_plan` (eligibility, the once-per-item bound, request-hash check);
+  - `recovery_pass` (new `judge_item_recovery` pass, rows copied from the base pass, separate
+    `judge_recovery_<run>_<pass>.json`);
+  - `grading/run_grading.py --judge-recover ITEMS --base-pass PASS`, which refuses ineligible items before any
+    reservation.
+- `grading/judge_validation.py`:
+  - `VERSION_TAGS` and `frozen_state` (latest existing version tag and its manifest);
+  - `recover`, which requires a clear ledger.
+- `grading/checks_2ea2e5b5.py` .4 and `grading/checks_47ef842d.py` .3: `visual_review="picture_chart"` on picture-chart
+  unassessable entries.
+- `grading/review.py`:
+  - `save_evidence_correction` (append-only, post-reveal, judgments unchanged);
+  - `save_label_checkpoint(extra=...)`;
+  - a `_n` suffix on same-second checkpoint names.
+- `grading/freeze_manifest.py`: `judge_surface`, `judge_surface_diff`, and `write --manifest --freeze --scope`.
+  Record: `grading/freeze/v1.1_manifest.json`.
+- Tests: `grading/tests/test_judge_recovery.py`, `test_judge_validation.py`,
+  `harness/tests/test_budget_unit.py::test_inferred_settled_amount_lifts_the_hold_but_stays_an_estimate`, and the
+  visual-review assertions in `test_gold_2ea2e5b5` and `test_gold_47ef842d`.
+- `regress_grading_cli` now expects `not_run` for not-attempted rows.
 
 ### F. Recorded limitations and open items (facts from `docs/status.md` and `preregistration.md`)
 
@@ -161,14 +209,23 @@ Gold-first evidence per task:
 - `a45bc83b…`: eight AI-QA judge-interpretation leads were recorded and not acted on; Dev judge items were not
   re-run with builder .3.
 - Judge Dev ledger settlements before `0c8efcb` priced summed prompts at the long-context tier and stay as recorded.
-- Not done at the pin: V1 re-grades of every Dev run under the frozen versions; the Docker-gated suites after
-  engine .4; the formal freeze (`freeze-v1`); Formal candidate runs.
+- Done after `0c8efcb`: V1 re-grades of every Dev run under the frozen versions; the Docker-gated suites at `0c8efcb`
+  and before `57e2a25`.
+- Judge protocol: a judge answer with a pass or fail verdict but an empty evidence list is a `judge_parse_error`
+  (`cannot_assess`). It is a completed call, so it is never recovered. Four such items are recorded on one Validation
+  run.
+- Provider failures: twice a judge call failed with `RetryError` wrapping a google `ClientError`. The recorded error
+  text does not include the inner status code. The retry setting (`max_retries` 3) is part of the frozen judge
+  configuration.
+- Not done at the pin: the remaining Judge Validation runs; the formal freeze (`freeze-v1`); Formal candidate runs.
 
 ## 3. Focused acceptance checks
 
-1. **Pin.** Section 1's `git diff` is empty, and `.venv/bin/python -m grading.freeze_manifest verify` prints
-   `"matches": true`. Confirm that `v1_manifest.json` covers every non-test `.py` file under `grading/` and
-   `harness/`.
+1. **Pin.** Section 1's `git diff` is empty, and
+   `.venv/bin/python -m grading.freeze_manifest verify --manifest grading/freeze/v1.1_manifest.json` prints
+   `"matches": true`. Confirm that `v1.1_manifest.json` covers every non-test `.py` file under `grading/` and `harness/`.
+   `.venv/bin/python -m grading.freeze_manifest judge-surface v1-calibration-freeze` must report `"identical": true`.
+   Check that `judge_surface` covers everything that shapes a judge request or its parsing.
 2. **Decision semantics.** For `Decision` (`grading/engine/decision.py`), `across_candidates` (`checks_7d7fc9a7`)
    and `over_candidates` (`checks_c3525d4d`), confirm against the code:
    - a confirmed violation fails;
@@ -196,13 +253,27 @@ Gold-first evidence per task:
    `compare_labels` verifies the checkpoint copy's SHA-256.
 10. **Version registration.** Confirm that every task module's `VERSION` equals `config.json`
     `grading.task_grader_versions`, and that `ENGINE_VERSION` equals `grading.engine_version`.
+11. **Per-item recovery** (`judge_recovery`, `run_grading --judge-recover`). Confirm against the code:
+    - only `provider_error` and `not_attempted` base calls are eligible;
+    - a completed call (any verdict or parse error) is never re-judged;
+    - each item gets at most one sent recovery attempt;
+    - the stored unit is sent unchanged, with the hash checked before any call;
+    - every non-recovered row is copied unchanged, and the base pass and its rows are never rewritten;
+    - a failed recovery stays `provider_error` / `not_run`;
+    - nothing touches candidate-model attempts.
+12. **Inferred ledger resolution.** Confirm that an inferred amount cannot be recorded without a calculation basis,
+    stays estimated, lifts only that unit's hold, and leaves the reservation and settlement events untouched.
+13. **Engine .7 labels and image-only evidence.** Check every consumer of verdict values (`_score`, `select_pass`,
+    `review.compare_labels`, critical status) with the new `provider_error` / `not_run` values. Confirm that every
+    `visual_review` tag comes from a picture-chart branch only, and that it reaches
+    `score.critical.<C>.visual_review_required`.
 
 Run the gold, layout and decision suites. Independent probes are welcome: a new layout or corruption of an expert
 deliverable, with the expected item map declared before it is run. Report each finding as Blocking (a false pass, a
 false fail, a cross-task behaviour change, a cost-safety or isolation defect, or a broken provenance or label-integrity
 guarantee) or Non-blocking, with the file and line, the input, the observed and the expected outcome.
 
-## 4. Records added after the pin
+## 4. Records after the V1 pin (`0c8efcb`) and the V1.1 pin (`57e2a25`)
 
 Docker-gated suites at `0c8efcb` (clean frozen tree; logs `logs/docker-gated-20261101T213418Z/`):
 
@@ -221,6 +292,14 @@ Validation and Judge Validation records (2026-11-01, code `0c8efcb`; details in 
 - The other nine Validation runs were graded deterministically through the official entry (log
   `~/turing-eval-runs/validation/grading/deterministic_reveal.jsonl`).
 - Dev frozen-version re-grades: `~/turing-eval-runs/dev/grading_v1/frozen_v1_regrade.jsonl`.
+- After the V1.1 tag (registry `~/turing-eval-runs/judge_validation/registry.jsonl`):
+  - the `a45bc83b…` unit was resolved at an inferred 0.856327 USD with the human's authorization;
+  - item 71 (first evaluation) and item 69 (one retry) were recovered: 2 calls, both ok, same request hashes as the
+    base, 0.049708 USD;
+  - four items of that run (18, 19, 20, 64) keep `judge_parse_error` from their completed base calls and are not
+    re-judged;
+  - the resumed pass halted on the first call of `c357f0e2…` (item 12: `RetryError` wrapping a google
+    `ClientError`); 53 calls were not attempted; the unit settled at its 6.11 USD reservation and is on hold.
 - Verdicts of the Validation runs must not be disclosed to the human before the Validation labels are checkpointed.
   Do not print or quote Validation verdicts or judge responses in the review report.
 
@@ -238,8 +317,9 @@ under /tmp/codex-r2/. Do not read plan/, .env or any credential. Do not run any 
 through harness/tests/run_isolated.sh /Users/yuning/turing-th <module>; grading tests with
 .venv/bin/python -m unittest <module> from the repository root.
 
-First check the pin (section 1): if git diff --name-only 0c8efcb HEAD -- grading harness config.json prints anything,
-stop and report. Then work through sections 2 and 3. For every claim you checked, record confirmed or not confirmed,
+First check the pin (section 1): if git diff --name-only 57e2a25 HEAD -- grading harness config.json prints anything,
+stop and report. Do not open anything under ~/turing-eval-runs/validation/grading/, ~/turing-eval-runs/labeling/validation-v4/
+or ~/turing-eval-runs/qa/ (blind review in progress). Then work through sections 2 and 3. For every claim you checked, record confirmed or not confirmed,
 with file:line evidence. Report findings as Blocking or Non-blocking with the input, the observed and the expected
 outcome, and say plainly what you did not check.
 ```

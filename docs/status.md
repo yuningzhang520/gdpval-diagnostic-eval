@@ -4298,6 +4298,79 @@ Correction of earlier records: the isolated harness totals were 199 (before `e22
 not 214 and 215 (those counts came from a plain discover run); corrected in place above and in
 `docs/codex_review_2.md`.
 
+## Validation ledger recovery, per-item recovery, second provider halt, backup gate (2026-11-01; code `57e2a25`, tag `v1.1-judge-item-recovery`)
+
+Ledger recovery of `a45bc83b…` unit `3gTajbGy…:judge:20261101T212539681943Z-9b97` (approved by the human):
+- Inferred settlement: `manual_resolution` `settled_amount` 0.856327 USD, with `inferred`.
+  - Basis: known metered 0.801080 USD over 58 calls, plus 4 x 0.013812 = 0.055247 USD for the failed attempt and its
+    retries.
+  - Recorded as not provider-confirmed. Reconciliation against Google billing for the Dev project is still required.
+- The original 7.06 USD reservation, the settlement and its hold flags are untouched.
+- The hold is lifted; the unused reservation is released (remaining 14.143673 USD).
+- Calculation: `~/turing-eval-runs/judge_validation/ledger_recovery_a45bc83b_3gTajbGy.json`.
+
+Per-item recovery (`python -m grading.judge_validation recover --run-uuid 3gTajbGy… --items 69,71`):
+- Item 71 got its first evaluation and item 69 its one retry. 2 calls, both ok, request hashes equal to the base.
+- Cost: 0.049708 USD. Reservation 0.68 USD, settled per call.
+- Recovery pass: `judge_item_recovery`, base pass `pass-20261101T212539712811Z-be5b`. The record is
+  `judge_recovery_3gTajbGy…_<pass>.json` in the run's grading folder.
+- Item 70 stays the human-authoritative V item.
+- Coverage of that run: 60 judge items with completed calls. 56 are protocol-conformant. 4 (18, 19, 20, 64) are
+  `judge_parse_error` from the base pass (verdict with an empty evidence list); they are `cannot_assess`, completed
+  calls, and are not re-judged.
+
+Dev item 59 evidence correction:
+- Append-only checkpoint `dev/grading/PTD5aFkm…/labels/PTD5aFkm…/checkpoint_20261101T221457Z.json`, SHA-256
+  `41e978b6…`.
+- Marked `post_reveal`, `judgments_unchanged`. It corrects `checkpoint_20261101T203644Z.json`; that checkpoint and
+  the human's earlier one are unchanged.
+- The corrected text names the slide-4 heading. It was written by Claude at the human's instruction and is not part of
+  the original blind submission. Corrected CSV: `labeling/dev-v4/2ea2e5b5_PTD5aFkm/labels_evidence_correction_item59.csv`.
+- Verdicts unchanged (pass, pass).
+
+Judge Validation resumed under V1.1 (22:16:15Z) and **halted again**:
+- First run `c357f0e2…`: item 12, its first call, failed with `RetryError` wrapping a google `ClientError` after 38.3 s
+  of Inspect retries (request 54,946 characters). 53 calls were not attempted.
+- The unit `GnjmsoZZ…:judge:20261101T221615177559Z-7980` settled at its 6.11 USD reservation and is on hold.
+- Ledger: settled 7.016035 USD (0.856327 inferred + 0.049708 recovery + 6.11 held), remaining 7.983965 USD of 15.
+- This is the second occurrence of this failure class (the first: `a45bc83b…` item 69 at 21:31Z, whose identical
+  request later succeeded). The pass is stopped under the repeated-failure rule.
+- The recorded error does not carry the inner status code, so rate limiting, quota and request rejection cannot be
+  told apart from the record.
+- **Blocked on the human:** the second hold, and whether to diagnose or change retry pacing. `max_retries` 3 is part of
+  the frozen judge configuration.
+- Seven judge runs have no judge pass yet: `1137e2bb…`, `2ea2e5b5…`, `47ef842d…`, `7b08cd4d…`, `7d7fc9a7…`,
+  `c3525d4d…`, `f841ddcf…`. Their deterministic Validation passes exist. `b5d2e6f1…` is complete; `a45bc83b…` is
+  complete apart from the four parse errors.
+
+Codex Review 2 package re-pinned to `57e2a25` (tag `v1.1-judge-item-recovery`). The baseline is unchanged
+(`a9a1f88`). It adds the V1.1 section, acceptance checks 11-13, records after the pins, the Codex CLI read-only
+invocation, and the instruction not to open Validation verdict folders.
+
+Private GitHub backup security gate (read-only checks; **no push made**):
+- Remote: `origin` = `github.com/yuningzhang520/gdpval-diagnostic-eval`, visibility PRIVATE (`gh repo view`).
+- Remote refs: `refs/heads/main` at `f37f1e8`, no tags. Local `main` is a fast-forward (ancestor verified). No remote
+  tag conflicts. 17 local tags.
+- Paths reachable from `main` and every tag (294): none under `.env`, `.environment`, `private/`, `logs/`, `plan/`,
+  parquet, run folders or key files.
+- Secret patterns in every reachable blob and commit message: only the repository's synthetic test markers
+  (`sk-ant-SYNTHETIC-not-a-real-key-000000`, `Bearer synthetictoken…`); no Google-key pattern.
+- Path and run-reference gate (the human's condition): **failed**. Tracked content and its history reference locations
+  outside `~/turing-eval-runs/`:
+  - `docs/status.md:2733`: the retired run root `~/turing-th-runs/` (introduced in `a172980`, carried in every later
+    version; no run identifiers);
+  - absolute repository paths `/Users/yuning/turing-th/...` (`docs/status.md`, `docs/codex_review_2.md`,
+    `harness/smoke.py:63`, `scripts/run_authorized_batches_2026-11-01.sh`);
+  - local evidence folders `logs/...` (`docs/status.md` 88 lines, `README.md`, `docs/codex_review_*.md`, tests,
+    `grading/validation/*/gold_transitions_observed.json`, `tag_provenance.json`);
+  - temporary review folders `/private/tmp/stage2-closeout-g5mk9l3i/` (`docs/status.md:708`) and
+    `/private/tmp/extraction-review-0r3d__40/` (`docs/status.md:2126`);
+  - synthetic test paths `/Users/someuser/...` (`grading/tests/test_grading_chain.py:317`,
+    `harness/tests/test_launcher_regressions.py:456`).
+  - Commit messages hold none.
+- The references are in history, so removing them would need a history rewrite (not authorized). The push is stopped
+  before it starts; the human decides.
+
 ## Known issues and findings (material check)
 
 - `rubric_json.form_content`: 8,036 items hold `null`, 2,417 items lack the key, zero
@@ -4350,13 +4423,11 @@ not 214 and 215 (those counts came from a plain discover run); corrected in plac
 
 ## In flight
 
-- Gemini generation complete (Dev and Validation 10 of 10); Validation outputs stay sealed.
-- Dev labels saved and compared (4/6); Dev calibration of all ten tasks done.
-- Judge Dev Pass 2 done; V1 calibration frozen (tag `v1-calibration-freeze`); Validation revealed (deterministic).
-- Judge Validation halted after `a45bc83b…`: the unit is on manual-review hold. The human reconciles it
-  (`settled_amount` or `clear_review`) before the pass resumes for the eight remaining judge runs.
-- The 10 Validation packets (`labeling/validation-v4/`) await the human's labels.
-- Codex Review 2 package ready (`docs/codex_review_2.md`); the human runs it after Validation, before `freeze-v1`.
+- V1.1 tagged (`v1.1-judge-item-recovery`, `57e2a25`); `v1-calibration-freeze` unchanged at `0c8efcb`.
+- Judge Validation stopped after a second provider failure (`c357f0e2…`). Hold on its unit; seven judge runs pending.
+- The human labels the 10 Validation items (`labeling/validation-v4/`).
+- Codex Review 2 package pinned to `57e2a25` (`docs/codex_review_2.md`), ready for the human's local read-only run.
+- Private GitHub backup: security checks pass; the path-reference gate fails; not pushed.
 
 ## Decisions taken (date · what · commit)
 
@@ -4697,7 +4768,8 @@ not 214 and 215 (those counts came from a plain discover run); corrected in plac
 - 2026-11-01 · Dev labels checkpointed and compared (4/6); labelled-task calibration (`2ea2e5b5…` .3, `f841ddcf…` .2, `a45bc83b…` .3, engine .6); rubric decisions R-2.7-11, R-2.7-21 (`7d7fc9a7…` .7), R-2.5-27 (`c3525d4d…` .5); Judge Dev Pass 2 plan · e2208d3
 - 2026-11-01 · Judge Dev Pass 2 (`2ea2e5b5…`, 4 calls, 0.031 USD; 57 and 59 now agree); per-call judge pricing; V1 calibration freeze (shared judge + all task V1, `grading/freeze/v1_manifest.json`, tag `v1-calibration-freeze`); Judge Validation runner and plan · 0c8efcb
 - 2026-11-01 · Validation revealed under the frozen versions; Judge Validation halted on a provider error (hold, 7.06 USD settled conservatively); 10 Validation packets; Dev frozen re-grades; Docker-gated suites; Codex Review 2 package · 2c4b8d7
-- 2026-11-01 · V1.1 (approved): per-item judge recovery, inferred ledger resolutions, engine .7 provider_error / not_run, picture-chart visual-review flags (`2ea2e5b5…` .4, `47ef842d…` .3), evidence corrections; tag `v1.1-judge-item-recovery` · (this commit)
+- 2026-11-01 · V1.1 (approved): per-item judge recovery, inferred ledger resolutions, engine .7 provider_error / not_run, picture-chart visual-review flags (`2ea2e5b5…` .4, `47ef842d…` .3), evidence corrections; tag `v1.1-judge-item-recovery` · 57e2a25
+- 2026-11-01 · Validation ledger recovery (inferred 0.856327 USD), `a45bc83b…` items 69 and 71 recovered, item-59 evidence correction, second provider halt (`c357f0e2…`), Codex package re-pinned to `57e2a25`, backup gate failed on path references (no push) · (this commit)
 
 ## Next stage (not started)
 
