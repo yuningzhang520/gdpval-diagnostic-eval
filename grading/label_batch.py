@@ -373,6 +373,10 @@ def assemble_v2(batch: str, runs: list[dict], passes: list[dict], out_root: str,
         sub = os.path.join(folder, f"{r['task_id'][:8]}_{r['run_uuid'][:8]}")
         os.makedirs(os.path.join(sub, "deliverables")); os.makedirs(os.path.join(sub, "inputs"))
         crit = {c["id"]: c for c in plan_all["criteria"]}
+        from .review import REFERENCE_SUMMARY
+        if "## Independent reference" not in head and r["task_id"] in REFERENCE_SUMMARY:  # task-level, input-derived, identical for every run
+            refp = os.path.join(ROOT, "private", "checks", "recalc", f"{r['task_id']}.json")
+            head = head.rstrip() + "\n\n## Independent reference (computed from the task's source materials, not from any deliverable)\n\n" + REFERENCE_SUMMARY[r["task_id"]](json.load(open(refp, encoding="utf-8"))) + "\n"
         md = [head.rstrip(), "", f"Evidence class: {plan.get('evidence_class', phase)}.", "", "# Part 1: critical criteria (one label per criterion; full evidence)", ""]
         for cid in plan["criteria"]:
             d = defs.get(cid, {})

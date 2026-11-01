@@ -27,7 +27,46 @@ import sys
 LABELS = ("pass", "fail", "cannot_tell")
 LOCATION_KEYS = ("file", "files", "sheet", "sheets", "header_row", "header_rows", "column_mapping", "groups", "bottom_rows", "lines", "basis", "source", "cell", "coord",
                  "located_by", "label", "detail_sheet", "paragraphs", "slide", "slides", "shape", "table", "chart")
+def _ref_f841ddcf(ref: dict) -> str:
+    j, sl, f = ref["june"], ref["slipped_rubric_rule"], ref["reference_figures_cents"]
+    acc = lambda d: "; ".join(f"{k}: {v['n']} PO, order {v['order_cost']:,.2f}, shipped {v['shipped_cost']:,.3f}" for k, v in sorted(d["accounts"].items()))
+    return (f"Independent recalculation from the input `PO Log.xlsx` ({ref['po_count']} POs, all Shipped, {ref['blank_actual']} blank actual ship dates). "
+            f"June shipments (actual ship date 06/01-06/30/2025): {j['n']} POs {sorted(j['po_numbers'])}; order value at cost {f['june_order_value_at_cost']}, "
+            f"shipped value at cost {f['june_shipped_value_at_cost']} (unrounded {j['total_shipped']}), short {f['june_short_shipped']}, % shipped {f['june_pct_shipped'] * 100:.4f} %; "
+            f"per account: {acc(j)}. Slipped to July (start ship date >= 06/01/2025, cancel date <= 06/30/2025, shipped in July): {sl['n']} POs {sorted(sl['po_numbers'])}; "
+            f"PO value at cost {f['slipped_po_value_at_cost']}, actual shipped value {f['slipped_actual_shipped_value']}; per account: {acc(sl)}.")
+
+
+def _ref_47ef842d(ref: dict) -> str:
+    rules = "; ".join(f"{k}: {v}" for k, v in ref["rules"].items())
+    per = "; ".join(f"{u}: active stores {v['active_stores']}, current week inventory {v['current_inv_total']:,.0f}, daily sold (4 wk) {v['daily_sold_total']:.4f}, "
+                    f"weekly rate {v['weekly_rate']:.4f}, WOS {v['wos']:.4f}, OOS stores {v['oos_count']}, % OOS {v['pct_oos'] * 100:.4f} %" for u, v in ref["per_upc"].items())
+    return f"Independent recalculation from the input `Reference Inventory.xlsx` ({ref['rows']} rows). Rules: {rules}. Per UPC: {per}."
+
+
+def _ref_c3525d4d(ref: dict) -> str:
+    e, c = ref["email"], ref["comparison_original_vs_revised"]
+    return (f"Independent recalculation from the inputs: production estimate base {e['base']}, side panel {e['side']} x 2, shelf strip {e['strip']} x 4 -> unit {ref['unit_cost_original']}; "
+            f"revised strip +0.25 -> unit {ref['unit_cost_revised']}; overage {float(e['overage']) * 100:.0f} %, rounding: {ref['rounding_rule']}. "
+            f"Original {ref['original_count']} stores -> {ref['original']['units_nearest_integer_adopted']} units, total {ref['original']['cost_adopted']}; "
+            f"final {ref['final_count']} stores -> {ref['revised']['units_nearest_integer_adopted']} units, total {ref['revised']['cost_adopted']}; change {ref['delta_adopted']}. "
+            f"Store lists compared after removing leading zeros: {c['normalised_common']} common, {len(c['added'])} added {c['added']}, removed {c['removed']}.")
+
+
+def _ref_7b08cd4d(ref: dict) -> str:
+    stops = "; ".join(f"{s['city']} ({s['country']}, {s['date']}): gross {s['gross']:,.0f}, rate {s['rate']}, withholding {s['withholding']:,.5f}, net {s['net']:,.5f}" for s in ref["stops"])
+    wh = ", ".join(f"{k} {v:,.5f}" for k, v in ref["withholding_by_country"].items())
+    return (f"Independent recalculation from the input `Fall Music Tour Ref File.xlsx`: stops {stops}. Gross {ref['gross']:,.2f}; withholding by country {wh}; total withholding "
+            f"{ref['withholding']:,.5f}; net revenue {ref['net_revenue']:,.5f}. Expenses: tour manager {ref['tm_total']:,.2f} (by source category {ref['tm_by_category']}), production company "
+            f"{ref['pc_total']:,.2f} (by source category {ref['pc_by_category']}), combined {ref['expenses_total']:,.2f}. Net income combined {ref['net_income']:,.5f}, tour manager "
+            f"{ref['net_income_tm']:,.5f}, production company {ref['net_income_pc']:,.2f}.")
+
+
 REFERENCE_SUMMARY = {
+    "f841ddcf-2a28-4f6d-bac3-61b607219d3e": _ref_f841ddcf,
+    "47ef842d-8eac-4b90-bda8-dd934c228c96": _ref_47ef842d,
+    "c3525d4d-2012-45df-853e-2d2a0e902991": _ref_c3525d4d,
+    "7b08cd4d-df60-41ae-9102-8aaa49306ba2": _ref_7b08cd4d,
     "1137e2bb-bdf9-4876-b572-f29b7de5e595": lambda ref: (f"Independent recalculation from the input workbook: {ref['total_price_mismatch']} price-mismatch lines, {ref['total_case_pack']} case-pack lines, "
                                                          f"{ref['total_errors']} errors in total across {len(ref['lines'])} lines; per SKU " + ", ".join(f"{k}: {v['total']} ({v['price']} price, {v['case']} case)" for k, v in sorted(ref["by_sku"].items())) + "."),
     "7d7fc9a7-21a7-4b83-906f-416dea5ad04f": lambda ref: ("Independent recalculation: 41 services invoices (" + "; ".join(f"{i['vendor']} {i['invoice']} {i['date']} {i['amount_text']}" for i in ref["expense_invoices"]) + "). 25 insurance invoices ("
