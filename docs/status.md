@@ -4517,6 +4517,54 @@ Second ledger recovery (`c357f0e2…` unit `GnjmsoZZ…:judge:20261101T221615177
 Codex Review 2 package re-pinned to `5121e1a` (tag `v1.2-judge-infrastructure`), adding section H and acceptance checks
 14-15.
 
+## Validation comparison (deterministic stratum), two V1 false fails diagnosed, backup pushed, Formal preflight at V1.2 (2026-11-01)
+
+Validation comparison after the 10/10 checkpoints:
+- Labels against the ORIGINAL first-pass verdicts: grader V1, engine .6 plus the task V1 versions; held-out.
+- Comparison files are `validation/grading/<run>/labels/<run>/comparison_*.json`.
+
+| Stratum | Agreement | Detail |
+|---|---|---|
+| Deterministic | **4/6** | agree: `7b08cd4d…` 19, `a45bc83b…` 2, `b5d2e6f1…` 18, `f841ddcf…` 2; false fails: `2ea2e5b5…` 45, `c3525d4d…` 32 (human pass, grader fail) |
+| Judge-only | pending | `1137e2bb…` 28, `47ef842d…` 57, `7d7fc9a7…` 18, `c357f0e2…` 24: no judge verdict yet |
+
+Diagnosis of the two false fails (implementation defects; not fixed, awaiting the human's decision on a versioned
+post-freeze correction):
+- `2ea2e5b5…` item 45:
+  - every slide heading of the deck begins "WORK-TIME STUDY |", and the time-section keyword `time` matches
+    "WORK-TIME", so slides 2, 4 and 5 all locate as the time section and the strategic section finds none;
+  - `run_checks` then records a confirmed absence ("every slide is identified as another part of the deck") although
+    the time section is ambiguous (3 slides): a fail that rests on an unresolved identification.
+- `c3525d4d…` item 32:
+  - the "Final Approved Store List" tab holds a removed-stores table ("Store #" in column B, rows 10-12) above the
+    final matrix ("Seq #" in B, "Store #" in C from row 15);
+  - `store_lists` reads column B past the end of the first table, takes the sequence numbers as store ids, and
+    prefers that longer column, giving 477 missing and 477 extra ids.
+
+Private GitHub backup (the human's revised gate):
+- `docs/status.md:2733` is one sentence from `a172980` ("the retired `~/turing-th-runs/` is not read") about the
+  run root of the earlier, never-run pilot setup. No version names a run, file or record under it; later mentions are
+  this file's own gate reports.
+- Destination `yuningzhang520/gdpval-diagnostic-eval`, PRIVATE. The push was a fast-forward from `f37f1e8`, and
+  there were no remote tags.
+- History scan (297 paths, every blob and commit message):
+  - no `.env`, `.environment`, `private/`, `logs/`, `plan/`, data inputs or prompts, run folders or key files;
+  - key-like strings only the synthetic test marker (also quoted in this file's gate report);
+  - no tracked office or PDF file, and no copy of a gold deliverable.
+- Noted, not a blocker: `grading/capability_map.json` (tracked since `9b1df11`) carries 295 verbatim criteria of the
+  public GDPval v2 rubrics. It is deliberately tracked methodology content, not a gitignored `private/` file. The
+  repository is private, and model isolation is not affected.
+- **Pushed once (normal, no force):** `main` `f37f1e8..abb6dd6` and all 18 local tags. These are 15 `grader-v0-*`
+  (including the superseded ones), `v1-calibration-freeze`, `v1.1-judge-item-recovery` and
+  `v1.2-judge-infrastructure`. Later commits are local only.
+
+Formal preflight at V1.2 (`abb6dd6`, clean): launcher `--dry-run` for all 20 units, all rc 0, 20 s.
+- Shared prompt `6b539cf9…` for both candidates.
+- Image `sha256:18cde712…`.
+- 86 staged files verified.
+- No credential missing.
+- Scratch ledger `formal/preflight-20261101T233332Z/`.
+
 ## Known issues and findings (material check)
 
 - `rubric_json.form_content`: 8,036 items hold `null`, 2,417 items lack the key, zero
@@ -4918,7 +4966,8 @@ Codex Review 2 package re-pinned to `5121e1a` (tag `v1.2-judge-infrastructure`),
 - 2026-11-01 · Validation ledger recovery (inferred 0.856327 USD), `a45bc83b…` items 69 and 71 recovered, item-59 evidence correction, second provider halt (`c357f0e2…`), Codex package re-pinned to `57e2a25`, backup gate failed on path references (no push) · eb781fd
 - 2026-11-01 · Formal preflight dry-run (20 units, no provider call) and backup inventory · 6b6eaeb
 - 2026-11-01 · V1.2 judge infrastructure (engine .8): provider error detail, max_retries 10, pacing, continuation with a 3-item stop, schema retry, invalid_judge_output, inferred buffer; tag `v1.2-judge-infrastructure` · 5121e1a
-- 2026-11-01 · Validation labels checkpointed 10/10; `c357f0e2…` inferred settlement; Codex package re-pinned to `5121e1a` · (this commit)
+- 2026-11-01 · Validation labels checkpointed 10/10; `c357f0e2…` inferred settlement; Codex package re-pinned to `5121e1a` · 7890cec
+- 2026-11-01 · Validation deterministic comparison 4/6, two V1 false fails diagnosed (not fixed), private backup pushed (main `abb6dd6`, 18 tags), Formal preflight at V1.2 · (this commit; local)
 
 ## Next stage (not started)
 
