@@ -3848,7 +3848,16 @@ Pass 1 results so far (registry `~/turing-eval-runs/judge_dev/registry.jsonl`; v
   `judge_dev/self_consistency_pass1_SEALED.json`. This measures stability, not correctness.
 - Cost at the per-call standard tier: 4.174 USD (primaries 3.715, repeats 0.459). Judge Dev ledger, conservative:
   7.158 USD. Remaining: Pass 1 12.84 USD; aggregate 22.84 USD.
-- Pending: `a45bc83b…` (Dev generation running).
+- Addendum 2: `a45bc83b…` run `jQBk9JXXTYWJnxkUoXKrtN` (Dev output accepted 18:17Z), 60 judge items.
+- Labeling batch 2: `~/turing-eval-runs/labeling/batch-2r/`, verdict-free. It has 6 criterion labels and 3 item
+  labels:
+  - `2ea2e5b5…`: 3 + 1 (full calibration).
+  - Smoke checks: `7b08cd4d…` 1 + 1, `7d7fc9a7…` 1 + 1, `b5d2e6f1…` 1 + 0.
+  - Checked against the queue: every critical member item, judge excerpts for judge members, no pre-filled cell, no
+    verdict wording.
+  - `batch-2` (built minutes earlier without the `b5d2e6f1…` reference, never handed out) is superseded. The new
+    `b5d2e6f1…` reference uses source sums only.
+  - Batch 3 (`a45bc83b…` full, smoke checks `c3525d4d…` and `c357f0e2…`) follows its judged pass.
 - Guard change before `a45bc83b…`: the guard now prices calls already made and the next worst case at the long-context
   rates (4 / 18 USD per M). Those rates bound the ledger's settlement of a unit, so the ledger total, not only the
   provider bill, stays within both ceilings. Test: `GuardTierTests`.

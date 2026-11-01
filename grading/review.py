@@ -62,7 +62,19 @@ def _ref_7b08cd4d(ref: dict) -> str:
             f"{ref['net_income_tm']:,.5f}, production company {ref['net_income_pc']:,.2f}.")
 
 
+def _ref_b5d2e6f1(ref: dict) -> str:
+    """Source sums only (the recalc file's gold comparisons are not used)."""
+    h = ("WTD", "MTD", "YTD")
+    brands = "; ".join(f"{name}: " + ", ".join(f"{p} qty {v[p + ' Qty']:,.0f}, sales ${v[p + ' $']:,.2f}, SOH {v[p + ' SOH']:,.0f}, ST% {v['ST%_ratio_of_sums'][p] * 100:.2f}%" for p in h)
+                       for name, v in sorted(ref["by_brand"].items()))
+    g = ref["grand_total"]
+    return (f"Independent recalculation from the input `Weekly Sales Data.xlsx` ({ref['source_rows']} rows, {ref['stores']} stores, {ref['brands']} brands, {ref['pairs']} store-brand pairs). "
+            f"ST% = Sales Quantity / Stock On Hand as a ratio of sums over the rows aggregated. By brand: {brands}. Grand total: "
+            + ", ".join(f"{p} qty {g[p + ' Qty']:,.0f}, sales ${g[p + ' $']:,.2f}, SOH {g[p + ' SOH']:,.0f}" for p in h) + ".")
+
+
 REFERENCE_SUMMARY = {
+    "b5d2e6f1-62a2-433a-bcdd-95b260cdd860": _ref_b5d2e6f1,
     "f841ddcf-2a28-4f6d-bac3-61b607219d3e": _ref_f841ddcf,
     "47ef842d-8eac-4b90-bda8-dd934c228c96": _ref_47ef842d,
     "c3525d4d-2012-45df-853e-2d2a0e902991": _ref_c3525d4d,

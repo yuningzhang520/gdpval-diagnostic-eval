@@ -1,0 +1,16 @@
+{
+ "pass": "judge-dev-pass-1",
+ "addendum": 2,
+ "created_at": "2026-11-01T18:18:39+00:00",
+ "plan_sha256": "6f278cc61d565baf749c0de89a4b512fbcf60b94cb3400effe2b004d2cf3c80d",
+ "eligible_runs": [
+  {
+   "task_id": "a45bc83b-22f9-4def-8d89-9c5661b2b86f",
+   "run_uuid": "jQBk9JXXTYWJnxkUoXKrtN",
+   "judge_items": 60
+  }
+ ],
+ "pending_tasks": [],
+ "added_judge_units": 60,
+ "self_consistency": "unchanged: the subset frozen in pass1_plan.json; added runs get primary units only"
+}
