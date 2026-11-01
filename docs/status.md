@@ -2999,6 +2999,21 @@ extraction and the Task 3 (`2ea2e5b5…`) grader in progress; capability mapping
 
 ## Decisions taken (date · what · commit)
 
+- 2026-11-01 · Gemini recovery and Codex Review 1 fixes AUTHORIZED by the human (chat, after the key investigation):
+  (1) the human replaced `GOOGLE_API_KEY` in the project `.env` with the key of the Paid Tier 1 project (auto-reload
+  of the prepaid balance enabled); no billing settings are changed by the assistant; any billing, quota or payment
+  error stops the chain without rerun; (2) the second held dev unit
+  `b5d2e6f1-62a2-433a-bcdd-95b260cdd860:google/gemini-3.8-flash:20261101T093448Z` may be reconciled at 0.00 USD if
+  the evidence supports unbilled free-tier usage; (3) exactly one further replacement of `b5d2e6f1…` in the dev class
+  (the third attempt) with the corrected key, existing configuration and limits, new run uuid, earlier attempts kept;
+  only a successful replacement with complete accounting and usable artifacts (collection complete, expected file
+  types present, structural integrity checks pass; no content inspected) authorizes resuming the chain: remaining dev
+  tasks -> compat (Opus 5.5, GPT-6.1 Sol) -> validation, concurrency 1, approved snapshots, completed samples
+  skipped; (4) `7d7fc9a7…` rubric 30 stays in critical C2 as preregistered (monthly GL Balance and Variance checks
+  for Jan-Apr with variance 0.00 are required; correct balances alone do not satisfy it); the expert failures on 10
+  and 30 stay documented data-quality findings; recorded before any `7d7fc9a7…` development output is opened;
+  (5) targeted fixes of Codex Review 1 B1-B4 and the P1 items (`logs/shared-core-review-wm_mg0v2/review.md`), no
+  redesign. Authorization reference for the launcher: this entry.
 - 2026-11-01 · 1137e2bb grader finalized (item 9 numeric-format rule, business-row rule, roll-up variant; task
   version .2; commit `384721957b6d553825159bb2d2f8225923e3d9c9`, tag `grader-v0-1137e2bb` moved there from
   `a172980…`). Shared engine extracted and Task 2 `7d7fc9a7…` gold-first grader v0 (this entry's commit, tag

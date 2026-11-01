@@ -1184,12 +1184,12 @@ Requirement layers (APPROVED 2026-10-30):
 
 ## 4. Decisions still needed from the human before freeze
 
-- 2026-11-01, `7d7fc9a7…` C2 composition: rubric 30 (GL and variance check present and
-  zero for every month) is part of C2 "1250 reconciliation". The expert workbook fails 30 on
-  presentation (no per-month variance figures) while every 1250 balance reconciles to the
-  cent. Decide whether 30 stays in C2 (the approved text names "variance line shows 0.00")
-  or C2 is restricted to the balance items 21–26. Until decided, the approved composition
-  stands and the grader reports it as is.
+- 2026-11-01, `7d7fc9a7…` C2 composition: DECIDED the same day by the human - rubric 30 stays
+  in C2 as preregistered. The requirement includes monthly GL Balance and Variance checks for
+  January-April 2025 with the variance equal to 0.00; correct account balances alone do not
+  satisfy it when the monthly reconciliation evidence is missing. The expert failures on 10 and
+  30 remain documented data-quality findings (A-10b, A-30); the critical composition and the
+  rubric are not relaxed. Recorded before any development output of the task was opened.
 
 - 2026-11-01, `1137e2bb…` rubric 9 and 5–8: DECIDED the same day (rule recorded in
   section 2.4: item 9 numeric 0/1 only; 5–8 and 18–20 coerce unambiguous representations;
