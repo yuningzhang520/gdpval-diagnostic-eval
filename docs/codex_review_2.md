@@ -369,13 +369,14 @@ because the package states it.
 
 Rules: do not modify, add, stage or commit any file in /Users/yuning/turing-th; write your notes and probe files only
 under /tmp/codex-r2/. Do not read plan/, .env or any credential. Do not run any command that calls a model provider
-(grading.judge_dev run or pass2, grading.judge_validation run, harness.launcher, harness.scheduler). Harness tests run
+(grading.judge_dev run or pass2, grading.judge_validation run or recover, grading.run_grading --judge, harness.launcher,
+harness.scheduler). Harness tests run
 through harness/tests/run_isolated.sh /Users/yuning/turing-th <module>; grading tests with
 .venv/bin/python -m unittest <module> from the repository root.
 
 First check the pin (section 1): if git diff --name-only 5121e1a HEAD -- grading harness config.json prints anything,
 stop and report. Do not open anything under ~/turing-eval-runs/validation/grading/, ~/turing-eval-runs/labeling/validation-v4/
-or ~/turing-eval-runs/qa/ (blind review in progress). Then work through sections 2 and 3. For every claim you checked, record confirmed or not confirmed,
+or ~/turing-eval-runs/qa/, and never quote Validation verdicts or judge responses. Then work through sections 2 and 3. For every claim you checked, record confirmed or not confirmed,
 with file:line evidence. Report findings as Blocking or Non-blocking with the input, the observed and the expected
 outcome, and say plainly what you did not check.
 ```
