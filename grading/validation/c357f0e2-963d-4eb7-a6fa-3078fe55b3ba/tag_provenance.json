@@ -1,0 +1,29 @@
+{
+ "tag": "grader-v0-c357f0e2",
+ "moved_at": "2026-11-01T16:28:12+00:00",
+ "moved_by": "assistant, on the human's instruction (2026-11-01: move the affected grader-v0 tags to the amended tested commit before opening any dev output of the task)",
+ "previous": {
+  "target_commit": "24d2eeac3834159ac19514c92b09d1b3ea464f17",
+  "tag_object": "afc085a87a916f2dbf7c78eaab0b6e38132ebe16",
+  "tagged_at": "2026-11-01 07:53:06 -0800",
+  "task_grader_version": "c357f0e2-2026-11-01.1",
+  "archived_as": "grader-v0-c357f0e2-superseded-24d2eea"
+ },
+ "current": {
+  "target_commit": "7f3594c422113e8990a68bf4056e59988d12a31c",
+  "tag_object": "2b73846b83fa38be336a26c399220a33016f9b0f",
+  "task_grader_version": "c357f0e2-2026-11-01.2",
+  "code_bound_records": "grading/validation/c357f0e2-963d-4eb7-a6fa-3078fe55b3ba/code_7f3594c/"
+ },
+ "reason": "approved rubric decision of 2026-11-01: item 69 label match or judge routing (engine-2026-11-01.2)",
+ "dev_output_revealed_before_move": "no dev output existed at the move",
+ "first_pass_note": "the first-pass comparison of the task's dev output uses the amended grader at the current target",
+ "references_checked": {
+  "run_root_records": "none name the tag (grading passes and inventories record full commit hashes)",
+  "validation_records": "first-pass and code-bound records name commits and task versions, not the tag"
+ },
+ "prior_records_preserved": [
+  "code_24d2eea",
+  "gold_first_pass.json"
+ ]
+}

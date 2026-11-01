@@ -1,0 +1,29 @@
+{
+ "tag": "grader-v0-b5d2e6f1",
+ "moved_at": "2026-11-01T16:28:12+00:00",
+ "moved_by": "assistant, on the human's instruction (2026-11-01: move the affected grader-v0 tags to the amended tested commit before opening any dev output of the task)",
+ "previous": {
+  "target_commit": "48fd3fc9289afe16c0f02c78298aef273a7cc1bb",
+  "tag_object": "fc21fb2ef0bc064af512c976779568ee1322701d",
+  "tagged_at": "2026-11-01 06:36:58 -0800",
+  "task_grader_version": "b5d2e6f1-2026-11-01.1",
+  "archived_as": "grader-v0-b5d2e6f1-superseded-48fd3fc"
+ },
+ "current": {
+  "target_commit": "7f3594c422113e8990a68bf4056e59988d12a31c",
+  "tag_object": "b33c1a0eebee8a4d3de7d4609f233c777f2b75b2",
+  "task_grader_version": "b5d2e6f1-2026-11-01.2",
+  "code_bound_records": "grading/validation/b5d2e6f1-62a2-433a-bcdd-95b260cdd860/code_7f3594c/"
+ },
+ "reason": "approved rule A-1 of 2026-11-01 ('(blank)' pivot rows)",
+ "dev_output_revealed_before_move": "dev run 3mhbRUHW7n2U8vuFDFpVu9 not opened; only its file types and collection-manifest consistency were read",
+ "first_pass_note": "the first-pass comparison of the task's dev output uses the amended grader at the current target",
+ "references_checked": {
+  "run_root_records": "none name the tag (grading passes and inventories record full commit hashes)",
+  "validation_records": "first-pass and code-bound records name commits and task versions, not the tag"
+ },
+ "prior_records_preserved": [
+  "code_48fd3fc",
+  "gold_first_pass.json"
+ ]
+}

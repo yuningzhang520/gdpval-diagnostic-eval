@@ -3957,8 +3957,9 @@ cap is 1). `c3525d4d…` grader v0 tagged (`grader-v0-c3525d4d` at `5435534`; co
   column layout and blank-cell styles, and the narrow reading of item 69 (pending human review) · 24d2eea (tag `grader-v0-c357f0e2`)
 
 - 2026-11-01 · approved rubric decisions implemented: P-2.5-1, P-2.6-1, `c357f0e2…` item 69 judge routing (engine
-  .2), `c3525d4d…` item 7 / flag identity, `b5d2e6f1…` A-1; tags of the three amended graders moved (this commit and
-  the tag record that follows)
+  .2), `c3525d4d…` item 7 / flag identity, `b5d2e6f1…` A-1 · 7f3594c; tags `grader-v0-c3525d4d`, `grader-v0-c357f0e2`,
+  `grader-v0-b5d2e6f1` moved to 7f3594c (old targets archived as `-superseded-5435534`, `-superseded-24d2eea`,
+  `-superseded-48fd3fc`; `tag_provenance.json` and code-bound records `code_7f3594c/` per task)
 
 ## Next stage (not started)
 

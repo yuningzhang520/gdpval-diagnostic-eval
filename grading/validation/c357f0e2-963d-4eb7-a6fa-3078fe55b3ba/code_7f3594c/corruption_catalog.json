@@ -1,0 +1,389 @@
+{
+ "task_id": "c357f0e2-963d-4eb7-a6fa-3078fe55b3ba",
+ "gold_files_sha256": {
+  "UAT Plan.xlsx": "910f9b1f327643eaaa52a842c0fbe679166824e3bfdcda7659641d977e6cb74f"
+ },
+ "baseline": {
+  "1": "pass",
+  "2": "pass",
+  "3": "pass",
+  "4": "fail",
+  "5": "pass",
+  "6": "pass",
+  "7": "pass",
+  "8": "pass",
+  "9": "pass",
+  "10": "fail",
+  "11": "pass",
+  "14": "pass",
+  "67": "fail",
+  "68": "pass",
+  "69": "route_to_judge"
+ },
+ "scope": "expectations cover the deterministic items only; 'neutral' means deterministic-neutral; judge items 12, 13, 15-66 and visual item 70 are not asserted",
+ "variants": {
+  "R01_ten_more_cases": {
+   "kind": "rubric_relevant",
+   "basis": "ten more counted cases (85), styles copied from the last row",
+   "expected_overrides": {
+    "4": "pass"
+   },
+   "expected_map": {
+    "1": "pass",
+    "2": "pass",
+    "3": "pass",
+    "4": "pass",
+    "5": "pass",
+    "6": "pass",
+    "7": "pass",
+    "8": "pass",
+    "9": "pass",
+    "10": "fail",
+    "11": "pass",
+    "14": "pass",
+    "67": "fail",
+    "68": "pass",
+    "69": "route_to_judge"
+   }
+  },
+  "R02_expected_filled": {
+   "kind": "rubric_relevant",
+   "basis": "the 20 empty Expected Result cells filled (wrapped)",
+   "expected_overrides": {
+    "10": "pass"
+   },
+   "expected_map": {
+    "1": "pass",
+    "2": "pass",
+    "3": "pass",
+    "4": "fail",
+    "5": "pass",
+    "6": "pass",
+    "7": "pass",
+    "8": "pass",
+    "9": "pass",
+    "10": "pass",
+    "11": "pass",
+    "14": "pass",
+    "67": "fail",
+    "68": "pass",
+    "69": "route_to_judge"
+   }
+  },
+  "R03_date_format": {
+   "kind": "rubric_relevant",
+   "basis": "every counted row's date cell formatted mm/dd/yyyy (still blank)",
+   "expected_overrides": {
+    "67": "pass"
+   },
+   "expected_map": {
+    "1": "pass",
+    "2": "pass",
+    "3": "pass",
+    "4": "fail",
+    "5": "pass",
+    "6": "pass",
+    "7": "pass",
+    "8": "pass",
+    "9": "pass",
+    "10": "fail",
+    "11": "pass",
+    "14": "pass",
+    "67": "pass",
+    "68": "pass",
+    "69": "route_to_judge"
+   }
+  },
+  "R04_cross_functional_label": {
+   "kind": "rubric_relevant",
+   "basis": "module 'Cross browser Testing' renamed 'Cross-functional Testing'",
+   "expected_overrides": {
+    "69": "pass"
+   },
+   "expected_map": {
+    "1": "pass",
+    "2": "pass",
+    "3": "pass",
+    "4": "fail",
+    "5": "pass",
+    "6": "pass",
+    "7": "pass",
+    "8": "pass",
+    "9": "pass",
+    "10": "fail",
+    "11": "pass",
+    "14": "pass",
+    "67": "fail",
+    "68": "pass",
+    "69": "pass"
+   }
+  },
+  "R05_actual_result_filled": {
+   "kind": "rubric_relevant",
+   "basis": "H10 = 'Pass' on a counted row",
+   "expected_overrides": {
+    "5": "fail"
+   },
+   "expected_map": {
+    "1": "pass",
+    "2": "pass",
+    "3": "pass",
+    "4": "fail",
+    "5": "fail",
+    "6": "pass",
+    "7": "pass",
+    "8": "pass",
+    "9": "pass",
+    "10": "fail",
+    "11": "pass",
+    "14": "pass",
+    "67": "fail",
+    "68": "pass",
+    "69": "route_to_judge"
+   }
+  },
+  "R06_tested_date_filled": {
+   "kind": "rubric_relevant",
+   "basis": "I10 = 2025-01-15 on a counted row (67 still fails on the other cells)",
+   "expected_overrides": {
+    "6": "fail"
+   },
+   "expected_map": {
+    "1": "pass",
+    "2": "pass",
+    "3": "pass",
+    "4": "fail",
+    "5": "pass",
+    "6": "fail",
+    "7": "pass",
+    "8": "pass",
+    "9": "pass",
+    "10": "fail",
+    "11": "pass",
+    "14": "pass",
+    "67": "fail",
+    "68": "pass",
+    "69": "route_to_judge"
+   }
+  },
+  "R07_role_blank": {
+   "kind": "rubric_relevant",
+   "basis": "the Role of a counted row emptied",
+   "expected_overrides": {
+    "7": "fail"
+   },
+   "expected_map": {
+    "1": "pass",
+    "2": "pass",
+    "3": "pass",
+    "4": "fail",
+    "5": "pass",
+    "6": "pass",
+    "7": "fail",
+    "8": "pass",
+    "9": "pass",
+    "10": "fail",
+    "11": "pass",
+    "14": "pass",
+    "67": "fail",
+    "68": "pass",
+    "69": "route_to_judge"
+   }
+  },
+  "R08_headers_in_row_1": {
+   "kind": "rubric_relevant",
+   "basis": "A-2: the title row removed, headers in row 1: graded as before",
+   "expected_overrides": {},
+   "expected_map": {
+    "1": "pass",
+    "2": "pass",
+    "3": "pass",
+    "4": "fail",
+    "5": "pass",
+    "6": "pass",
+    "7": "pass",
+    "8": "pass",
+    "9": "pass",
+    "10": "fail",
+    "11": "pass",
+    "14": "pass",
+    "67": "fail",
+    "68": "pass",
+    "69": "route_to_judge"
+   }
+  },
+  "R09_date_header_renamed": {
+   "kind": "rubric_relevant",
+   "basis": "'Tested Date' renamed 'Test Date' (not one of the three accepted names): no test-case sheet, every sheet item fails",
+   "expected_overrides": {
+    "2": "fail",
+    "3": "fail",
+    "4": "fail",
+    "5": "fail",
+    "6": "fail",
+    "7": "fail",
+    "8": "fail",
+    "9": "fail",
+    "10": "fail",
+    "11": "fail",
+    "14": "fail",
+    "67": "fail",
+    "68": "fail",
+    "69": "fail"
+   },
+   "expected_map": {
+    "1": "pass",
+    "2": "fail",
+    "3": "fail",
+    "4": "fail",
+    "5": "fail",
+    "6": "fail",
+    "7": "fail",
+    "8": "fail",
+    "9": "fail",
+    "10": "fail",
+    "11": "fail",
+    "14": "fail",
+    "67": "fail",
+    "68": "fail",
+    "69": "fail"
+   }
+  },
+  "R10_hidden_sheet_first": {
+   "kind": "rubric_relevant",
+   "basis": "a hidden copy with 95 cases placed first: the first VISIBLE sheet is graded (4 still fails)",
+   "expected_overrides": {},
+   "expected_map": {
+    "1": "pass",
+    "2": "pass",
+    "3": "pass",
+    "4": "fail",
+    "5": "pass",
+    "6": "pass",
+    "7": "pass",
+    "8": "pass",
+    "9": "pass",
+    "10": "fail",
+    "11": "pass",
+    "14": "pass",
+    "67": "fail",
+    "68": "pass",
+    "69": "route_to_judge"
+   }
+  },
+  "R11_scenario_unwrapped": {
+   "kind": "rubric_relevant",
+   "basis": "Test Scenario unwrapped and column E 20 wide: long scenarios are cut off",
+   "expected_overrides": {
+    "68": "fail"
+   },
+   "expected_map": {
+    "1": "pass",
+    "2": "pass",
+    "3": "pass",
+    "4": "fail",
+    "5": "pass",
+    "6": "pass",
+    "7": "pass",
+    "8": "pass",
+    "9": "pass",
+    "10": "fail",
+    "11": "pass",
+    "14": "pass",
+    "67": "fail",
+    "68": "fail",
+    "69": "route_to_judge"
+   }
+  },
+  "R12_no_chrome": {
+   "kind": "rubric_relevant",
+   "basis": "the Chrome case renamed to Opera: Firefox and Safari remain, Chrome is missing",
+   "expected_overrides": {
+    "14": "fail"
+   },
+   "expected_map": {
+    "1": "pass",
+    "2": "pass",
+    "3": "pass",
+    "4": "fail",
+    "5": "pass",
+    "6": "pass",
+    "7": "pass",
+    "8": "pass",
+    "9": "pass",
+    "10": "fail",
+    "11": "pass",
+    "14": "fail",
+    "67": "fail",
+    "68": "pass",
+    "69": "route_to_judge"
+   }
+  },
+  "R13_cross_module_label": {
+   "kind": "rubric_relevant",
+   "basis": "module labelled 'Cross-module Testing': not a label match, routed to the judge as in the expert workbook",
+   "expected_overrides": {},
+   "expected_map": {
+    "1": "pass",
+    "2": "pass",
+    "3": "pass",
+    "4": "fail",
+    "5": "pass",
+    "6": "pass",
+    "7": "pass",
+    "8": "pass",
+    "9": "pass",
+    "10": "fail",
+    "11": "pass",
+    "14": "pass",
+    "67": "fail",
+    "68": "pass",
+    "69": "route_to_judge"
+   }
+  },
+  "N01_whitespace_actual": {
+   "kind": "neutral",
+   "basis": "H10 holds only spaces: blank after trimming",
+   "expected_overrides": {},
+   "expected_map": {
+    "1": "pass",
+    "2": "pass",
+    "3": "pass",
+    "4": "fail",
+    "5": "pass",
+    "6": "pass",
+    "7": "pass",
+    "8": "pass",
+    "9": "pass",
+    "10": "fail",
+    "11": "pass",
+    "14": "pass",
+    "67": "fail",
+    "68": "pass",
+    "69": "route_to_judge"
+   }
+  },
+  "N02_resaved": {
+   "kind": "neutral",
+   "basis": "the workbook re-saved by openpyxl without change",
+   "expected_overrides": {},
+   "expected_map": {
+    "1": "pass",
+    "2": "pass",
+    "3": "pass",
+    "4": "fail",
+    "5": "pass",
+    "6": "pass",
+    "7": "pass",
+    "8": "pass",
+    "9": "pass",
+    "10": "fail",
+    "11": "pass",
+    "14": "pass",
+    "67": "fail",
+    "68": "pass",
+    "69": "route_to_judge"
+   }
+  }
+ }
+}

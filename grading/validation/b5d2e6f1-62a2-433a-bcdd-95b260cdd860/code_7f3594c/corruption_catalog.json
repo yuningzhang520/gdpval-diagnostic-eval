@@ -1,0 +1,216 @@
+{
+ "task_id": "b5d2e6f1-62a2-433a-bcdd-95b260cdd860",
+ "gold_files_sha256": {
+  "Weekly Sales Analysis.xlsx": "d8c0f1f878821963ffb484ff498e3666197173729b70824e86b6bc604cd15397"
+ },
+ "baseline": {
+  "1": "pass",
+  "2": "pass",
+  "3": "pass",
+  "4": "fail",
+  "5": "pass",
+  "6": "pass",
+  "7": "fail",
+  "8": "fail",
+  "9": "fail",
+  "10": "pass",
+  "11": "pass",
+  "12": "pass",
+  "13": "fail",
+  "14": "pass",
+  "15": "pass",
+  "16": "pass",
+  "17": "pass",
+  "18": "fail",
+  "19": "fail",
+  "20": "fail",
+  "21": "fail",
+  "22": "fail",
+  "23": "pass",
+  "24": "pass",
+  "25": "pass",
+  "26": "pass",
+  "27": "pass",
+  "28": "pass",
+  "29": "fail",
+  "30": "pass",
+  "31": "pass"
+ },
+ "baseline_extra": {
+  "c1_columns": "pass",
+  "c2_source_totals": "fail"
+ },
+ "scope": "expectations cover the deterministic items 1-31 and the two non-rubric critical checks; 'neutral' means deterministic-neutral; the visual item 32 is not asserted",
+ "variants": {
+  "R01_data_renamed": {
+   "kind": "rubric_relevant",
+   "basis": "the Data tab renamed 'Raw Data': no worksheet named Data (2); the pivot cache still names 'Data', not the data sheet (12); content items use the sheet found by keyword; rule A-1 (grader .2): without a pivot sourced from the data sheet the '(blank)' rows cannot be told from hidden data (14)",
+   "expected_overrides": {
+    "2": "fail",
+    "12": "fail",
+    "14": "cannot_assess"
+   },
+   "expected_extra": {}
+  },
+  "R02_brand_tab_deleted": {
+   "kind": "rubric_relevant",
+   "basis": "no Sales by Brand sheet: its items fail as not delivered (4-10, 24, 27 incl. the baseline fails), both-tab items 29-31 fail; the source comparison is not computed",
+   "expected_overrides": {
+    "3": "fail",
+    "5": "fail",
+    "6": "fail",
+    "10": "fail",
+    "24": "fail",
+    "27": "fail",
+    "30": "fail",
+    "31": "fail"
+   },
+   "expected_extra": {
+    "c1_columns": "fail",
+    "c2_source_totals": null
+   }
+  },
+  "R03_brand_value_wrong": {
+   "kind": "rubric_relevant",
+   "basis": "Clinique WTD quantity +10: no longer the sum of its Data rows (6); the Grand Total no longer equals the brand rows (10)",
+   "expected_overrides": {
+    "6": "fail",
+    "10": "fail"
+   },
+   "expected_extra": {}
+  },
+  "R04_store_pivot_removed": {
+   "kind": "rubric_relevant",
+   "basis": "the PivotTable object removed from Sales by Store, cells kept: no pivot (12); grouping judged from the layout (15 holds); rule A-1 (grader .2): no source range for the '(blank)' rows (14)",
+   "expected_overrides": {
+    "12": "fail",
+    "14": "cannot_assess"
+   },
+   "expected_extra": {}
+  },
+  "R05_store_subtotal_wrong": {
+   "kind": "rubric_relevant",
+   "basis": "store 1 subtotal WTD quantity +5: not the sum of its brand rows (16); the Grand Total no longer equals the subtotals (25); 17 (sum of pair rows) holds",
+   "expected_overrides": {
+    "16": "fail",
+    "25": "fail"
+   },
+   "expected_extra": {}
+  },
+  "R06_pair_brand_relabelled": {
+   "kind": "rubric_relevant",
+   "basis": "store 1's Clinique row labelled 'Dior': a missing pair and an unclassified row (14); the store 1 subtotal no longer equals its brand rows (16)",
+   "expected_overrides": {
+    "14": "fail",
+    "16": "fail"
+   },
+   "expected_extra": {}
+  },
+  "R07_merged_header_brand": {
+   "kind": "rubric_relevant",
+   "basis": "A1:B1 merged above the Sales by Brand header (30)",
+   "expected_overrides": {
+    "30": "fail"
+   },
+   "expected_extra": {}
+  },
+  "R08_grand_total_label_total": {
+   "kind": "rubric_relevant",
+   "basis": "the brand tab's final row labelled 'Total': still the grand total for the value items (10 holds), not labelled 'Grand Total' (31)",
+   "expected_overrides": {
+    "31": "fail"
+   },
+   "expected_extra": {}
+  },
+  "R09_brand_wtd_st_ratio": {
+   "kind": "rubric_relevant",
+   "basis": "brand-tab WTD ST% replaced by the ratio of the row's quantity to stock: 7 passes; MTD and YTD keep the average (8, 9 fail)",
+   "expected_overrides": {
+    "7": "pass"
+   },
+   "expected_extra": {}
+  },
+  "R10_data_text_number": {
+   "kind": "rubric_relevant",
+   "basis": "one Data quantity stored as the text '84' (23); its value still sums (6 holds)",
+   "expected_overrides": {
+    "23": "fail"
+   },
+   "expected_extra": {}
+  },
+  "R11_usd_currency_format": {
+   "kind": "rubric_relevant",
+   "basis": "Sales $ cells on both tabs formatted '\"$\"#,##0.00' (29 passes)",
+   "expected_overrides": {
+    "29": "pass"
+   },
+   "expected_extra": {}
+  },
+  "R12_store_tab_tabular": {
+   "kind": "rubric_relevant",
+   "basis": "Sales by Store rebuilt as a tabular table with the exact headers (13 passes), '<store> Total' subtotals and a Grand Total, without a PivotTable (12 fails); pairs, grouping, subtotals and totals hold (14-17, 25, 26)",
+   "expected_overrides": {
+    "13": "pass",
+    "12": "fail"
+   },
+   "expected_extra": {}
+  },
+  "R13_exact_brand_headers": {
+   "kind": "rubric_relevant",
+   "basis": "Sales by Brand headers written as the rubric's labels (4 passes)",
+   "expected_overrides": {
+    "4": "pass"
+   },
+   "expected_extra": {}
+  },
+  "R14_A1_blank_row_with_figures": {
+   "kind": "rubric_relevant",
+   "basis": "rule A-1: a '(blank)' pivot row with a figure; the source has no row without a store or brand, so it reflects an incorrect source range or aggregation (14)",
+   "expected_overrides": {
+    "14": "fail"
+   },
+   "expected_extra": {}
+  },
+  "R15_A1_pivot_range_unreadable": {
+   "kind": "rubric_relevant",
+   "basis": "rule A-1: the pivot source as whole columns 'B:V': the range cannot be bounded (12) and the figure-less '(blank)' rows cannot be told from hidden data (14)",
+   "expected_overrides": {
+    "12": "cannot_assess",
+    "14": "cannot_assess"
+   },
+   "expected_extra": {}
+  },
+  "R16_A1_unlabelled_data_row": {
+   "kind": "rubric_relevant",
+   "basis": "rule A-1: a Data row inside the pivot source range with figures but no store or brand: the '(blank)' rows hide data (14); the labelled rows and their totals are unchanged",
+   "expected_overrides": {
+    "14": "fail"
+   },
+   "expected_extra": {}
+  },
+  "N01_sheet_order": {
+   "kind": "neutral",
+   "basis": "the Data tab moved to the first position",
+   "expected_overrides": {},
+   "expected_extra": {}
+  },
+  "N02_notes_sheet": {
+   "kind": "neutral",
+   "basis": "an extra Notes sheet",
+   "expected_overrides": {},
+   "expected_extra": {}
+  },
+  "N03_brand_label_case": {
+   "kind": "neutral",
+   "basis": "brand labels in upper case with a typographic apostrophe (KIEHL\u2019S): same brands",
+   "expected_overrides": {},
+   "expected_extra": {}
+  },
+  "N04_roundtrip": {
+   "kind": "neutral",
+   "basis": "openpyxl load and save only",
+   "expected_overrides": {},
+   "expected_extra": {}
+  }
+ }
+}

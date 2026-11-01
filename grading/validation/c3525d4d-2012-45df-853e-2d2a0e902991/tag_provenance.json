@@ -1,0 +1,29 @@
+{
+ "tag": "grader-v0-c3525d4d",
+ "moved_at": "2026-11-01T16:28:12+00:00",
+ "moved_by": "assistant, on the human's instruction (2026-11-01: move the affected grader-v0 tags to the amended tested commit before opening any dev output of the task)",
+ "previous": {
+  "target_commit": "5435534709cbb4825ec6c98ef4179a457b7cc80e",
+  "tag_object": "55b89c47da9787ba8d07f92aa58c8dab0ddfe584",
+  "tagged_at": "2026-11-01 07:37:02 -0800",
+  "task_grader_version": "c3525d4d-2026-11-01.1",
+  "archived_as": "grader-v0-c3525d4d-superseded-5435534"
+ },
+ "current": {
+  "target_commit": "7f3594c422113e8990a68bf4056e59988d12a31c",
+  "tag_object": "c9d73cd1f081178598981826b2287764eb6cf218",
+  "task_grader_version": "c3525d4d-2026-11-01.2",
+  "code_bound_records": "grading/validation/c3525d4d-2012-45df-853e-2d2a0e902991/code_7f3594c/"
+ },
+ "reason": "approved rubric decisions of 2026-11-01: correction P-2.5-1 confirmed; item 7 per the rubric text (no majority); conflicting flag indicators cannot_assess; email tolerance confirmed",
+ "dev_output_revealed_before_move": "dev run UzC6bRkvzRHNGkCztWJhb9 finished 16:21:42Z, not opened before this move; only numeric metadata of its in-progress sample buffer was read (efficiency check, 16:00-16:03Z)",
+ "first_pass_note": "the first-pass comparison of the task's dev output uses the amended grader at the current target",
+ "references_checked": {
+  "run_root_records": "none name the tag (grading passes and inventories record full commit hashes)",
+  "validation_records": "first-pass and code-bound records name commits and task versions, not the tag"
+ },
+ "prior_records_preserved": [
+  "code_5435534",
+  "gold_first_pass.json"
+ ]
+}
