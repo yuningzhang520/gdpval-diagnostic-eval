@@ -3607,6 +3607,24 @@ LibreOffice recalculation in Docker, which is not started while paid sandboxes a
 | `unittest grading.tests.test_label_batch` | 12.7 s | 1 | 2/3: the gate test used `b5d2e6f1…` as its not-ready example, which is ready now; it now uses a task not listed in readiness |
 | `unittest grading.tests.test_label_batch` (rerun) | 13.0 s | 0 | 3/3 |
 
+## Expert gold FAIL audit (2026-11-01; requested by the human; `docs/expert_gold_fail_audit.md`; no paid call)
+
+Every deterministic non-pass of the expert deliverables across the ten graders has been audited, with the critical
+items first. Judge and visual items are not assessed (no judge call, no visual review).
+
+Classification:
+- Dataset artifact: `c3525d4d…` 6 and 32. The expert store list is the input list in the same order with the ids
+  re-identified: 26 of 26 capital-plan positions are identical and the substitution is unrelated to the input order.
+- Expert error (under the positional mapping): `c3525d4d…` 7 and 33 (six flags offset to capital-plan rows).
+- Unresolved, rubric beyond the prompt, critical: `7b08cd4d…` 16 and 17. C1's text "rates applied per country"
+  conflicts with its per-stop items.
+- Unresolved, rubric beyond the prompt, critical: `2ea2e5b5…` 10 (Total Hours).
+- Unresolved: the `b5d2e6f1…` C2 source check (K2 Data-tab edits) and `47ef842d…` 4 / 31 / 52.
+- Expert error: the remaining items.
+- Grader reading: no defect found.
+
+Six decisions are requested in section 5 of the audit.
+
 ## Known issues and findings (material check)
 
 - `rubric_json.form_content`: 8,036 items hold `null`, 2,417 items lack the key, zero
