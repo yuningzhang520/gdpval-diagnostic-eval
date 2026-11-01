@@ -158,13 +158,17 @@ grading rule, environment, model. If no critical failure is observed, that is re
 as such; tasks are not swapped to manufacture failures.
 
 ### 1.15 Budget, concurrency, timeouts
-Draft values are in `config.json` (DRAFT, 2026-10-30; PENDING approval): tool timeout
-600 s, sample `time_limit` 3,600 s, `message_limit` 200, 3 GiB per sandbox, collector
+Values are in `config.json` (high-reasoning configuration approved 2026-11-01 as the initial
+Pilot A/B condition; fixed at `freeze-v1` after the pilot cost report): `reasoning_effort` high on
+both candidates (explicit; the same nominal level, not equal compute; reported per model), tool
+timeout 600 s, sample `time_limit` and `working_limit` 7,200 s, `message_limit` 200, `token_limit`
+20,000,000 (type `all`), `max_tokens` 32,000 per request, 3 GiB per sandbox, collector
 limits from `harness/collect.py`, `attempts=1`; pilot concurrency 1 on every axis, formal
 concurrency 2 as a candidate pending memory and stability evidence; three fixed retry
 layers (Inspect `max_retries=3` with exponential backoff for transport-class errors only,
-provider SDK retries recorded and proposed at 0, whole-sample reruns off); pilot ceiling
-15 USD pending approval, estimate to follow model selection. Final values are fixed at
+request timeout 2,700 s and attempt timeout 900 s, provider SDK retries 0, whole-sample reruns
+off); per-sample Inspect `cost_limit` 20 USD as a safety net; pilot ceiling 45 USD; reservations
+A 8 USD, B 5 USD (forecasts). Final values are fixed at
 `freeze-v1` after the pilot cost report. Budget exhaustion is graded under section 1.3.
 
 ---

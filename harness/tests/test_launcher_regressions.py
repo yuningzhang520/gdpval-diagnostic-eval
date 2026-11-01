@@ -115,7 +115,9 @@ class DispatchTests(_Base):
         for kw, m in zip(seen, models):
             self.assertEqual(kw["model"], m)
             self.assertEqual((kw["max_tokens"], kw["attempt_timeout"], kw["token_limit"]), (g["max_tokens_per_request"], r1["attempt_timeout_s"], g["token_limit"]))
-            self.assertEqual((kw["max_tokens"], kw["attempt_timeout"], kw["token_limit"]), (16384, 600, 10_000_000))
+            self.assertEqual((kw["max_tokens"], kw["attempt_timeout"], kw["token_limit"]), (32000, 900, 20_000_000))  # approved 2026-11-01
+            self.assertEqual((kw["reasoning_effort"], kw["reasoning_summary"]), (g["reasoning_effort"], g["reasoning_summary"]))
+            self.assertEqual((kw["reasoning_effort"], kw["reasoning_summary"]), ("high", "none"))  # explicit, identical for both candidates
             self.assertEqual((kw["time_limit"], kw["working_limit"], kw["message_limit"]), (g["time_limit_s"], g["working_limit_s"], g["message_limit"]))
             self.assertEqual((kw["max_retries"], kw["timeout"], kw["model_args"]), (r1["max_retries"], r1["timeout_s"], {"max_retries": self.cfg["retries"]["layer_2_provider_sdk"]["max_retries"]}))
             self.assertEqual((kw["retry_on_error"], kw["fail_on_error"], kw["task_retry_attempts"], kw["epochs"]), (0, False, 0, 1))
@@ -126,7 +128,8 @@ class DispatchTests(_Base):
             self.assertEqual(os.path.dirname(kw["log_dir"]), launcher.log_dir); self.assertTrue(os.path.basename(kw["log_dir"])); self.assertTrue(os.path.isdir(kw["log_dir"]))
 
     def test_missing_execution_settings_refuse_before_any_ledger_change(self):
-        for path in (("generation", "max_tokens_per_request"), ("retries", "layer_1_inspect_model_request", "attempt_timeout_s"), ("generation", "token_limit")):
+        for path in (("generation", "max_tokens_per_request"), ("retries", "layer_1_inspect_model_request", "attempt_timeout_s"), ("generation", "token_limit"),
+                     ("generation", "reasoning_effort"), ("generation", "reasoning_summary")):
             with self.subTest(setting=path[-1]):
                 c = copy.deepcopy(self.cfg)
                 d = c

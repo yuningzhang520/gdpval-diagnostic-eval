@@ -5,6 +5,14 @@ this document has been run. No model, judge or paid API call has been made. Valu
 FORECAST are planning estimates, not measurements; no version or cost figure below is confirmed
 by an actual run, and the placeholders stay until the human fills them at authorization.
 
+Status update 2026-11-01: the generation configuration below was revised to the approved high-reasoning
+condition (`reasoning_effort` high on both candidates, `max_tokens` 32,000, time and working limits 7,200 s,
+`token_limit` 20,000,000, `cost_limit` 20 USD, reservations A 8 USD / B 5 USD, pilot ceiling 45 USD; see
+"Execution limits in force" and `config.json`). Superseded statements kept below for the record: the real
+launcher path is implemented and mock-verified since commit `bcb8887` (`--real-run`, section "Enabling the
+real launcher"); missing or incomplete usage now settles conservatively AND holds further paid starts until a
+recorded manual reconciliation (B2, approved 2026-10-31), which closes the "Open before the pilot" row.
+
 ## Scope
 
 | Item | Value |
@@ -30,9 +38,11 @@ exists yet; the ranges below are judgement, not data.
 | cache-write tokens | 0.1 M | 0.5 M | |
 | output tokens (incl. thinking) | 20 k | 120 k | tool calls plus deliverable code |
 | cost at list prices (4 / 20 / 0.20 read / 8 write ledger rate) | ≈ 2.1 USD | ≈ 11.2 USD | low: 0.2 M × 4 + 0.5 M × 0.20 + 0.1 M × 8 + 0.02 M × 20 = 0.8 + 0.1 + 0.8 + 0.4; high: 1.0 M × 4 + 4.0 M × 0.20 + 0.5 M × 8 + 0.12 M × 20 = 4.0 + 0.8 + 4.0 + 2.4; the high case exceeds the 10 USD `cost_limit`, which Inspect checks between calls (cost limit event, graded under the budget policy) |
+| cost at `reasoning_effort` high (approved 2026-11-01; same call, input and cache quantities; output incl. thinking 40 k–250 k, a guess of two to three times the default-effort forecast) | ≈ 2.5 USD | ≈ 14 USD | FORECAST; the 20 USD `cost_limit` can still bind in the worst case; Model B at half price ≈ 1.1–6 USD |
 
-Proposed pre-run estimate for the ledger reservation: 5 USD (FORECAST). The reservation, the
-2× stop rule, the 10 USD per-sample `cost_limit` and the 30 USD aggregate ceiling are
+Pre-run estimate for the ledger reservation: 8 USD for sample A and 5 USD for sample B (FORECAST,
+approved 2026-11-01; the 5 USD figure of the earlier draft is superseded). The reservation, the
+2× stop rule, the 20 USD per-sample `cost_limit` and the 45 USD aggregate ceiling are
 accounting and stop controls inside this harness: none of them caps the provider's final bill.
 A call already in flight when a limit is crossed is billed in full, cache and retry charges
 are priced from the provider's usage report after the fact, and the ledger's conservative
@@ -55,9 +65,9 @@ and the number of self-check iterations dominate; a factor of 3 either way is pl
 
 | Control | Value | Source |
 |---|---|---|
-| Pilot ceiling | 30 USD cumulative (A, B, judge, cache charges, billable retries) | `config.json` `pilot.budget_ceiling_usd`; ledger-enforced, not a provider hard cap |
-| Per-sample cost limit | 10 USD (Inspect `cost_limit` with `model_cost_config` from the candidate facts; fails closed without price data) | `generation.cost_limit_usd` |
-| Reservation | 5 USD for sample A (FORECAST); judge units for one run ≈ 0.15 USD reserved separately (per-call basis above; FORECAST) | this request |
+| Pilot ceiling | 45 USD cumulative (approved 2026-11-01; 30 USD before) (A, B, judge, cache charges, billable retries) | `config.json` `pilot.budget_ceiling_usd`; ledger-enforced, not a provider hard cap |
+| Per-sample cost limit | 20 USD (approved 2026-11-01; 10 USD before; Inspect `cost_limit` with `model_cost_config` from the candidate facts; fails closed without price data) | `generation.cost_limit_usd` |
+| Reservation | 8 USD for sample A and 5 USD for sample B (FORECAST, approved 2026-11-01); judge units for one run ≈ 0.15 USD reserved separately (per-call basis above; FORECAST) | this request |
 | Stop conditions | reservation not covered; actual > 2× estimate; same engineering failure class twice; ceiling reached; usage-source conflict or unpriced usage → settled conservatively and held for manual review | `pilot.stop_conditions`, `harness/budget.py` |
 | Engineering errors (as implemented) | a returned eval error (`fail_on_error=false`) is recorded as an engineering failure (two of the same class stop further starts) and settled through the normal `settle` path: with usage present → priced from the usage (exact; `estimated` only when retries, unpriced models or an aggregated-vs-per-call conflict are involved); with no usage → `fallback_to_reservation`: max(priced part, reservation), `estimated`, no hold; unpriced or conflicting usage → `estimated` + `manual_review_required` hold. An exception raised by `eval` itself → settled `estimated` at the reservation. Human handling is required for: every `manual_review_required` settlement, every open reservation after a restart, and any `estimated` settlement before the pilot cost is reported | `launcher.run_sample`, `_after_unit`, `classify_eval_log`, `budget.settle` |
 | Missing usage (as implemented) | no usage in the returned sample → `settle(fallback_to_reservation=True)`: cost = max(priced part, reservation), flagged `estimated` ("settled at the reserved amount"); this does NOT set `manual_review_required` and does not by itself stop further starts | `budget.settle` |
@@ -67,15 +77,19 @@ and the number of self-check iterations dominate; a factor of 3 either way is pl
 
 ## Execution limits in force (`config.json`, DRAFT until `freeze-v1`)
 
-`token_limit` 10,000,000 (type `all`), `message_limit` 200, `time_limit_s` 3600,
-`working_limit_s` 3600, `max_tokens_per_request` 16,384, `tool_timeout_s` 600, `mem_limit`
-3 GB, concurrency 1 / 1 / 1 / 1. Retries: Inspect request retries 3 (timeout 1800 s, attempt
-600 s), SDK retries 0, `retry_on_error` 0, `fail_on_error` false, `task_retry_attempts` 0.
-Note: `generation.token_semantics.launcher_wiring` still says token_limit and max_tokens are
-"Blocking"; `eval_kwargs` now passes both from the config — the config text is stale and should
-be corrected at freeze.
+Approved 2026-11-01 (high-reasoning configuration): `reasoning_effort` high on both candidates
+(explicit, passed as `GenerateConfig.reasoning_effort`; `reasoning_summary` none), `token_limit`
+20,000,000 (type `all`), `message_limit` 200, `time_limit_s` 7200, `working_limit_s` 7200,
+`max_tokens_per_request` 32,000, `tool_timeout_s` 600, `mem_limit` 3 GB, concurrency 1 / 1 / 1 / 1.
+Retries: Inspect request retries 3 (timeout 2700 s, attempt 900 s), SDK retries 0 (`model_args`),
+`retry_on_error` 0, `fail_on_error` false, `task_retry_attempts` 0. `eval_kwargs` passes every value
+from the config and refuses to start when one is missing or not an Inspect literal. Same nominal
+effort is not equal compute: the two providers implement it differently, tokenizers and prices differ,
+and results are reported per model with their own usage.
 
-## Enabling the real launcher (not done)
+## Enabling the real launcher (superseded: implemented 2026-10-31, commits `bcb8887` and `b22ebd9`)
+
+Superseded. Kept as the historical record of the request; `--real-run` with `--confirm`, `--authorized-by` and `--authorization-ref` is implemented and mock-verified.
 
 A paid pilot cannot be executed with the current code: `harness/launcher.py main()` raises
 "real mode is not enabled in this stage" after the pre-flight (only `--dry-run` runs), and no
@@ -111,4 +125,4 @@ cost and time accounting (generation, grading, human review).
 
 commit `PLACEHOLDER_COMMIT_HASH` · config sha256 `PLACEHOLDER_CONFIG_SHA256` · image
 `sha256:18cde712cde1867c94b8f23ae1f4066b0aa3146fdbd8deac70d1b4aa043ea9ee` · approved by ___ on
-___ · ceiling 30 USD · sample A reservation ___ USD · judge reservation ___ USD.
+___ · ceiling 45 USD · sample A reservation 8 USD (FORECAST) · sample B reservation 5 USD (FORECAST) · judge reservation ___ USD.

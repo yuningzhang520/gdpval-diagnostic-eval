@@ -1,11 +1,13 @@
 # Status
 
-Current stage: **B2 Architecture Cleanup and Engineering Review CLOSED by Codex's final independent
-verification (2026-11-01: "READY FOR B2 COMMIT"; the two remaining Blockings closed, section "B2 closure
-fix"; the three earlier fixes confirmed). The B2 checkpoint commit (this commit, on top of the Wiring
-Checkpoint `bcb888771c9b798e4fc237634a5da76ce6442e61`) was approved by the human after a staged
-safety verification; hash reported in chat and recorded in the next status update. No provider call.
-Next: Pilot A configuration, preflight and paid authorization, handled separately.** Earlier header,
+Current stage: **Pilot A execution planning on the B2 checkpoint `b22ebd94bd510bb90bd369057d810fa154d9156c`
+(pushed to `origin/main` 2026-11-01): read-only preflight PASSED and the high-reasoning generation
+configuration approved on 2026-11-01 is applied in the working tree and mock-verified (section "Pilot A/B
+generation configuration"); uncommitted, awaiting the human's review, commit approval and the first paid
+Model A authorization. No provider call.** Earlier header, kept for the record: B2 Architecture Cleanup and
+Engineering Review CLOSED by Codex's final independent verification (2026-11-01: "READY FOR B2 COMMIT"; the
+two remaining Blockings closed, section "B2 closure fix"; the three earlier fixes confirmed); the B2
+checkpoint commit was approved by the human after a staged safety verification. Earlier header,
 kept for the record: B2 remediation of the independent review's four P0 and one P1 findings
 implemented and mock-verified (2026-11-01; section "B2 remediation"), on top of the B2
 stabilization and the Wiring Checkpoint; awaiting the Codex closure review. Earlier header, kept for the record: B2
@@ -2652,6 +2654,75 @@ Engineering Review. The human then approved the B2 checkpoint commit and push af
 paths not staged, model-visible prompt / tools / sandbox / generation parameters and approved rubric unchanged). No
 paid call was made.
 
+## Pilot A/B generation configuration (2026-11-01; approved high-reasoning condition; config + launcher pass-through; mock-verified; no model, judge, provider or paid call; logs under `logs/pilot-a-config-20261101T012029Z/`)
+
+Preflight (read-only, same day, on `b22ebd9`, scratch ledger and scratch runs root): launcher `--dry-run` for
+`anthropic/claude-opus-5-5` on `1137e2bb-bdf9-4876-b572-f29b7de5e595` PASSED every gate (commit clean, image
+`sha256:18cde712…ea9ee` linux/arm64 by ID, prompt sha `6b539cf9…` stripped form, 1 staged file verified by
+sha256, credential names loaded and none missing, reservation 5 then void, remaining 30). Layer-2 SDK retries
+confirmed offline (constructed `AsyncAnthropic.max_retries` 0 with `model_args`, 2 without; sockets blocked).
+The real Anthropic and OpenAI responses, usage fields, cache TTL behaviour and applied effort remain REAL
+PROVIDER UNVERIFIED by design.
+
+Configuration review (read-only) and the human's approval of its primary recommendation as the initial
+Pilot A/B condition. Rationale: capability-first measurement with an explicit, reproducible reasoning level
+instead of a silent provider default; identical declared settings for both candidates; the dollar cap raised
+so the identical time, message and token limits, not the per-sample cost cap, are the operative budgets for
+the dearer model. Same nominal effort is not equal compute (recorded in `compute_equivalence_note`).
+
+| Parameter | Before | Approved 2026-11-01 |
+|---|---|---|
+| `generation.reasoning_effort` | not set (provider default, unverified) | `high`, explicit, both candidates |
+| `generation.reasoning_summary` | not set (OpenAI adapter sends an account probe request) | `none` |
+| `generation.max_tokens_per_request` | 16,384 | 32,000 |
+| `generation.time_limit_s` / `working_limit_s` | 3,600 / 3,600 | 7,200 / 7,200 |
+| `generation.token_limit` (type all) | 10,000,000 | 20,000,000 |
+| `generation.cost_limit_usd` | 10 | 20 |
+| `retries.layer_1.timeout_s` / `attempt_timeout_s` | 1,800 / 600 | 2,700 / 900 |
+| `pilot.budget_ceiling_usd` | 30 | 45 |
+| `pilot.reservations_usd` (new; `--estimate-usd`, FORECAST) | 5 (A, request draft) | A 8, B 5 |
+| `message_limit`, attempts, epochs, retry counts, concurrency, prompt, tools, sandbox | unchanged | unchanged |
+
+Implementation: `config.json` 20 leaf changes (the values above plus the text fields `budget_status`,
+`cost_limit_policy`, `pilot_limits_status`, `reasoning_effort_policy`, `compute_equivalence_note`,
+`reasoning_settings_basis`, `timeouts_revised_2026_11_01`), verified by a parsed diff listing exactly the
+intended paths; new `config.json` sha256 `93a89d33264f5a2277401afb5f0d3476249ba6a71249ef14b7f2e26a3734d09d`.
+`harness/launcher.py` `eval_kwargs`: `reasoning_effort` and `reasoning_summary` are read from `generation`,
+must be Inspect literals (`REASONING_EFFORTS`, `REASONING_SUMMARIES`), refuse to start otherwise, and are
+passed to `eval(**kw)` as GenerateConfig fields next to `max_tokens`. Tests: pinned values updated in
+`test_launcher_regressions` (dispatch spy, missing-setting refusal for both new fields) and `test_budget_unit`
+(eval_kwargs values, unknown literal refused); new `harness/tests/test_generation_config.py`. Records:
+`docs/pilot_a_request.md` (status update, high-effort forecast row, limits, budget table, approval line,
+superseded "not enabled" section marked), `preregistration.md` 1.15 values.
+
+Adapter mapping verified offline against inspect_ai 0.3.286 (dummy keys, socket connects blocked, OpenAI
+`client.responses.create` replaced by a recorder): Anthropic `completion_config` for `claude-opus-5-5` with
+`reasoning_effort high`, `max_tokens 32000` sends `thinking {type adaptive, display summarized}`,
+`output_config {effort high}` and the `output-128k-2025-02-19` beta; without an effort none of the three is
+sent; `reasoning_tokens` is refused up front; thinking cannot be disabled on Opus 5.5; Inspect's own sizing for
+high would be 48,000. OpenAI `gpt-6.1-sol` (version 6.1, Responses API, always reasons): the captured request
+carries `reasoning {effort high}`, `max_output_tokens 32000`, `store false`, `include reasoning.encrypted_content`,
+exactly one request when `reasoning_summary` is set; with the field unset the adapter first sends the
+"Please say 'hello, world'" probe at effort low (a real request outside the sample's usage and the ledger) —
+the reason `reasoning_summary none` is set. The real eval() call point was exercised through the real-run CLI
+regression with the real Inspect eval, docker sandbox and mockllm.
+
+### Verification (first execution captured; one rerun after a pinned-value fix)
+| Command (`run_isolated.sh`, `/usr/bin/time -p`) | Wall clock | Exit | Result |
+|---|---|---|---|
+| `unittest harness.tests.test_launcher_regressions` (dispatch carries effort/summary; missing-setting refusals) | 6.02 s | 0 | 42/42 |
+| `unittest harness.tests.test_budget_unit` (eval_kwargs values; unknown literal refused) | 0.99 → 1.31 s | 1 / 0 | 33/33 (one older pinned `3600` expectation updated to the approved 7,200) |
+| `unittest harness.tests.test_generation_config` (new; adapter mapping, request capture, probe) | 2.76 s | 0 | 6/6 |
+| `unittest harness.tests.test_docs_consistency` | 0.98 s | 0 | 3/3 |
+| `harness.tests.regress_pilot_cli` (real-run CLI → real Inspect eval + docker + mockllm with the new kwargs) | 8.58 s | 0 | 10/10 |
+
+Not run (unchanged code): grading suites and the grading CLI regression, layout, limits / closeout / tools /
+compose / recalc, staging / collect / image unit suites.
+
+Pending human decisions: commit of this configuration; Model A id final approval is implied by the approved
+condition but the first paid run still needs its own `--authorized-by` / `--authorization-ref` entry; judge
+model, judge block and judge reservation (separate approval).
+
 ## Known issues and findings (material check)
 
 - `rubric_json.form_content`: 8,036 items hold `null`, 2,417 items lack the key, zero
@@ -2704,12 +2775,19 @@ paid call was made.
 
 ## In flight
 
-Nothing. B2 is closed and committed as the B2 checkpoint. Pilot A configuration, preflight and paid authorization
-are the next, separately run stage (pending human decisions: judge model id and config `judge` block, judge
-reservation per run, Model A final approval, real-run and judge paid authorizations).
+Pilot A generation configuration applied and mock-verified in the working tree, uncommitted; waiting for the
+human's review, commit approval and the first paid Model A authorization (judge model id, judge block and judge
+reservation remain separate pending decisions).
 
 ## Decisions taken (date · what · commit)
 
+- 2026-11-01 · B2 checkpoint committed and pushed (`b22ebd94bd510bb90bd369057d810fa154d9156c`,
+  "fix: stabilize pilot accounting, judge recovery and reporting"; 17 files; staged safety verification
+  passed). Read-only Pilot A preflight PASSED on it (scratch dry run). Human approved the high-reasoning
+  generation configuration (reasoning_effort high both candidates, reasoning_summary none, max_tokens
+  32,000, time/working 7,200 s, token_limit 20M, cost_limit 20 USD, timeouts 2,700/900 s, reservations
+  A 8 / B 5 USD, pilot ceiling 45 USD) as the initial Pilot A/B condition; applied in config.json and
+  eval_kwargs, mock-verified · uncommitted (working tree after `b22ebd9`)
 - 2026-11-01 · Codex closure fix: usage recovery after an eval exception is bound to the execution
   (per-execution Inspect log directory `inspect_logs/<unit>/`, task/model identity check, one count per
   eval id / sample / epoch, unattributable logs excluded and flagged); report selection fails closed

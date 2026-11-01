@@ -193,7 +193,7 @@ class LauncherBudgetTests(unittest.TestCase):
         meta = launcher.run_sample(task=SimpleNamespace(name="t"), model=model, unit_id="u1", estimate_usd=5)
         kw = calls[0]
         self.assertEqual((kw["max_retries"], kw["model_args"], kw["retry_on_error"], kw["fail_on_error"], kw["task_retry_attempts"]), (3, {"max_retries": 0}, 0, False, 0))
-        self.assertEqual((kw["time_limit"], kw["working_limit"], kw["message_limit"], kw["epochs"]), (3600, 3600, 200, 1))
+        self.assertEqual((kw["time_limit"], kw["working_limit"], kw["message_limit"], kw["epochs"]), (7200, 7200, 200, 1))  # approved 2026-11-01 limits
         self.assertEqual((kw["max_samples"], kw["max_tasks"], kw["max_sandboxes"], kw["max_connections"]), (1, 1, 1, 1))
         # input 0.80 + output 0.40 + cache_read 0.20 + cache_write 0.25 = 1.65; retry estimate 1 x 0.80
         self.assertEqual(meta["settlement"]["cost_usd"], "2.450000")
@@ -321,8 +321,12 @@ class LauncherPreflightTests(unittest.TestCase):
         self.assertEqual(kw["max_retries"], 3)
         self.assertEqual(kw["model_args"], {"max_retries": 0})
         self.assertEqual((kw["retry_on_error"], kw["fail_on_error"], kw["task_retry_attempts"]), (0, False, 0))
-        self.assertEqual((kw["token_limit"], kw["max_tokens"], kw["attempt_timeout"], kw["timeout"]), (10_000_000, 16384, 600, 1800))
-        self.assertEqual((kw["cost_limit"], "anthropic/claude-opus-5-5" in kw["model_cost_config"]), (10.0, True))
+        self.assertEqual((kw["token_limit"], kw["max_tokens"], kw["attempt_timeout"], kw["timeout"]), (20_000_000, 32000, 900, 2700))  # approved 2026-11-01
+        self.assertEqual((kw["cost_limit"], "anthropic/claude-opus-5-5" in kw["model_cost_config"]), (20.0, True))
+        self.assertEqual((kw["reasoning_effort"], kw["reasoning_summary"]), ("high", "none"))
+        bad = json.loads(json.dumps(cfg)); bad["generation"]["reasoning_effort"] = "maximum"
+        with self.assertRaisesRegex(L.LauncherError, "reasoning_effort"):
+            L.eval_kwargs(bad, log_dir="/x", model="anthropic/claude-opus-5-5")  # an unknown literal is refused before any call
         self.assertEqual(L.eval_kwargs(cfg, log_dir="/x", token_limit=400_000, model="anthropic/claude-opus-5-5")["token_limit"], 400_000)
         prices = L.prices_from_config(cfg)
         self.assertEqual(prices["anthropic/claude-opus-5-5"]["output"], 20)

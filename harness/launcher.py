@@ -29,6 +29,8 @@ from .budget import BudgetExhausted, BudgetLedger, LedgerConflict, model_events_
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 KEY_ENV_BY_PROVIDER = {"anthropic": "ANTHROPIC_API_KEY", "openai": "OPENAI_API_KEY", "google": "GOOGLE_API_KEY"}
+REASONING_EFFORTS = ("none", "minimal", "low", "medium", "high", "xhigh", "max")  # inspect_ai 0.3.286 GenerateConfig.reasoning_effort literals
+REASONING_SUMMARIES = ("none", "concise", "detailed", "auto")  # GenerateConfig.reasoning_summary literals (OpenAI reasoning models; "none" also skips the adapter's account probe)
 ENV_LINE = re.compile(r"^\s*(?:export\s+)?([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*?)\s*$")
 
 
@@ -237,7 +239,10 @@ def eval_kwargs(cfg: dict, *, log_dir: str, token_limit: int | None = None, mode
     (model_args max_retries=0), sample reruns (retry_on_error=0, fail_on_error=False), task
     retries (task_retry_attempts=0; eval_set is not used). A numeric ``cost_limit_usd`` in the
     config adds Inspect's per-sample cost limit (safety net behind the ledger) and requires price
-    data for the model (fail closed)."""
+    data for the model (fail closed). The reasoning settings are explicit and identical for both
+    candidates (approved 2026-11-01): ``generation.reasoning_effort`` and ``generation.reasoning_summary``
+    are required and must be Inspect literals; they reach the provider adapters as GenerateConfig fields
+    through eval(**kwargs) (Anthropic: adaptive thinking + output_config.effort; OpenAI: reasoning.effort)."""
     g, r, c = cfg["generation"], cfg["retries"], cfg["concurrency"]["pilot"]
     l1, l2 = r["layer_1_inspect_model_request"], r["layer_2_provider_sdk"]
     cost_limit = g.get("cost_limit_usd")
@@ -256,10 +261,17 @@ def eval_kwargs(cfg: dict, *, log_dir: str, token_limit: int | None = None, mode
     effective_token_limit = token_limit if token_limit is not None else _int_or_none(g.get("token_limit"))
     if effective_token_limit is None or effective_token_limit <= 0:
         raise LauncherError("generation.token_limit must be a positive integer (approved per-sample token cap); refusing to start")
+    reasoning_effort = g.get("reasoning_effort")
+    if reasoning_effort not in REASONING_EFFORTS:
+        raise LauncherError(f"generation.reasoning_effort must be one of {REASONING_EFFORTS} (explicit, identical for both candidates); got {reasoning_effort!r}; refusing to start")
+    reasoning_summary = g.get("reasoning_summary")
+    if reasoning_summary not in REASONING_SUMMARIES:
+        raise LauncherError(f"generation.reasoning_summary must be one of {REASONING_SUMMARIES}; got {reasoning_summary!r}; refusing to start")
     kw = {
         "log_dir": log_dir, "epochs": g["epochs"], "sandbox_prebuilt": True, "log_images": True,
         "time_limit": g["time_limit_s"], "working_limit": g["working_limit_s"], "message_limit": g["message_limit"],
         "token_limit": effective_token_limit, "max_tokens": max_tokens,
+        "reasoning_effort": reasoning_effort, "reasoning_summary": reasoning_summary,
         "max_retries": l1["max_retries"], "timeout": l1["timeout_s"], "attempt_timeout": attempt_timeout,
         "model_args": {"max_retries": l2["max_retries"]},
         "retry_on_error": 0, "fail_on_error": False, "task_retry_attempts": 0,

@@ -377,8 +377,13 @@
       "human-review checkpoint",
       "model_b on the same task"
     ],
-    "budget_ceiling_usd": 30,
-    "budget_status": "cumulative pilot ceiling 30 USD proposed 2026-10-30 (covers A, B, judge, cache-related charges and billable retries), supersedes the 25 USD value of the earlier draft; pending final approval; every paid call still needs separate authorization; enforced by the launcher ledger, not an absolute billing hard cap",
+    "budget_ceiling_usd": 45,
+    "reservations_usd": {
+      "anthropic/claude-opus-5-5": 8,
+      "openai/gpt-6.1-sol": 5,
+      "basis": "FORECAST pre-run estimates passed to the launcher as --estimate-usd (approved 2026-11-01 with the high-reasoning configuration); the 2x stop rule records a stop when a unit settles above 16 USD (A) or 10 USD (B); judge units are reserved separately under their own approval"
+    },
+    "budget_status": "cumulative pilot ceiling 45 USD approved 2026-11-01 with the high-reasoning configuration (covers A, B, judge, cache-related charges and billable retries; sized for two samples at the 20 USD per-sample cost limit plus judge and retries), supersedes the 30 USD value proposed 2026-10-30 and the 25 USD value of the earlier draft; every paid call still needs separate authorization; enforced by the launcher ledger as a start gate, not an absolute billing hard cap",
     "stop_conditions": [
       "no new sample or judge batch starts when the remaining budget cannot cover its reservation",
       "after the ceiling is reached no further sample starts (no per-request interception)",
@@ -630,18 +635,18 @@
         },
         "status": "judge candidate, not frozen"
       },
-      "compute_equivalence_note": "The two candidate models are not given equal compute: Anthropic runs adaptive thinking at effort 'medium' by default with thinking tokens billed as output at 20 USD/MTok; OpenAI runs reasoning at effort 'medium' by default with reasoning tokens billed as output at 10 USD/MTok; tokenizers differ, so token counts and the shared max_tokens cap are not equivalent budgets. Results are reported per model with their own usage and cost, never on one scale.",
-      "reasoning_effort_policy": "No reasoning effort or thinking parameter is set by the harness for A, B or the judge; provider defaults apply. 'Not set' is not 'verified default': the applied level is confirmed only by the pilot's recorded requests and usage."
+      "compute_equivalence_note": "The two candidate models are not given equal compute: Anthropic runs adaptive thinking at the explicitly requested effort 'high' with thinking tokens billed as output at 20 USD/MTok; OpenAI runs reasoning at the explicitly requested effort 'high' with reasoning tokens billed as output at 10 USD/MTok (same nominal level, different mechanisms, not equal compute); tokenizers differ, so token counts and the shared max_tokens cap are not equivalent budgets. Results are reported per model with their own usage and cost, never on one scale.",
+      "reasoning_effort_policy": "Approved 2026-11-01: generation.reasoning_effort 'high' is set explicitly for both candidates and passed by eval_kwargs as GenerateConfig.reasoning_effort (Anthropic: thinking adaptive + output_config.effort high + output-128k beta; OpenAI: Responses reasoning.effort high); generation.reasoning_summary 'none' suppresses the OpenAI adapter's account probe request. The judge is configured separately (judge block, pending). The level actually applied by each provider is confirmed only by the pilot's recorded requests and usage (REAL PROVIDER UNVERIFIED)."
     }
   },
   "generation": {
     "attempts": 1,
     "epochs": 1,
     "tool_timeout_s": 600,
-    "time_limit_s": 3600,
+    "time_limit_s": 7200,
     "message_limit": 200,
-    "token_limit": 10000000,
-    "working_limit_s": 3600,
+    "token_limit": 20000000,
+    "working_limit_s": 7200,
     "budget_limit_types_grading_eligible": [
       "time",
       "working",
@@ -659,7 +664,10 @@
     "system_prompt_sha256": "6b539cf9171a0f303a5afd3fe64d68536e3db00f9ba767478d8415331cd558e9",
     "system_prompt_text": "You are completing a professional work task. Read the task description and the files under /workspace/inputs (and /workspace/resources when present). Produce every requested deliverable as a file under /output/final/ using the requested file formats and clear file names. The sandbox has no network access; Python with openpyxl, python-docx, python-pptx, pandas, matplotlib, reportlab and pymupdf, and LibreOffice (soffice, with python3-uno bindings) are available. Tools to view images and render document pages are provided. No one is available to answer questions; make reasonable assumptions and state them in the deliverable. Before finishing, open your deliverables again and check that the numbers, labels and formatting are correct and consistent with each other. Finish by stating which files you produced.",
     "system_prompt_status": "DRAFT with the three additions approved 2026-10-30 (python3-uno bindings; image/render tools; no one to answer questions); identical for both models; frozen at freeze-v1",
-    "max_tokens_per_request": 16384,
+    "max_tokens_per_request": 32000,
+    "reasoning_effort": "high",
+    "reasoning_summary": "none",
+    "reasoning_settings_basis": "Approved 2026-11-01 (configuration review): reasoning_effort high is requested explicitly for both candidates and passed by harness.launcher.eval_kwargs as GenerateConfig.reasoning_effort; inspect_ai 0.3.286 maps it to Anthropic thinking type adaptive with output_config.effort high (plus the output-128k beta at max_tokens > 8192) and to OpenAI Responses reasoning.effort high. reasoning_summary none (OpenAI-only field, ignored by the Anthropic provider) suppresses the OpenAI adapter's one-off account probe request and reasoning summaries. Same nominal level is not equal compute (see models.pilot_models.compute_equivalence_note). Verified offline against the adapter source and request construction; the level actually applied by each provider is REAL PROVIDER UNVERIFIED until the pilot's recorded requests and usage are inspected.",
     "approved_2026_10_30": [
       "attempts=1",
       "epochs=1",
@@ -671,10 +679,10 @@
     ],
     "comparability_rule": "Comparable A and B runs must use the same system prompt, the same tool schema and the same execution environment, recorded by identical system_prompt_sha256, tool list, image id/digest and config hash. If the prompt or tool configuration changes after pilot A, that A run is labelled a technical trial or intervention and A is rerun under the new version before any comparison with B; results from different configurations are never presented as a fair comparison.",
     "image_tool_validation": "implemented 2026-10-30 (Stage 3b item 4, I2): view_image and render_document decode the bytes on the host with Pillow, require the actual format to match the extension, and bound bytes (8,000,000), side (8000 px) and total pixels (20,000,000); invalid images return a ToolError and are never sent to the provider",
-    "cost_limit_usd": 10.0,
-    "cost_limit_policy": "Inspect per-sample cost limit at 10 USD as a safety net behind the pilot ledger; model_cost_config built from models.candidate_facts (A: 4/20, cache read 0.20, write 5; B: 2/10, cached 0.10; judge: 2/12 tier <= 200k); the launcher fails closed without complete price data. The same 10 USD cap buys different token and compute budgets on the two models and must not become the limit that decides A/B results; a hit records SampleLimitEvent type 'cost' with the limit and running value and is graded under the budget policy (mock-triggered 2026-10-30).",
+    "cost_limit_usd": 20.0,
+    "cost_limit_policy": "Inspect per-sample cost limit at 20 USD (raised from 10 USD on 2026-11-01 so that the identical time, message and token limits, not the dollar cap, are the operative budgets for the dearer model) as a safety net behind the pilot ledger; model_cost_config built from models.candidate_facts (A: 4/20, cache read 0.20, write 5; B: 2/10, cached 0.10; judge: 2/12 tier <= 200k); the launcher fails closed without complete price data. The same 20 USD cap buys different token and compute budgets on the two models and must not become the limit that decides A/B results; a hit records SampleLimitEvent type 'cost' with the limit and running value and is graded under the budget policy (mock-triggered 2026-10-30).",
     "token_limit_type": "all",
-    "pilot_limits_status": "DRAFT safety ceilings proposed 2026-10-30, pending final approval; not frozen; identical numbers do not give the two models identical reasoning budgets",
+    "pilot_limits_status": "High-reasoning configuration approved by the human on 2026-11-01 as the initial Pilot A/B condition (reasoning_effort high on both candidates, reasoning_summary none, max_tokens_per_request 32,000, time_limit_s and working_limit_s 7,200, token_limit 20,000,000, cost_limit_usd 20; message_limit 200, attempts, retries counts, concurrency, prompt, tools and sandbox unchanged); supersedes the 2026-10-30 draft ceilings; not frozen (fixed at freeze-v1 after the pilot cost report); identical numbers do not give the two models identical reasoning budgets",
     "token_semantics": {
       "token_limit": "cumulative per sample over all model calls, Inspect TokenLimit type 'all' (input + output of every call, so a long agent loop re-counts its context on each call); alternative forms 'output:N' exist (output-metered, includes reasoning on all three providers) but are not used",
       "max_tokens": "per-request output cap passed through eval(max_tokens=...) as GenerateConfig.max_tokens -> Anthropic max_tokens, OpenAI Responses max_output_tokens, Google max_output_tokens",
@@ -751,8 +759,9 @@
       "approved_2026_10_30": true,
       "backoff": "Inspect tenacity wait_exponential_jitter(initial=3 s, max=1800 s, jitter=3 s) (inspect_ai 0.3.286 model/_retry.py)",
       "retried": "transport-class errors as classified by the provider's should_retry (rate limit 429, 5xx, connection errors); OpenAI quota-exceeded never retried",
-      "timeout_s": 1800,
-      "attempt_timeout_s": 600,
+      "timeout_s": 2700,
+      "attempt_timeout_s": 900,
+      "timeouts_revised_2026_11_01": "timeout_s 1800 -> 2700 and attempt_timeout_s 600 -> 900 for streamed responses of up to 32,000 output tokens at high effort; max_retries unchanged",
       "logged": true,
       "default_if_unset": "unlimited retries (GenerateConfig.max_retries docstring: 'defaults to unlimited'); never leave unset"
     },
