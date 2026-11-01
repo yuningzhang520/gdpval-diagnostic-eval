@@ -1,0 +1,5 @@
+module at c04a788, blob 80b9d64c90a91843625051081b9535371a287b34
+R36_totals_rows_both_wrong_one_unreadable_1250 [c04a788]: RED {"22": {"declared": "fail", "c04a788": "cannot_assess"}}
+R36_totals_rows_both_wrong_one_unreadable_1250 [fixed]: matches the declaration
+R37_no_totals_row_conflicting_ending_rows_1250 [c04a788]: RED {"29": {"declared": "cannot_assess", "c04a788": "fail"}}
+R37_no_totals_row_conflicting_ending_rows_1250 [fixed]: matches the declaration

@@ -1,0 +1,1370 @@
+{
+ "_provenance": {
+  "commit": "a9a1f88293264d653e4f0ded024eeeedcf1f4636",
+  "dirty": false,
+  "changed_paths": 0,
+  "untracked_paths": 0,
+  "task_grader_version": "7d7fc9a7-2026-11-01.4",
+  "engine_version": "engine-2026-11-01.1"
+ },
+ "gold_anchor": {
+  "gold_map": {
+   "1": "pass",
+   "2": "pass",
+   "3": "pass",
+   "4": "pass",
+   "5": "pass",
+   "6": "pass",
+   "7": "pass",
+   "8": "pass",
+   "9": "pass",
+   "10": "fail",
+   "11": "pass",
+   "13": "pass",
+   "14": "pass",
+   "19": "pass",
+   "20": "pass",
+   "21": "pass",
+   "22": "pass",
+   "23": "pass",
+   "24": "pass",
+   "25": "pass",
+   "26": "pass",
+   "27": "pass",
+   "28": "pass",
+   "29": "pass",
+   "30": "fail",
+   "33": "pass",
+   "34": "pass",
+   "36": "pass",
+   "37": "pass",
+   "38": "pass",
+   "39": "pass",
+   "40": "pass",
+   "41": "pass",
+   "42": "pass",
+   "43": "pass",
+   "44": "pass",
+   "47": "pass",
+   "48": "pass",
+   "49": "pass",
+   "50": "pass",
+   "53": "pass"
+  },
+  "gold_critical": {
+   "C1": "pass",
+   "C2": "fail",
+   "C3": "pass",
+   "C4": "fail"
+  },
+  "twin_map": {
+   "1": "pass",
+   "2": "pass",
+   "3": "pass",
+   "4": "pass",
+   "5": "pass",
+   "6": "pass",
+   "7": "fail",
+   "8": "pass",
+   "9": "pass",
+   "10": "fail",
+   "11": "pass",
+   "13": "pass",
+   "14": "pass",
+   "19": "pass",
+   "20": "pass",
+   "21": "pass",
+   "22": "pass",
+   "23": "pass",
+   "24": "pass",
+   "25": "pass",
+   "26": "pass",
+   "27": "pass",
+   "28": "pass",
+   "29": "pass",
+   "30": "fail",
+   "33": "pass",
+   "34": "pass",
+   "36": "pass",
+   "37": "pass",
+   "38": "pass",
+   "39": "pass",
+   "40": "pass",
+   "41": "pass",
+   "42": "pass",
+   "43": "pass",
+   "44": "pass",
+   "47": "pass",
+   "48": "pass",
+   "49": "pass",
+   "50": "pass",
+   "53": "pass"
+  },
+  "gold_sha256": {
+   "Aurisic_Amortization_4-25.xlsx": "894e8b780163b00ff589075e97e1898c85a469f5503bb66bcc74208efd20a533"
+  }
+ },
+ "N01_values_only_twin": {
+  "kind": "neutral",
+  "expected_overrides": {},
+  "observed_fail": [
+   7,
+   10,
+   30
+  ],
+  "observed_cannot_assess": [],
+  "critical": {
+   "C1": "pass",
+   "C2": "fail",
+   "C3": "pass",
+   "C4": "fail"
+  },
+  "diff": {}
+ },
+ "N02_sheet_names_with_words": {
+  "kind": "neutral",
+  "expected_overrides": {},
+  "observed_fail": [
+   7,
+   10,
+   30
+  ],
+  "observed_cannot_assess": [],
+  "critical": {
+   "C1": "pass",
+   "C2": "fail",
+   "C3": "pass",
+   "C4": "fail"
+  },
+  "diff": {}
+ },
+ "N03_one_row_header": {
+  "kind": "neutral",
+  "expected_overrides": {},
+  "observed_fail": [
+   7,
+   10,
+   30
+  ],
+  "observed_cannot_assess": [],
+  "critical": {
+   "C1": "pass",
+   "C2": "fail",
+   "C3": "pass",
+   "C4": "fail"
+  },
+  "diff": {}
+ },
+ "N04_header_synonyms": {
+  "kind": "neutral",
+  "expected_overrides": {},
+  "observed_fail": [
+   7,
+   10,
+   30
+  ],
+  "observed_cannot_assess": [],
+  "critical": {
+   "C1": "pass",
+   "C2": "fail",
+   "C3": "pass",
+   "C4": "fail"
+  },
+  "diff": {}
+ },
+ "N05_extra_columns": {
+  "kind": "neutral",
+  "expected_overrides": {},
+  "observed_fail": [
+   7,
+   10,
+   30
+  ],
+  "observed_cannot_assess": [],
+  "critical": {
+   "C1": "pass",
+   "C2": "fail",
+   "C3": "pass",
+   "C4": "fail"
+  },
+  "diff": {}
+ },
+ "N06_vendor_names_lowercase": {
+  "kind": "neutral",
+  "expected_overrides": {},
+  "observed_fail": [
+   7,
+   10,
+   30
+  ],
+  "observed_cannot_assess": [],
+  "critical": {
+   "C1": "pass",
+   "C2": "fail",
+   "C3": "pass",
+   "C4": "fail"
+  },
+  "diff": {}
+ },
+ "N07_blank_rows_between_vendor_groups": {
+  "kind": "neutral",
+  "expected_overrides": {},
+  "observed_fail": [
+   7,
+   10,
+   30
+  ],
+  "observed_cannot_assess": [],
+  "critical": {
+   "C1": "pass",
+   "C2": "fail",
+   "C3": "pass",
+   "C4": "fail"
+  },
+  "diff": {}
+ },
+ "N08_notes_below": {
+  "kind": "neutral",
+  "expected_overrides": {},
+  "observed_fail": [
+   7,
+   10,
+   30
+  ],
+  "observed_cannot_assess": [],
+  "critical": {
+   "C1": "pass",
+   "C2": "fail",
+   "C3": "pass",
+   "C4": "fail"
+  },
+  "diff": {}
+ },
+ "N09_extra_sheet": {
+  "kind": "neutral",
+  "expected_overrides": {},
+  "observed_fail": [
+   7,
+   10,
+   30
+  ],
+  "observed_cannot_assess": [],
+  "critical": {
+   "C1": "pass",
+   "C2": "fail",
+   "C3": "pass",
+   "C4": "fail"
+  },
+  "diff": {}
+ },
+ "N10_title_rows_added": {
+  "kind": "neutral",
+  "expected_overrides": {},
+  "observed_fail": [
+   7,
+   10,
+   30
+  ],
+  "observed_cannot_assess": [],
+  "critical": {
+   "C1": "pass",
+   "C2": "fail",
+   "C3": "pass",
+   "C4": "fail"
+  },
+  "diff": {}
+ },
+ "N11_lines_sorted_by_amount": {
+  "kind": "d_neutral",
+  "expected_overrides": {},
+  "observed_fail": [
+   7,
+   10,
+   30
+  ],
+  "observed_cannot_assess": [],
+  "critical": {
+   "C1": "pass",
+   "C2": "fail",
+   "C3": "pass",
+   "C4": "fail"
+  },
+  "diff": {}
+ },
+ "N12_gl_variance_label_variants": {
+  "kind": "neutral",
+  "expected_overrides": {},
+  "observed_fail": [
+   7,
+   10,
+   30
+  ],
+  "observed_cannot_assess": [],
+  "critical": {
+   "C1": "pass",
+   "C2": "fail",
+   "C3": "pass",
+   "C4": "fail"
+  },
+  "diff": {}
+ },
+ "N13_dollar_currency_format": {
+  "kind": "neutral",
+  "expected_overrides": {},
+  "observed_fail": [
+   7,
+   10,
+   30
+  ],
+  "observed_cannot_assess": [],
+  "critical": {
+   "C1": "pass",
+   "C2": "fail",
+   "C3": "pass",
+   "C4": "fail"
+  },
+  "diff": {}
+ },
+ "N14_beginning_balance_column_removed": {
+  "kind": "neutral",
+  "expected_overrides": {},
+  "observed_fail": [
+   7,
+   10,
+   30
+  ],
+  "observed_cannot_assess": [],
+  "critical": {
+   "C1": "pass",
+   "C2": "fail",
+   "C3": "pass",
+   "C4": "fail"
+  },
+  "diff": {}
+ },
+ "N15_summary_labels_rephrased": {
+  "kind": "neutral",
+  "expected_overrides": {},
+  "observed_fail": [
+   7,
+   10,
+   30
+  ],
+  "observed_cannot_assess": [],
+  "critical": {
+   "C1": "pass",
+   "C2": "fail",
+   "C3": "pass",
+   "C4": "fail"
+  },
+  "diff": {}
+ },
+ "R01_delete_invoice_line_1250": {
+  "kind": "rubric_relevant",
+  "expected_overrides": {
+   "13": "fail",
+   "22": "fail"
+  },
+  "observed_fail": [
+   7,
+   10,
+   13,
+   22,
+   30
+  ],
+  "observed_cannot_assess": [],
+  "critical": {
+   "C1": "fail",
+   "C2": "fail",
+   "C3": "pass",
+   "C4": "fail"
+  },
+  "diff": {}
+ },
+ "R02_wrong_amount_line": {
+  "kind": "rubric_relevant",
+  "expected_overrides": {
+   "14": "fail",
+   "21": "fail"
+  },
+  "observed_fail": [
+   7,
+   10,
+   14,
+   21,
+   30
+  ],
+  "observed_cannot_assess": [],
+  "critical": {
+   "C1": "fail",
+   "C2": "fail",
+   "C3": "pass",
+   "C4": "fail"
+  },
+  "diff": {}
+ },
+ "R03_amortization_before_invoice_month": {
+  "kind": "rubric_relevant",
+  "expected_overrides": {
+   "20": "fail",
+   "21": "fail",
+   "22": "fail"
+  },
+  "observed_fail": [
+   7,
+   10,
+   20,
+   21,
+   22,
+   30
+  ],
+  "observed_cannot_assess": [],
+  "critical": {
+   "C1": "pass",
+   "C2": "fail",
+   "C3": "pass",
+   "C4": "fail"
+  },
+  "diff": {}
+ },
+ "R04_bcbs_own_month": {
+  "kind": "rubric_relevant",
+  "expected_overrides": {
+   "37": "fail",
+   "39": "fail",
+   "40": "fail"
+  },
+  "observed_fail": [
+   7,
+   10,
+   30,
+   37,
+   39,
+   40
+  ],
+  "observed_cannot_assess": [],
+  "critical": {
+   "C1": "pass",
+   "C2": "fail",
+   "C3": "fail",
+   "C4": "fail"
+  },
+  "diff": {}
+ },
+ "R05_good_insurance_term_6": {
+  "kind": "rubric_relevant",
+  "expected_overrides": {
+   "36": "fail",
+   "39": "fail",
+   "40": "fail"
+  },
+  "observed_fail": [
+   7,
+   10,
+   30,
+   36,
+   39,
+   40
+  ],
+  "observed_cannot_assess": [],
+  "critical": {
+   "C1": "pass",
+   "C2": "fail",
+   "C3": "fail",
+   "C4": "fail"
+  },
+  "diff": {}
+ },
+ "R06_negative_amortization": {
+  "kind": "rubric_relevant",
+  "expected_overrides": {
+   "36": "fail",
+   "39": "fail",
+   "40": "fail",
+   "49": "fail"
+  },
+  "observed_fail": [
+   7,
+   10,
+   30,
+   36,
+   39,
+   40,
+   49
+  ],
+  "observed_cannot_assess": [],
+  "critical": {
+   "C1": "pass",
+   "C2": "fail",
+   "C3": "fail",
+   "C4": "fail"
+  },
+  "diff": {}
+ },
+ "R07_balance_increase_without_addition": {
+  "kind": "rubric_relevant",
+  "expected_overrides": {
+   "39": "fail",
+   "40": "fail",
+   "50": "fail"
+  },
+  "observed_fail": [
+   7,
+   10,
+   30,
+   39,
+   40,
+   50
+  ],
+  "observed_cannot_assess": [],
+  "critical": {
+   "C1": "pass",
+   "C2": "fail",
+   "C3": "fail",
+   "C4": "fail"
+  },
+  "diff": {}
+ },
+ "R08_ending_balance_off_gl": {
+  "kind": "rubric_relevant",
+  "expected_overrides": {
+   "23": "fail"
+  },
+  "observed_fail": [
+   7,
+   10,
+   23,
+   30
+  ],
+  "observed_cannot_assess": [],
+  "critical": {
+   "C1": "pass",
+   "C2": "fail",
+   "C3": "pass",
+   "C4": "fail"
+  },
+  "diff": {}
+ },
+ "R09_variance_row_completed_1250": {
+  "kind": "rubric_relevant",
+  "expected_overrides": {
+   "30": "pass"
+  },
+  "observed_fail": [
+   7,
+   10
+  ],
+  "observed_cannot_assess": [],
+  "critical": {
+   "C1": "pass",
+   "C2": "pass",
+   "C3": "pass",
+   "C4": "fail"
+  },
+  "diff": {}
+ },
+ "R10_total_prepaid_added": {
+  "kind": "rubric_relevant",
+  "expected_overrides": {
+   "10": "pass"
+  },
+  "observed_fail": [
+   7,
+   30
+  ],
+  "observed_cannot_assess": [],
+  "critical": {
+   "C1": "pass",
+   "C2": "fail",
+   "C3": "pass",
+   "C4": "fail"
+  },
+  "diff": {}
+ },
+ "R11_summary_balance_wrong": {
+  "kind": "rubric_relevant",
+  "expected_overrides": {
+   "8": "fail"
+  },
+  "observed_fail": [
+   7,
+   8,
+   10,
+   30
+  ],
+  "observed_cannot_assess": [],
+  "critical": {
+   "C1": "pass",
+   "C2": "fail",
+   "C3": "pass",
+   "C4": "fail"
+  },
+  "diff": {}
+ },
+ "R12_summary_ytd_mismatch": {
+  "kind": "rubric_relevant",
+  "expected_overrides": {
+   "11": "fail"
+  },
+  "observed_fail": [
+   7,
+   10,
+   11,
+   30
+  ],
+  "observed_cannot_assess": [],
+  "critical": {
+   "C1": "pass",
+   "C2": "fail",
+   "C3": "pass",
+   "C4": "fail"
+  },
+  "diff": {}
+ },
+ "R13_sheet_1250_renamed_without_number": {
+  "kind": "rubric_relevant",
+  "expected_overrides": {
+   "3": "fail"
+  },
+  "observed_fail": [
+   3,
+   7,
+   10,
+   30
+  ],
+  "observed_cannot_assess": [],
+  "critical": {
+   "C1": "pass",
+   "C2": "fail",
+   "C3": "pass",
+   "C4": "fail"
+  },
+  "diff": {}
+ },
+ "R14_summary_sheet_renamed": {
+  "kind": "rubric_relevant",
+  "expected_overrides": {
+   "2": "fail"
+  },
+  "observed_fail": [
+   2,
+   7,
+   10,
+   30
+  ],
+  "observed_cannot_assess": [],
+  "critical": {
+   "C1": "pass",
+   "C2": "fail",
+   "C3": "pass",
+   "C4": "fail"
+  },
+  "diff": {}
+ },
+ "R15_company_name_removed": {
+  "kind": "rubric_relevant",
+  "expected_overrides": {
+   "5": "fail"
+  },
+  "observed_fail": [
+   5,
+   7,
+   10,
+   30
+  ],
+  "observed_cannot_assess": [],
+  "critical": {
+   "C1": "pass",
+   "C2": "fail",
+   "C3": "pass",
+   "C4": "fail"
+  },
+  "diff": {}
+ },
+ "R16_period_removed": {
+  "kind": "rubric_relevant",
+  "expected_overrides": {
+   "6": "fail"
+  },
+  "observed_fail": [
+   6,
+   7,
+   10,
+   30
+  ],
+  "observed_cannot_assess": [],
+  "critical": {
+   "C1": "pass",
+   "C2": "fail",
+   "C3": "pass",
+   "C4": "fail"
+  },
+  "diff": {}
+ },
+ "R17_general_number_format": {
+  "kind": "rubric_relevant",
+  "expected_overrides": {
+   "53": "fail"
+  },
+  "observed_fail": [
+   7,
+   10,
+   30,
+   53
+  ],
+  "observed_cannot_assess": [],
+  "critical": {
+   "C1": "pass",
+   "C2": "fail",
+   "C3": "pass",
+   "C4": "fail"
+  },
+  "diff": {}
+ },
+ "R18_schedule_1251_deleted": {
+  "kind": "rubric_relevant",
+  "expected_overrides": {
+   "4": "fail",
+   "33": "fail",
+   "34": "fail",
+   "36": "fail",
+   "37": "fail",
+   "38": "fail",
+   "39": "fail",
+   "40": "fail",
+   "41": "fail",
+   "42": "fail",
+   "43": "fail",
+   "44": "fail",
+   "47": "fail",
+   "48": "fail",
+   "49": "fail",
+   "50": "fail",
+   "11": "cannot_assess"
+  },
+  "observed_fail": [
+   4,
+   7,
+   10,
+   30,
+   33,
+   34,
+   36,
+   37,
+   38,
+   39,
+   40,
+   41,
+   42,
+   43,
+   44,
+   47,
+   48,
+   49,
+   50
+  ],
+  "observed_cannot_assess": [
+   11
+  ],
+  "critical": {
+   "C1": "fail",
+   "C2": "fail",
+   "C3": "fail",
+   "C4": "fail"
+  },
+  "diff": {}
+ },
+ "R19_workbook_deleted": {
+  "kind": "rubric_relevant",
+  "expected_overrides": {
+   "1": "fail",
+   "2": "fail",
+   "3": "fail",
+   "4": "fail",
+   "5": "fail",
+   "6": "fail",
+   "7": "fail",
+   "8": "fail",
+   "9": "fail",
+   "10": "fail",
+   "11": "fail",
+   "13": "fail",
+   "14": "fail",
+   "19": "fail",
+   "20": "fail",
+   "21": "fail",
+   "22": "fail",
+   "23": "fail",
+   "24": "fail",
+   "25": "fail",
+   "26": "fail",
+   "27": "fail",
+   "28": "fail",
+   "29": "fail",
+   "30": "fail",
+   "33": "fail",
+   "34": "fail",
+   "36": "fail",
+   "37": "fail",
+   "38": "fail",
+   "39": "fail",
+   "40": "fail",
+   "41": "fail",
+   "42": "fail",
+   "43": "fail",
+   "44": "fail",
+   "47": "fail",
+   "48": "fail",
+   "49": "fail",
+   "50": "fail",
+   "53": "fail"
+  },
+  "observed_fail": [
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   7,
+   8,
+   9,
+   10,
+   11,
+   13,
+   14,
+   19,
+   20,
+   21,
+   22,
+   23,
+   24,
+   25,
+   26,
+   27,
+   28,
+   29,
+   30,
+   33,
+   34,
+   36,
+   37,
+   38,
+   39,
+   40,
+   41,
+   42,
+   43,
+   44,
+   47,
+   48,
+   49,
+   50,
+   53
+  ],
+  "observed_cannot_assess": [],
+  "critical": {
+   "C1": "fail",
+   "C2": "fail",
+   "C3": "fail",
+   "C4": "fail"
+  },
+  "diff": {}
+ },
+ "R20_second_workbook": {
+  "kind": "rubric_relevant",
+  "expected_overrides": {
+   "1": "fail"
+  },
+  "observed_fail": [
+   1,
+   7,
+   10,
+   30
+  ],
+  "observed_cannot_assess": [],
+  "critical": {
+   "C1": "pass",
+   "C2": "fail",
+   "C3": "pass",
+   "C4": "fail"
+  },
+  "diff": {}
+ },
+ "R21_one_monetary_cell_general": {
+  "kind": "rubric_relevant",
+  "expected_overrides": {
+   "53": "fail"
+  },
+  "observed_fail": [
+   7,
+   10,
+   30,
+   53
+  ],
+  "observed_cannot_assess": [],
+  "critical": {
+   "C1": "pass",
+   "C2": "fail",
+   "C3": "pass",
+   "C4": "fail"
+  },
+  "diff": {}
+ },
+ "R22_summary_balances_swapped": {
+  "kind": "rubric_relevant",
+  "expected_overrides": {
+   "8": "fail",
+   "9": "fail"
+  },
+  "observed_fail": [
+   7,
+   8,
+   9,
+   10,
+   30
+  ],
+  "observed_cannot_assess": [],
+  "critical": {
+   "C1": "pass",
+   "C2": "fail",
+   "C3": "pass",
+   "C4": "fail"
+  },
+  "diff": {}
+ },
+ "R23_summary_balance_uncached_formula": {
+  "kind": "rubric_relevant",
+  "expected_overrides": {
+   "8": "cannot_assess"
+  },
+  "observed_fail": [
+   7,
+   10,
+   30
+  ],
+  "observed_cannot_assess": [
+   8
+  ],
+  "critical": {
+   "C1": "pass",
+   "C2": "fail",
+   "C3": "pass",
+   "C4": "fail"
+  },
+  "diff": {}
+ },
+ "R24_add_uncached_formula": {
+  "kind": "rubric_relevant",
+  "expected_overrides": {
+   "13": "cannot_assess",
+   "14": "cannot_assess",
+   "21": "cannot_assess"
+  },
+  "observed_fail": [
+   7,
+   10,
+   30
+  ],
+  "observed_cannot_assess": [
+   13,
+   14,
+   21
+  ],
+  "critical": {
+   "C1": "not_confirmed",
+   "C2": "fail",
+   "C3": "pass",
+   "C4": "fail"
+  },
+  "diff": {}
+ },
+ "R25_amortization_uncached_formula": {
+  "kind": "rubric_relevant",
+  "expected_overrides": {
+   "21": "cannot_assess",
+   "22": "cannot_assess"
+  },
+  "observed_fail": [
+   7,
+   10,
+   30
+  ],
+  "observed_cannot_assess": [
+   21,
+   22
+  ],
+  "critical": {
+   "C1": "pass",
+   "C2": "fail",
+   "C3": "pass",
+   "C4": "fail"
+  },
+  "diff": {}
+ },
+ "R26_insurance_amortization_uncached": {
+  "kind": "rubric_relevant",
+  "expected_overrides": {
+   "36": "cannot_assess",
+   "39": "cannot_assess",
+   "40": "cannot_assess",
+   "49": "cannot_assess"
+  },
+  "observed_fail": [
+   7,
+   10,
+   30
+  ],
+  "observed_cannot_assess": [
+   36,
+   39,
+   40,
+   49
+  ],
+  "critical": {
+   "C1": "pass",
+   "C2": "fail",
+   "C3": "not_confirmed",
+   "C4": "fail"
+  },
+  "diff": {}
+ },
+ "R27_duplicate_jan_end_column": {
+  "kind": "rubric_relevant",
+  "expected_overrides": {
+   "21": "cannot_assess",
+   "22": "cannot_assess",
+   "23": "cannot_assess",
+   "29": "cannot_assess"
+  },
+  "observed_fail": [
+   7,
+   10,
+   30
+  ],
+  "observed_cannot_assess": [
+   21,
+   22,
+   23,
+   29
+  ],
+  "critical": {
+   "C1": "pass",
+   "C2": "fail",
+   "C3": "pass",
+   "C4": "fail"
+  },
+  "diff": {}
+ },
+ "R28_vendor_blank_on_one_line": {
+  "kind": "rubric_relevant",
+  "expected_overrides": {
+   "13": "cannot_assess",
+   "14": "cannot_assess",
+   "22": "cannot_assess"
+  },
+  "observed_fail": [
+   7,
+   10,
+   30
+  ],
+  "observed_cannot_assess": [
+   13,
+   14,
+   22
+  ],
+  "critical": {
+   "C1": "not_confirmed",
+   "C2": "fail",
+   "C3": "pass",
+   "C4": "fail"
+  },
+  "diff": {}
+ },
+ "R29_conflicting_totals_row_1250": {
+  "kind": "rubric_relevant",
+  "expected_overrides": {
+   "11": "cannot_assess",
+   "22": "cannot_assess",
+   "23": "cannot_assess",
+   "24": "cannot_assess",
+   "25": "cannot_assess",
+   "26": "cannot_assess",
+   "27": "cannot_assess",
+   "28": "cannot_assess",
+   "29": "cannot_assess"
+  },
+  "observed_fail": [
+   7,
+   10,
+   30
+  ],
+  "observed_cannot_assess": [
+   11,
+   22,
+   23,
+   24,
+   25,
+   26,
+   27,
+   28,
+   29
+  ],
+  "critical": {
+   "C1": "pass",
+   "C2": "fail",
+   "C3": "pass",
+   "C4": "fail"
+  },
+  "diff": {}
+ },
+ "R30_totals_rows_both_wrong_1250": {
+  "kind": "rubric_relevant",
+  "expected_overrides": {
+   "11": "fail",
+   "22": "fail",
+   "23": "cannot_assess",
+   "24": "cannot_assess",
+   "25": "cannot_assess",
+   "26": "cannot_assess",
+   "27": "cannot_assess",
+   "28": "cannot_assess",
+   "29": "cannot_assess"
+  },
+  "observed_fail": [
+   7,
+   10,
+   11,
+   22,
+   30
+  ],
+  "observed_cannot_assess": [
+   23,
+   24,
+   25,
+   26,
+   27,
+   28,
+   29
+  ],
+  "critical": {
+   "C1": "pass",
+   "C2": "fail",
+   "C3": "pass",
+   "C4": "fail"
+  },
+  "diff": {}
+ },
+ "R31_conflicting_jan_amort_column_1250": {
+  "kind": "rubric_relevant",
+  "expected_overrides": {
+   "11": "cannot_assess",
+   "20": "cannot_assess",
+   "21": "cannot_assess",
+   "22": "cannot_assess",
+   "28": "cannot_assess"
+  },
+  "observed_fail": [
+   7,
+   10,
+   30
+  ],
+  "observed_cannot_assess": [
+   11,
+   20,
+   21,
+   22,
+   28
+  ],
+  "critical": {
+   "C1": "pass",
+   "C2": "fail",
+   "C3": "pass",
+   "C4": "fail"
+  },
+  "diff": {}
+ },
+ "R32_conflicting_totals_row_1251": {
+  "kind": "rubric_relevant",
+  "expected_overrides": {
+   "11": "cannot_assess",
+   "40": "cannot_assess",
+   "41": "cannot_assess",
+   "42": "cannot_assess",
+   "43": "cannot_assess",
+   "44": "cannot_assess",
+   "47": "cannot_assess"
+  },
+  "observed_fail": [
+   7,
+   10,
+   30
+  ],
+  "observed_cannot_assess": [
+   11,
+   40,
+   41,
+   42,
+   43,
+   44,
+   47
+  ],
+  "critical": {
+   "C1": "pass",
+   "C2": "fail",
+   "C3": "not_confirmed",
+   "C4": "fail"
+  },
+  "diff": {}
+ },
+ "R33_conflicting_variance_row_1251": {
+  "kind": "rubric_relevant",
+  "expected_overrides": {
+   "48": "cannot_assess"
+  },
+  "observed_fail": [
+   7,
+   10,
+   30
+  ],
+  "observed_cannot_assess": [
+   48
+  ],
+  "critical": {
+   "C1": "pass",
+   "C2": "fail",
+   "C3": "not_confirmed",
+   "C4": "fail"
+  },
+  "diff": {}
+ },
+ "R34_totals_row_first_blank_adds_1250": {
+  "kind": "rubric_relevant",
+  "expected_overrides": {
+   "22": "cannot_assess",
+   "23": "cannot_assess",
+   "24": "cannot_assess",
+   "25": "cannot_assess",
+   "26": "cannot_assess",
+   "27": "cannot_assess",
+   "28": "cannot_assess",
+   "29": "cannot_assess"
+  },
+  "observed_fail": [
+   7,
+   10,
+   30
+  ],
+  "observed_cannot_assess": [
+   22,
+   23,
+   24,
+   25,
+   26,
+   27,
+   28,
+   29
+  ],
+  "critical": {
+   "C1": "pass",
+   "C2": "fail",
+   "C3": "pass",
+   "C4": "fail"
+  },
+  "diff": {}
+ },
+ "R35_totals_row_missing_jan_adds_1250": {
+  "kind": "rubric_relevant",
+  "expected_overrides": {
+   "27": "fail"
+  },
+  "observed_fail": [
+   7,
+   10,
+   27,
+   30
+  ],
+  "observed_cannot_assess": [],
+  "critical": {
+   "C1": "pass",
+   "C2": "fail",
+   "C3": "pass",
+   "C4": "fail"
+  },
+  "diff": {}
+ },
+ "R36_totals_rows_both_wrong_one_unreadable_1250": {
+  "kind": "rubric_relevant",
+  "expected_overrides": {
+   "22": "fail",
+   "11": "cannot_assess",
+   "23": "cannot_assess",
+   "24": "cannot_assess",
+   "25": "cannot_assess",
+   "26": "cannot_assess",
+   "27": "cannot_assess",
+   "28": "cannot_assess",
+   "29": "cannot_assess"
+  },
+  "observed_fail": [
+   7,
+   10,
+   22,
+   30
+  ],
+  "observed_cannot_assess": [
+   11,
+   23,
+   24,
+   25,
+   26,
+   27,
+   28,
+   29
+  ],
+  "critical": {
+   "C1": "pass",
+   "C2": "fail",
+   "C3": "pass",
+   "C4": "fail"
+  },
+  "diff": {}
+ },
+ "R37_no_totals_row_conflicting_ending_rows_1250": {
+  "kind": "rubric_relevant",
+  "expected_overrides": {
+   "22": "fail",
+   "27": "fail",
+   "28": "fail",
+   "11": "cannot_assess",
+   "23": "cannot_assess",
+   "24": "cannot_assess",
+   "25": "cannot_assess",
+   "26": "cannot_assess",
+   "29": "cannot_assess"
+  },
+  "observed_fail": [
+   7,
+   10,
+   22,
+   27,
+   28,
+   30
+  ],
+  "observed_cannot_assess": [
+   11,
+   23,
+   24,
+   25,
+   26,
+   29
+  ],
+  "critical": {
+   "C1": "pass",
+   "C2": "fail",
+   "C3": "pass",
+   "C4": "fail"
+  },
+  "diff": {}
+ }
+}
