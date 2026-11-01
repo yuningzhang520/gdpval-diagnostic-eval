@@ -3277,6 +3277,23 @@ all earlier records are kept. Code-bound records at the new target (clean tree):
 `grading/readiness.json` now lists 7d7fc9a7: its development output may be opened under Early Generate, Late Reveal and
 independent human labeling (no 7d7fc9a7 development output exists yet).
 
+## Scheduler ended; deferred Docker-gated suites run (2026-11-01 14:20Z; logs `logs/docker-deferred-20261101T142035Z/`)
+
+Validation `b5d2e6f1…` (launched 13:59:29Z) finished at 14:19:52Z: accepted by the unit gate and designated canonical
+(run `a6r3d7JbVeqHqyUcEZFKRM`), execution `completed`, no limit event, 231 messages, 115 model calls, 0 tool errors,
+settled 1.741075 USD (not estimated); validation ledger clear. Outputs, logs and trajectories stay sealed. With every
+remaining Gemini job blocked by the quota stop, the scheduler ended (`scheduler_end`, 14:19:52Z); no batch process
+runs. Cap override set back to 1 at 14:19Z under the override-mode rule (pressure level 2; swap below the baseline).
+
+Paid sandboxes idle, so the deferred Docker-gated suites ran at `3f256b7` (clean tree):
+
+| Command (`run_isolated.sh`, `/usr/bin/time -p`) | Wall clock | Exit | Result |
+|---|---|---|---|
+| `GOLD_RECALC_DOCKER=1 unittest grading.tests.test_gold_7d7fc9a7.GoldRecalcDockerTests` (the three deferred) | 5.1 s | 0 | 3/3 |
+| `GOLD_RECALC_DOCKER=1 unittest grading.tests.test_gold_1137e2bb.GoldRecalcDockerTests` | 10.8 s | 0 | 2/2 |
+| `grading.tests.regress_recalc_docker --output-root …` | 3.6 s | 0 | 16 PASS, 0 FAIL |
+| `grading.tests.regress_grading_cli --output-root …` (extractor, scorer and item-70 changes) | 6.5 s | 0 | 61 PASS, 0 FAIL |
+
 ## Known issues and findings (material check)
 
 - `rubric_json.form_content`: 8,036 items hold `null`, 2,417 items lack the key, zero
