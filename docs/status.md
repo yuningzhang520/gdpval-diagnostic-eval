@@ -3939,6 +3939,21 @@ Re-grades went to the scratchpad; the official V1 Dev re-grade follows the per-t
   - Effect on Dev run `6iqdXFGC…`: all 15 deterministic false-fail leads pass. No item without a lead changed.
   - The remaining lead is an attribution label (K1 tag in the evidence).
 
+## Final review workload, policy v4 (2026-11-01; approved by the human before any label; supersedes v1-v3)
+
+`grading/review_queue/queue_v4.json` (review-queue-2026-11-01.4, seed 20261101; `verify-v4` reproduces it; tests
+`QueueV4Tests`). 36 item-level labels: Dev 6, Validation 10, Formal 20 (10 item ids, each on both candidates). No
+criterion-level label. Queues v1-v3 and their packet folders are kept, never labelled, superseded.
+- Dev: `2ea2e5b5…` 57, 59; `a45bc83b…` 6, 46; `f841ddcf…` 42, 44 (judge-only items).
+- Validation: one item per task, strata alternating from judge over the sorted tasks.
+- Formal: critical-member group `47ef842d…`, `b5d2e6f1…`, `c3525d4d…`, `c357f0e2…`, `f841ddcf…`; the judge-only group
+  is the other five; presentation order fixed per task.
+
+Packets:
+- `~/turing-eval-runs/labeling/dev-v4/`: 3 packets, 2 labels each, item-only layout.
+- Checked: the queue items, judge excerpts and source material per item, no pre-filled cell, no verdict wording.
+- `label_batch` change: a plan without criteria gives an item-only `items.md` and README.
+
 ## Known issues and findings (material check)
 
 - `rubric_json.form_content`: 8,036 items hold `null`, 2,417 items lack the key, zero
@@ -3991,9 +4006,10 @@ Re-grades went to the scratchpad; the official V1 Dev re-grade follows the per-t
 
 ## In flight
 
-- Gemini validation generation (`paid-2026-11-01c`, cap 1): 3 tasks remain. Validation outputs stay sealed.
-- v3 Dev packets (`labeling/dev-v3/`, 19 labels) await the human.
-- Grader V1 work from the sealed QA leads on the seven Dev tasks without v3 human labels.
+- Gemini validation generation: `a45bc83b…` running (the last of ten). Validation outputs stay sealed.
+- v4 Dev packets (`labeling/dev-v4/`, 6 labels) await the human.
+- Grader V1 calibration from sealed QA leads on the Dev tasks without a human label: `7d7fc9a7…`, `c3525d4d…` and
+  `7b08cd4d…` are committed; `47ef842d…` .2 and engine .5 are in progress; `1137e2bb…` is next.
 
 ## Decisions taken (date · what · commit)
 
@@ -4326,7 +4342,8 @@ Re-grades went to the scratchpad; the official V1 Dev re-grade follows the per-t
 - 2026-11-01 · review policy v3 (time-bounded human review; critical-FAIL verification before reporting), queue_v3 frozen (seed 20261101) · 306e49d
 - 2026-11-01 · engine .4 (truncated sheet names in the recalculation join) and `7d7fc9a7…` grader .6 (Dev calibration) · e80f775
 - 2026-11-01 · `c3525d4d…` grader .4 (Dev calibration: row labels and column captions) · b87972b
-- 2026-11-01 · `7b08cd4d…` grader .3 (Dev calibration: gross column, total-expenses row) · (this commit)
+- 2026-11-01 · `7b08cd4d…` grader .3 (Dev calibration: gross column, total-expenses row) · 4f71d3d
+- 2026-11-01 · final review workload v4 (36 item-level blind labels; supersedes v1-v3), queue_v4 frozen (seed 20261101) · (this commit)
 
 ## Next stage (not started)
 

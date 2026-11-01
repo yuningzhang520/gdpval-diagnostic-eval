@@ -339,6 +339,41 @@ Rules for every phase:
   - Outcome-driven items never join the agreement sample.
   - Validation runs once per frozen version and never tunes it.
 
+Amendment v4 (review-queue-2026-11-01.4): final human-review workload of 36 labels.
+- Adoption: 2026-11-01, approved by the human, before any human label. It supersedes amendments v1-v3, whose queues
+  (`queue_v1.json`, `queue_v2.json`, `queue_v3.json`) and packet folders are kept unlabelled for provenance. Not
+  preregistered.
+- Queue: `grading/review_queue/queue_v4.json`, seed 20261101, algorithm recorded in the queue; `verify-v4` reproduces
+  it.
+- Membership uses only the rubric inventory (item types, critical mappings, visual categories), deliverable families
+  and the seed; never a grader, judge, QA or candidate outcome. Visual items are not sampled.
+
+Labels by phase:
+- Dev, 6 labels: two judge-only items per deliverable family. Presentation: `2ea2e5b5…` items 57, 59. Document:
+  `a45bc83b…` items 6, 46. Spreadsheet: `f841ddcf…` items 42, 44 (task drawn with the seed). They calibrate the shared
+  judge prompt. Deterministic grading reliability rests on the gold and corruption regression catalogs.
+- Validation, 10 labels: one item per task, the deterministic and judge-only strata alternating over the sorted tasks
+  (`b5d2e6f1…` has no judge item). Held-out assessment only, never prompt tuning. Validation stays sealed until the
+  shared judge prompt and the task's Grader V1 are frozen.
+- Formal, 20 labels: one item per task with the same item id on both candidate outputs, candidate identity hidden and
+  presentation order randomized with the seed.
+  - Five tasks sample a critical-criterion member item: `47ef842d…`, `b5d2e6f1…`, `c3525d4d…`, `c357f0e2…`,
+    `f841ddcf…`. A task without a judge item joins this group.
+  - The other five sample a judge-only item.
+  - These are item-level blind checks, not certification of a critical criterion.
+
+Reporting and safeguards:
+- Results are reported as n = 36 independent blind labels: a limited reliability check, not a precise accuracy
+  estimate.
+- Critical-failure safeguard (unchanged from v3): every critical FAIL cited in the candidate comparison, the headline
+  results or the failure taxonomy is human-verified against the deliverable, the authoritative source and the rubric
+  before it is reported as confirmed. This is kept separate from the blind sample. Meaningful failures are investigated
+  on the Formal candidate outputs, not on Gemini Dev outputs.
+- The mandatory `2ea2e5b5…` item-10 human label is dropped. The automated original-versus-revised critical sensitivity
+  reporting (1.18) stays, and consequential reported failures are verified.
+- Unchanged: full automatic grading, gold and synthetic regressions, Dev judge calibration, version provenance and
+  the sealed-validation safeguards.
+
 ### 1.15 Budget, concurrency, timeouts
 Values are in `config.json` (high-reasoning configuration approved 2026-11-01 as the initial
 Pilot A/B condition; fixed at `freeze-v1` after the pilot cost report): `reasoning_effort` high on

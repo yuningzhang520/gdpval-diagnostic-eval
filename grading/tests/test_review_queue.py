@@ -228,5 +228,44 @@ class QueueV3Tests(unittest.TestCase):
         self.assertEqual(sum(len(p["phases"]["formal"]["criteria"]) for p in self.built["plans"].values()), 3)
 
 
+class QueueV4Tests(unittest.TestCase):
+    """Final workload v4 (36 labels): reproducible, item-level only, rubric-inventory and seed only."""
+
+    @classmethod
+    def setUpClass(cls):
+        from grading import review_queue as RQ
+        from grading.grade import TASK_MODULES
+        cls.RQ, cls.tasks = RQ, sorted(TASK_MODULES)
+        cls.built = RQ.build_plans_v4(20261101, cls.tasks)
+
+    def test_reproducible_and_counts(self):
+        self.assertEqual(self.RQ.build_plans_v4(20261101, self.tasks), self.built)
+        w = self.RQ.workload_v3(self.built["plans"])
+        self.assertEqual({ph: w[ph]["labels"] for ph in w}, {"dev": 6, "validation": 10, "formal": 20})
+        self.assertEqual(sum(w[ph]["criterion_labels"] for ph in w), 0)
+
+    def test_strata(self):
+        P = self.built["plans"]
+        self.assertEqual(sorted(P[t]["family"] for t in self.built["dev_tasks"]), ["document", "presentation", "spreadsheet"])
+        for t in self.built["dev_tasks"]:
+            items = [x["item"] for x in P[t]["phases"]["dev"]["items"]]
+            self.assertEqual(len(items), 2)
+            self.assertTrue(set(items) <= set(self.RQ.task_module(t).J_ITEMS))
+        g = self.built["formal_groups"]
+        self.assertEqual((len(g["critical_member"]), len(g["judge_only"])), (5, 5))
+        self.assertIn("b5d2e6f1-62a2-433a-bcdd-95b260cdd860", g["critical_member"])  # no judge-only item
+        for t, p in P.items():
+            f = p["phases"]["formal"]
+            self.assertEqual((len(f["items"]), f["outputs"]), (1, 2))
+            self.assertEqual(sorted(f["presentation_order"]), ["candidate_a", "candidate_b"])
+            i = f["items"][0]["item"]
+            ck = self.RQ.task_module(t)
+            self.assertIn(i, ck.J_ITEMS if t in g["judge_only"] else {m for c in p["criteria"] for m in c["members"]})
+            self.assertNotIn(i, p["visual_items"])
+            self.assertEqual(len(p["phases"]["validation"]["items"]), 1)
+        planned = [P[t]["phases"]["validation"]["stratum_planned"] for t in sorted(P)]
+        self.assertTrue(all(a != b for a, b in zip(planned, planned[1:])))  # strata alternate
+
+
 if __name__ == "__main__":
     unittest.main()

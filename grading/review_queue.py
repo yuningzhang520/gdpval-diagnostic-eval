@@ -124,10 +124,20 @@ def verify(path: str) -> dict:
 
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description="fixed, verdict-independent human review queue")
-    ap.add_argument("command", choices=("freeze", "verify", "show", "freeze-v2", "verify-v2", "freeze-v3", "verify-v3"))
+    ap.add_argument("command", choices=("freeze", "verify", "show", "freeze-v2", "verify-v2", "freeze-v3", "verify-v3", "freeze-v4", "verify-v4"))
     ap.add_argument("--seed", type=int, default=None)
     ap.add_argument("--out", default=os.path.join(ROOT, "grading", "review_queue", "queue_v1.json"))
     args = ap.parse_args(argv)
+    if args.command in ("freeze-v4", "verify-v4"):
+        out = args.out if args.out != os.path.join(ROOT, "grading", "review_queue", "queue_v1.json") else os.path.join(ROOT, "grading", "review_queue", "queue_v4.json")
+        if args.command == "freeze-v4":
+            if args.seed is None:
+                raise SystemExit("freeze-v4 needs --seed (recorded in the queue)")
+            rec = freeze_v4(args.seed, out)
+            print(json.dumps({k: rec[k] for k in ("dev_tasks", "formal_groups", "validation_start_stratum", "workload_total")}, indent=1))
+        else:
+            print(json.dumps(verify_v4(out), indent=1))
+        return 0
     if args.command in ("freeze-v3", "verify-v3"):
         out = args.out if args.out != os.path.join(ROOT, "grading", "review_queue", "queue_v1.json") else os.path.join(ROOT, "grading", "review_queue", "queue_v3.json")
         if args.command == "freeze-v3":
@@ -455,6 +465,101 @@ def verify_v3(path: str) -> dict:
     built = build_plans_v3(rec["seed"], sorted(rec["plans"]))
     diffs = sorted(t for t, p in rec["plans"].items() if built["plans"][t] != p)
     return {"path": path, "seed": rec["seed"], "tasks": len(rec["plans"]), "reproduced": not diffs and built["dev_tasks"] == rec["dev_tasks"], "differs": diffs,
+            "inputs_changed": sorted(k for k, v in input_hashes(sorted(rec["plans"])).items() if rec["inputs_sha256"].get(k) != v)}
+
+
+
+# ============================================================================= policy v4 (amended 2026-11-01, final workload: 36 labels)
+# Supersedes v1-v3 (never labelled; kept). Item-level blind labels only, drawn from the rubric inventory and the seed.
+POLICY_VERSION_V4 = "review-queue-2026-11-01.4"
+ALGORITHM_V4 = ("rng(key) = random.Random(int(sha256(f'{seed}:v4:{key}').hexdigest()[:16], 16)); pools exclude visual items. "
+                "Dev: per deliverable family (presentation, document, spreadsheet), a task drawn with rng('dev-task:'+family) from the family's tasks "
+                "with at least two judge-only items, then 2 judge-only items with rng('dev:'+task). Validation: tasks sorted; the first stratum is "
+                "rng('validation-start').choice(['deterministic', 'judge']); strata alternate task by task; a task without an item of its stratum takes the "
+                "other; one item with rng('validation:'+task). Formal: tasks without a judge-only item join the critical group; the others are shuffled "
+                "with rng('formal-split') and fill the critical group to five; the rest form the judge group; one item per task with rng('formal:'+task) "
+                "from the critical-criterion member items (current definition) or the judge-only items; the same item id on both candidate outputs; "
+                "presentation order per task with rng('formal-order:'+task).")
+
+
+def _rng4(seed: int, key: str) -> random.Random:
+    return random.Random(int(hashlib.sha256(f"{seed}:v4:{key}".encode()).hexdigest()[:16], 16))
+
+
+def build_plans_v4(seed: int, task_ids: list[str]) -> dict:
+    facts = {t: _task_facts(t) for t in task_ids}
+    crit_members = {t: sorted({i for c in facts[t]["criteria"] for i in c["members"]} - set(facts[t]["visual"])) for t in task_ids}
+    fam = {f: sorted(t for t in task_ids if _family(t) == f) for f in ("presentation", "document", "spreadsheet")}
+    plans = {t: {"task_id": t, "family": _family(t), "rubric_items": facts[t]["n"], "criteria": facts[t]["criteria"], "visual_items": facts[t]["visual"],
+                 "differing_items": facts[t]["differing"], "phases": {}} for t in task_ids}
+
+    def row(i, cat):
+        return [{"item": i, "categories": [cat]}]
+
+    dev = {}
+    for f in ("presentation", "document", "spreadsheet"):
+        elig = [t for t in fam[f] if len(facts[t]["J"]) >= 2]
+        if elig:
+            dev[_rng4(seed, f"dev-task:{f}").choice(elig)] = f
+    for t in task_ids:
+        if t in dev:
+            items = sorted(_rng4(seed, f"dev:{t}").sample(facts[t]["J"], 2))
+            plans[t]["phases"]["dev"] = {"mode": "v4 dev: two judge-only items", "evidence_class": "dev judge calibration (not held-out agreement)", "criteria": [],
+                                         "items": [{"item": i, "categories": [f"dev: judge-only ({dev[t]})"]} for i in items], "outputs": 1}
+        else:
+            plans[t]["phases"]["dev"] = {"mode": "automatic only (no human label under v4)", "evidence_class": "none", "criteria": [], "items": [], "outputs": 1}
+    strata = ["deterministic", "judge"]
+    start = _rng4(seed, "validation-start").choice(strata)
+    for k, t in enumerate(sorted(task_ids)):
+        want = strata[(strata.index(start) + k) % 2]
+        pools = {"deterministic": facts[t]["D"], "judge": facts[t]["J"]}
+        stratum = want if pools[want] else ("judge" if want == "deterministic" else "deterministic")
+        i = _rng4(seed, f"validation:{t}").choice(pools[stratum])
+        plans[t]["phases"]["validation"] = {"mode": "v4 validation: one item", "evidence_class": "validation blind agreement sample (held-out)", "criteria": [],
+                                            "items": row(i, f"validation: {stratum}" + ("" if stratum == want else f" (no {want} item)")), "stratum_planned": want, "outputs": 1}
+    no_j = sorted(t for t in task_ids if not facts[t]["J"])
+    rest = sorted(t for t in task_ids if facts[t]["J"])
+    _rng4(seed, "formal-split").shuffle(rest)
+    n_crit = max(0, 5 - len(no_j))
+    crit_group, judge_group = sorted(no_j + rest[:n_crit]), sorted(rest[n_crit:])
+    for t in task_ids:
+        group = "critical member" if t in crit_group else "judge-only"
+        pool = crit_members[t] if t in crit_group else facts[t]["J"]
+        i = _rng4(seed, f"formal:{t}").choice(pool)
+        order = _rng4(seed, f"formal-order:{t}").sample(["candidate_a", "candidate_b"], 2)
+        plans[t]["phases"]["formal"] = {"mode": "v4 formal: one item, both candidates", "evidence_class": "formal blind agreement sample; identical item id for both candidates, identity hidden",
+                                        "criteria": [], "items": row(i, f"formal: {group}"), "group": group, "presentation_order": order, "outputs": 2}
+    return {"dev_tasks": sorted(dev), "dev_families": dict(sorted(dev.items())), "formal_groups": {"critical_member": crit_group, "judge_only": judge_group},
+            "validation_start_stratum": start, "plans": plans}
+
+
+def freeze_v4(seed: int, out_path: str, task_ids: list[str] | None = None) -> dict:
+    from .grade import TASK_MODULES
+    task_ids = sorted(task_ids or TASK_MODULES)
+    built = build_plans_v4(seed, task_ids)
+    rec = {"policy_version": POLICY_VERSION_V4, "supersedes": [POLICY_VERSION, POLICY_VERSION_V2, POLICY_VERSION_V3], "superseded_queues_kept": ["queue_v1.json", "queue_v2.json", "queue_v3.json"],
+           "adopted": "2026-11-01, approved by the human (final workload: 36 independent blind labels), before any human label; not preregistered",
+           "frozen_at": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"), "seed": seed, "algorithm": ALGORITHM_V4,
+           "families": {t: _family(t) for t in task_ids}, "inputs_sha256": input_hashes(task_ids),
+           "verdict_independent": "membership is computed from the rubric inventory (item types, critical mappings, visual categories), deliverable families and the seed only; never from grader, judge, QA or candidate outcomes",
+           "not_covered": "item-level blind checks only: no criterion-level label, no certification of a critical criterion; visual items are not sampled (not evaluated unless a human verdict is obtained); "
+                          "every critical FAIL cited in the candidate comparison, headline results or failure taxonomy is verified separately before it is reported as confirmed",
+           "dev_tasks": built["dev_tasks"], "dev_families": built["dev_families"], "formal_groups": built["formal_groups"], "validation_start_stratum": built["validation_start_stratum"],
+           "plans": built["plans"], "workload": {t: workload(p) for t, p in built["plans"].items()}, "workload_total": workload_v3(built["plans"])}
+    if os.path.exists(out_path):
+        raise FileExistsError(f"{out_path} exists; a frozen queue is never overwritten (write a new version)")
+    os.makedirs(os.path.dirname(out_path), exist_ok=True)
+    with open(out_path, "x", encoding="utf-8") as f:
+        json.dump(rec, f, indent=1)
+    return rec
+
+
+def verify_v4(path: str) -> dict:
+    rec = load(path)
+    built = build_plans_v4(rec["seed"], sorted(rec["plans"]))
+    diffs = sorted(t for t, p in rec["plans"].items() if built["plans"][t] != p)
+    same = not diffs and all(built[k] == rec[k] for k in ("dev_tasks", "formal_groups", "validation_start_stratum"))
+    return {"path": path, "seed": rec["seed"], "tasks": len(rec["plans"]), "reproduced": same, "differs": diffs,
             "inputs_changed": sorted(k for k, v in input_hashes(sorted(rec["plans"])).items() if rec["inputs_sha256"].get(k) != v)}
 
 

@@ -256,22 +256,27 @@ parse error and its criteria stay ungraded.
 - Budget: judge calibration costs have their own ledger and ceiling.
 
 **Human review.**
-- Approach: time-bounded and blind, from a frozen, seeded queue whose membership never depends on a verdict.
-- Development outputs: three tasks, one per deliverable family (spreadsheet, presentation, document), calibrate the
-  judge prompt and the graders. Each gets one critical criterion, two deterministic items and three judge-only items.
-- Validation and formal outputs: one deterministic and one judge-only item per task (the same ids for both
-  candidates, candidate identity hidden), plus a small stratified critical and visual subset fixed in advance.
+- Approach: blind and item-level, from a frozen, seeded queue whose membership depends only on the rubric inventory and
+  the seed. There are 36 labels in all.
+- Development outputs: two judge-only items per deliverable family (spreadsheet, presentation, document), 6 labels,
+  calibrate the shared judge prompt. Deterministic grading reliability rests on the gold and corruption regression
+  catalogs.
+- Validation outputs: one item per task, alternating deterministic and judge-only strata, 10 labels. They are used
+  only for held-out assessment.
+- Formal outputs: one item per task, with the same item on both candidate outputs, identity hidden and order
+  randomized, 20 labels. Five tasks sample a critical-criterion member item and five a judge-only item. These are
+  item-level checks, not certification of a critical criterion.
 - Packets: the human labels from verdict-free packets, and the labels are saved with a hash and timestamp before any
   automated verdict is shown.
-- Agreement: reported per model with its actual numerators and denominators. Agreement measures consistency, not
-  correctness. A small random sample bounds false-pass risk only loosely, and no precise false-pass rate is claimed.
+- Reporting: the results are reported as n = 36 independent blind labels, a limited reliability check, not a precise
+  accuracy estimate. Agreement measures consistency, not correctness.
 - Visual criteria: those without a human verdict are reported as not evaluated. A judge verdict never stands in for
   them.
-- Reported critical failures: every critical fail used in the candidate comparison, the headline findings or the
+- Reported critical failures: every critical fail cited in the candidate comparison, the headline results or the
   failure taxonomy is verified by a human against the deliverable, the source data and the rubric. Until then it is
   reported as an unverified finding, and any reclassification (grader, dataset, rubric, environment) is recorded.
-- Failure analysis: about 20-30 failure events, chosen by impact, severity, uncertainty and capability family, are
-  investigated in depth, separately from the agreement statistics.
+- Failure analysis: about 20-30 failure events on the formal candidate outputs are investigated in depth,
+  separately from the agreement statistics.
 - Disagreements: those between the judge and the deterministic checks are adjudicated and recorded.
 
 **Scores.** For each task and model: W is the total rubric weight, E the weight of

@@ -301,11 +301,7 @@ Written for: the human labeller. Created {created}. Queue: `{queue}` (seed {seed
 
 Evidence class: {evidence_class}.
 
-`items.md` has two parts. Part 1, critical criteria: label each criterion once (rows `C1`, `C2`, ... in `labels.csv`).
-A criterion passes only if the whole requirement is met on the full evidence. Every member requirement is listed and
-must be checked; a pass may not rest on sampled rows. Part 2, items: label each listed item. Neither part carries an
-automated verdict or a grader location. `deliverables/` holds the model's files and `inputs/` the task's input files
-(read-only copies).
+{parts}
 
 Use `pass`, `fail` or `cannot_tell` and name the evidence location. When the CSV is complete, save it before any
 automated verdict is shown:
@@ -365,6 +361,16 @@ def _dedupe_excerpts(text: str) -> str:
     return "".join(out)
 
 
+PARTS_TEXT = {True: """`items.md` has two parts. Part 1, critical criteria: label each criterion once (rows `C1`, `C2`, ... in `labels.csv`).
+A criterion passes only if the whole requirement is met on the full evidence. Every member requirement is listed and
+must be checked; a pass may not rest on sampled rows. Part 2, items: label each listed item. Neither part carries an
+automated verdict or a grader location. `deliverables/` holds the model's files and `inputs/` the task's input files
+(read-only copies).""",
+              False: """`items.md` lists the items to label: one label per item, each judged on its own text (item-level checks; no
+critical criterion is certified). It carries no automated verdict and no grader location. `deliverables/` holds the
+model's files and `inputs/` the task's input files (read-only copies)."""}
+
+
 def assemble_v2(batch: str, runs: list[dict], passes: list[dict], out_root: str, queue_path: str, phase: str = "dev") -> dict:
     """A labeling batch under review-queue policy v2 (amended 2026-11-01): criterion-level critical labels on full
     evidence, plus the plan's item labels. Never overwrites a batch."""
@@ -398,7 +404,7 @@ def assemble_v2(batch: str, runs: list[dict], passes: list[dict], out_root: str,
         if "## Independent reference" not in head and r["task_id"] in REFERENCE_SUMMARY:  # task-level, input-derived, identical for every run
             refp = os.path.join(ROOT, "private", "checks", "recalc", f"{r['task_id']}.json")
             head = head.rstrip() + "\n\n## Independent reference (computed from the task's source materials, not from any deliverable)\n\n" + REFERENCE_SUMMARY[r["task_id"]](json.load(open(refp, encoding="utf-8"))) + "\n"
-        md = [head.rstrip(), "", f"Evidence class: {plan.get('evidence_class', phase)}.", "", "# Part 1: critical criteria (one label per criterion; full evidence)", ""]
+        md = [head.rstrip(), "", f"Evidence class: {plan.get('evidence_class', phase)}.", ""] + (["# Part 1: critical criteria (one label per criterion; full evidence)", ""] if plan["criteria"] else [])
         for cid in plan["criteria"]:
             d = defs.get(cid, {})
             members = crit[cid]["members"]
@@ -413,7 +419,7 @@ def assemble_v2(batch: str, runs: list[dict], passes: list[dict], out_root: str,
                 if i in jset and i in secs:
                     md += ["", f"### Evidence for member item {i} (judge excerpt)", ""] + _clean(secs[i], True)[1:]
             md.append("")
-        md += ["# Part 2: items", ""]
+        md += ["# Part 2: items" if plan["criteria"] else "# Items (one label per item)", ""]
         cats = {x["item"]: x["categories"] for x in plan["items"]}
         for i in sorted(cats):
             if i in secs:
@@ -455,9 +461,10 @@ def assemble_v2(batch: str, runs: list[dict], passes: list[dict], out_root: str,
                      f"{w['item_labels_per_output']} item labels; evidence covers {w['evidence_items_per_output']} rubric items")
     with open(os.path.join(folder, "manifest.json"), "x", encoding="utf-8") as f:
         json.dump(manifest, f, indent=1)
+    any_criteria = any(m["plan"]["criteria"] for m in manifest["runs"])
     with open(os.path.join(folder, "README.md"), "x", encoding="utf-8") as f:
         f.write(V2_README.format(batch=batch, phase=phase, policy=q["policy_version"], created=manifest["created_at"], queue=manifest["queue"], seed=q["seed"], frozen=q["frozen_at"],
-                                 evidence_class="; ".join(sorted(evidence_classes)), runs="\n".join(lines)))
+                                 evidence_class="; ".join(sorted(evidence_classes)), runs="\n".join(lines), parts=PARTS_TEXT[any_criteria]))
     return {"folder": folder, "runs": len(runs), "manifest": os.path.join(folder, "manifest.json")}
 
 
