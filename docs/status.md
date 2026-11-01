@@ -3981,6 +3981,13 @@ Packets:
 - Checked: the queue items, judge excerpts and source material per item, no pre-filled cell, no verdict wording.
 - `label_batch` change: a plan without criteria gives an item-only `items.md` and README.
 
+## Gemini generation complete (2026-11-01 19:19Z; scheduler plan `paid-2026-11-01c` ended normally)
+
+- Dev: 10 of 10 canonical; ledger 22.255219 USD settled of 100.
+- Validation: 10 of 10 canonical, sealed; ledger 17.488478 USD settled of 100.
+- Final run: Validation `a45bc83b…` run `3gTajbGy…`, completed, 1.175022 USD.
+- Ledger state: no open reservation, held unit or stop in either ledger. No Gemini or class stop.
+
 ## Known issues and findings (material check)
 
 - `rubric_json.form_content`: 8,036 items hold `null`, 2,417 items lack the key, zero
@@ -4033,7 +4040,7 @@ Packets:
 
 ## In flight
 
-- Gemini validation generation: `a45bc83b…` running (the last of ten). Validation outputs stay sealed.
+- Gemini generation complete (Dev and Validation 10 of 10); Validation outputs stay sealed.
 - v4 Dev packets (`labeling/dev-v4/`, 6 labels) await the human.
 - Grader V1 calibration from sealed QA leads on the Dev tasks without a human label: `7d7fc9a7…`, `c3525d4d…` and
   `7b08cd4d…`, `47ef842d…` and `1137e2bb…` are committed.
