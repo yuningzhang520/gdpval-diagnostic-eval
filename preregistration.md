@@ -90,8 +90,16 @@ from text. Items used to debug the judge are never reused to validate it; human
 judgments for agreement are recorded before the judge verdict is shown.
 
 ### 1.6 Deterministic check validation
-Before the pilot, every deterministic check is run on one known-good example and one
-deliberately corrupted example and must separate them. (Planned for the toolchain stage.)
+Every deterministic check is validated gold-first before any model output of its task is
+opened: the expert deliverables are graded (the original first-pass result is preserved
+unchanged), numeric expectations are reconciled independently with the source materials,
+findings are classified (expert-deliverable defect, rubric ambiguity, source-data issue,
+grader defect), and a catalog of seeded corruptions and layout transformations derived
+from the expert deliverables declares the expected verdict transitions item by item
+(neutral transformations must leave the complete verdict map unchanged; rubric-relevant
+ones must produce exactly their declared map). Records: `grading/validation/<task_id>/`;
+suite: `grading/tests/test_gold_<task>.py`. Implemented for `1137e2bb…` on 2026-11-01
+(section 2.4).
 
 ### 1.7 Numeric conventions (APPROVED)
 - Currency amounts are handled as `Decimal` with intermediate precision preserved; where
@@ -140,7 +148,11 @@ by business impact; "original verdict overturned on review" as a separate status
 Any change to inputs, prompt, tools, or execution budget: assess impact, rerun affected
 tasks for both models if needed. Grader bug with deliverables intact: re-grade both,
 no rerun. Amendments record old rule, evidence, new rule, and re-grading of both models.
-Runs are labelled `pilot`, `formal`, or `intervention`.
+Runs are labelled by run class: `dev`, `validation`, `compat` or `formal` (2026-11-01;
+the earlier `pilot` label is retired, the candidate pilot was not run); a rerun after an
+approved change keeps its class and is recorded as an intervention in `docs/status.md`.
+Classes keep separate roots, ledgers, logs, inventories and artifact manifests.
+
 
 ### 1.13 Pre-declared substitutes and fallbacks (APPROVED 2026-10-30, as written)
 - GCP task `a45bc83b…`: if pre-staged resources or visual verification cannot be
@@ -150,6 +162,30 @@ Runs are labelled `pilot`, `formal`, or `intervention`.
 - Single-model fallback: if budget, access, or human-review capacity triggers before
   freeze, run one model on all ten tasks; the model is chosen by access reliability and
   cost, not by performance.
+
+### 1.16 Grader development and sealed validation protocol (2026-11-01)
+Development samples: one `google/gemini-3.8-flash` sample per selected task (`dev`),
+generated under the candidate generation configuration. Before a task's development
+output (deliverables, `.eval` messages, trajectory, tool output) is opened, that task's
+Grader v0 must be verified against the expert deliverables and the corruption catalog
+(1.6), its regressions run, and the complete code state committed and tagged with the
+version and hashes recorded; only programmatic collection, hashing and the predefined
+run-level metadata (execution status, limits, usage, cost) may be read earlier. The
+first-pass Grader v0 result is preserved before any evidence-backed fix. Human labels
+come from verdict-free review packets (criteria, source evidence, deliverable references
+and excerpts; no grader or judge verdict, suggested answer or diagnosis) and are saved
+with a SHA-256 and timestamp before any automated verdict is revealed; labels are
+requested in groups of at least three tasks. Validation samples: a second, independently
+generated sample per task (`validation`: own run uuid, unit, root, ledger, provenance,
+label and artifact manifest) sealed until the grader candidate is committed and tagged;
+then labelled the same way, graded by the frozen deterministic grader and the separately
+authorized judge, with false PASS, false FAIL, coverage loss and human-grader and
+human-judge agreement reported with numerators and denominators. Fixes after validation
+are versioned and symmetric; post-fix scores on the same samples are regression
+evidence, not independent validation. Development outputs are examples, never
+validation evidence; the development model's samples do not establish cross-family
+generalisation. Compatibility runs (`compat`, task `87da214f…`, outside the formal
+ten) verify provider, tool, artifact, rendering and accounting behaviour only.
 
 ### 1.14 Review entry and result boundaries
 All failures, incomplete runs, `cannot_assess` items, and critical disagreements enter
@@ -654,6 +690,47 @@ equality, so float noise is not a mismatch; counts exact.
   5 and 6 FAIL, 7 and 18–20 PASS, C1 fails; a deleted flagged line fails the sum items whose
   column it affects and its own named line.
 
+- Gold-first verification (2026-11-01; `grading/validation/1137e2bb-…/`). Independent
+  recomputation from `Reference_PO Data.xlsx` equals the stored reference and the expert
+  workbook's own flags on all 41 lines (15 / 10 / 25; per-SKU identical). Original first
+  pass of the grader of 2026-10-31 on the expert deliverables: 49 pass, 0 fail, 6
+  `cannot_assess` (4, 8, 10, 17, 20, 21; grader side). Classification and amendments,
+  all grader-side extraction rules (no grading rule, critical criterion or adjudication
+  changed; no model output existed):
+  - Grader defect: the expert's total column is headed "Number of Errors", which the
+    synonym table did not know. New rule: the total-column synonyms and keywords include
+    "number of errors", "# of errors", "error count per line" and the like; a column is
+    `confirmed_missing` only when every other header maps (unchanged). Effect: 4, 8, 17,
+    20 become assessable.
+  - Grader defect: a formula whose result is the empty string (the expert's TEXTJOIN on
+    zero-error lines) was read as a formula without a cached value (both Excel and
+    LibreOffice store it as a string-typed cell with an empty value; openpyxl returns
+    None, as for an uncached formula). New rule: the extraction keeps such a result as the
+    value "" (data type `str`), in the original and in the recalculated copy. Effect: 10
+    becomes assessable; the recalculation comparison counts 164 of 164 formulas equal.
+  - Expert-deliverable defect (A-21, unchanged): the expert workbook has no Case Pack
+    Missing indicator; with the total column mapped, `case_missing` is `confirmed_missing`
+    and item 21 fails as written (the only non-pass of the expert deliverables).
+  - Grader defect found by the corruption catalog (R14): a workbook whose only other sheet
+    is a copy of the raw input returned `cannot_assess` for the summary items instead of a
+    confirmed FAIL. New rule: sheets that are identified detail-table candidates (the raw
+    copy is one) can never hold the summary; with no other sheet the summary is confirmed
+    absent (C2 fails). The conservative `cannot_assess` stays for genuinely unrecognised
+    sheets.
+  - Grader defect found by the layout catalog (N02–N04): footer TOTAL rows, legend and
+    note rows and Excel subtotal rows ("PO1001 Total") under the detail table were read
+    as business rows with blank or non-binary flags and failed 5–7. New rule: a row with a
+    blank quantity cell and blank business cells (entered, expected, UOM, case pack),
+    whatever its id cells hold, is an annotation row (`no_id`): never summed, matched or
+    counted as a row that could hold a missing input line.
+  Result after the fixes: 54 pass, 1 fail (21), 0 `cannot_assess`; C1 pass, C2 pass,
+  C3 not confirmed (judge items pending); identical through the LibreOffice path. The
+  catalog (24 rubric-relevant corruptions, 20 neutral transformations) and the two
+  recalculation-path cases land exactly on their declared maps. Open interpretation,
+  not decided and not pinned: whether textual booleans (Yes/No, TRUE/FALSE) in the flag
+  columns satisfy rubric 9 ("binary (0 or 1)"); the implementation currently accepts
+  them as 1/0 for items 5–8 and 9 (section 4).
+
 ### 2.5 `c3525d4d-2012-45df-853e-2d2a0e902991` — Holiday floor-stand budget (Order Clerks)
 Inputs: `Email Trail Floorstands.docx` (base 5.65; side panels 2.24 × 2; shelf strips
 1.89 × 4; unit 17.69; 1,228 stores; 5 % overage; total 22,802.41),
@@ -1048,6 +1125,12 @@ Requirement layers (APPROVED 2026-10-30):
 ---
 
 ## 4. Decisions still needed from the human before freeze
+
+- 2026-11-01, `1137e2bb…` rubric 9 and 5–8: textual booleans in the flag columns
+  (Yes/No, TRUE/FALSE, "x") are currently accepted as 1/0. Proposed rule: accept Excel
+  booleans TRUE/FALSE and the literal 1/0 as binary for item 9; accept Yes/No and
+  TRUE/FALSE for the logic items 5–8; record any other text as a confirmed non-binary
+  value. Not applied; the current behaviour is unchanged until decided.
 
 1. Critical criteria: closed. 17 of the 18 criteria listed as PENDING were APPROVED on
    2026-10-30 as written (f841ddcf C3–C5; 47ef842d C1, C4; 1137e2bb C1, C3; c3525d4d

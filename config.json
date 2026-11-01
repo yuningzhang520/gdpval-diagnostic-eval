@@ -372,18 +372,6 @@
   ],
   "pilot": {
     "task_id": "1137e2bb-bdf9-4876-b572-f29b7de5e595",
-    "sequence": [
-      "model_a end-to-end through grading and human review",
-      "human-review checkpoint",
-      "model_b on the same task"
-    ],
-    "budget_ceiling_usd": 45,
-    "reservations_usd": {
-      "anthropic/claude-opus-5-5": 8,
-      "openai/gpt-6.1-sol": 5,
-      "basis": "FORECAST pre-run estimates passed to the launcher as --estimate-usd (approved 2026-11-01 with the high-reasoning configuration); the 2x stop rule records a stop when a unit settles above 16 USD (A) or 10 USD (B); judge units are reserved separately under their own approval"
-    },
-    "budget_status": "cumulative pilot ceiling 45 USD approved 2026-11-01 with the high-reasoning configuration (covers A, B, judge, cache-related charges and billable retries; sized for two samples at the 20 USD per-sample cost limit plus judge and retries), supersedes the 30 USD value proposed 2026-10-30 and the 25 USD value of the earlier draft; every paid call still needs separate authorization; enforced by the launcher ledger as a start gate, not an absolute billing hard cap",
     "stop_conditions": [
       "no new sample or judge batch starts when the remaining budget cannot cover its reservation",
       "after the ceiling is reached no further sample starts (no per-request interception)",
@@ -413,7 +401,8 @@
         "safety_net_effect": "with default-retention rates in ModelCost the 10 USD per-sample limit tracks Inspect's own pricing for both candidates; it fires late (not early) for long-context calls; a difference in cost estimation between models is a billing property and is never read as a capability difference",
         "mock_verification": "harness/tests/test_launcher_regressions.py PriceTierTests (ledger tiers, Inspect ModelCost rates, usage-source reconciliation)"
       }
-    }
+    },
+    "superseded_2026_11_01": "the pilot execution plan (model A then B on the pilot task, pilot reservations, pilot ceiling) is superseded by per-batch controls in `batches` (dev, validation, compat, formal); the stop conditions and the budget-protection mechanism below apply to every batch ledger unchanged; the candidate pilot on 1137e2bb was not run"
   },
   "models": {
     "selection_status": "pilot_models proposed 2026-10-30 (capability-first strategy); final approval of A/B and judge pending",
@@ -637,6 +626,36 @@
       },
       "compute_equivalence_note": "The two candidate models are not given equal compute: Anthropic runs adaptive thinking at the explicitly requested effort 'high' with thinking tokens billed as output at 20 USD/MTok; OpenAI runs reasoning at the explicitly requested effort 'high' with reasoning tokens billed as output at 10 USD/MTok (same nominal level, different mechanisms, not equal compute); tokenizers differ, so token counts and the shared max_tokens cap are not equivalent budgets. Results are reported per model with their own usage and cost, never on one scale.",
       "reasoning_effort_policy": "Approved 2026-11-01: generation.reasoning_effort 'high' is set explicitly for both candidates and passed by eval_kwargs as GenerateConfig.reasoning_effort (Anthropic: thinking adaptive + output_config.effort high + output-128k beta; OpenAI: Responses reasoning.effort high); generation.reasoning_summary 'none' suppresses the OpenAI adapter's account probe request. The judge is configured separately (judge block, pending). The level actually applied by each provider is confirmed only by the pilot's recorded requests and usage (REAL PROVIDER UNVERIFIED)."
+    },
+    "model_facts_queried_2026_11_01": {
+      "gemini-3.8-flash": {
+        "input_per_mtok_usd": 0.75,
+        "output_per_mtok_usd": 3.75,
+        "cache_read_per_mtok_usd": 0.075,
+        "cache_storage_per_mtok_hour_usd": 0.5,
+        "rates_valid": "through 2026-12-31 (from 2027-01-01: 1.50 / 7.50 / 0.15 / 1.00 per the same page)",
+        "output_includes_thinking": true,
+        "input_token_limit": 1048576,
+        "output_token_limit": 65536,
+        "thinking": "supported (low, medium, high; minimal rejected); default level not stated",
+        "tools": "function calling, code execution, structured outputs; image, PDF, video, audio input",
+        "stage": "Stable (New Stable); 'Our most intelligent Flash model'",
+        "source": "ai.google.dev/gemini-api/docs/pricing (last updated 2026-10-30) and /docs/models/gemini-3.8-flash (last updated 2026-10-30), fetched 2026-11-01",
+        "models_list_visibility": "present as models/gemini-3.8-flash in the Google list of 2026-10-30T22:30:42Z (data/provider_model_lists/20261030T223043Z.json)",
+        "cache_write_conservative_per_mtok_usd": 0.75,
+        "cache_write_basis": "no per-token cache-write price exists (storage is billed per token-hour, not modelled); the input price is the conservative stand-in, as for the judge candidate",
+        "no_prompt_size_tiers": "the Flash rows carry no >200k tier on the pricing page"
+      }
+    },
+    "development_model": {
+      "role": "grader-development and sealed-validation sample generator (not a candidate)",
+      "provider": "google",
+      "provider_api_model_id": "gemini-3.8-flash",
+      "inspect_model_name": "google/gemini-3.8-flash",
+      "status": "proposed 2026-11-01; pending the human's dev/validation batch authorization",
+      "reasoning_mapping_verified_offline_2026_11_01": "inspect_ai 0.3.286 google provider: reasoning_effort high -> ThinkingConfig(include_thoughts=True, thinking_level=HIGH); max_tokens 32,000 -> max_output_tokens (model output limit 65,536); reasoning_summary is not read by the Google provider; same explicit settings as the candidates (generation block)",
+      "pricing": "models.model_facts_queried_2026_11_01.gemini-3.8-flash; ledger and Inspect cost limit use 0.75 / 3.75 / cache read 0.075 / cache write stand-in 0.75",
+      "unverified": "real provider behaviour, usage fields, tool use with the sandbox tools and image input remain REAL PROVIDER UNVERIFIED until the first dev run"
     }
   },
   "generation": {
@@ -751,6 +770,27 @@
       "max_sandboxes": 2,
       "max_connections": 2,
       "status": "PENDING; requires memory and stability evidence (Docker VM 7.75 GiB, 3 GiB per sandbox)"
+    },
+    "dev": {
+      "max_samples": 1,
+      "max_tasks": 1,
+      "max_sandboxes": 1,
+      "max_connections": 1,
+      "basis": "pilot values (approved 2026-10-30) applied to every run class until memory and stability evidence"
+    },
+    "validation": {
+      "max_samples": 1,
+      "max_tasks": 1,
+      "max_sandboxes": 1,
+      "max_connections": 1,
+      "basis": "pilot values (approved 2026-10-30) applied to every run class until memory and stability evidence"
+    },
+    "compat": {
+      "max_samples": 1,
+      "max_tasks": 1,
+      "max_sandboxes": 1,
+      "max_connections": 1,
+      "basis": "pilot values (approved 2026-10-30) applied to every run class until memory and stability evidence"
     }
   },
   "retries": {
@@ -790,12 +830,16 @@
   },
   "grading": {
     "preregistration": "preregistration.md (draft; frozen at freeze-v1)",
-    "grader_version": "grading-1137e2bb-2026-10-31",
+    "engine_version": "engine-2026-11-01.1",
+    "task_grader_versions": {
+      "1137e2bb-bdf9-4876-b572-f29b7de5e595": "1137e2bb-2026-11-01.1"
+    },
+    "grader_version_scheme": "every grading pass records grader_version = '<engine_version>+<task_grader_version>', the engine and task versions separately, and the full git commit of the grading code (grading.grade.code_provenance); the engine covers extraction, recalculation, outcome gate, scoring, pass selection, judge and review infrastructure; each task specification carries its own version; superseded value: grader_version grading-1137e2bb-2026-10-31 (pre gold-first fixes)",
     "judge_input_manifest": "grading.judge.build_units_1137e2bb (task requirement, criterion, independent reference, deliverable excerpt per unit); other tasks: Stage 3 work",
     "outcome_gate": "harness.collect.load_run_outcome through grading.grade.grade_run (identity from the completed Inspect log; integrated 2026-10-31, mock-verified)",
     "entry_point": "grading.run_grading (one saved run: run.json / .eval / task id binding, host-only materials, grade_run; judged pass behind the judge gate, reserved and settled on the run's bound ledger) -> grading.grade.grade_run: load_run_outcome(for_grading=False) with identity from the completed Inspect log, terminal-log join, attribution routing, deterministic checks, judge units, grades.jsonl and results.jsonl (one results record per grading pass; select_pass picks one pass per run)",
     "debug_set": "grading/debug_set.json (criteria used with the stub judge; excluded from judge validation)",
-    "grader_version_check": "grading.run_grading refuses to grade when this value differs from grading.grade.GRADER_VERSION"
+    "grader_version_check": "grading.run_grading refuses to grade when engine_version or the task's task_grader_versions entry differs from the code (grading.grade.ENGINE_VERSION, <task module>.VERSION)"
   },
   "pre_staged_resources": {
     "task_id": "a45bc83b-22f9-4def-8d89-9c5661b2b86f",
@@ -978,5 +1022,137 @@
       "grading": "limited attempts follow grading_decision and run_outcome.json: budget exhaustion is not a harness error; collection faults and execution errors are attributed independently",
       "comparability": "the cost safety net is not a primary limit on A/B results; identical dollar or token caps are not identical compute budgets across providers"
     }
-  }
+  },
+  "batches": {
+    "_scheme": "run classes with separate execution artifacts, Inspect logs, ledger, manifests and run inventory under ~/turing-eval-runs/<label>/; reservations are FORECAST pre-run estimates passed as --estimate-usd; budget_ceiling_usd is a start gate on that class's ledger, never a billing cap; cost_limit_usd (when set) replaces generation.cost_limit_usd as Inspect's per-sample safety net for that class only (formal keeps the generation value)",
+    "dev": {
+      "run_label": "dev",
+      "purpose": "grader development examples: one Gemini Flash sample per selected task; outputs are opened only after the task's Grader v0 is committed and tagged",
+      "task_manifest": "data/selected_tasks.json",
+      "models": [
+        "google/gemini-3.8-flash"
+      ],
+      "samples_per_task": 1,
+      "units_total": 10,
+      "budget_ceiling_usd": 30,
+      "reservation_usd_by_model": {
+        "google/gemini-3.8-flash": "2.00"
+      },
+      "cost_limit_usd": 3.0,
+      "stop_conditions": [
+        "no new sample or judge batch starts when the remaining budget cannot cover its reservation",
+        "after the ceiling is reached no further sample starts (no per-request interception)",
+        "per-task cost exceeds 2x the pre-run estimate",
+        "the same engineering failure class occurs a second time",
+        "cumulative budget ceiling reached"
+      ],
+      "concurrency": "config.concurrency.<label> (1 on every axis until memory and stability evidence)",
+      "ledger": "one ledger file per run class (ledger label = run label; the launcher refuses a ledger or runs root whose path does not carry the label)",
+      "status": "DRAFT: proposed controls pending the human's batch authorization; every paid batch needs one explicit authorization (recorded in docs/status.md and passed as --authorized-by / --authorization-ref)",
+      "forecast": "FORECAST per sample at the list rates with no cache credit: 0.5-3.6 USD (25-90 calls, 0.5-4.0 M input tokens re-sent, 20-150 k output incl. thinking); the 3 USD Inspect cost limit ends a sample between calls; reservation 2.00 (2x stop above 4.00); ceiling 30 covers 10 units at the cap"
+    },
+    "validation": {
+      "run_label": "validation",
+      "purpose": "sealed validation: a second, independently generated Gemini Flash sample per selected task; content sealed until the validation checkpoint",
+      "task_manifest": "data/selected_tasks.json",
+      "models": [
+        "google/gemini-3.8-flash"
+      ],
+      "samples_per_task": 1,
+      "units_total": 10,
+      "budget_ceiling_usd": 30,
+      "reservation_usd_by_model": {
+        "google/gemini-3.8-flash": "2.00"
+      },
+      "cost_limit_usd": 3.0,
+      "stop_conditions": [
+        "no new sample or judge batch starts when the remaining budget cannot cover its reservation",
+        "after the ceiling is reached no further sample starts (no per-request interception)",
+        "per-task cost exceeds 2x the pre-run estimate",
+        "the same engineering failure class occurs a second time",
+        "cumulative budget ceiling reached"
+      ],
+      "concurrency": "config.concurrency.<label> (1 on every axis until memory and stability evidence)",
+      "ledger": "one ledger file per run class (ledger label = run label; the launcher refuses a ledger or runs root whose path does not carry the label)",
+      "status": "DRAFT: proposed controls pending the human's batch authorization; every paid batch needs one explicit authorization (recorded in docs/status.md and passed as --authorized-by / --authorization-ref)",
+      "forecast": "FORECAST per sample at the list rates with no cache credit: 0.5-3.6 USD (25-90 calls, 0.5-4.0 M input tokens re-sent, 20-150 k output incl. thinking); the 3 USD Inspect cost limit ends a sample between calls; reservation 2.00 (2x stop above 4.00); ceiling 30 covers 10 units at the cap"
+    },
+    "compat": {
+      "run_label": "compat",
+      "purpose": "candidate compatibility: one sample of each candidate on one GDPval task outside the formal ten (data/compat_tasks.json); never graded against business rules, never a capability result",
+      "task_manifest": "data/compat_tasks.json",
+      "models": [
+        "anthropic/claude-opus-5-5",
+        "openai/gpt-6.1-sol"
+      ],
+      "samples_per_task": 1,
+      "units_total": 2,
+      "budget_ceiling_usd": 45,
+      "reservation_usd_by_model": {
+        "anthropic/claude-opus-5-5": "8.00",
+        "openai/gpt-6.1-sol": "5.00"
+      },
+      "stop_conditions": [
+        "no new sample or judge batch starts when the remaining budget cannot cover its reservation",
+        "after the ceiling is reached no further sample starts (no per-request interception)",
+        "per-task cost exceeds 2x the pre-run estimate",
+        "the same engineering failure class occurs a second time",
+        "cumulative budget ceiling reached"
+      ],
+      "concurrency": "config.concurrency.<label> (1 on every axis until memory and stability evidence)",
+      "ledger": "one ledger file per run class (ledger label = run label; the launcher refuses a ledger or runs root whose path does not carry the label)",
+      "status": "DRAFT: proposed controls pending the human's batch authorization; every paid batch needs one explicit authorization (recorded in docs/status.md and passed as --authorized-by / --authorization-ref)"
+    },
+    "formal": {
+      "run_label": "formal",
+      "purpose": "the formal evaluation after freeze-v1: 10 tasks x 2 candidates, k=1, attempts=1, identical model-visible conditions",
+      "task_manifest": "data/selected_tasks.json",
+      "models": [
+        "anthropic/claude-opus-5-5",
+        "openai/gpt-6.1-sol"
+      ],
+      "samples_per_task": 1,
+      "units_total": 20,
+      "budget_ceiling_usd": "PLACEHOLDER (fixed at freeze-v1 from the compat and dev cost reports)",
+      "reservation_usd_by_model": {
+        "anthropic/claude-opus-5-5": "8.00",
+        "openai/gpt-6.1-sol": "5.00"
+      },
+      "stop_conditions": [
+        "no new sample or judge batch starts when the remaining budget cannot cover its reservation",
+        "after the ceiling is reached no further sample starts (no per-request interception)",
+        "per-task cost exceeds 2x the pre-run estimate",
+        "the same engineering failure class occurs a second time",
+        "cumulative budget ceiling reached"
+      ],
+      "concurrency": "config.concurrency.<label> (1 on every axis until memory and stability evidence)",
+      "ledger": "one ledger file per run class (ledger label = run label; the launcher refuses a ledger or runs root whose path does not carry the label)",
+      "status": "DRAFT: ceiling fixed at freeze-v1; runs only after the human's freeze approval and batch authorization"
+    }
+  },
+  "compat_tasks": [
+    {
+      "task_id": "87da214f-fd92-4c58-9854-f4d0d10adce0",
+      "group": "compat",
+      "occupation": "Customer Service Representatives",
+      "prompt_file": "data/prompts/87da214f-fd92-4c58-9854-f4d0d10adce0.txt",
+      "prompt_sha256": "5a4a56ebb7187eed00f130913cade3e214b18f9f606f16ae9a25bf20e0dc4506",
+      "rubric_item_count_computed": 59,
+      "staged_files": [
+        {
+          "sandbox_path": "/workspace/inputs/ID Theft Policy (1).docx",
+          "source": "data/inputs/87da214f-fd92-4c58-9854-f4d0d10adce0/ID Theft Policy (1).docx",
+          "bytes": 25200,
+          "sha256": "e0c07ec47c647cd03af6f42cfe864ca73c12b1a22cdf9ccae6b88be135cd45f5"
+        },
+        {
+          "sandbox_path": "/workspace/inputs/Policy Reimbursement Account Sample.xlsx",
+          "source": "data/inputs/87da214f-fd92-4c58-9854-f4d0d10adce0/Policy Reimbursement Account Sample.xlsx",
+          "bytes": 11973,
+          "sha256": "3d7da764be71ad747aff75b5e39daf5cfa45d5ee9d6e90a5f2cda3b7ce66b5e1"
+        }
+      ],
+      "note": "compatibility task outside the ten selected tasks (data/compat_tasks.json, data/compat_manifest.json); no business grader; its rubric is not used for scoring"
+    }
+  ]
 }

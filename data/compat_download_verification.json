@@ -1,0 +1,90 @@
+{
+  "repo_id": "openai/gdpval",
+  "revision": "11e7900cdcac61bc4daf59e65feb238acda98fbf",
+  "run_at_utc": "2026-11-01T07:54:29+00:00",
+  "expected_counts": {
+    "input": 2,
+    "gold": 1
+  },
+  "verified_file_count": 3,
+  "records": [
+    {
+      "role": "input",
+      "task_id": "87da214f-fd92-4c58-9854-f4d0d10adce0",
+      "original_filename": "ID Theft Policy (1).docx",
+      "source_path": "reference_files/8e2249c26d343289d1396317ddedd6e2/ID Theft Policy (1).docx",
+      "url": "https://huggingface.co/datasets/openai/gdpval/resolve/11e7900cdcac61bc4daf59e65feb238acda98fbf/reference_files/8e2249c26d343289d1396317ddedd6e2/ID%20Theft%20Policy%20%281%29.docx",
+      "revision": "11e7900cdcac61bc4daf59e65feb238acda98fbf",
+      "local_path": "data/inputs/87da214f-fd92-4c58-9854-f4d0d10adce0/ID Theft Policy (1).docx",
+      "hf_storage": "git_blob",
+      "hf_size": 25200,
+      "hf_expected_hash": "7ada3f35733f16075c22959911156b74a458d736",
+      "verification_method": "git_blob_sha1",
+      "sha256": "e0c07ec47c647cd03af6f42cfe864ca73c12b1a22cdf9ccae6b88be135cd45f5",
+      "size": 25200,
+      "verified": true,
+      "action": "downloaded"
+    },
+    {
+      "role": "input",
+      "task_id": "87da214f-fd92-4c58-9854-f4d0d10adce0",
+      "original_filename": "Policy Reimbursement Account Sample.xlsx",
+      "source_path": "reference_files/1272fc8a6788399f795d1031073ac91e/Policy Reimbursement Account Sample.xlsx",
+      "url": "https://huggingface.co/datasets/openai/gdpval/resolve/11e7900cdcac61bc4daf59e65feb238acda98fbf/reference_files/1272fc8a6788399f795d1031073ac91e/Policy%20Reimbursement%20Account%20Sample.xlsx",
+      "revision": "11e7900cdcac61bc4daf59e65feb238acda98fbf",
+      "local_path": "data/inputs/87da214f-fd92-4c58-9854-f4d0d10adce0/Policy Reimbursement Account Sample.xlsx",
+      "hf_storage": "git_blob",
+      "hf_size": 11973,
+      "hf_expected_hash": "2e92a161df897675a604e9535e2859d6140c3116",
+      "verification_method": "git_blob_sha1",
+      "sha256": "3d7da764be71ad747aff75b5e39daf5cfa45d5ee9d6e90a5f2cda3b7ce66b5e1",
+      "size": 11973,
+      "verified": true,
+      "action": "downloaded"
+    },
+    {
+      "role": "gold",
+      "task_id": "87da214f-fd92-4c58-9854-f4d0d10adce0",
+      "original_filename": "Policy Reimbursement and Remediation Review.pptx",
+      "source_path": "deliverable_files/384ebc517b291dbca0fe6e70aa23a596/Policy Reimbursement and Remediation Review.pptx",
+      "url": "https://huggingface.co/datasets/openai/gdpval/resolve/11e7900cdcac61bc4daf59e65feb238acda98fbf/deliverable_files/384ebc517b291dbca0fe6e70aa23a596/Policy%20Reimbursement%20and%20Remediation%20Review.pptx",
+      "revision": "11e7900cdcac61bc4daf59e65feb238acda98fbf",
+      "local_path": "private/gold/87da214f-fd92-4c58-9854-f4d0d10adce0/Policy Reimbursement and Remediation Review.pptx",
+      "hf_storage": "git_blob",
+      "hf_size": 56690,
+      "hf_expected_hash": "752d22267bbc9215e1b6bbc0f26aa99231ff8ac4",
+      "verification_method": "git_blob_sha1",
+      "sha256": "32527916eb0c1367fdd6281e686380ca6ff33ebe95da252777cbe1b8701edfb3",
+      "size": 56690,
+      "verified": true,
+      "action": "downloaded"
+    },
+    {
+      "role": "rubric",
+      "task_id": "87da214f-fd92-4c58-9854-f4d0d10adce0",
+      "original_filename": null,
+      "source_path": "parquet column rubric_json",
+      "url": null,
+      "revision": "11e7900cdcac61bc4daf59e65feb238acda98fbf",
+      "local_path": "private/rubric/87da214f-fd92-4c58-9854-f4d0d10adce0.json",
+      "sha256": "c555bb5c2b5b3e5503f6422435287f201292a27ef409225f7fdb37c7e702e340",
+      "size": 17519,
+      "item_count": 59,
+      "verified": true,
+      "action": "written"
+    },
+    {
+      "role": "prompt",
+      "task_id": "87da214f-fd92-4c58-9854-f4d0d10adce0",
+      "original_filename": null,
+      "source_path": "parquet column prompt",
+      "url": null,
+      "revision": "11e7900cdcac61bc4daf59e65feb238acda98fbf",
+      "local_path": "data/prompts/87da214f-fd92-4c58-9854-f4d0d10adce0.txt",
+      "sha256": "5a4a56ebb7187eed00f130913cade3e214b18f9f606f16ae9a25bf20e0dc4506",
+      "size": 1089,
+      "verified": true,
+      "action": "written"
+    }
+  ]
+}

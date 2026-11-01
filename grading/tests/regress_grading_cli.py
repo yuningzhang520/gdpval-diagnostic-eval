@@ -39,7 +39,7 @@ def main():
     run_dir, eval_log, task, ledger_path = manifest["run_dir"], manifest["eval_log"], manifest["task_id"], manifest["ledger"]
     uuid = os.path.basename(run_dir)
     cfg = load_config(os.path.join(os.environ["HARNESS_PROJECT_ROOT"], "config.json"))
-    ledger = lambda: BudgetLedger(ledger_path, cfg["pilot"]["budget_ceiling_usd"], prices_from_config(cfg))
+    ledger = lambda: BudgetLedger.open_existing(ledger_path, prices_from_config(cfg))
     entries = lambda: [e["type"] for e in json.load(open(ledger_path))["entries"]]
     with open(os.path.join(out, "env.test"), "w", encoding="utf-8") as f:
         f.write("GOOGLE_API_KEY=dummy-test-key-not-real-0005\n")  # never the project .env; mockllm needs no key
@@ -53,7 +53,7 @@ def main():
     grades = [json.loads(l) for l in open(os.path.join(grading_out, "grades.jsonl"))]
     r = results[-1]
     check("one results record, graded through the outcome gate (the collected note.txt makes the collection complete)", len(results) == 1 and r["gate"] == "passed" and r["graded"] is True and r["collection_status"] == "complete" and r["outcome_class_effective"] == "collected", {k: r.get(k) for k in ("gate", "graded", "collection_status", "outcome_class_effective")})
-    check("run identity in results equals the saved run (uuid, sample id = task id); grader version is the code's", r["run"]["uuid"] == uuid and r["run"]["sample_id"] == task and r["grader_version"] == GRADER_VERSION, (r["run"], r["grader_version"]))
+    check("run identity in results equals the saved run (uuid, sample id = task id); grader version is the code's", r["run"]["uuid"] == uuid and r["run"]["sample_id"] == task and r["grader_version"] == GRADER_VERSION and r["engine_version"] and r["task_grader_version"] and len(r["code"]["commit"] or "") == 40, (r["run"], r["grader_version"], r.get("code")))
     d_items, j_items = [g for g in grades if g["source"] == "D"], [g for g in grades if g["source"] == "J"]
     check("grades.jsonl holds every deterministic item and the 7 judge-only items", sorted(g["item"] for g in d_items) == CK.D_ITEMS and sorted(g["item"] for g in j_items) == CK.J_ITEMS, (len(d_items), len(j_items)))
     check("judge-only items are pending_judge, never pass/fail, with judge_mode none and completeness none", all(g["verdict"] == "pending_judge" for g in j_items) and r["judge_mode"] == "none" and r["judge_verdicts"] == 0 and r["judge_completeness"] == "none", {g["item"]: g["verdict"] for g in j_items})
@@ -75,7 +75,8 @@ def main():
             return str(ex)
         except SystemExit as ex:  # argparse error in the probe itself: report, never abort the regression silently
             return f"ARGPARSE_EXIT {ex.code}"
-    check("wrong --task-id is refused before grading", (refused(["--host-dir", run_dir, "--eval-log", eval_log, "--task-id", "b5d2e6f1-62a2-433a-bcdd-95b260cdd860", "--out-dir", os.path.join(out, "r1")]) or "").startswith("run.json sample_id"))
+    msg = refused(["--host-dir", run_dir, "--eval-log", eval_log, "--task-id", "b5d2e6f1-62a2-433a-bcdd-95b260cdd860", "--out-dir", os.path.join(out, "r1")]) or ""
+    check("wrong --task-id is refused before grading (no grader registered for it yet, or the run's sample id is not that task)", msg.startswith(("no grader registered", "run.json sample_id")), msg)
     renamed = os.path.join(out, "renamed_run", "NOTTHEUUID"); shutil.copytree(run_dir, renamed)
     check("a run directory whose name differs from run.json is refused", "differs from the directory name" in (refused(["--host-dir", renamed, "--eval-log", eval_log, "--task-id", task, "--out-dir", os.path.join(out, "r2")]) or ""))
     other_log = next((os.path.join(dp, f) for dp, _, fs in os.walk(os.path.join(os.environ["HARNESS_PROJECT_ROOT"], "logs", "stage2_fix", "inspect")) for f in fs if f.endswith(".eval")), None)
@@ -85,15 +86,15 @@ def main():
     # ---------------------------------------------------------------- 1b. execution-bound recovery on the REAL Inspect log of this run (Codex foreign_recovery)
     from harness.launcher import PilotLauncher
     launcher_probe = PilotLauncher(cfg, runs_root=os.path.join(out, "probe_runs"), ledger=ledger(), eval_fn=None)
-    rec_own = launcher_probe.recover_usage_from_logs(manifest["unit_log_dir"], unit_id=manifest["unit_id"], task_name="pilot_1137e2bb", model=manifest["model"])
+    rec_own = launcher_probe.recover_usage_from_logs(manifest["unit_log_dir"], unit_id=manifest["unit_id"], task_name="formal_1137e2bb", model=manifest["model"])
     check("recovery from this execution's own log directory reads the real .eval once (mockllm usage, 1 event, 0 duplicates, attributable)", rec_own["recovered"] and rec_own["counted_events"] == 1 and rec_own["duplicate_events_skipped"] == 0 and rec_own["attribution_uncertain"] is False and rec_own["usage"][manifest["model"]]["input_tokens"] > 0, {k: rec_own.get(k) for k in ("recovered", "counted_events", "summary")})
     shutil.copyfile(manifest["eval_log"], os.path.join(manifest["unit_log_dir"], "duplicate-copy.eval"))
-    rec_dup = launcher_probe.recover_usage_from_logs(manifest["unit_log_dir"], unit_id=manifest["unit_id"], task_name="pilot_1137e2bb", model=manifest["model"])
+    rec_dup = launcher_probe.recover_usage_from_logs(manifest["unit_log_dir"], unit_id=manifest["unit_id"], task_name="formal_1137e2bb", model=manifest["model"])
     check("a duplicate representation of the same log counts once", rec_dup["counted_events"] == 1 and rec_dup["duplicate_events_skipped"] == 1 and rec_dup["usage"] == rec_own["usage"], {k: rec_dup.get(k) for k in ("counted_events", "duplicate_events_skipped")})
     os.remove(os.path.join(manifest["unit_log_dir"], "duplicate-copy.eval"))
     rec_other = launcher_probe.recover_usage_from_logs(manifest["unit_log_dir"], unit_id="SOME-OTHER-UNIT", task_name="another_task", model=manifest["model"])
     check("the same log is NOT attributed to a unit with a different task identity (uncertain, nothing counted)", rec_other["recovered"] is False and rec_other["attribution_uncertain"] is True and rec_other["counted_events"] == 0, rec_other["summary"])
-    rec_none = launcher_probe.recover_usage_from_logs(os.path.join(out, "empty_unit_dir"), unit_id="x", task_name="pilot_1137e2bb", model=manifest["model"])
+    rec_none = launcher_probe.recover_usage_from_logs(os.path.join(out, "empty_unit_dir"), unit_id="x", task_name="formal_1137e2bb", model=manifest["model"])
     check("an empty execution directory recovers nothing and says so", rec_none["recovered"] is False and "nothing recovered" in rec_none["summary"])
 
     # ---------------------------------------------------------------- 2. judge gate (U3 + B2-1)

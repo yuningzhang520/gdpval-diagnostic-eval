@@ -26,8 +26,31 @@ from .extract import extract_all
 from .review import write_review_materials
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-GRADER_VERSION = "grading-1137e2bb-2026-10-31"  # the version every grade row and results record carries; config.grading.grader_version must equal it (checked by run_grading)
-TASK_MODULES = {CK.TASK: {"checks": CK.run_checks, "units": J.build_units_1137e2bb, "critical": CK.CRITICAL, "judge_items": CK.J_ITEMS}}
+# Versioning (2026-11-01): the shared engine (extraction, recalculation, outcome gate, scoring, pass selection, judge and
+# review infrastructure) carries ENGINE_VERSION; every task specification carries its own VERSION; a grading pass records
+# the combined grader version "<engine>+<task>" and the full git commit of the code that graded. config.grading must state
+# the engine version and the per-task versions (checked by run_grading before any grading).
+ENGINE_VERSION = "engine-2026-11-01.1"
+TASK_MODULES = {CK.TASK: {"checks": CK.run_checks, "units": J.build_units_1137e2bb, "critical": CK.CRITICAL, "judge_items": CK.J_ITEMS, "version": CK.VERSION}}
+
+
+def grader_version_of(task_id: str) -> str:
+    return f"{ENGINE_VERSION}+{TASK_MODULES[task_id]['version']}"
+
+
+GRADER_VERSION = grader_version_of(CK.TASK)  # the pilot task's combined version (kept as the name earlier code imports)
+
+
+def code_provenance() -> dict:
+    """Full git commit of the grading code and whether the tree was dirty when the pass ran (recorded in every pass)."""
+    try:
+        head = subprocess.run(["git", "rev-parse", "HEAD"], cwd=ROOT, capture_output=True, text=True, timeout=20)
+        dirty = subprocess.run(["git", "status", "--porcelain", "--untracked-files=no"], cwd=ROOT, capture_output=True, text=True, timeout=20)
+        if head.returncode != 0:
+            return {"commit": None, "dirty": None, "error": "git rev-parse failed"}
+        return {"commit": head.stdout.strip(), "dirty": bool(dirty.stdout.strip()) if dirty.returncode == 0 else None}
+    except Exception as ex:  # pragma: no cover
+        return {"commit": None, "dirty": None, "error": type(ex).__name__}
 
 
 def binding_from_log(log, sample) -> dict:
@@ -175,7 +198,7 @@ def _score(grades: list[dict], critical_spec: dict) -> dict:
 
 
 def grade_run(host_dir: str, log, sample_uuid: str, *, task_id: str, rubric: list[dict], task_prompt: str, reference: dict, out_dir: str,
-              judge=None, recalc: bool = True, runner=subprocess.run, grader_version: str = GRADER_VERSION,
+              judge=None, recalc: bool = True, runner=subprocess.run, grader_version: str | None = None,
               allow_stub: bool = False) -> dict:
     """Grade one run. ``log`` is a completed Inspect EvalLog (or an object with the same fields).
     A stub judge is refused unless ``allow_stub`` (test mode) is set explicitly. There is no
@@ -183,6 +206,9 @@ def grade_run(host_dir: str, log, sample_uuid: str, *, task_id: str, rubric: lis
     Returns the results record that was appended to out_dir/results.jsonl."""
     if judge is not None and getattr(judge, "is_stub", False) and not allow_stub:
         raise ValueError("stub judge refused in formal grading mode; pass allow_stub=True only in an explicit test run")
+    if task_id not in TASK_MODULES:
+        raise ValueError(f"no grader registered for task {task_id}")
+    grader_version = grader_version or grader_version_of(task_id)
     os.makedirs(out_dir, exist_ok=True)
     sample = next((s for s in log.samples if s.uuid == sample_uuid), None)
     if sample is None:
@@ -192,6 +218,7 @@ def grade_run(host_dir: str, log, sample_uuid: str, *, task_id: str, rubric: lis
     previous = grading_passes(out_dir, binding["uuid"])
     graded_at = dt.datetime.now(dt.timezone.utc)
     rec = {"run": binding, "task_id": task_id, "graded_at": graded_at.isoformat(timespec="seconds"), "grader_version": grader_version,
+           "engine_version": ENGINE_VERSION, "task_grader_version": TASK_MODULES[task_id]["version"], "code": code_provenance(),
            "grading_pass": f"pass-{graded_at.strftime('%Y%m%dT%H%M%S%fZ')}-{os.urandom(2).hex()}",
            "pass_kind": {"none": "deterministic_only", "real": "deterministic_plus_judge", "stub-test-mode": "stub_test"}[judge_mode],
            "supersedes_pass": previous[-1].get("grading_pass") if previous else None, "pass_index": len(previous) + 1,

@@ -1,3 +1,5 @@
+> SUPERSEDED 2026-11-01: the candidate pilot on `1137e2bb…` described here was not run. The revised evaluation architecture replaces it with run classes (`dev`, `validation`, `compat`, `formal`; `config.json` `batches`, `PLAN.md` sections 3, 4 and 7). Kept unchanged below as the record of the superseded request.
+
 # Pilot A — paid-run request (DRAFT, not executed)
 
 Status: DRAFT request for approval, corrected 2026-10-31 after the Stage 3b review. Nothing in

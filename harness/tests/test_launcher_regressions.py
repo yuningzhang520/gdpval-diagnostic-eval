@@ -744,14 +744,24 @@ class RealRunCliTests(_Base):
 
     def setUp(self):
         super().setUp()
-        self.runs = os.path.join(self.root, "runs"); os.makedirs(self.runs)
+        # run classes (2026-11-01): the CLI runs the formal task set with the candidates only under the 'formal' class; the
+        # repository config keeps the formal ceiling as a PLACEHOLDER until freeze, so these tests use a config copy with a
+        # numeric formal ceiling and labelled paths (<root>/formal/runs, <root>/formal/ledger.json)
+        self.runs = os.path.join(self.root, "formal", "runs"); os.makedirs(self.runs)
+        self.ledger_path = os.path.join(self.root, "formal", "ledger.json")
         self.env_file = os.path.join(self.root, "env.test")
         Path(self.env_file).write_text("ANTHROPIC_API_KEY=dummy-test-key-not-real-0003\n")
         self.image_id = self.cfg["sandbox"]["image_id"]
         self.docker = lambda cmd, **kw: SimpleNamespace(returncode=0, stdout=f"{self.image_id}|arm64|linux|[]\n", stderr="")
+        self.cfg_path = self.config_with(formal_ceiling=30)
 
-    def argv(self, *extra, model=None, estimate="5", config=None):
-        return ["--config", config or CONFIG, "--runs-root", self.runs, "--ledger", os.path.join(self.root, "ledger.json"), "--task-id", self.TASK,
+    def config_with(self, *, formal_ceiling=30, extra_models=(), name="config.json"):
+        c = cfg(); c["batches"]["formal"]["budget_ceiling_usd"] = formal_ceiling
+        c["batches"]["formal"]["models"] = list(c["batches"]["formal"]["models"]) + list(extra_models)
+        path = os.path.join(self.root, name); json.dump(c, open(path, "w"), indent=2); return path
+
+    def argv(self, *extra, model=None, estimate="5", config=None, run_label="formal"):
+        return ["--config", config or self.cfg_path, "--run-label", run_label, "--runs-root", self.runs, "--ledger", self.ledger_path, "--task-id", self.TASK,
                 "--model", model or self.MODEL, "--estimate-usd", estimate, "--env-file", self.env_file, *extra]
 
     def real(self, *extra, config=None, model=None, estimate="5"):
@@ -771,12 +781,12 @@ class RealRunCliTests(_Base):
         self.assertEqual(os.listdir(self.runs), [])  # nothing created before the refusals
 
     def test_prompt_hash_mismatch_refuses_before_any_call(self):
-        cfg = json.loads(Path(CONFIG).read_text()); cfg["generation"]["system_prompt_sha256"] = "0" * 64
+        cfg = json.loads(Path(self.cfg_path).read_text()); cfg["generation"]["system_prompt_sha256"] = "0" * 64  # the formal-class copy, with the prompt hash broken
         bad = os.path.join(self.root, "config_bad_prompt.json"); Path(bad).write_text(json.dumps(cfg))
         calls = []
         with self.assertRaisesRegex(L.LauncherError, "system prompt file"):
             L.main(self.real(config=bad), eval_fn=lambda *a, **k: calls.append(1), environ={}, docker_runner=self.docker)
-        self.assertEqual(calls, []); self.assertFalse(os.path.exists(os.path.join(self.root, "ledger.json")) and json.loads(Path(os.path.join(self.root, "ledger.json")).read_text())["entries"])
+        self.assertEqual(calls, []); self.assertFalse(os.path.exists(self.ledger_path) and json.loads(Path(self.ledger_path).read_text())["entries"])
         self.assertEqual(L.verify_system_prompt(self.cfg)["matched_form"], "stripped_text")
 
     def test_real_run_path_calls_the_injected_eval_once_with_the_built_task_and_records_provenance(self):
@@ -788,8 +798,9 @@ class RealRunCliTests(_Base):
         self.assertEqual(rc, 0); self.assertEqual(len(seen), 1)
         task, kw = seen[0]
         self.assertEqual((task.name, kw["model"], kw["max_tokens"], kw["token_limit"], kw["time_limit"], kw["retry_on_error"], kw["fail_on_error"], kw["task_retry_attempts"]),
-                         ("pilot_1137e2bb", self.MODEL, self.cfg["generation"]["max_tokens_per_request"], self.cfg["generation"]["token_limit"], self.cfg["generation"]["time_limit_s"], 0, False, 0))
+                         ("formal_1137e2bb", self.MODEL, self.cfg["generation"]["max_tokens_per_request"], self.cfg["generation"]["token_limit"], self.cfg["generation"]["time_limit_s"], 0, False, 0))
         self.assertEqual(os.path.dirname(kw["log_dir"]), os.path.join(self.runs, "inspect_logs")); self.assertTrue(os.path.isdir(kw["log_dir"]))  # per-execution log directory
+        self.assertEqual(task.name, "formal_1137e2bb")
         self.assertEqual(env.get("ANTHROPIC_API_KEY"), "dummy-test-key-not-real-0003")
         records = {f: json.loads(Path(self.runs, "launcher_records", f).read_text()) for f in os.listdir(os.path.join(self.runs, "launcher_records"))}
         prov = next(v for k, v in records.items() if "_real_run_provenance_" in k)
@@ -798,17 +809,17 @@ class RealRunCliTests(_Base):
         self.assertTrue(prov["config_sha256"] and prov["code"]["commit"] and prov["staging_verified"]); self.assertIn("not verify", prov["authorization"]["note"])
         sample = next(v for k, v in records.items() if "_sample_" in k and "_sample_error_" not in k and "_sample_cardinality_" not in k)
         self.assertEqual((sample["settlement"]["cost_usd"], sample["settlement"]["estimated"]), ("0.008000", False))  # 1000 x 4 + 200 x 20 per MTok
-        ledger = json.loads(Path(self.root, "ledger.json").read_text())
+        ledger = json.loads(Path(self.ledger_path).read_text())
         self.assertEqual([e["type"] for e in ledger["entries"]], ["reservation", "settlement"])
         for f in Path(self.runs).rglob("*"):
             if f.is_file():
                 self.assertNotIn("dummy-test-key-not-real-0003", f.read_text(errors="replace"), f)
-        self.assertNotIn("dummy-test-key-not-real-0003", Path(self.root, "ledger.json").read_text())
+        self.assertNotIn("dummy-test-key-not-real-0003", Path(self.ledger_path).read_text())
 
     def test_dry_run_shares_the_unit_construction_and_never_calls_eval(self):
         rc = L.main(self.argv("--dry-run"), eval_fn=lambda *a, **k: self.fail("eval called"), environ={"INSPECT_DISABLE_MODEL_API": "1"}, docker_runner=self.docker)
         self.assertEqual(rc, 0)
-        ledger = json.loads(Path(self.root, "ledger.json").read_text())
+        ledger = json.loads(Path(self.ledger_path).read_text())
         self.assertEqual([e["type"] for e in ledger["entries"]], ["reservation", "void"])
         self.assertTrue(any("_dry_run_" in f for f in os.listdir(os.path.join(self.runs, "launcher_records"))))
 
@@ -891,3 +902,90 @@ class SandboxPreflightTests(_Base):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+
+class RunClassTests(_Base):
+    """Run classes (2026-11-01): per-batch controls from config.batches, labelled roots and ledgers that are never mixed,
+    the model and task set of a class, the per-class cost limit, the append-only run inventory and the artifact manifest."""
+    TASK, MODEL = RealRunCliTests.TASK, RealRunCliTests.MODEL
+    DEV_MODEL = "google/gemini-3.8-flash"
+    COMPAT_TASK = "87da214f-fd92-4c58-9854-f4d0d10adce0"
+    config_with, argv, real = RealRunCliTests.config_with, RealRunCliTests.argv, RealRunCliTests.real
+
+    def setUp(self):
+        super().setUp()
+        self.runs = os.path.join(self.root, "formal", "runs"); os.makedirs(self.runs)
+        self.ledger_path = os.path.join(self.root, "formal", "ledger.json")
+        self.env_file = os.path.join(self.root, "env.test")
+        Path(self.env_file).write_text("ANTHROPIC_API_KEY=dummy-test-key-not-real-0003\n")
+        self.image_id = self.cfg["sandbox"]["image_id"]
+        self.docker = lambda cmd, **kw: SimpleNamespace(returncode=0, stdout=f"{self.image_id}|arm64|linux|[]\n", stderr="")
+        self.cfg_path = self.config_with(formal_ceiling=30)
+
+    def test_batch_controls_fail_closed_on_unknown_label_or_placeholder_ceiling(self):
+        c = cfg()
+        with self.assertRaisesRegex(L.LauncherError, "run label"):
+            L.batch_controls(c, "pilot")
+        with self.assertRaisesRegex(L.LauncherError, "not a number"):
+            L.batch_controls(c, "formal")  # PLACEHOLDER until freeze-v1
+        dev = L.batch_controls(c, "dev")
+        self.assertEqual((dev["budget_ceiling_usd"], dev["models"], dev["task_manifest"], dev["cost_limit_usd"]), (Decimal("30"), [self.DEV_MODEL], "data/selected_tasks.json", 3.0))
+        compat = L.batch_controls(c, "compat")
+        self.assertEqual((compat["task_manifest"], sorted(compat["models"]), compat["cost_limit_usd"]), ("data/compat_tasks.json", ["anthropic/claude-opus-5-5", "openai/gpt-6.1-sol"], None))
+
+    def test_run_class_paths_must_carry_the_label_and_never_another_class(self):
+        L.check_run_class_paths("dev", os.path.join(self.root, "dev", "runs"), os.path.join(self.root, "dev", "ledger.json"))
+        with self.assertRaisesRegex(L.LauncherError, "does not lie under"):
+            L.check_run_class_paths("dev", os.path.join(self.root, "runs"), os.path.join(self.root, "dev", "ledger.json"))
+        with self.assertRaisesRegex(L.LauncherError, "refusing to mix"):
+            L.check_run_class_paths("dev", os.path.join(self.root, "dev", "runs"), os.path.join(self.root, "validation", "ledger.json"))
+        with self.assertRaisesRegex(L.LauncherError, "run classes"):
+            L.main(self.argv("--dry-run", run_label="dev", config=CONFIG, model=self.DEV_MODEL), docker_runner=self.docker)  # formal paths with the dev label
+
+    def test_dev_dry_run_uses_the_dev_controls_and_writes_the_inventory(self):
+        runs = os.path.join(self.root, "dev", "runs"); ledger = os.path.join(self.root, "dev", "ledger.json")
+        argv = ["--config", CONFIG, "--run-label", "dev", "--runs-root", runs, "--ledger", ledger, "--task-id", self.TASK, "--model", self.DEV_MODEL, "--estimate-usd", "1.00", "--env-file", self.env_file, "--dry-run"]
+        self.assertEqual(L.main(argv, docker_runner=self.docker), 0)
+        state = json.loads(Path(ledger).read_text())
+        self.assertEqual((state["label"], state["ceiling_usd"]), ("dev", "30.000000"))
+        rec = next(json.loads(Path(runs, "launcher_records", f).read_text()) for f in os.listdir(os.path.join(runs, "launcher_records")) if "_dry_run_" in f)
+        self.assertEqual((rec["run_label"], rec["task_id"], rec["eval_kwargs"]["cost_limit"], rec["eval_kwargs"]["reasoning_effort"]), ("dev", self.TASK, 3.0, "high"))
+        self.assertIn("input=0.75", str(rec["eval_kwargs"]["model_cost_config"][self.DEV_MODEL]))  # ModelCost serialised into the record
+        inv = [json.loads(l) for l in Path(runs, "run_inventory.jsonl").read_text().splitlines()]
+        self.assertEqual([(i["kind"], i["run_label"], i["task_id"], i["model"], i["dry_run"]) for i in inv], [("dry_run", "dev", self.TASK, self.DEV_MODEL, True)])
+        self.assertTrue(inv[0]["config_sha256"] and inv[0]["code_commit"])
+        with self.assertRaisesRegex(b.LedgerConflict, "label"):  # the dev ledger cannot be reused by another class
+            b.BudgetLedger(ledger, 30, PRICES, label="validation")
+
+    def test_model_and_task_set_are_bound_to_the_class(self):
+        with self.assertRaisesRegex(L.LauncherError, "not allowed in run class 'dev'"):
+            L.main(["--config", CONFIG, "--run-label", "dev", "--runs-root", os.path.join(self.root, "dev", "runs"), "--ledger", os.path.join(self.root, "dev", "ledger.json"), "--task-id", self.TASK,
+                    "--model", self.MODEL, "--estimate-usd", "1", "--env-file", self.env_file, "--dry-run"], docker_runner=self.docker)
+        with self.assertRaisesRegex(L.LauncherError, "not in the 'compat' task set"):
+            L.main(["--config", CONFIG, "--run-label", "compat", "--runs-root", os.path.join(self.root, "compat", "runs"), "--ledger", os.path.join(self.root, "compat", "ledger.json"), "--task-id", self.TASK,
+                    "--model", self.MODEL, "--estimate-usd", "8", "--env-file", self.env_file, "--dry-run"], docker_runner=self.docker)
+        runs = os.path.join(self.root, "compat", "runs")
+        rc = L.main(["--config", CONFIG, "--run-label", "compat", "--runs-root", runs, "--ledger", os.path.join(self.root, "compat", "ledger.json"), "--task-id", self.COMPAT_TASK,
+                     "--model", self.MODEL, "--estimate-usd", "8", "--env-file", self.env_file, "--dry-run"], docker_runner=self.docker)
+        self.assertEqual(rc, 0)
+        rec = next(json.loads(Path(runs, "launcher_records", f).read_text()) for f in os.listdir(os.path.join(runs, "launcher_records")) if "_dry_run_" in f)
+        self.assertEqual((rec["task_id"], rec["run_label"], rec["eval_kwargs"]["cost_limit"]), (self.COMPAT_TASK, "compat", 20.0))  # compat keeps the generation cost limit
+        self.assertEqual(json.loads(Path(self.root, "compat", "ledger.json").read_text())["ceiling_usd"], "45.000000")
+
+    def test_real_run_records_inventory_binding_and_artifact_manifest(self):
+        def fake_eval(task, **kw):
+            return usage_log(kw["model"], ModelUsage(input_tokens=1000, output_tokens=200))
+        rc = L.main(self.real(), eval_fn=fake_eval, environ={}, docker_runner=self.docker)
+        self.assertEqual(rc, 0)
+        inv = [json.loads(l) for l in Path(self.runs, "run_inventory.jsonl").read_text().splitlines()]
+        self.assertEqual(len(inv), 1); i = inv[0]
+        self.assertEqual((i["kind"], i["run_label"], i["task_id"], i["model"], i["dry_run"], i["inspect_status"]), ("sample", "formal", self.TASK, self.MODEL, False, "success"))
+        self.assertTrue(i["run_uuid"] and i["settlement_cost_usd"] and i["artifact_manifest"]["path"] and i["artifact_manifest"]["sha256"])
+        man = json.loads(Path(i["artifact_manifest"]["path"]).read_text())
+        self.assertEqual((man["run_uuid"], man["run_label"], man["files"], man["file_count"]), (i["run_uuid"], "formal", [], 0))  # the synthetic log collected nothing: an empty, hashed manifest
+        run_json = json.loads(Path(self.runs, i["run_uuid"], "ledger_binding.json").read_text())
+        self.assertEqual(run_json["run_uuid"], i["run_uuid"])
+        launcher = L.PilotLauncher(self.cfg, runs_root=self.runs, ledger=b.BudgetLedger.open_existing(self.ledger_path, PRICES), eval_fn=None, run_label="formal")
+        again = launcher.write_artifact_manifest(i["run_uuid"])
+        self.assertEqual((again["written"], again["consistent_with_existing"]), (False, True))  # written once, verified afterwards

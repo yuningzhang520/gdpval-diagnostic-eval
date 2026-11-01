@@ -5,7 +5,7 @@ import os
 import re
 import unittest
 
-from grading.grade import GRADER_VERSION
+from grading.grade import ENGINE_VERSION, TASK_MODULES
 from harness import launcher as L
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -22,19 +22,22 @@ class DocsConsistencyTests(unittest.TestCase):
             self.readme = f.read()
 
     def test_readme_flags_exist_in_the_cli_parsers(self):
-        known = argparse_flags(os.path.join(ROOT, "harness", "launcher.py")) | argparse_flags(os.path.join(ROOT, "grading", "run_grading.py")) | argparse_flags(os.path.join(ROOT, "harness", "ledger_admin.py"))
+        known = (argparse_flags(os.path.join(ROOT, "harness", "launcher.py")) | argparse_flags(os.path.join(ROOT, "grading", "run_grading.py"))
+                 | argparse_flags(os.path.join(ROOT, "harness", "ledger_admin.py")) | argparse_flags(os.path.join(ROOT, "harness", "batch.py")))
         mentioned = set(re.findall(r"(--[a-z][a-z-]+)", self.readme)) - {"--frozen", "--revision-file", "--out", "--parquet", "--deep", "--supplementary", "--tasks", "--log", "--task-id", "--format"}
         unknown = sorted(f for f in mentioned if f not in known and f not in ("--dry-run", "--real-run"))
         self.assertEqual(unknown, [], unknown)
-        self.assertTrue({"--dry-run", "--real-run", "--confirm", "--judge", "--rejudge", "--confirm-judge", "--resolution"} <= known)
+        self.assertTrue({"--dry-run", "--real-run", "--confirm", "--judge", "--rejudge", "--confirm-judge", "--resolution", "--run-label", "--confirm-batch"} <= known)
 
     def test_readme_modules_exist_and_grader_version_matches_config(self):
         for mod in ("harness/launcher.py", "harness/task.py", "harness/samples.py", "harness/tools.py", "harness/collect.py", "harness/budget.py", "harness/ledger_admin.py",
                     "grading/run_grading.py", "grading/grade.py", "grading/extract.py", "grading/checks_1137e2bb.py", "grading/judge.py", "grading/review.py", "grading/costs.py",
-                    "harness/tests/run_isolated.sh", "grading/tests/regress_grading_cli.py", "docs/pilot_a_request.md"):
+                    "harness/tests/run_isolated.sh", "grading/tests/regress_grading_cli.py", "docs/pilot_a_request.md",
+                    "harness/batch.py", "grading/gold_variants_1137e2bb.py", "grading/tests/test_gold_1137e2bb.py"):
             self.assertIn(f"`{mod}`", self.readme, mod); self.assertTrue(os.path.exists(os.path.join(ROOT, mod)), mod)
         cfg = L.load_config(os.path.join(ROOT, "config.json"))
-        self.assertEqual(cfg["grading"]["grader_version"], GRADER_VERSION)
+        self.assertEqual(cfg["grading"]["engine_version"], ENGINE_VERSION)
+        self.assertEqual(cfg["grading"]["task_grader_versions"], {t: m["version"] for t, m in TASK_MODULES.items()})
         self.assertNotIn("Blocking", cfg["generation"]["token_semantics"]["launcher_wiring"])
 
     def test_readme_paid_examples_are_placeholders_not_runnable_commands(self):

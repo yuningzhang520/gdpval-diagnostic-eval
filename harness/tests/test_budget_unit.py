@@ -470,3 +470,18 @@ class ClaimAndEffectiveSettlementTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class RunClassLedgerTests(unittest.TestCase):
+    """Run classes (2026-11-01): a ledger belongs to one class; grading opens it with its stored ceiling and label."""
+    def test_open_existing_uses_the_stored_ceiling_and_label_and_another_label_is_refused(self):
+        with tempfile.TemporaryDirectory() as d:
+            path = os.path.join(d, "dev", "ledger.json")
+            lg = b.BudgetLedger(path, 15, PRICES, label="dev")
+            lg.reserve("u1", "sample", 1, {"model": "m", "task": "t"})
+            again = b.BudgetLedger.open_existing(path, PRICES)
+            self.assertEqual((str(again.ceiling), again.label, again.snapshot()["open_reservations"]), ("15.000000", "dev", ["u1"]))
+            with self.assertRaisesRegex(b.LedgerConflict, "label"):
+                b.BudgetLedger(path, 15, PRICES, label="validation")
+            with self.assertRaisesRegex(b.LedgerConflict, "does not exist"):
+                b.BudgetLedger.open_existing(os.path.join(d, "missing.json"), PRICES)

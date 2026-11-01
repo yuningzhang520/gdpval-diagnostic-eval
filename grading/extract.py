@@ -85,6 +85,11 @@ def extract_xlsx(path: str) -> dict:
                     vals.append(None)
                     continue
                 formula = v if isinstance(v, str) and v.startswith("=") else None
+                if formula and cached is None and wv[c.coordinate].data_type == "str":
+                    # A string-typed formula cell with an empty <v/> is a cached EMPTY-STRING result (Excel and
+                    # LibreOffice both write t="str" with an empty value for "" results); openpyxl returns None for
+                    # it, exactly as for a formula with no cached value, which is typed "n". Keep the two apart.
+                    cached = ""
                 cells[c.coordinate] = {"formula": formula, "cached": _cell_value(cached), "literal": None if formula else _cell_value(v)}
                 vals.append(_cell_value(cached if formula else v))
             rows.append(vals)
@@ -248,7 +253,18 @@ def recalculate_xlsx(copy_path: str, work_dir: str, runner=subprocess.run, timeo
         return {**record, "status": "failed", "reason": f"recalculated workbook unreadable: {fmt['error']}", "produced": produced}
     try:
         wb = openpyxl.load_workbook(out_path, data_only=True)
-        values = {ws.title: {c.coordinate: _cell_value(c.value) for row in ws.iter_rows() for c in row if c.value is not None} for ws in wb.worksheets}
+        wb_f = openpyxl.load_workbook(out_path, data_only=False)
+        values = {}
+        for ws in wb.worksheets:
+            wf = wb_f[ws.title]
+            vals = {}
+            for row in ws.iter_rows():
+                for c in row:
+                    if c.value is not None:
+                        vals[c.coordinate] = _cell_value(c.value)
+                    elif c.data_type == "str" and isinstance(wf[c.coordinate].value, str) and wf[c.coordinate].value.startswith("="):
+                        vals[c.coordinate] = ""  # recalculated formula whose result is the empty string (t="str", empty <v>)
+            values[ws.title] = vals
     except Exception as ex:
         return {**record, "status": "failed", "reason": f"recalculated workbook unreadable: {type(ex).__name__}", "produced": produced}
     return {**record, "status": "ok", "values": values, "recalculated_copy": out_path, "output_sha256": sha256(out_path), "sheets": list(values)}

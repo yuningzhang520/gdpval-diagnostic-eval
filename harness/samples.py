@@ -91,11 +91,26 @@ def _sha256(path: str) -> str:
     return h.hexdigest()
 
 
-def expected_staged_from_config(config_path: str = CONFIG) -> dict[str, dict[str, dict]]:
-    """task_id -> {sandbox_path: {"source", "bytes", "sha256"}} from config.json."""
+COMPAT_SELECTED = os.path.join(ROOT, "data", "compat_tasks.json")
+COMPAT_MANIFEST = os.path.join(ROOT, "data", "compat_manifest.json")
+TASK_SETS = {"selected": {"selected": SELECTED, "manifest": MANIFEST, "config_key": "tasks"},
+             "compat": {"selected": COMPAT_SELECTED, "manifest": COMPAT_MANIFEST, "config_key": "compat_tasks"}}
+
+
+def task_set_for_manifest(task_manifest: str) -> str:
+    """The task set ('selected' or 'compat') a batch's task_manifest path names (config.batches.<label>.task_manifest)."""
+    norm = task_manifest.replace(os.sep, "/")
+    for name, ts in TASK_SETS.items():
+        if norm == os.path.relpath(ts["selected"], ROOT).replace(os.sep, "/") or norm == ts["selected"]:
+            return name
+    raise ValueError(f"unknown task manifest {task_manifest!r}; expected one of {[os.path.relpath(t['selected'], ROOT) for t in TASK_SETS.values()]}")
+
+
+def expected_staged_from_config(config_path: str = CONFIG, config_key: str = "tasks") -> dict[str, dict[str, dict]]:
+    """task_id -> {sandbox_path: {"source", "bytes", "sha256"}} from config.json (``tasks`` or ``compat_tasks``)."""
     cfg = load_json(config_path)
     out: dict[str, dict[str, dict]] = {}
-    for t in cfg["tasks"]:
+    for t in cfg.get(config_key, []):
         entries = {}
         for e in t["staged_files"]:
             if e["sandbox_path"] in entries:
@@ -165,13 +180,16 @@ def verify_staged_files(task_id: str, files: dict[str, str], expected: dict[str,
     return {"task_id": task_id, "files_verified": len(files), "sha256_checked": True, "config": os.path.relpath(CONFIG, ROOT)}
 
 
-def build_samples(task_ids: list[str] | None = None, verify_config: str | None = None) -> list[Sample]:
-    """Build the samples; with ``verify_config`` every staged file is verified against that
-    config and a failure prevents the sample from being built (the launcher always verifies)."""
-    sel = load_json(SELECTED)
-    manifest = load_json(MANIFEST)
-    all_ids = [t["task_id"] for t in sel["tasks"]]
-    expected = expected_staged_from_config(verify_config) if verify_config else None
+def build_samples(task_ids: list[str] | None = None, verify_config: str | None = None, task_set: str = "selected") -> list[Sample]:
+    """Build the samples of one task set ('selected': the ten formal tasks; 'compat': the compatibility task, from its own
+    manifest and config block); with ``verify_config`` every staged file is verified against that config and a failure
+    prevents the sample from being built (the launcher always verifies). The cross-task check uses the ids of BOTH sets,
+    so a compatibility sample can never carry a formal task's file and vice versa."""
+    ts = TASK_SETS[task_set]
+    sel = load_json(ts["selected"])
+    manifest = load_json(ts["manifest"])
+    all_ids = sorted({t["task_id"] for name in TASK_SETS for t in load_json(TASK_SETS[name]["selected"])["tasks"] if os.path.exists(TASK_SETS[name]["selected"])})
+    expected = expected_staged_from_config(verify_config, ts["config_key"]) if verify_config else None
     samples = []
     for t in sel["tasks"]:
         tid = t["task_id"]
@@ -179,7 +197,7 @@ def build_samples(task_ids: list[str] | None = None, verify_config: str | None =
             continue
         files = task_files(tid, manifest)
         check_allowlist(tid, files, all_ids)
-        meta = {"occupation": t["occupation"], "group": t["group"], "staged_files": sorted(files)}
+        meta = {"occupation": t["occupation"], "group": t["group"], "staged_files": sorted(files), "task_set": task_set}
         if expected is not None:
             meta["staging_verified"] = verify_staged_files(tid, files, expected.get(tid, {}), all_ids)
         with open(os.path.join(PROMPTS_DIR, f"{tid}.txt"), encoding="utf-8") as f:

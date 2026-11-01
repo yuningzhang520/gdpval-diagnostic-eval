@@ -151,3 +151,24 @@ class OpenAIRequestTests(_Offline):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class GoogleMappingTests(_Offline):
+    """Development model (2026-11-01): the approved settings reach the Google provider of inspect_ai 0.3.286 as
+    thinking_level HIGH with max_output_tokens 32,000; the ledger and Inspect price tables carry gemini-3.8-flash."""
+    def test_high_effort_becomes_thinking_level_high_and_prices_are_registered(self):
+        import os
+        from inspect_ai.model import GenerateConfig, get_model
+        from harness import launcher as L
+        os.environ["GOOGLE_API_KEY"] = "dummy-not-a-real-key-offline"
+        api = get_model("google/gemini-3.8-flash").api
+        self.assertTrue(api.is_gemini_3_plus() and api.is_gemini_flash())
+        tc = api.chat_thinking_config(GenerateConfig(reasoning_effort="high", reasoning_summary="none", max_tokens=32000))
+        self.assertEqual((tc.include_thoughts, str(tc.thinking_level), tc.thinking_budget), (True, "ThinkingLevel.HIGH", None))
+        cfg = L.load_config(os.path.join(L.ROOT, "config.json"))
+        price = L.prices_from_config(cfg)["google/gemini-3.8-flash"]
+        self.assertEqual((price["input"], price["output"], price["cache_read"], price["cache_write"]), (0.75, 3.75, 0.075, 0.75))
+        mc = L.model_cost_config(cfg)["google/gemini-3.8-flash"]
+        self.assertEqual((mc.input, mc.output, mc.input_cache_read, mc.input_cache_write), (0.75, 3.75, 0.075, 0.75))
+        kw = L.eval_kwargs(cfg, log_dir="/x", model="google/gemini-3.8-flash", cost_limit_override=3.0)
+        self.assertEqual((kw["cost_limit"], kw["reasoning_effort"], kw["max_tokens"]), (3.0, "high", 32000))

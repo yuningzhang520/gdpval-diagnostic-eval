@@ -45,6 +45,7 @@ from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 from .extract import ERROR_PREFIXES
 
 TASK = "1137e2bb-bdf9-4876-b572-f29b7de5e595"
+VERSION = "1137e2bb-2026-11-01.1"  # task-specification version (gold-first fixes of 2026-11-01: total-column synonyms, annotation rows, summary fallback)
 D_ITEMS = [1, 2] + [i for i in range(3, 23) if i != 11] + [25, 26] + list(range(31, 63))
 J_ITEMS = [11, 23, 24, 27, 28, 29, 30]
 CRITICAL = {"C1": {"items": [5, 6, 7, 8, 18, 19, 20] + list(range(31, 56)), "name": "Line flags"},
@@ -70,8 +71,10 @@ FLAG_SCHEMA = {
                    "keywords": (("price",), ("mismatch", "flag", "error", "check", "variance", "diff"))},
     "case_flag": {"synonyms": ["case pack error", "case pack error flag", "case pack flag", "case pack violation", "case pack check", "case_pack_error", "casepack error", "case error", "case pack error (1/0)", "case pack mismatch"],
                   "keywords": (("case",), ("error", "flag", "check", "violation", "mismatch"))},
-    "total": {"synonyms": ["total errors", "total error", "total errors per line", "errors total", "error count", "total issues", "errors", "# errors", "total"],
-              "keywords": (("total",), ("error", "issue", "count"))},
+    "total": {"synonyms": ["total errors", "total error", "total errors per line", "errors total", "error count", "total issues", "errors", "# errors", "total",
+                           "number of errors", "no. of errors", "no of errors", "# of errors", "num errors", "number of errors per line", "error count per line",
+                           "total error count", "errors per line", "error total", "line errors", "errors (total)", "total errors (per line)"],
+              "keywords": (("total", "number", "count", "#", "num "), ("error", "issue"))},
     "summary_text": {"synonyms": ["error summary", "summary", "error type", "error types", "error description", "description", "issue", "issues", "errors found", "error detail", "error summary text"],
                      "keywords": (("summary", "error type", "description", "issue", "detail"), ())},
     "case_missing": {"synonyms": ["case pack missing", "missing case pack", "case pack missing flag", "invalid case pack", "case pack missing/invalid"],
@@ -470,7 +473,11 @@ def parse_rows(sheet: dict, table: dict, reference_lines: list[dict]) -> dict:
     that matches no reference entity keeps its normalised form (a parsed but wrong id). Quantities
     are exact decimals. Row classes: identified (PO, SKU, quantity resolved to one entity),
     unidentified (source data present but identity unresolved: unparseable or blank id, ambiguous
-    entity, unresolved quantity), no_id (no source-field data at all: notes, footers)."""
+    entity, unresolved quantity), no_id (no source-field data at all, or an annotation row: a blank
+    quantity cell and blank business cells, whatever text the id cells hold - footer TOTAL rows,
+    Excel subtotal rows such as "PO1001 Total", legends and notes; gold-derived layout evidence of
+    2026-11-01). An annotation row is never a business row: it is not summed, not matched and never
+    counted as a row that could hold a missing input line."""
     m = table["mapping"]
     cols = m["cols"]
     ref_ids, collisions = reference_ids(reference_lines)
@@ -510,10 +517,13 @@ def parse_rows(sheet: dict, table: dict, reference_lines: list[dict]) -> dict:
             else:
                 units = {"status": units_cell["status"], "value": None}
         source_present = any(cells[f]["status"] != "empty" for f in SOURCE_FIELDS if f in cells)
+        annotation = units_cell is not None and units_cell["status"] == "empty" and all(cells[f]["status"] == "empty" for f in BUSINESS_FIELDS if f in cells)
         if ids["po"]["status"] == "ok" and ids["sku"]["status"] == "ok" and units["status"] == "ok" and ids["po"]["entity_status"] != "ambiguous_entity" and ids["sku"]["entity_status"] != "ambiguous_entity":
             cls, reason = "identified", None
         elif not source_present:
             cls, reason = "no_id", "no source-field data in the row"
+        elif annotation:
+            cls, reason = "no_id", "annotation row: blank quantity and blank business cells (footer, subtotal or note), not a data row"
         else:
             cls = "unidentified"
             parts = []
@@ -1150,7 +1160,9 @@ def run_checks(extraction: dict, reference: dict, rubric: list[dict], integrity:
             # --- summary table
             summary = locate_summary_sheet(x, {t["sheet"] for t in tables} | {c["sheet"] for c in ident["candidates"]})
             summary_meta = {k: summary[k] for k in ("sheet", "header_row")} if summary else None
-            other_sheets = [n for n in x["sheets"] if n not in {t["sheet"] for t in tables}]
+            # sheets that could still hold a summary in an unrecognised form: neither the detail table(s) nor any other
+            # identified detail-table candidate (a copy of the raw input is a detail candidate, never a possible summary)
+            other_sheets = [n for n in x["sheets"] if n not in ({t["sheet"] for t in tables} | {c["sheet"] for c in ident["candidates"]})]
             if summary is None:
                 if not other_sheets:
                     fill(SUMMARY_ITEMS, "fail", "the workbook has no sheet other than the detail sheet: no separate SKU summary (confirmed)", "model_caused", {"file": xlsx_name, "sheets": list(x["sheets"])})

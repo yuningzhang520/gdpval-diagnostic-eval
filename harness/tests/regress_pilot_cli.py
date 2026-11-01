@@ -8,6 +8,7 @@ ledger itself has no price for mockllm, so the settlement must be the conservati
 Produces a real run directory and a real .eval that the U2 grading-CLI regression consumes.
 Usage: harness/tests/run_isolated.sh <project_root> harness.tests.regress_pilot_cli --output-root <new dir>"""
 import argparse
+import hashlib
 import json
 import os
 
@@ -31,7 +32,9 @@ def run_pilot_cli(output_root: str) -> dict:
     """Run the real-run CLI path with the real Inspect eval, the docker sandbox and mockllm into output_root; returns the
     manifest (run dir, eval log, ledger, unit id). Reused by grading.tests.regress_grading_cli to obtain a fresh, bound run."""
     out = os.path.realpath(output_root); os.makedirs(out, exist_ok=False)
-    runs = os.path.join(out, "runs"); os.makedirs(runs)
+    runs = os.path.join(out, "formal", "runs"); os.makedirs(runs)  # run class 'formal' (the only class whose task set holds the formal tasks); config copy with a numeric ceiling and the mock model allowed
+    cfg_copy = json.load(open(os.path.join(ROOT, "config.json"))); cfg_copy["batches"]["formal"]["budget_ceiling_usd"] = 30; cfg_copy["batches"]["formal"]["models"].append(M)
+    config_path = os.path.join(out, "config.json"); json.dump(cfg_copy, open(config_path, "w"), indent=2)
     env_file = os.path.join(out, "env.test")
     with open(env_file, "w", encoding="utf-8") as f:
         f.write("ANTHROPIC_API_KEY=dummy-test-key-not-real-0004\n")
@@ -46,7 +49,7 @@ def run_pilot_cli(output_root: str) -> dict:
         kw.update(display="plain", log_level="warning")
         return inspect_eval(task, **kw)
 
-    argv = ["--runs-root", runs, "--ledger", os.path.join(out, "ledger.json"), "--task-id", TASK, "--model", M, "--estimate-usd", "1", "--env-file", env_file,
+    argv = ["--config", config_path, "--run-label", "formal", "--runs-root", runs, "--ledger", os.path.join(out, "formal", "ledger.json"), "--task-id", TASK, "--model", M, "--estimate-usd", "1", "--env-file", env_file,
             "--real-run", "--confirm", f"{TASK}|{M}|1", "--authorized-by", "mock-regression", "--authorization-ref", "harness/tests/regress_pilot_cli.py"]
     rc = H.main(argv, eval_fn=mock_eval, environ=env)
     check("main --real-run returned 0 through the real Inspect eval with mockllm", rc == 0 and len(calls) == 1, (rc, calls))
@@ -70,9 +73,19 @@ def run_pilot_cli(output_root: str) -> dict:
     check("inspect status success and single-sample contract satisfied", (sample or {}).get("inspect_status") == "success" and "sample_count" not in (sample or {}), (sample or {}).get("inspect_status"))
     leaked = [str(p) for p in __import__("pathlib").Path(out).rglob("*") if p.is_file() and p.name != "env.test" and "dummy-test-key-not-real-0004" in p.read_text(errors="replace")]
     check("no synthetic key value in any produced file (the test's own env file is the only holder)", leaked == [], leaked)
-    ledger = json.load(open(os.path.join(out, "ledger.json")))
-    check("ledger: one reservation and one settlement for the unit", [e["type"] for e in ledger["entries"]] == ["reservation", "settlement"], [e["type"] for e in ledger["entries"]])
-    manifest = {"run_dir": run_dir, "eval_log": evals[0] if evals else None, "unit_log_dir": os.path.join(runs, "inspect_logs", unit_dirs[0]) if unit_dirs else None, "ledger": os.path.join(out, "ledger.json"), "unit_id": (sample or {}).get("unit_id"), "task_id": TASK, "model": M}
+    ledger = json.load(open(os.path.join(out, "formal", "ledger.json")))
+    check("ledger: one reservation and one settlement for the unit; ledger label is the run class", [e["type"] for e in ledger["entries"]] == ["reservation", "settlement"] and ledger["label"] == "formal", ([e["type"] for e in ledger["entries"]], ledger.get("label")))
+    inv = [json.loads(l) for l in open(os.path.join(runs, "run_inventory.jsonl"))] if os.path.exists(os.path.join(runs, "run_inventory.jsonl")) else []
+    check("run inventory: one 'sample' line with run class, task, model, run uuid, settlement and artifact manifest hash", len(inv) == 1 and inv[0]["kind"] == "sample" and inv[0]["run_label"] == "formal" and inv[0]["task_id"] == TASK
+          and inv[0]["run_uuid"] == os.path.basename(run_dir or "") and inv[0]["artifact_manifest"]["sha256"], inv)
+    am_path = os.path.join(run_dir, "artifact_manifest.json") if run_dir else None
+    am = json.load(open(am_path)) if am_path and os.path.exists(am_path) else None
+    note_sha = hashlib.sha256(open(os.path.join(run_dir, "final", "note.txt"), "rb").read()).hexdigest() if run_dir else None
+    check("artifact manifest: note.txt hashed on the host, equal to the collector's record, cross-check consistent", bool(am) and am["files"] == [{"path": "note.txt", "bytes": len("pilot cli mock deliverable"), "sha256": note_sha}]
+          and am["collector_cross_check"]["consistent"] is True and am["collector_cross_check"]["hash_mismatches"] == [], (am or {}).get("collector_cross_check"))
+    run_json = json.load(open(os.path.join(run_dir, "run.json"))) if run_dir else {}
+    check("run.json carries the run label from the Task binding", run_json.get("run_label") == "formal", run_json.get("run_label"))
+    manifest = {"run_dir": run_dir, "eval_log": evals[0] if evals else None, "unit_log_dir": os.path.join(runs, "inspect_logs", unit_dirs[0]) if unit_dirs else None, "ledger": os.path.join(out, "formal", "ledger.json"), "unit_id": (sample or {}).get("unit_id"), "task_id": TASK, "model": M, "config": config_path}
     with open(os.path.join(out, "pilot_cli_manifest.json"), "w", encoding="utf-8") as f:
         json.dump(manifest, f, indent=1)
     with open(os.path.join(out, "results.json"), "w", encoding="utf-8") as f:

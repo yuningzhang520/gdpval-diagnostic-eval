@@ -25,7 +25,7 @@ from inspect_ai.log import read_eval_log
 from harness.budget import BudgetExhausted, BudgetLedger, LedgerConflict
 from harness.launcher import KEY_ENV_BY_PROVIDER, LauncherError, PilotLauncher, config_sha256, git_provenance, load_env_file, missing_keys, prices_from_config, refuse_disabled_model_api
 from grading.costs import grading_cost, run_cost_record
-from grading.grade import GRADER_VERSION, grade_run, grading_passes, judge_completeness, select_pass, selected_grades
+from grading.grade import ENGINE_VERSION, GRADER_VERSION, TASK_MODULES, grade_run, grader_version_of, grading_passes, judge_completeness, select_pass, selected_grades
 from grading.judge import ProviderJudge, scan_judge_log, usage_from_judge_log
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -51,9 +51,13 @@ def load_materials(task_id: str, config_path: str) -> dict:
     entry = next((t for t in cfg["tasks"] if t["task_id"] == task_id), None)
     if entry is None:
         raise GradingCliError(f"task {task_id} is not in config.tasks")
-    declared = (cfg.get("grading") or {}).get("grader_version")
-    if declared != GRADER_VERSION:  # version consistency: the config states the grader version explicitly and it must be the code's
-        raise GradingCliError(f"config.grading.grader_version {declared!r} differs from the grader code version {GRADER_VERSION!r}; refusing to grade")
+    g = cfg.get("grading") or {}
+    if task_id not in TASK_MODULES:
+        raise GradingCliError(f"no grader registered for task {task_id}; refusing to grade")
+    declared_engine, declared_task = g.get("engine_version"), (g.get("task_grader_versions") or {}).get(task_id)
+    if declared_engine != ENGINE_VERSION or declared_task != TASK_MODULES[task_id]["version"]:  # version consistency: the config states both versions explicitly and they must be the code's
+        raise GradingCliError(f"config.grading versions (engine {declared_engine!r}, task {declared_task!r}) differ from the grader code "
+                              f"(engine {ENGINE_VERSION!r}, task {TASK_MODULES[task_id]['version']!r}; combined grader_version {grader_version_of(task_id)!r}); refusing to grade")
     rubric_path = os.path.join(ROOT, "private", "rubric", f"{task_id}.json")
     reference_path = os.path.join(ROOT, "private", "checks", "recalc", f"{task_id}.json")
     prompt_path = os.path.join(ROOT, entry["prompt_file"])
@@ -151,7 +155,7 @@ def report_selection(cfg: dict, host_dir: str, out_dir: str, run_uuid: str, ledg
         if not os.path.isfile(binding.get("ledger_path") or ""):
             return {"pass": None, "blocked": True, "authoritative": False, "history": select_pass(passes)["history"], "attempts": None, "binding": binding,
                     "basis": f"the run's bound ledger {binding.get('ledger_path')} is not readable; selection fails closed", "warnings": []}
-        ledger = BudgetLedger(binding["ledger_path"], cfg["pilot"]["budget_ceiling_usd"], prices_from_config(cfg))
+        ledger = BudgetLedger.open_existing(binding["ledger_path"], prices_from_config(cfg))
     if ledger.snapshot().get("ledger_id") != binding.get("ledger_id"):
         return {"pass": None, "blocked": True, "authoritative": False, "history": select_pass(passes)["history"], "attempts": None, "binding": binding,
                 "basis": "the bound ledger's id differs from ledger_binding.json; selection fails closed", "warnings": []}
@@ -306,7 +310,7 @@ def main(argv=None, *, judge_factory=None, environ: dict | None = None) -> int:
     if args.ledger:
         if not os.path.isfile(args.ledger):
             raise GradingCliError(f"--ledger {args.ledger} does not exist; grading never creates a ledger")
-        ledger = BudgetLedger(args.ledger, cfg["pilot"]["budget_ceiling_usd"], prices_from_config(cfg))
+        ledger = BudgetLedger.open_existing(args.ledger, prices_from_config(cfg))
     common = dict(task_id=args.task_id, rubric=materials["rubric"], task_prompt=materials["task_prompt"], reference=materials["reference"], out_dir=args.out_dir, recalc=not args.no_recalc)
     if not args.judge:
         rec = grade_run(host_dir, log, sample.uuid, judge=None, **common)

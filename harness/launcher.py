@@ -233,7 +233,7 @@ def verify_cost_data(model: str, cfg: dict) -> dict:
     return costs[model].model_dump()
 
 
-def eval_kwargs(cfg: dict, *, log_dir: str, token_limit: int | None = None, model: str | None = None) -> dict:
+def eval_kwargs(cfg: dict, *, log_dir: str, token_limit: int | None = None, model: str | None = None, cost_limit_override=None) -> dict:
     """The fixed execution and retry settings for inspect_ai.eval(); nothing here touches
     credentials. Four retry layers: Inspect request retries (max_retries), SDK retries
     (model_args max_retries=0), sample reruns (retry_on_error=0, fail_on_error=False), task
@@ -245,7 +245,7 @@ def eval_kwargs(cfg: dict, *, log_dir: str, token_limit: int | None = None, mode
     through eval(**kwargs) (Anthropic: adaptive thinking + output_config.effort; OpenAI: reasoning.effort)."""
     g, r, c = cfg["generation"], cfg["retries"], cfg["concurrency"]["pilot"]
     l1, l2 = r["layer_1_inspect_model_request"], r["layer_2_provider_sdk"]
-    cost_limit = g.get("cost_limit_usd")
+    cost_limit = g.get("cost_limit_usd") if cost_limit_override is None else cost_limit_override  # a run class may set its own per-sample safety net (config.batches.<label>.cost_limit_usd)
     cost_kw = {}
     if isinstance(cost_limit, (int, float)) and not isinstance(cost_limit, bool):
         if model is None:
@@ -289,7 +289,7 @@ def prices_from_config(cfg: dict) -> dict:
     facts name as ``cache_write_conservative_per_mtok_usd`` when present), ``cache_write_extended``
     and ``long_context`` (threshold and rates)."""
     out = {}
-    facts = cfg["models"].get("candidate_facts_queried_2026_10_30", {})
+    facts = {**cfg["models"].get("candidate_facts_queried_2026_10_30", {}), **cfg["models"].get("model_facts_queried_2026_11_01", {})}  # later queries add models; same id would override
     for model, f in facts.items():
         provider = "anthropic" if model.startswith("claude") else "openai" if model.startswith("gpt") else "google"
         default_rate = f.get("cache_write_default_per_mtok_usd", f.get("cache_write_5m_per_mtok_usd"))
@@ -315,6 +315,51 @@ def prices_from_config(cfg: dict) -> dict:
     return out
 
 
+# ----------------------------------------------------------------------------- run classes (batches)
+BATCH_LABELS = ("dev", "validation", "compat", "formal")
+
+
+def batch_controls(cfg: dict, run_label: str) -> dict:
+    """The approved controls of one run class from config.batches: ceiling (a start gate on that class's ledger), the
+    task manifest (which task set may run), the allowed models, the per-model reservation forecasts and an optional
+    per-sample Inspect cost limit. Fail closed on an unknown label or a non-numeric ceiling (e.g. a PLACEHOLDER)."""
+    if run_label not in BATCH_LABELS:
+        raise LauncherError(f"run label must be one of {BATCH_LABELS}; got {run_label!r}")
+    b = (cfg.get("batches") or {}).get(run_label)
+    if not isinstance(b, dict):
+        raise LauncherError(f"config.batches.{run_label} is missing; refusing to start")
+    ceiling = b.get("budget_ceiling_usd")
+    if isinstance(ceiling, bool) or not isinstance(ceiling, (int, float, str)) or (isinstance(ceiling, str) and not re.fullmatch(r"\d+(\.\d+)?", ceiling.strip())):
+        raise LauncherError(f"config.batches.{run_label}.budget_ceiling_usd is not a number ({ceiling!r}); the ceiling is fixed before a run of this class starts")
+    if not isinstance(b.get("models"), list) or not b["models"]:
+        raise LauncherError(f"config.batches.{run_label}.models must list the allowed models")
+    cost_limit = b.get("cost_limit_usd")
+    if cost_limit is not None and (isinstance(cost_limit, bool) or not isinstance(cost_limit, (int, float))):
+        raise LauncherError(f"config.batches.{run_label}.cost_limit_usd must be a number when set")
+    return {"run_label": run_label, "budget_ceiling_usd": Decimal(str(ceiling).strip()), "models": list(b["models"]), "task_manifest": b.get("task_manifest", "data/selected_tasks.json"),
+            "reservation_usd_by_model": dict(b.get("reservation_usd_by_model") or {}), "cost_limit_usd": cost_limit, "status": b.get("status")}
+
+
+def check_run_class_paths(run_label: str, runs_root: str, ledger_path: str) -> None:
+    """Run classes are never mixed: the runs root and the ledger of a class must both sit under a directory named after
+    the label (e.g. ~/turing-eval-runs/dev/runs and ~/turing-eval-runs/dev/ledger.json)."""
+    for what, path in (("runs root", runs_root), ("ledger", ledger_path)):
+        parts = os.path.normpath(os.path.realpath(path) if os.path.exists(path) else os.path.abspath(path)).split(os.sep)
+        for other in BATCH_LABELS:
+            if other != run_label and other in parts:
+                raise LauncherError(f"{what} {path!r} carries the run class {other!r} in its path; refusing to mix run classes")
+        if run_label not in parts:
+            raise LauncherError(f"{what} {path!r} does not lie under a directory named {run_label!r}; run classes keep separate roots and ledgers")
+
+
+def sha256_file(path: str) -> str:
+    h = hashlib.sha256()
+    with open(path, "rb") as f:
+        for chunk in iter(lambda: f.read(1 << 20), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
 # ----------------------------------------------------------------------------- units
 def _now() -> str:
     return dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds")
@@ -328,7 +373,11 @@ def _runs_root_from_config(cfg: dict) -> str:
 class PilotLauncher:
     """Orchestrates one unit at a time: check → reserve → run → settle → stop check."""
 
-    def __init__(self, cfg: dict, *, runs_root: str, ledger: BudgetLedger, eval_fn, log_dir: str | None = None, record_dir: str | None = None):
+    def __init__(self, cfg: dict, *, runs_root: str, ledger: BudgetLedger, eval_fn, log_dir: str | None = None, record_dir: str | None = None,
+                 run_label: str | None = None, cost_limit_override=None, provenance: dict | None = None):
+        self.run_label = run_label
+        self.cost_limit_override = cost_limit_override
+        self.provenance = provenance or {}
         self.cfg = cfg
         self.runs_root = runs_root
         self.ledger = ledger
@@ -379,7 +428,7 @@ class PilotLauncher:
             json.dump(payload, f, indent=1, default=str)
         return path
 
-    def run_sample(self, *, task, model: str, unit_id: str, estimate_usd, token_limit: int | None = None, dry_run: bool = False) -> dict:
+    def run_sample(self, *, task, model: str, unit_id: str, estimate_usd, token_limit: int | None = None, dry_run: bool = False, task_id: str | None = None) -> dict:
         """One sample unit = one Task, one returned EvalLog, one sample. Refuses to start when the
         budget cannot cover the estimate or a stop condition applies; settles from the eval log
         afterwards only when the single-log / single-sample contract holds; on failure settles
@@ -387,7 +436,7 @@ class PilotLauncher:
         # Fail closed on the execution settings before the ledger is touched: a configuration
         # defect must not create a reservation or a conservative settlement.
         unit_log_dir = os.path.join(self.log_dir, unit_id.replace("/", "_").replace(":", "_"))  # this execution's own log directory: the binding usage recovery relies on
-        kw = eval_kwargs(self.cfg, log_dir=unit_log_dir, token_limit=token_limit, model=model)
+        kw = eval_kwargs(self.cfg, log_dir=unit_log_dir, token_limit=token_limit, model=model, cost_limit_override=self.cost_limit_override)
         # Single-task contract, before any call: the unit is one Task object. A list, tuple or set of
         # tasks (even of length 1) is refused here, before the stop check and the reservation.
         if task is None or isinstance(task, (list, tuple, set, frozenset, dict, str, bytes)):
@@ -401,15 +450,16 @@ class PilotLauncher:
         except (BudgetExhausted, LedgerConflict) as ex:
             self.record("refused", {"unit_id": unit_id, "model": model, "reasons": [redact(ex)], "ledger": self.ledger.snapshot()})
             raise
-        os.makedirs(unit_log_dir, exist_ok=True)
-        meta = {"unit_id": unit_id, "model": model, "entry_point": "inspect_ai.eval", "eval_kwargs": kw, "reservation": reservation, "log_dir": unit_log_dir,
+        meta = {"unit_id": unit_id, "model": model, "task_id": task_id, "run_label": self.run_label, "entry_point": "inspect_ai.eval", "eval_kwargs": kw, "reservation": reservation, "log_dir": unit_log_dir,
                 "ledger": self.ledger.identity(), "config_status": self.cfg["_status"][:5], "started_at": _now()}
         if dry_run:
             meta["dry_run"] = True
             self.ledger.void(unit_id, "dry run: eval() not called")
             meta["ledger_after"] = self.ledger.snapshot()
             self.record("dry_run", meta)
+            self.append_inventory("dry_run", meta)
             return meta
+        os.makedirs(unit_log_dir, exist_ok=True)  # created only when eval() is about to run (a dry run leaves no log directory behind)
         try:
             returned = self.eval_fn(task, model=model, **kw)
             logs = list(returned) if isinstance(returned, (list, tuple)) else [returned]
@@ -430,6 +480,7 @@ class PilotLauncher:
                              "sample_count": len(samples), "all_sample_usage": all_usage, "settlement": None, "manual_review_required": True, "stop_recorded": reasons,
                              "ledger_after": self.ledger.snapshot(), "finished_at": _now()})
                 self.record("sample_cardinality", meta)
+                self.append_inventory("sample_cardinality", meta)
                 return meta
             log = logs[0]
             sample = samples[0]
@@ -443,9 +494,11 @@ class PilotLauncher:
                                             fallback_to_reservation=not usage, incomplete=incomplete)  # approved 2026-10-31: missing/incomplete usage -> conservative estimate + persistent hold
             post = self._after_unit(unit_id=unit_id, settlement=settlement, estimate_usd=estimate_usd, log=log)
             binding = self.write_ledger_binding(sample, unit_id=unit_id, model=model, task=task)
+            artifacts = self.write_artifact_manifest(getattr(sample, "uuid", None))
             meta.update({"inspect_status": log.status, "log_file": getattr(log, "location", None), "usage": usage, "retries": retries,
-                         "settlement": settlement, "post_run": post, "ledger_binding": binding, "ledger_after": self.ledger.snapshot(), "finished_at": _now()})
+                         "settlement": settlement, "post_run": post, "ledger_binding": binding, "artifact_manifest": artifacts, "ledger_after": self.ledger.snapshot(), "finished_at": _now()})
             self.record("sample", meta)
+            self.append_inventory("sample", meta)
             return meta
         except Exception as ex:
             cls = type(ex).__name__
@@ -459,7 +512,77 @@ class PilotLauncher:
             post = self._after_unit(unit_id=unit_id, settlement=settlement, estimate_usd=estimate_usd)
             meta.update({"error": f"{cls}: {redact(ex)}", "settlement": settlement, "usage_recovery": recovery, "post_run": post, "ledger_after": self.ledger.snapshot(), "finished_at": _now()})
             self.record("sample_error", meta)
+            self.append_inventory("sample_error", meta)
             raise
+
+    def write_artifact_manifest(self, run_uuid) -> dict:
+        """SHA-256 manifest of the collected deliverables of one execution (runs_root/<uuid>/artifact_manifest.json): every
+        regular file under final/, hashed on the host now, cross-checked against the collector's record in run_outcome.json
+        (sha256_collected per file). Metadata only - no file content is read into a record - so sealed validation outputs
+        can be inventoried without being opened. Written once; a second call verifies the existing manifest instead."""
+        if not run_uuid:
+            return {"written": False, "reason": "no run uuid"}
+        host_dir = os.path.join(self.runs_root, str(run_uuid))
+        final = os.path.join(host_dir, "final")
+        path = os.path.join(host_dir, "artifact_manifest.json")
+        files = []
+        if os.path.isdir(final):
+            for dp, _, fs in os.walk(final):
+                for f in sorted(fs):
+                    full = os.path.join(dp, f)
+                    if os.path.islink(full) or not os.path.isfile(full):
+                        continue
+                    files.append({"path": os.path.relpath(full, final).replace(os.sep, "/"), "bytes": os.path.getsize(full), "sha256": sha256_file(full)})
+        files.sort(key=lambda x: x["path"])
+        collected, cross = {}, None
+        outcome_path = os.path.join(host_dir, "run_outcome.json")
+        if os.path.isfile(outcome_path):
+            try:
+                with open(outcome_path, encoding="utf-8") as f:
+                    rec = json.load(f)
+                for item in (rec.get("collection") or {}).get("files") or []:
+                    hp = item.get("host_path")
+                    if hp and item.get("sha256_collected"):
+                        collected[os.path.relpath(hp, final).replace(os.sep, "/")] = item["sha256_collected"]
+                mism = [x["path"] for x in files if x["path"] in collected and collected[x["path"]] != x["sha256"]]
+                cross = {"collector_files": len(collected), "manifest_files": len(files), "hash_mismatches": mism, "not_in_collector_record": [x["path"] for x in files if x["path"] not in collected],
+                         "consistent": not mism and all(x["path"] in collected for x in files)}
+            except Exception as ex:  # a defective outcome file is recorded, never hidden
+                cross = {"error": type(ex).__name__}
+        manifest = {"record_version": 1, "run_uuid": str(run_uuid), "run_label": self.run_label, "final_dir": final, "files": files, "file_count": len(files),
+                    "total_bytes": sum(x["bytes"] for x in files), "collector_cross_check": cross, "generated_at": _now()}
+        if os.path.exists(path):
+            with open(path, encoding="utf-8") as f:
+                existing = json.load(f)
+            same = existing.get("files") == files
+            return {"written": False, "path": path, "sha256": sha256_file(path), "consistent_with_existing": same, "file_count": len(files)}
+        tmp = f"{path}.{os.urandom(4).hex()}.tmp"
+        with open(tmp, "w", encoding="utf-8") as f:
+            json.dump(manifest, f, indent=1)
+            f.flush()
+            os.fsync(f.fileno())
+        os.replace(tmp, path)
+        return {"written": True, "path": path, "sha256": sha256_file(path), "file_count": len(files), "total_bytes": manifest["total_bytes"], "collector_cross_check": cross}
+
+    def append_inventory(self, kind: str, meta: dict) -> dict:
+        """One line per execution attempt in runs_root/run_inventory.jsonl (append-only, fsynced): run class, task, model,
+        unit, run uuid, status, settlement, stop/hold state, log file, artifact manifest hash, code commit and config hash.
+        Never carries model-generated content."""
+        st = meta.get("settlement") or {}
+        binding = meta.get("ledger_binding") or {}
+        rec = {"recorded_at": _now(), "kind": kind, "run_label": self.run_label, "task_id": meta.get("task_id"), "model": meta.get("model"), "unit_id": meta.get("unit_id"),
+               "run_uuid": binding.get("run_uuid"), "inspect_status": meta.get("inspect_status"), "dry_run": bool(meta.get("dry_run")), "error": meta.get("error"),
+               "settlement_cost_usd": st.get("cost_usd"), "estimated": st.get("estimated"), "manual_review_required": bool(meta.get("manual_review_required") or st.get("manual_review_required")),
+               "stop_recorded": meta.get("stop_recorded") or (meta.get("post_run") or {}).get("stop_recorded"), "log_file": meta.get("log_file"), "log_dir": meta.get("log_dir"),
+               "artifact_manifest": {k: (meta.get("artifact_manifest") or {}).get(k) for k in ("path", "sha256", "file_count")} if meta.get("artifact_manifest") else None,
+               "ledger": meta.get("ledger"), "code_commit": (self.provenance.get("code") or {}).get("commit"), "config_sha256": self.provenance.get("config_sha256"),
+               "started_at": meta.get("started_at"), "finished_at": meta.get("finished_at")}
+        path = os.path.join(self.runs_root, "run_inventory.jsonl")
+        with open(path, "a", encoding="utf-8") as f:
+            f.write(json.dumps(rec, default=str) + "\n")
+            f.flush()
+            os.fsync(f.fileno())
+        return rec
 
     def recover_usage_from_logs(self, unit_log_dir: str, *, unit_id: str, task_name: str | None, model: str | None, read_log=None) -> dict:
         """Execution-bound recovery of usage after an eval exception. Invariant: only usage that verifiably belongs to THIS
@@ -623,21 +746,22 @@ def verify_system_prompt(cfg: dict, root: str = ROOT) -> dict:
     return {"file": g["system_prompt_file"], "sha256": expected, "matched_form": matched, "text": text}
 
 
-def build_unit(cfg: dict, *, task_id: str, model: str, runs_root: str, config_path: str) -> dict:
+def build_unit(cfg: dict, *, task_id: str, model: str, runs_root: str, config_path: str, run_label: str = "dev", task_set: str = "selected") -> dict:
     """Samples, Task and unit id shared by --dry-run and --real-run: staged-file allowlist and hashes
     verified against the config (I1), the system prompt verified against its recorded hash, the
-    tool timeout taken from the config. Nothing here calls a model."""
+    tool timeout taken from the config. The Task is named after the run class and carries the run
+    label into run.json (the collector's run binding). Nothing here calls a model."""
     from .samples import build_samples
     from .task import make_task
     prompt = verify_system_prompt(cfg)
-    samples = build_samples([task_id], verify_config=config_path)  # fail closed on any staged-file mismatch
+    samples = build_samples([task_id], verify_config=config_path, task_set=task_set)  # fail closed on any staged-file mismatch
     if not samples:
-        raise LauncherError(f"task {task_id} is not in data/selected_tasks.json")
+        raise LauncherError(f"task {task_id} is not in the {task_set!r} task set")
     if len(samples) != 1:
-        raise LauncherError(f"task {task_id} built {len(samples)} samples; a pilot unit is exactly one sample")
-    task, _ = make_task(samples, runs_root, name=f"pilot_{task_id[:8]}", tool_timeout=cfg["generation"]["tool_timeout_s"], system_prompt=prompt["text"])
+        raise LauncherError(f"task {task_id} built {len(samples)} samples; a unit is exactly one sample")
+    task, _ = make_task(samples, runs_root, run_id=run_label, name=f"{run_label}_{task_id[:8]}", tool_timeout=cfg["generation"]["tool_timeout_s"], system_prompt=prompt["text"])
     unit_id = f"{task_id}:{model}:{dt.datetime.now(dt.timezone.utc).strftime('%Y%m%dT%H%M%SZ')}"
-    return {"task": task, "unit_id": unit_id, "sample_ids": [s.id for s in samples], "staging_verified": samples[0].metadata.get("staging_verified"),
+    return {"task": task, "unit_id": unit_id, "sample_ids": [s.id for s in samples], "staging_verified": samples[0].metadata.get("staging_verified"), "task_set": task_set,
             "prompt": {k: prompt[k] for k in ("file", "sha256", "matched_form")}, "tool_timeout_s": cfg["generation"]["tool_timeout_s"]}
 
 
@@ -669,6 +793,7 @@ def main(argv=None, *, eval_fn=None, environ: dict | None = None, docker_runner=
     p.add_argument("--task-id", required=True)
     p.add_argument("--model", required=True, help="Inspect model name, e.g. anthropic/claude-opus-5-5")
     p.add_argument("--estimate-usd", required=True, type=Decimal, help="pre-run cost estimate for this unit (no estimate, no start)")
+    p.add_argument("--run-label", required=True, choices=BATCH_LABELS, help="run class (dev | validation | compat | formal): selects config.batches.<label>; its runs root and ledger must sit under a directory of that name")
     p.add_argument("--token-limit", type=int, default=None)
     p.add_argument("--env-file", default=os.path.join(ROOT, ".env"))
     mode = p.add_mutually_exclusive_group(required=True)
@@ -682,6 +807,12 @@ def main(argv=None, *, eval_fn=None, environ: dict | None = None, docker_runner=
 
     cfg = load_config(args.config)
     provider = args.model.split("/", 1)[0]
+    batch = batch_controls(cfg, args.run_label)
+    if args.model not in batch["models"]:
+        raise LauncherError(f"model {args.model!r} is not allowed in run class {args.run_label!r} (config.batches.{args.run_label}.models = {batch['models']}); refusing to start")
+    from .samples import task_set_for_manifest
+    task_set = task_set_for_manifest(batch["task_manifest"])
+    check_run_class_paths(args.run_label, args.runs_root, args.ledger)
     if args.real_run:
         refuse_disabled_model_api(env)
         confirm_scope(args.confirm, task_id=args.task_id, model=args.model, estimate_usd=args.estimate_usd)
@@ -695,29 +826,30 @@ def main(argv=None, *, eval_fn=None, environ: dict | None = None, docker_runner=
     if missing and args.real_run:
         raise LauncherError(f"missing credential variable(s): {missing} (names only; nothing printed)")
     image = preflight_sandbox(cfg, runner=docker_runner)  # by full image ID; compose and config must agree
-    ledger = BudgetLedger(args.ledger, cfg["pilot"]["budget_ceiling_usd"], prices_from_config(cfg))
-    unit = build_unit(cfg, task_id=args.task_id, model=args.model, runs_root=runs_root, config_path=args.config)
-    provenance = {"code": git_provenance(), "config_path": args.config, "config_sha256": config_sha256(args.config), "config_status": cfg["_status"][:5], "ledger": ledger.identity(),
+    ledger = BudgetLedger(args.ledger, batch["budget_ceiling_usd"], prices_from_config(cfg), label=args.run_label)
+    unit = build_unit(cfg, task_id=args.task_id, model=args.model, runs_root=runs_root, config_path=args.config, run_label=args.run_label, task_set=task_set)
+    provenance = {"run_label": args.run_label, "batch": {k: (str(v) if isinstance(v, Decimal) else v) for k, v in batch.items()}, "task_set": task_set,
+                  "code": git_provenance(), "config_path": args.config, "config_sha256": config_sha256(args.config), "config_status": cfg["_status"][:5], "ledger": ledger.identity(),
                   "prompt": unit["prompt"], "image_id": image.get("daemon_id"), "image_platform": (image.get("os"), image.get("architecture")),
                   "image_tags_informational": image.get("repo_tags"), "runs_root": runs_root, "task_id": args.task_id, "model": args.model,
                   "sample_ids": unit["sample_ids"], "staging_verified": unit["staging_verified"], "tool_timeout_s": unit["tool_timeout_s"],
                   "env_names_loaded": loaded, "missing_key_names": missing, "credential_required": provider in KEY_ENV_BY_PROVIDER}
     print(json.dumps({**provenance, "image_attempts": len(image["attempts"]), "ledger": ledger.snapshot(), "mode": "real-run" if args.real_run else "dry-run"}, indent=1, default=str))
     if args.dry_run:
-        launcher = PilotLauncher(cfg, runs_root=runs_root, ledger=ledger, eval_fn=None)
-        launcher.run_sample(task=unit["task"], model=args.model, unit_id=unit["unit_id"], estimate_usd=args.estimate_usd, token_limit=args.token_limit, dry_run=True)
+        launcher = PilotLauncher(cfg, runs_root=runs_root, ledger=ledger, eval_fn=None, run_label=args.run_label, cost_limit_override=batch["cost_limit_usd"], provenance=provenance)
+        launcher.run_sample(task=unit["task"], model=args.model, unit_id=unit["unit_id"], estimate_usd=args.estimate_usd, token_limit=args.token_limit, dry_run=True, task_id=args.task_id)
         return 0
     # --real-run: the only paid path; inspect_ai.eval is imported here and nowhere else in this module
     if eval_fn is None:
         from inspect_ai import eval as inspect_eval
         eval_fn = inspect_eval
-    launcher = PilotLauncher(cfg, runs_root=runs_root, ledger=ledger, eval_fn=eval_fn)
+    launcher = PilotLauncher(cfg, runs_root=runs_root, ledger=ledger, eval_fn=eval_fn, run_label=args.run_label, cost_limit_override=batch["cost_limit_usd"], provenance=provenance)
     authorization = {"by": args.authorized_by, "ref": args.authorization_ref, "confirm": args.confirm, "estimate_usd": str(args.estimate_usd),
                      "note": "operator-supplied audit metadata recorded verbatim; the launcher does not verify an approval"}
     launcher.record("real_run_provenance", {**provenance, "unit_id": unit["unit_id"], "authorization": authorization, "started_at": _now()})
-    meta = launcher.run_sample(task=unit["task"], model=args.model, unit_id=unit["unit_id"], estimate_usd=args.estimate_usd, token_limit=args.token_limit)
+    meta = launcher.run_sample(task=unit["task"], model=args.model, unit_id=unit["unit_id"], estimate_usd=args.estimate_usd, token_limit=args.token_limit, task_id=args.task_id)
     settlement = meta.get("settlement") or {}
-    print(json.dumps({"unit_id": unit["unit_id"], "inspect_status": meta.get("inspect_status"), "log_file": meta.get("log_file"),
+    print(json.dumps({"unit_id": unit["unit_id"], "run_label": args.run_label, "inspect_status": meta.get("inspect_status"), "log_file": meta.get("log_file"), "artifact_manifest": meta.get("artifact_manifest"),
                       "settlement": {k: settlement.get(k) for k in ("cost_usd", "estimated", "manual_review_required", "flags")} if settlement else None,
                       "manual_review_required": bool(meta.get("manual_review_required") or settlement.get("manual_review_required")),
                       "stop_recorded": meta.get("stop_recorded") or (meta.get("post_run") or {}).get("stop_recorded"), "record_dir": launcher.record_dir}, indent=1, default=str))

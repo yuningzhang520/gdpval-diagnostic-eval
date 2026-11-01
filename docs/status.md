@@ -1,10 +1,14 @@
 # Status
 
-Current stage: **Pilot A execution planning on the B2 checkpoint `b22ebd94bd510bb90bd369057d810fa154d9156c`
-(pushed to `origin/main` 2026-11-01): read-only preflight PASSED and the high-reasoning generation
-configuration approved on 2026-11-01 is applied in the working tree and mock-verified (section "Pilot A/B
-generation configuration"); uncommitted, awaiting the human's review, commit approval and the first paid
-Model A authorization. No provider call.** Earlier header, kept for the record: B2 Architecture Cleanup and
+Current stage: **Evaluation architecture implementation on baseline `f37f1e829af2efd5daf81e3a680ea691b16fcfbe`
+(2026-11-01): Task 1 (`1137e2bb…`) gold-first verification done and Grader v0 tagged; run classes (dev /
+validation / compat / formal), batch runner, artifact manifests, run inventory, engine + task grader versions,
+development model (`google/gemini-3.8-flash`) and compatibility task (`87da214f…`) implemented and dry-run
+verified; waiting for the human's authorization of the Gemini dev + validation batches and the candidate
+compatibility batch (section "Evaluation architecture implementation"). No paid call.** Earlier header, kept
+for the record: Pilot A execution planning on the B2 checkpoint `b22ebd94bd510bb90bd369057d810fa154d9156c`;
+the high-reasoning generation configuration was approved and committed as `f37f1e8` (pushed); the candidate
+pilot itself was superseded by the revised architecture and never run. Earlier header, kept for the record: B2 Architecture Cleanup and
 Engineering Review CLOSED by Codex's final independent verification (2026-11-01: "READY FOR B2 COMMIT"; the
 two remaining Blockings closed, section "B2 closure fix"; the three earlier fixes confirmed); the B2
 checkpoint commit was approved by the human after a staged safety verification. Earlier header,
@@ -2723,6 +2727,53 @@ Pending human decisions: commit of this configuration; Model A id final approval
 condition but the first paid run still needs its own `--authorized-by` / `--authorization-ref` entry; judge
 model, judge block and judge reservation (separate approval).
 
+## Evaluation architecture implementation (2026-11-01; baseline `f37f1e8`; Task 1 gold-first, run classes, versions, development model, compatibility task; mock and dry-run verified; no model, judge, provider or paid call; logs under `logs/gold-first-1137e2bb-20261101T*/`, `logs/run-classes-20261101T*/`)
+
+Baseline verified: HEAD = origin/main = `f37f1e829af2efd5daf81e3a680ea691b16fcfbe`, tree clean, no tags. The run root
+`~/turing-eval-runs/{dev,validation,compat,formal}` was created; the retired `~/turing-th-runs/` is not read.
+
+### Task 1 `1137e2bb…` — gold-first verification (records in `grading/validation/1137e2bb-…/`)
+- Independent recomputation from the source equals the stored reference and the expert workbook's flags (41 lines, 15 / 10 / 25, per-SKU identical).
+- Original first pass of the committed grader (code at `f37f1e8`, grader_version grading-1137e2bb-2026-10-31, both extraction paths): 49 pass, 0 fail, 6 `cannot_assess` (4, 8, 10, 17, 20, 21, grader side), C1/C2/C3 not confirmed. Preserved in `gold_first_pass_pre_fix.json`.
+- Findings and fixes (all grader-side extraction rules; recorded as amendments in `preregistration.md` 2.4): the expert's "Number of Errors" header unknown to the total-column synonyms; empty-string formula results (TEXTJOIN) read as uncached formulas (evidence: both Excel and LibreOffice store them as string-typed cells with an empty value; openpyxl's data type distinguishes them from a formula without a cache); a raw-input copy as the only other sheet turned a confirmed missing summary into `cannot_assess` (found by corruption R14); footer / legend / subtotal rows read as business rows (found by layout variants N02–N04). Expert-deliverable defect confirmed as adjudicated: item 21 (no Case Pack Missing indicator) fails as written.
+- After the fixes: 54 pass, 1 fail (21), 0 `cannot_assess`; C1 pass, C2 pass, C3 not confirmed; identical through the LibreOffice path (164/164 formulas equal).
+- Catalog (`grading/gold_variants_1137e2bb.py`): 24 rubric-relevant corruptions and 20 neutral transformations (TOTAL/footer rows, legends, grouped subtotals, hidden rows and outline levels, lowercase ids, extra worksheets, merged title and two-level headers, header variants, column reorder, renames, formatting, sorting, whitespace, lowercase UOM, numbers as text) with declared full-map expectations; every variant and the two recalculation-path cases land on their declared map (`gold_transitions_observed.json`). One expectation (R10, changed quantity on a named line) was corrected before the run from the already pinned identity rule (FAIL, not `cannot_assess`). The expert workbook loads in 8 s (two million styled empty cells); a values-only twin grades identically in 0.1 s and is the base of every variant (verified in the suite).
+- Existing regressions preserved: layout 57/57, grading chain 28/28, docker recalculation 16/16.
+- Open interpretation escalated (preregistration section 4): textual booleans in the flag columns vs rubric 9 "binary (0 or 1)".
+
+### Versions
+`grading.grade.ENGINE_VERSION = engine-2026-11-01.1`, `checks_1137e2bb.VERSION = 1137e2bb-2026-11-01.1`; every pass records `grader_version = <engine>+<task>`, both parts, and the full git commit with a dirty flag (`code_provenance`). `config.grading` states `engine_version` and `task_grader_versions`; `run_grading` refuses on either mismatch.
+
+### Run classes and batch controls
+- `config.json`: `batches` (dev, validation, compat, formal: task manifest, models, ceiling as a start gate, per-model reservation forecasts, optional per-sample cost limit) replace `pilot.sequence`, `pilot.reservations_usd`, `pilot.budget_ceiling_usd` (superseded note kept; stop conditions and the budget-protection mechanism unchanged); `compat_tasks` (87da214f: 2 inputs verified by hash, prompt sha, 59 rubric items; `data/compat_tasks.json`, `data/compat_manifest.json`; the formal list untouched); `models.development_model` and `model_facts_queried_2026_11_01.gemini-3.8-flash` (official pricing page, last updated 2026-10-30, fetched 2026-11-01: 0.75 / 3.75 / cache read 0.075 USD per MTok through 2026-12-31; output includes thinking; input limit 1,048,576, output 65,536; thinking low/medium/high); `concurrency.dev/validation/compat` = 1.
+- Launcher: `--run-label` (required; `config.batches.<label>`), path guard (root and ledger under a directory named after the label, never another class), model and task set bound to the class, per-class cost limit (dev/validation 3 USD; compat and formal keep 20), ledger label (an existing ledger refuses another class), `run.json` carries the label (Task named `<label>_<task8>`), `artifact_manifest.json` per execution (host-side SHA-256 of every collected file, cross-checked against the collector record; metadata only, so sealed outputs are inventoried without being opened; written once), `run_inventory.jsonl` (append-only, one line per execution attempt incl. dry runs). `BudgetLedger.open_existing` (grading, reporting and reconciliation never decide a ceiling). `harness/batch.py` runs every task of a class through the launcher gates, one authorization per batch (`--confirm-batch`), duplicate-run protection from the inventory, stops at the first refusal / exception / stop / hold, never retries.
+- Development model adapter mapping verified offline (inspect_ai 0.3.286 Google provider): `reasoning_effort high` -> `thinking_level HIGH`, `max_tokens 32000` -> `max_output_tokens`; prices registered for the ledger and Inspect's cost limit.
+- Dry runs into the real roots (no eval call): dev 10 units, validation 10 units, compat 2 units (one per candidate); ledgers labelled with ceilings 15 / 15 / 45, every reservation voided, inventories and batch records written.
+
+### Verification (first execution captured unless a defect required a rerun)
+| Command (`run_isolated.sh`, `/usr/bin/time -p`) | Wall clock | Exit | Result |
+|---|---|---|---|
+| `unittest grading.tests.test_gold_1137e2bb` (new; 48 incl. 2 docker-gated) | 12.2 → 12.4 → 12.4 s | 1 / 0 / 0 | 46/46 + 2 skipped (first run: the three annotation-row layouts failed on the unfixed grader — the N02–N04 finding) |
+| `unittest grading.tests.test_gold_1137e2bb.GoldRecalcDockerTests` (`GOLD_RECALC_DOCKER=1`, LibreOffice in the pinned image) | 12.8 s | 0 | 2/2 |
+| `unittest grading.tests.test_layout_regressions` | 3.9 / 3.7 / 3.7 s | 0 | 57/57 (after each fix) |
+| `unittest grading.tests.test_grading_chain` | 1.3 → 2.2 → 3.0 s | 0 | 28/28 (after the fixes, the versions, the run classes) |
+| `grading.tests.regress_recalc_docker` | 4.0 s | 0 | 16/16 |
+| `unittest harness.tests.test_launcher_regressions` (+ RunClassTests) | 6.3 → 6.1 → 6.4 s | 1 / 1 / 0 | 47/47 (two older ledger-path pins and the formal-class config copy adjusted) |
+| `unittest harness.tests.test_budget_unit` (+ run-class ledger) | 0.95 s | 0 | 34/34 |
+| `unittest harness.tests.test_staging_unit` (+ compat task set) | 0.82 s | 0 | 12/12 |
+| `unittest harness.tests.test_generation_config` (+ Google mapping) | 2.6 s | 0 | 7/7 |
+| `unittest harness.tests.test_docs_consistency` | 0.9 s | 0 | 3/3 |
+| `harness.tests.regress_pilot_cli` (real Inspect + docker + mockllm, formal class, inventory + artifact manifest) | 8.1 s | 0 | 13/13 |
+| `grading.tests.regress_grading_cli` (docker) | 6.2 → 6.4 s | 1 / 0 | 74/74 (task name and refusal message pins updated) |
+| `harness.batch --dry-run` dev / validation / compat x2 | 1.8 s / similar | 0 | 10 / 10 / 1 / 1 units, all gates passed, reservations voided |
+
+Not run (unchanged code): limits / closeout / tools / compose / collect / image unit suites.
+
+### Pending human decisions
+1. Authorization of the Gemini dev + validation batches and the candidate compatibility batch (packet in chat).
+2. Preregistration section 4: textual booleans in the flag columns (rubric 9).
+3. Judge model and judge block (separate approval, unchanged).
+
 ## Known issues and findings (material check)
 
 - `rubric_json.form_content`: 8,036 items hold `null`, 2,417 items lack the key, zero
@@ -2775,12 +2826,21 @@ model, judge block and judge reservation (separate approval).
 
 ## In flight
 
-Pilot A generation configuration applied and mock-verified in the working tree, uncommitted; waiting for the
-human's review, commit approval and the first paid Model A authorization (judge model id, judge block and judge
-reservation remain separate pending decisions).
+Evaluation architecture implementation (section above): Task 1 gold-first done and tagged; run classes and batch
+controls implemented and dry-run verified; waiting for the human's authorization of the Gemini dev + validation
+batches and the candidate compatibility batch. Next offline work while authorization is pending: Task 2
+(`7d7fc9a7…`) gold-first grader and the shared spreadsheet core.
 
 ## Decisions taken (date · what · commit)
 
+- 2026-11-01 · Revised evaluation architecture adopted (human): three grading layers, gold-first grader
+  development with declared corruption catalogs, Gemini Flash development + sealed validation samples
+  (two independent execution units per task), verdict-free batched human labelling, candidate
+  compatibility task `87da214f…` outside the formal ten, run classes dev / validation / compat / formal
+  with separate roots and ledgers, per-batch controls superseding the pilot plan; candidate generation
+  configuration of `f37f1e8` preserved unchanged. Task 1 `1137e2bb…` gold-first fixes (four grader-side
+  extraction rules, prereg 2.4) and Grader v0 tag · local commit (this entry's commit), tag
+  `grader-v0-1137e2bb`
 - 2026-11-01 · B2 checkpoint committed and pushed (`b22ebd94bd510bb90bd369057d810fa154d9156c`,
   "fix: stabilize pilot accounting, judge recovery and reporting"; 17 files; staged safety verification
   passed). Read-only Pilot A preflight PASSED on it (scratch dry run). Human approved the high-reasoning
@@ -3016,11 +3076,13 @@ reservation remain separate pending decisions).
 
 ## Next stage (not started)
 
-Stage 3b (grading chain for the pilot task, pre-pilot gates, launcher, dependencies), then
-the pilot on `1137e2bb…` (model A end-to-end through grading and human review, then model
-B). The current decision list is in section "Stage 3a"; the list below is the earlier
-Stage 3 list, kept for the record (items 1 and 4 are partly settled by the rulings of
-2026-10-30 recorded above):
+Under the revised architecture (2026-11-01): Task 2 `7d7fc9a7…` gold-first grader and the shared
+spreadsheet core (then the Codex architecture review), Task 3 `2ea2e5b5…` (PPTX), the remaining task
+graders, judge evidence builders, Gemini dev/validation batches once authorized (early generate, late
+reveal), batched human labelling, sealed validation, candidate compatibility runs, judge preparation,
+measurement-readiness review, freeze, formal run. The list below is the earlier Stage 3 list, kept
+for the record (items 1 and 4 are partly settled by the rulings of 2026-10-30 recorded above; the
+pilot it refers to was superseded and never run):
 
 1. `preregistration.md` section 4: pending critical criteria; the PO-log per-item precision
    entries; 1.13 substitutes and fallback; item 5 (`7d7fc9a7…` rounding policy, due before

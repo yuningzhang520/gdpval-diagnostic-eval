@@ -103,13 +103,67 @@ Both models run under one shared agent scaffold built on Inspect AI:
   fetch date in `data/manifest.json`, and provided identically to both models.
 - **Provider settings.** Exact model ids, reasoning settings, execution limits, image
   digest, and code commit are recorded in `config.json` and frozen (`freeze-v1`) before
-  the formal run. Results describe the two models under this common scaffold.
+  the formal run. Results describe the two models under this common scaffold. The
+  candidate generation configuration (explicit `reasoning_effort` high on both candidates,
+  `max_tokens` 32,000, the time, working, message and token limits, timeouts, tools and
+  `attempts=1`) is carried unchanged into `freeze-v1` and the formal runs; the only
+  permitted change is an explicitly documented and approved compatibility change.
+- **Run classes.** Every execution belongs to one run class with its own root, ledger,
+  Inspect logs, run inventory and artifact manifests: `dev` and `validation` (one Gemini
+  Flash sample each per formal task, generated independently: separate run uuid, unit,
+  root, ledger, provenance, label and SHA-256 artifact manifest; never two epochs in one
+  log), `compat` (one sample of each candidate on a GDPval task outside the formal ten,
+  for provider, tool, artifact, rendering and accounting behaviour only; its outputs
+  calibrate no grading rule and report no capability) and `formal` (the evaluation
+  proper). Classes are never mixed in execution or accounting records.
 
 ## 4. Grading
 
 Grading combines three layers. None of them is tuned to make a model pass; any change
 to a grading rule after freeze is recorded with the old rule, the evidence it was wrong,
 the new rule, and both models are re-graded.
+
+**Architecture.** A shared grading engine (XLSX, DOCX and PPTX extraction and
+recalculation, table recognition, row and column matching, numeric comparison and
+evidence location, the `pass` / `fail` / `cannot_assess` semantics, model / grader /
+environment attribution, scoring, coverage, critical status, judge and human-review
+infrastructure) carries one engine version; each task has a thin specification (rubric
+item mapping, expected values from the authoritative source materials, business rules
+and applicability, task-specific evidence and calculation requirements) with its own
+version; a cross-task capability analysis (requirements adherence, reference grounding,
+business-rule execution, coverage, cross-file consistency, deliverable mechanics and
+usability, the preregistered failure taxonomy) is produced after the formal run. Shared
+code is extracted only where a second real task demonstrates the need. Every grading
+pass records the engine version, the task version and the full git commit of the code.
+
+**Gold-first grader development.** For each task the grader is first run against the
+expert deliverables, the numeric expectations are reconciled independently with the
+source materials, and findings are classified as expert-deliverable defects, rubric
+ambiguities, source-data issues or grader defects. A catalog of seeded corruptions
+derived from the expert deliverables declares, for every corruption, the affected items
+and the expected verdict transitions (dependencies between items included), and layout
+transformations are classified as neutral (the full verdict map must not change) or
+rubric-relevant (the declared result must appear); the suite compares complete item
+maps, never subsets. The original first-pass result on the expert deliverables is
+preserved before any fix. Grader v0 of a task is committed and tagged before that task's
+development sample is opened.
+
+**Development and sealed validation samples.** One Gemini Flash sample per task
+(`dev`) calibrates the grader after Grader v0 exists: the human labels the deliverable
+from a verdict-free review packet (criteria, source evidence, deliverable references and
+excerpts; no grader or judge verdict, no suggested answer) before any automated verdict
+is revealed, the labels are saved with a hash and timestamp, and disagreements are
+diagnosed as model failures, grader defects, rubric ambiguity or environment faults;
+evidence-backed grader defects are repaired with versioned changes that preserve the
+original grades. Human labels are requested in groups of at least three tasks. A second,
+independently generated sample per task (`validation`) stays sealed - content,
+trajectory and logs unopened - until the grader candidate is committed and tagged;
+it is then labelled the same way before the frozen deterministic grader and the judge
+run, and false passes, false fails, coverage loss and agreement are reported with
+numerators and denominators. Post-fix scores on the same samples are regression
+evidence, not new held-out validation; the development model's samples support
+validation on unseen outputs of one model family only. Judge debug criteria are never
+reused as held-out judge-validation criteria.
 
 **Execution and collection gate.** Before any capability grading, the grading entry
 point must load and validate the final `run_outcome.json` using
@@ -247,13 +301,22 @@ the other tasks, and the pilot task's judge verdicts are checked by human review
 ## 7. Workflow and controls
 
 Stages run in order: read-only check, material download and rule drafting, toolchain
-validation without model calls, model and budget configuration, pilot (one task, model
-A end-to-end through grading and human review, then model B), freeze, formal run with
-human review, deliverables. Each stage ends with a report in `docs/status.md`.
+validation without model calls, model and budget configuration, gold-first grader
+development with development and sealed validation samples (section 4), candidate
+compatibility runs, judge preparation, freeze, formal run with human review,
+deliverables. Each stage ends with a report in `docs/status.md`. Two independent
+engineering reviews gate the work: one of the shared spreadsheet grading core after the
+second task, before it is scaled to the remaining tasks, and one of measurement
+readiness (coverage, independent validation, judge reliability, candidate fairness,
+provenance, unresolved blockers) before the freeze request.
 
 Paid calls (candidate models, judge, connectivity tests) need explicit approval of the
-scope, expected cost, ceiling, and stop conditions. The first paid batch is the pilot.
-Concurrency starts at one or two and is raised only on evidence.
+scope, expected cost, ceiling, and stop conditions; one authorization covers one defined
+batch (model ids, task and sample counts, forecast cost, internal controls, destinations,
+stop conditions and retry policy). A batch stops when its ledger reaches a stop
+condition; ceilings are never raised, holds never cleared and paid samples never
+retried without explicit authorization. Concurrency starts at one and is raised only on
+evidence.
 
 ## 8. Reproducibility
 
@@ -268,3 +331,9 @@ Concurrency starts at one or two and is raised only on evidence.
 - Run and grading configuration: `config.json` (frozen at `freeze-v1`).
 - Per-task critical criteria, checks, judge inputs, known data defects, adjudications:
   `preregistration.md`.
+- Gold-first validation records per task (original first pass, post-fix result,
+  corruption catalog with declared transitions, observed transitions):
+  `grading/validation/<task_id>/`; grader versions: `grading.grade.ENGINE_VERSION`
+  and each task module's `VERSION`, stated in `config.json` `grading`.
+- Compatibility task (outside the formal ten): `data/compat_tasks.json`,
+  `data/compat_manifest.json`, `config.json` `compat_tasks`.

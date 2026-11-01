@@ -478,13 +478,18 @@ class JudgeAdapterTests(unittest.TestCase):
 class GradingCliVersionTests(unittest.TestCase):
     def test_config_grader_version_must_equal_the_code_version(self):
         from grading import run_grading as RG
-        from grading.grade import GRADER_VERSION
+        from grading.grade import ENGINE_VERSION, GRADER_VERSION, TASK_MODULES, grader_version_of
         cfg = json.load(open(os.path.join(ROOT, "config.json")))
-        self.assertEqual(cfg["grading"]["grader_version"], GRADER_VERSION)
+        self.assertEqual((cfg["grading"]["engine_version"], cfg["grading"]["task_grader_versions"][TASK]), (ENGINE_VERSION, TASK_MODULES[TASK]["version"]))
+        self.assertEqual(GRADER_VERSION, grader_version_of(TASK)); self.assertEqual(GRADER_VERSION, f"{ENGINE_VERSION}+{TASK_MODULES[TASK]['version']}")
         with tempfile.TemporaryDirectory() as d:
-            bad = os.path.join(d, "config.json"); cfg["grading"]["grader_version"] = "grading-1137e2bb-2026-10-30"
+            bad = os.path.join(d, "config.json"); cfg["grading"]["task_grader_versions"][TASK] = "1137e2bb-2026-10-30"
             json.dump(cfg, open(bad, "w"))
-            with self.assertRaisesRegex(RG.GradingCliError, "grader_version"):
+            with self.assertRaisesRegex(RG.GradingCliError, "versions"):
+                RG.load_materials(TASK, bad)
+            cfg["grading"]["task_grader_versions"][TASK] = TASK_MODULES[TASK]["version"]; cfg["grading"]["engine_version"] = "engine-2026-10-31.0"
+            json.dump(cfg, open(bad, "w"))
+            with self.assertRaisesRegex(RG.GradingCliError, "versions"):
                 RG.load_materials(TASK, bad)
 
 

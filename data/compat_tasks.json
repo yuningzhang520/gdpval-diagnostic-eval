@@ -1,0 +1,21 @@
+{
+  "parquet_sha256": "f8422fab9b21d90c0ee5f0659842ab666d418cb8940842918f9f4b0df7ae0202",
+  "purpose": "candidate compatibility testing only: one representative GDPval task OUTSIDE the ten selected formal tasks; never graded against business rules, never reported as a capability result; its outputs calibrate nothing",
+  "groups": {
+    "compat": {
+      "description": "compatibility task (provider behaviour, reasoning configuration, tools, file and image handling, artifact collection, rendering, usage recovery and ledger settlement)",
+      "occupations": [
+        "Customer Service Representatives"
+      ]
+    }
+  },
+  "tasks": [
+    {
+      "task_id": "87da214f-fd92-4c58-9854-f4d0d10adce0",
+      "prefix": "87da214f",
+      "group": "compat",
+      "occupation": "Customer Service Representatives",
+      "sector": "Finance and Insurance"
+    }
+  ]
+}

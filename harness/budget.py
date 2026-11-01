@@ -214,9 +214,23 @@ class BudgetLedger:
                 state = self._read()
                 if _d(state["ceiling_usd"]) != self.ceiling:
                     raise LedgerConflict(f"ledger ceiling {state['ceiling_usd']} differs from configured {self.ceiling}; refuse to continue silently")
+                if state.get("label") not in (None, label):  # run classes are never mixed: a ledger belongs to one class
+                    raise LedgerConflict(f"ledger label {state.get('label')!r} differs from the requested run class {label!r}; refuse to continue")
                 if not state.get("ledger_id"):  # ledgers created before the identity existed: assign one persistent id once (identity metadata, not an event)
                     state["ledger_id"] = secrets.token_hex(16)
                     self._write(state)
+
+    @classmethod
+    def open_existing(cls, path: str, prices: dict | None = None) -> "BudgetLedger":
+        """Open a ledger that already exists with the ceiling and label it was created with (grading, reporting and
+        reconciliation never decide a ceiling; only the launcher creates a ledger, from the batch controls)."""
+        real = os.path.realpath(path)
+        if not os.path.isfile(real):
+            raise LedgerConflict(f"ledger {path} does not exist; only the launcher creates ledgers")
+        with open(real, encoding="utf-8") as f:
+            state = json.load(f)
+        _require(isinstance(state, dict) and _is_money(state.get("ceiling_usd")), "ledger file malformed")
+        return cls(real, state["ceiling_usd"], prices, label=state.get("label") or "pilot")
 
     def identity(self) -> dict:
         """Canonical identity a run binds to: the real path of the ledger file and its persistent id."""

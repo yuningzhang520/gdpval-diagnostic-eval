@@ -20,7 +20,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 def _ledger(path: str, config_path: str) -> BudgetLedger:
     from .launcher import load_config, prices_from_config
     cfg = load_config(config_path)
-    return BudgetLedger(path, cfg["pilot"]["budget_ceiling_usd"], prices_from_config(cfg))
+    return BudgetLedger.open_existing(path, prices_from_config(cfg))  # ceiling and run class come from the ledger itself
 
 
 def main(argv=None) -> int:

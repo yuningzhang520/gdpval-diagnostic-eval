@@ -130,3 +130,18 @@ class RealDataTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TaskSetTests(unittest.TestCase):
+    """Run classes (2026-11-01): the compatibility task comes from its own manifest and config block; the formal set is untouched."""
+    def test_compat_task_set_builds_from_its_own_manifest_and_verifies_against_config(self):
+        samples = S.build_samples(task_set="compat", verify_config=S.CONFIG)
+        self.assertEqual([s.id for s in samples], ["87da214f-fd92-4c58-9854-f4d0d10adce0"])
+        self.assertEqual(sorted(os.path.basename(k) for k in samples[0].files), ["ID Theft Policy (1).docx", "Policy Reimbursement Account Sample.xlsx"])
+        self.assertEqual((samples[0].metadata["task_set"], samples[0].metadata["staging_verified"]["files_verified"]), ("compat", 2))
+        self.assertEqual(S.task_set_for_manifest("data/selected_tasks.json"), "selected"); self.assertEqual(S.task_set_for_manifest("data/compat_tasks.json"), "compat")
+        with self.assertRaises(ValueError):
+            S.task_set_for_manifest("data/other.json")
+        formal_ids = {t["task_id"] for t in S.load_json(S.SELECTED)["tasks"]}
+        self.assertNotIn("87da214f-fd92-4c58-9854-f4d0d10adce0", formal_ids)  # the formal list is unchanged
+        self.assertEqual(len(S.build_samples(verify_config=S.CONFIG)), 10)
