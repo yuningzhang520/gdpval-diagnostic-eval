@@ -90,7 +90,7 @@ class LabelBatchTests(unittest.TestCase):
         v = [("validation",) + self.runs[0][1:]] + self.runs[1:]
         with self.assertRaisesRegex(LB.BatchError, "stay sealed"):
             self.resolved(v)
-        nr = [("dev", "b5d2e6f1-62a2-433a-bcdd-95b260cdd860", self.runs[0][2], None)] + self.runs[1:]  # no grader yet
+        nr = [("dev", "87da214f-fd92-4c58-9854-f4d0d10adce0", self.runs[0][2], None)] + self.runs[1:]  # not listed in readiness.json (the compat task; every selected task is ready since 2026-11-01)
         with self.assertRaisesRegex(LB.BatchError, "not ready for opening"):
             self.resolved(nr)
         with self.assertRaisesRegex(LB.BatchError, "does not exist"):

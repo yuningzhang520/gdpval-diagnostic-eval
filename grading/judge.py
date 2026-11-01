@@ -423,6 +423,16 @@ def build_units_c357f0e2(task_prompt: str, rubric: list[dict], extraction: dict,
         units.append({"unit_id": unit_id(task_id, item), "run_uuid": run_uuid, "task_id": task_id, "item": item, "weight": rubric[item - 1]["score"], "criterion": rubric[item - 1]["criterion"],
                       "task_requirement": task_prompt, "source_material": source, "deliverable_excerpt": excerpt, "excerpt_kind": "sheet:counted_test_cases",
                       "assembled_at": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds")})
+    r69 = (checks.get("items") or {}).get(69) or {}
+    if r69.get("verdict") == "route_to_judge":  # approved 2026-11-01: no label match, the judge assesses "or equivalent"
+        labels = (r69.get("evidence") or {}).get("module_labels") or []
+        src69 = (source + " Item 69 (approved 2026-11-01): a Module label 'Cross-functional Testing' or a legitimate synonym passes; no such label was found, so judge "
+                 "whether the plan has a module equivalent to outline section 7 (Cross-functional Testing: permissions by role and browser compatibility, tested "
+                 "across modules). 'Cross-browser Testing' alone is not a synonym, but its rows' substantive content may be relevant. Module labels in the "
+                 f"counted rows: {labels}.")
+        units.append({"unit_id": unit_id(task_id, 69), "run_uuid": run_uuid, "task_id": task_id, "item": 69, "weight": rubric[68]["score"], "criterion": rubric[68]["criterion"],
+                      "task_requirement": task_prompt, "source_material": src69, "deliverable_excerpt": excerpt, "excerpt_kind": "sheet:counted_test_cases",
+                      "routed_from": "deterministic", "assembled_at": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds")})
     return units
 
 

@@ -13,13 +13,16 @@ revised value, the unchanged revised value. A formula without a cached value is 
 
 Store lists. The final-list tab is a sheet other than the comparison tab with a store-number column (header naming a
 store, ids below); ids are normalised (leading zeros removed) and compared with the task's input files. Rows flagged
-as removed are not part of the listed final set. Added-store flags: a text flag in the row (added / new) decides;
-otherwise a highlight style named by a legend cell; otherwise the single non-baseline highlight style (fill or font
-colour of the id cell); several unexplained styles, or a highlight only through conditional formatting, cannot be
-assessed. Operational rules (preregistration 2.5): 6 = the listed set is closer (Jaccard) to the final input than to
-the original input; 7 = at least one row flagged and more than half of the flagged rows are added stores, and listed
-removed stores carry a removal flag; 33 = flagged set equals Final - Original exactly; 34-36 read removal statements
-(a removal phrase with the id in one paragraph, cell row, or under a removal header) in the workbook and the email.
+as removed are not part of the listed final set. Added-store flags (approved 2026-11-01): an explicit status text in
+the row (added / new) is used unless a highlight indicator contradicts it (a legend-designated style marking other rows,
+or a highlight style that overlaps the text-flagged rows without matching them): contradicting indicators cannot be
+assessed. Without a status text: a highlight style named by a legend cell; otherwise the single non-baseline highlight
+style (fill or font colour of the id cell); several unexplained styles, or a highlight only through conditional
+formatting, cannot be assessed. Rules (preregistration 2.5): 6 = the listed set is closer (Jaccard) to the final input
+than to the original input; 7 = every added store (Final - Original) is on the tab and flagged as added, the flag
+distinguishes rows (not every listed row flagged), and listed removed stores carry a removal flag; 33 = flagged set
+equals Final - Original exactly; 34-36 read removal statements (a removal phrase with the id in one paragraph, cell row,
+or under a removal header) in the workbook and the email.
 
 Email. All .docx text (paragraphs and tables). 37 / 41: a number equal to 1,320 / 1,257; 38 / 39: a number within the
 paired workbook tolerance (0.5 %, items 31 and 29) of 1,868.39 / 24,670.80; 42: the email contains each of the
@@ -36,7 +39,7 @@ from .engine.money import parse_money
 from .engine.workbook import workbook_gate
 
 TASK = "c3525d4d-2012-45df-853e-2d2a0e902991"
-VERSION = "c3525d4d-2026-11-01.1"
+VERSION = "c3525d4d-2026-11-01.2"  # .2: item 7 per the rubric text (every added store flagged; no majority); conflicting flag indicators cannot_assess (approved 2026-11-01)
 D_ITEMS = [1] + list(range(3, 40)) + list(range(41, 48)) + [49]
 J_ITEMS = [2, 40, 48, 50, 51]
 V_ITEMS = [52]
@@ -341,8 +344,6 @@ def added_flags(sh: dict, lst: dict, flags: dict) -> dict:
     highlight = {s: n for s, n in styles.items() if s != baseline}
     desc = {f"{s[0] or '-'} / {s[1] or '-'}": n for s, n in styles.items()}
     text_rows = {r for r, f in flags.items() if f["added_text"]}
-    if text_rows:
-        return {"rows": text_rows, "method": "text flag", "styles": desc}
     listed = {r for r, _ in lst["ids"]}
     legend = set()
     for coord, c in sh["cells"].items():
@@ -350,6 +351,15 @@ def added_flags(sh: dict, lst: dict, flags: dict) -> dict:
         m = re.match(r"([A-Z]+)(\d+)$", coord)
         if isinstance(v, str) and re.search(ADDED_RX, norm(v)) and int(m.group(2)) not in listed and (c.get("fill"), c.get("font_color")) in highlight:
             legend.add((c.get("fill"), c.get("font_color")))
+    classes = {s: {r for r, f in flags.items() if f["style"] == s} for s in highlight}
+    if text_rows:
+        if len(legend) == 1 and classes[next(iter(legend))] != text_rows:
+            return {"rows": None, "method": "status text and the legend-designated highlight mark different rows (conflicting indicators)", "styles": desc}
+        if not classes or any(rows == text_rows for rows in classes.values()):
+            return {"rows": text_rows, "method": "text flag" + (" (a highlight style marks the same rows)" if classes else ""), "styles": desc}
+        if any(rows & text_rows for rows in classes.values()):
+            return {"rows": None, "method": "status text and a highlight style overlap without matching (conflicting indicators)", "styles": desc}
+        return {"rows": text_rows, "method": "text flag (highlight styles mark other rows)", "styles": desc}
     if len(legend) == 1:
         s = next(iter(legend))
         return {"rows": {r for r, f in flags.items() if f["style"] == s}, "method": "legend style", "styles": desc}
@@ -764,10 +774,13 @@ def check_store_list(results, wb, name, sheet, lists, orig_set, final_set, added
         flagged = {flags[r]["id"] for r in af["rows"]}
         hit = flagged & added_ref
         d7.evidence.update({"flagged": len(flagged), "flagged_added": len(hit)}); d33.evidence.update({"flagged": len(flagged), "flagged_added": len(hit)})
+        unflagged_added = sorted(added_ref - flagged, key=int)
         if not flagged:
             d7.violation("no_highlight", "no row is highlighted or flagged as added")
-        elif len(hit) * 2 <= len(flagged):
-            d7.violation("wrong_rows", f"{len(hit)} of {len(flagged)} flagged rows are added stores (Final - Original)")
+        elif unflagged_added:
+            d7.violation("added_not_flagged", f"{len(unflagged_added)} of {len(added_ref)} added store(s) not on the tab or not flagged, e.g. {unflagged_added[:6]}")
+        if flagged and flagged >= {f["id"] for f in flags.values()}:
+            d7.violation("no_distinction", "every listed row is flagged: the flag does not single out the added stores")
         unflagged_removed = sorted({f["id"] for f in flags.values() if f["id"] in removed_ref and not f["removed"]}, key=int)
         if unflagged_removed:
             d7.violation("removed_unflagged", f"removed store(s) {unflagged_removed} listed without a removal flag")

@@ -3545,6 +3545,47 @@ Labeling batch 1 is deferred. Its three ready canonical dev runs (`f841ddcf…`,
 workbooks whose formulas have no cached values (491, 457 and 923 formulas). Their deterministic pass therefore needs the
 LibreOffice recalculation in Docker, which is not started while paid sandboxes are active.
 
+## Approved rubric decisions implemented (2026-11-01; approved by the human; engine-2026-11-01.2; no model, judge or paid call; logs `logs/amendments-20261101-162146Z/`)
+
+- Corrections P-2.5-1 (`c3525d4d…` 37, 38, 39, 41 D) and P-2.6-1 (`7b08cd4d…` 41-48 J, 52 D) recorded as approved,
+  versioned preregistration corrections. `grading/tests/test_item_partition.py` checks that every task's D, J and V
+  lists partition its rubric (each item exactly once; counts from the rubric files).
+- `c357f0e2…` item 69 (task version .2): a "Cross-functional Testing" label or legitimate synonym passes
+  deterministically; otherwise the check returns `route_to_judge`. Shared change, recorded for Codex Review 2:
+  `grading.grade.grade_run` scores a routed item once, as a J row that carries the deterministic note and evidence
+  (`routed_from_deterministic`); the task's unit builder adds the judge unit with the module content and the approved
+  rule. The engine version is bumped to `engine-2026-11-01.2`. The expert workbook's 69 is now routed (grader .1:
+  fail). No judge call.
+- `c3525d4d…` (task version .2): item 7 follows the rubric text, which has no "most" or "majority". Every added store
+  must be on the tab and flagged; the flag must single out rows; listed removed stores must be flagged. The majority
+  threshold of .1 is withdrawn. Added-store identity: the explicit status text decides unless a highlight indicator
+  contradicts it (then cannot_assess). Email tolerance: the paired workbook item's 0.5 % relative tolerance (same
+  denominators, numbers as stated). Variant expectations changed with the rule: R06 7 pass (.1 fail), R08 7 fail (.1
+  pass). New variants R20 (status text and fill disagree: cannot_assess) and R21 (every row flagged: 7 fails). The
+  expert map is unchanged.
+- `b5d2e6f1…` rule A-1 approved (task version .2). Under it, figure-less "(blank)" pivot groups are permitted when the
+  pivot range covers the data and hides no data. Item 14 fails on a "(blank)" row with figures (the source has no
+  unlabelled row) or on unlabelled data rows inside the range; it is cannot_assess without a readable range. New
+  variants R14-R16; R01 and R04 now cannot_assess item 14 (no pivot sourced from the data sheet). The expert map is
+  unchanged (14 passes, as under the provisional rule); the literal-reading first pass is kept. `b5d2e6f1…` is moved
+  to ready in `grading/readiness.json`.
+- Reveal disclosure (before the tag moves): no dev output of `c3525d4d…`, `c357f0e2…` or `b5d2e6f1…` has been opened.
+  - `c3525d4d…` run `UzC6bRkvzRHNGkCztWJhb9` finished at 16:21:42Z. Only the numeric metadata of its in-progress sample
+    buffer was read in the efficiency check (token counts, call counts, timestamps, tool-error flags).
+  - `c357f0e2…` has no dev output yet.
+  - `b5d2e6f1…` run `3mhbRUHW7n2U8vuFDFpVu9`: only file types and the collection manifest's consistency were read.
+  These amendments were made after the approval of 2026-11-01 and are not described as preregistered.
+
+| Command (`run_isolated.sh`, `/usr/bin/time -p`) | Wall clock | Exit | Result |
+|---|---|---|---|
+| `unittest grading.tests.test_item_partition` | 1.0 s | 0 | 2/2 |
+| `unittest grading.tests.test_gold_1137e2bb` / `7d7fc9a7` (Task 1, Task 2) | 13.4 / 6.2 s | 0 | 53 + 2 skipped / 56 + 3 skipped |
+| `unittest grading.tests.test_gold_b5d2e6f1` / `c3525d4d` / `c357f0e2` | 59.6 / 6.3 / 1.6 s | 0 | 25 / 29 / 19 |
+| `unittest grading.tests.test_gold_7b08cd4d` / `2ea2e5b5` / `a45bc83b` / `f841ddcf` / `47ef842d` | 1.4 / 1.9 / 2.8 / 3.7 / 5.3 s | 0 | 15 / 30 / 20 / 18 / 14 |
+| `unittest grading.tests.test_grading_chain` / `harness.tests.test_docs_consistency` | 3.3 / 0.9 s | 0 | 29 / 3 |
+| `unittest grading.tests.test_label_batch` | 12.7 s | 1 | 2/3: the gate test used `b5d2e6f1…` as its not-ready example, which is ready now; it now uses a task not listed in readiness |
+| `unittest grading.tests.test_label_batch` (rerun) | 13.0 s | 0 | 3/3 |
+
 ## Known issues and findings (material check)
 
 - `rubric_json.form_content`: 8,036 items hold `null`, 2,417 items lack the key, zero
@@ -3914,6 +3955,10 @@ cap is 1). `c3525d4d…` grader v0 tagged (`grader-v0-c3525d4d` at `5435534`; co
 
 - 2026-11-01 · `c357f0e2…` grader v0 (task version c357f0e2-2026-11-01.1), the shared extractor's sheet visibility,
   column layout and blank-cell styles, and the narrow reading of item 69 (pending human review) · 24d2eea (tag `grader-v0-c357f0e2`)
+
+- 2026-11-01 · approved rubric decisions implemented: P-2.5-1, P-2.6-1, `c357f0e2…` item 69 judge routing (engine
+  .2), `c3525d4d…` item 7 / flag identity, `b5d2e6f1…` A-1; tags of the three amended graders moved (this commit and
+  the tag record that follows)
 
 ## Next stage (not started)
 

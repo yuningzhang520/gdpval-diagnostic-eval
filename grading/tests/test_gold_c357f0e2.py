@@ -66,7 +66,7 @@ class GoldAnchorTests(unittest.TestCase):
         self.assertEqual(self.gold["critical"], {"C1": "fail", "C2": "not_confirmed", "C3": "not_confirmed"})  # C2, C3 are judge criteria
         st = self.gold["res"]["extraction_status"]
         self.assertEqual((st["test_case_sheet"], st["counted_rows"]), ("UAT Test Plan", 75))
-        self.assertIn("cross browser testing", self.gold["res"]["items"][69]["evidence"]["component_labels"])
+        self.assertIn("cross browser testing", self.gold["res"]["items"][69]["evidence"]["related_labels"])  # routed to the judge, label kept as evidence (approved 2026-11-01)
 
     def test_extractor_reads_visibility_widths_and_wrap(self):
         sh = self.gold["ex"]["xlsx"][GV.XLSX]["sheets"]["UAT Test Plan"]
@@ -133,11 +133,14 @@ class ProductionGradeRunTests(unittest.TestCase):
             rows = [json.loads(l) for l in open(os.path.join(out, "grades.jsonl"), encoding="utf-8")]
             self.assertEqual(sorted(g["item"] for g in rows), list(range(1, len(RUBRIC) + 1)))
             by_src = {s_: [g for g in rows if g["source"] == s_] for s_ in ("D", "J", "V")}
-            self.assertEqual((len(by_src["D"]), len(by_src["J"]), len(by_src["V"])), (15, 54, 1))
-            self.assertEqual({g["item"]: g["verdict"] for g in by_src["D"]}, GV.GOLD_BASELINE)
+            self.assertEqual((len(by_src["D"]), len(by_src["J"]), len(by_src["V"])), (14, 55, 1))  # item 69 routed: one J row, no D row
+            self.assertEqual({g["item"]: g["verdict"] for g in by_src["D"]}, {i: v for i, v in GV.GOLD_BASELINE.items() if i != 69})
+            j69 = next(g for g in by_src["J"] if g["item"] == 69)
+            self.assertEqual(j69["verdict"], "pending_judge"); self.assertIn("routed to the judge", j69["routed_from_deterministic"]["note"])
             ex = X.extract_all(os.path.join(host, "final"), os.path.join(base, "w"), recalc=False)
             units = J.build_units_c357f0e2(PROMPT, RUBRIC, ex, REFERENCE, CK.run_checks(ex, REFERENCE, RUBRIC), b["uuid"])
-            self.assertEqual([u["item"] for u in units], CK.J_ITEMS)
+            self.assertEqual([u["item"] for u in units], CK.J_ITEMS + [69])
+            self.assertIn("Cross-browser Testing", units[-1]["source_material"])
             self.assertIn("Test Scenario", {u["item"]: u for u in units}[49]["deliverable_excerpt"]); self.assertIn("Viewers", {u["item"]: u for u in units}[49]["source_material"])
             TABLE["production_grade_run"] = {"rows": len(rows), "sources": {k: len(v) for k, v in by_src.items()}, "critical": {k: v["status"] for k, v in r["score"]["critical"].items()}}
 

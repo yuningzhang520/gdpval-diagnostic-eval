@@ -39,7 +39,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # review infrastructure) carries ENGINE_VERSION; every task specification carries its own VERSION; a grading pass records
 # the combined grader version "<engine>+<task>" and the full git commit of the code that graded. config.grading must state
 # the engine version and the per-task versions (checked by run_grading before any grading).
-ENGINE_VERSION = "engine-2026-11-01.1"
+ENGINE_VERSION = "engine-2026-11-01.2"  # .2: a deterministic item may route itself to the judge (route_to_judge); scored once, as a J row
 TASK_MODULES = {CK.TASK: {"checks": CK.run_checks, "units": J.build_units_1137e2bb, "critical": CK.CRITICAL, "judge_items": CK.J_ITEMS, "visual_items": [], "version": CK.VERSION},
                 CK2.TASK: {"checks": CK2.run_checks, "units": J.build_units_7d7fc9a7, "critical": CK2.CRITICAL, "judge_items": CK2.J_ITEMS, "visual_items": CK2.V_ITEMS, "version": CK2.VERSION},
                 CK3.TASK: {"checks": CK3.run_checks, "units": J.build_units_2ea2e5b5, "critical": CK3.CRITICAL, "judge_items": CK3.J_ITEMS, "visual_items": CK3.V_ITEMS, "version": CK3.VERSION},
@@ -281,14 +281,20 @@ def grade_run(host_dir: str, log, sample_uuid: str, *, task_id: str, rubric: lis
     units = mod["units"](task_prompt, rubric, extraction, reference, checks, binding["uuid"])
     verdicts = J.judge_units(units, judge) if judge is not None else []
     grades = []
+    # Approved 2026-11-01 (c357f0e2 item 69): a deterministic check may return verdict "route_to_judge" when its rule
+    # cannot decide by itself; the item is then scored once, as a judge row carrying the deterministic evidence.
+    routed = {i: r for i, r in checks["items"].items() if r["verdict"] == "route_to_judge"}
     for i, r in checks["items"].items():
+        if i in routed:
+            continue
         grades.append({"run_uuid": binding["uuid"], "task_id": task_id, "item": i, "weight": r["weight"], "criterion": r["criterion"], "source": "D", "verdict": r["verdict"],
                        "evidence": r["evidence"], "deliverable_value": r["deliverable_value"], "reference_value": r["reference_value"], "note": r["note"],
                        "attribution": r.get("attribution"), "grader_version": grader_version, "grading_pass": rec["grading_pass"]})
     vb = {v["item"]: v for v in verdicts}
-    for i in mod["judge_items"]:
+    for i in list(mod["judge_items"]) + sorted(routed):
         v = vb.get(i)
         grades.append({"run_uuid": binding["uuid"], "task_id": task_id, "item": i, "weight": rubric[i - 1]["score"], "criterion": rubric[i - 1]["criterion"], "source": "J",
+                       **({"routed_from_deterministic": {"note": routed[i]["note"], "evidence": routed[i]["evidence"]}} if i in routed else {}),
                        "verdict": v["verdict"] if v else "pending_judge", "evidence": v["evidence"] if v else [], "rationale": v["rationale"] if v else "", "judge_id": v["judge_id"] if v else None,
                        "parse_error": v["parse_error"] if v else None, "error_class": v.get("error_class") if v else None, "call_status": v.get("call_status") if v else None,
                        "usage_status": v.get("usage_status") if v else None, "grader_version": grader_version, "grading_pass": rec["grading_pass"]})

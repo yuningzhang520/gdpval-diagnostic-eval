@@ -27,7 +27,7 @@
   },
   "c3525d4d-2012-45df-853e-2d2a0e902991": {
    "tag": "grader-v0-c3525d4d",
-   "basis": "grader v0 2026-11-01 (task version c3525d4d-2026-11-01.1)"
+   "basis": "grader v0 amended 2026-11-01 before any dev output was opened (task version c3525d4d-2026-11-01.2; tag moved)"
   },
   "7b08cd4d-df60-41ae-9102-8aaa49306ba2": {
    "tag": "grader-v0-7b08cd4d",
@@ -35,10 +35,12 @@
   },
   "c357f0e2-963d-4eb7-a6fa-3078fe55b3ba": {
    "tag": "grader-v0-c357f0e2",
-   "basis": "grader v0 2026-11-01 (task version c357f0e2-2026-11-01.1)"
+   "basis": "grader v0 amended 2026-11-01 before any dev output existed (task version c357f0e2-2026-11-01.2; tag moved)"
+  },
+  "b5d2e6f1-62a2-433a-bcdd-95b260cdd860": {
+   "tag": "grader-v0-b5d2e6f1",
+   "basis": "rule A-1 approved by the human 2026-11-01; tag moved to the amended grader (task version b5d2e6f1-2026-11-01.2)"
   }
  },
- "not_ready": {
-  "b5d2e6f1-62a2-433a-bcdd-95b260cdd860": "grader v0 tagged; rubric decision A-1 ('(blank)' pivot rows) pending"
- }
+ "not_ready": {}
 }

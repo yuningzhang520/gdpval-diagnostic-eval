@@ -3,7 +3,7 @@ deterministic items. Workbook variants start from a values-only openpyxl copy of
 their cached values; fills, number formats and conditional formats are kept); email variants edit the expert .docx with
 python-docx. Store rows are copied from the task's input (data/inputs/<task>/Holiday Matrix final count.xlsx).
 
-Gold baseline (grader c3525d4d-2026-11-01.1): fails 6, 7, 32, 33 (K2: the final-list tab holds re-identified six-digit
+Gold baseline (grader c3525d4d-2026-11-01.2; unchanged from .1): fails 6, 7, 32, 33 (K2: the final-list tab holds re-identified six-digit
 ids, none in the input files; its 31 ADDED rows are not the added stores), 34, 35, 36 (removed stores 3737 / 4099 not
 mentioned), 46 (no per-unit change line). R01 replaces the tab with the input's final list and flags the 31 added
 stores; most store-list variants build on it. First pass: grading/validation/<task>/gold_first_pass.json."""
@@ -216,6 +216,22 @@ def o_values_only(wb):
     pass
 
 
+def o_text_fill_disagree(wb):
+    o_real_list(wb)
+    ws = wb["STORE LIST FINAL"]
+    r = next(r for r in range(6, ws.max_row + 1) if ws.cell(r, 4).value == "ADDED")
+    for c in range(1, 5):
+        ws.cell(r, c).fill = NOFILL
+
+
+def o_every_row_flagged(wb):
+    write_list(wb, final_rows(), yellow=False, blue_capital=False)
+    ws = wb["STORE LIST FINAL"]
+    for r in range(6, ws.max_row + 1):
+        if ws.cell(r, 1).value is not None:
+            ws.cell(r, 4).value = "ADDED"
+
+
 # ----------------------------------------------------------------------------- email edits
 def _doc_edit(path, fn):
     import docx
@@ -264,11 +280,11 @@ CATALOG = {
                            "basis": "revised overage rounded down (62, 1,319 units, 24,652.11, change 1,849.70): 25 and 31 fail; 29 within 0.5 %; the email's 1,320 / 1,868.39 / 24,670.80 no longer match (42)"},
     "R05_strip_plus_050": {"kind": "rubric_relevant", "openpyxl": o_strip_plus_050, "expected": F(15, 16, 18, 20, 29, 31, 42),
                            "basis": "shelf strip raised by 0.50 instead of 0.25 (2.39; per unit 19.69; total 25,990.80; change 3,188.39); totals stay consistent (27, 30 hold)"},
-    "R06_raw_string_flags": {"kind": "rubric_relevant", "openpyxl": o_raw_string_flags, "expected": P(6, 32) | F(7, 33),
-                             "basis": "K1 trap: 'added' by raw string comparison flags the 647 ids not matching as text (every id with leading zeros); 31 of 647 are added stores"},
+    "R06_raw_string_flags": {"kind": "rubric_relevant", "openpyxl": o_raw_string_flags, "expected": P(6, 7, 32) | F(33),
+                             "basis": "K1 trap: 'added' by raw string comparison flags the 647 ids not matching as text (every id with leading zeros); all 31 added stores are among them (7 passes under grader .2; .1 failed it by majority), the set is not exact (33)"},
     "R07_original_list": {"kind": "rubric_relevant", "openpyxl": o_original_list, "expected": F(6, 7, 32, 33), "basis": "the tab holds the original list (closer to the original than to the final input: 6 fails; 32, 7, 33 fail)"},
-    "R08_list_typo": {"kind": "rubric_relevant", "openpyxl": o_list_typo, "expected": P(6, 7) | F(32, 33),
-                      "basis": "R01 with one added id mistyped (0557 -> 0558, still flagged): 32 and 33 fail; 30 of 31 flagged rows are added stores (7 passes)"},
+    "R08_list_typo": {"kind": "rubric_relevant", "openpyxl": o_list_typo, "expected": P(6) | F(7, 32, 33),
+                      "basis": "R01 with one added id mistyped (0557 -> 0558, still flagged): added store 557 is not on the tab (7 fails under grader .2; .1 passed it by majority), 32 and 33 fail"},
     "R09_two_styles_no_text": {"kind": "rubric_relevant", "openpyxl": o_fill_two_styles, "expected": P(6, 32) | CA(7, 33),
                                "basis": "R01 without the ADDED text: yellow (added) and blue (capital plan) fills and no legend, so the materials do not say which style marks added stores"},
     "R10_fill_legend": {"kind": "rubric_relevant", "openpyxl": o_fill_legend, "expected": P(6, 7, 32, 33), "basis": "R09 plus a yellow legend cell naming added stores: the legend style decides"},
@@ -286,6 +302,10 @@ CATALOG = {
                            "basis": "original total program cost as a formula without a cached value: every item that reads it is cannot_assess, never fail"},
     "R19_table_layout": {"kind": "rubric_relevant", "openpyxl": o_table_layout, "expected": P(46),
                          "basis": "the comparison as tables with Original / Revised / Change columns (header-scoped scenarios); its Change column carries the per-unit change 1.00 (46 passes)"},
+    "R20_text_and_fill_disagree": {"kind": "rubric_relevant", "openpyxl": o_text_fill_disagree, "expected": P(6, 32) | CA(7, 33),
+                                   "basis": "R01 with the yellow fill removed from one ADDED row: the status text (31 rows) and the highlight (30 rows) overlap without matching, conflicting indicators"},
+    "R21_every_row_flagged": {"kind": "rubric_relevant", "openpyxl": o_every_row_flagged, "expected": P(6, 32) | F(7, 33),
+                              "basis": "every listed row flagged ADDED: all added stores are flagged but the flag does not single them out (7), the set is not exact (33)"},
     "N01_values_only_copy": {"kind": "neutral", "openpyxl": o_values_only, "basis": "the workbook saved from a values-only openpyxl copy (formulas become values)"},
     "N02_email_resaved": {"kind": "neutral", "docx": e_resave, "basis": "the email re-saved by python-docx without change"},
 }
@@ -294,7 +314,7 @@ CATALOG = {
 def expected_map(name: str) -> dict:
     spec = CATALOG[name]
     base = BASE_R01 if spec.get("openpyxl") in (o_real_list, o_raw_string_flags, o_list_typo, o_fill_two_styles, o_fill_legend, o_fill_single,
-                                                o_removed_flagged, o_removed_unflagged, o_original_list) else GOLD_BASELINE
+                                                o_removed_flagged, o_removed_unflagged, o_original_list, o_text_fill_disagree, o_every_row_flagged) else GOLD_BASELINE
     return {**base, **spec.get("expected", {})}
 
 

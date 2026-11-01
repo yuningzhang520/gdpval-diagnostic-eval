@@ -66,7 +66,7 @@ class GoldAnchorTests(unittest.TestCase):
         self.assertEqual(self.gold["critical"], {"C1": "fail", "C2": "pass", "C3": "pass"})
         st = self.gold["res"]["extraction_status"]
         self.assertEqual((st["comparison_sheet"], st["final_list"]["sheet"], st["final_list"]["common_with_final"]), ("BUDGET", "STORE LIST FINAL", 0))  # K2
-        self.assertEqual(st["final_list"]["added_flags"]["method"], "text flag")
+        self.assertEqual(st["final_list"]["added_flags"]["method"], "text flag (a highlight style marks the same rows)")  # yellow = ADDED rows; blue marks capital-plan rows
 
     def test_inputs_and_reference_agree(self):
         L = CK.input_lists()

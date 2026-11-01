@@ -5,8 +5,9 @@ deterministic items 1-31 and for the two non-rubric critical checks (c1_columns,
 Gold baseline (grader b5d2e6f1-2026-11-01.1): fails 4 and 13 (literal labels "WTD Sales Qty" for "WTD Sales Quantity",
 compact pivot without "Store" / "Brand Name" headers), 7-9 and 18-21 (ST% is the pivot's average of row-level ratios,
 K3), 22 (the Data tab keeps the source's field names), 29 (Sales $ in the General format); the source comparison of C2
-fails on the edited Data tab (K2). The first pass and the provisional rule A-1 ("(blank)" pivot rows) are recorded in
-grading/validation/<task>/gold_first_pass.json. Usage: python -m grading.gold_variants_b5d2e6f1 <out_dir>."""
+fails on the edited Data tab (K2). Rule A-1 ("(blank)" pivot rows; approved 2026-11-01, grader .2) keeps item 14 passing for
+the expert's two figure-less "(blank)" rows (empty groups of the whole-column range B1:V1048576). The first pass (literal
+reading, before A-1) is recorded in grading/validation/<task>/gold_first_pass.json. Usage: python -m grading.gold_variants_b5d2e6f1 <out_dir>."""
 import hashlib
 import json
 import os
@@ -141,6 +142,22 @@ def m_exact_brand_headers(wb):
         ws.cell(3, j).value = h
 
 
+def m_blank_row_with_figures(wb):
+    ws = wb["Sales by Store"]; assert ws["A355"].value == "(blank)"
+    ws["B355"] = 10  # a "(blank)" pivot row now carries a figure
+
+
+def m_pivot_range_unreadable(wb):
+    wb["Sales by Store"]._pivots[0].cache.cacheSource.worksheetSource.ref = "B:V"  # whole columns: not a cell range the grader can bound
+
+
+def m_unlabelled_data_row(wb):
+    ws = wb["Data"]; assert ws.max_row == 937
+    for c in range(4, ws.max_column + 1):  # store (B) and brand (C) left empty; the figures copied from row 937
+        v = ws.cell(937, c).value
+        ws.cell(938, c).value = v if not (isinstance(v, str) and v.startswith("=")) else None
+
+
 def n_sheet_order(wb):
     wb._sheets.insert(0, wb._sheets.pop(wb.sheetnames.index("Data")))
 
@@ -161,11 +178,11 @@ def n_roundtrip(wb):
 
 
 CATALOG = {
-    "R01_data_renamed": {"kind": "rubric_relevant", "wb": m_data_renamed, "expected": F(2, 12), "basis": "the Data tab renamed 'Raw Data': no worksheet named Data (2); the pivot cache still names 'Data', not the data sheet (12); content items use the sheet found by keyword"},
+    "R01_data_renamed": {"kind": "rubric_relevant", "wb": m_data_renamed, "expected": F(2, 12) | {14: "cannot_assess"}, "basis": "the Data tab renamed 'Raw Data': no worksheet named Data (2); the pivot cache still names 'Data', not the data sheet (12); content items use the sheet found by keyword; rule A-1 (grader .2): without a pivot sourced from the data sheet the '(blank)' rows cannot be told from hidden data (14)"},
     "R02_brand_tab_deleted": {"kind": "rubric_relevant", "wb": m_brand_tab_deleted, "expected": F(3, 5, 6, 10, 24, 27, 30, 31), "expected_extra": {"c1_columns": "fail", "c2_source_totals": None},
                               "basis": "no Sales by Brand sheet: its items fail as not delivered (4-10, 24, 27 incl. the baseline fails), both-tab items 29-31 fail; the source comparison is not computed"},
     "R03_brand_value_wrong": {"kind": "rubric_relevant", "wb": m_brand_value_wrong, "expected": F(6, 10), "basis": "Clinique WTD quantity +10: no longer the sum of its Data rows (6); the Grand Total no longer equals the brand rows (10)"},
-    "R04_store_pivot_removed": {"kind": "rubric_relevant", "wb": m_store_pivot_removed, "expected": F(12), "basis": "the PivotTable object removed from Sales by Store, cells kept: no pivot (12); grouping judged from the layout (15 holds)"},
+    "R04_store_pivot_removed": {"kind": "rubric_relevant", "wb": m_store_pivot_removed, "expected": F(12) | {14: "cannot_assess"}, "basis": "the PivotTable object removed from Sales by Store, cells kept: no pivot (12); grouping judged from the layout (15 holds); rule A-1 (grader .2): no source range for the '(blank)' rows (14)"},
     "R05_store_subtotal_wrong": {"kind": "rubric_relevant", "wb": m_store_subtotal_wrong, "expected": F(16, 25), "basis": "store 1 subtotal WTD quantity +5: not the sum of its brand rows (16); the Grand Total no longer equals the subtotals (25); 17 (sum of pair rows) holds"},
     "R06_pair_brand_relabelled": {"kind": "rubric_relevant", "wb": m_pair_brand_relabelled, "expected": F(14, 16), "basis": "store 1's Clinique row labelled 'Dior': a missing pair and an unclassified row (14); the store 1 subtotal no longer equals its brand rows (16)"},
     "R07_merged_header_brand": {"kind": "rubric_relevant", "wb": m_merged_header_brand, "expected": F(30), "basis": "A1:B1 merged above the Sales by Brand header (30)"},
@@ -176,6 +193,12 @@ CATALOG = {
     "R12_store_tab_tabular": {"kind": "rubric_relevant", "wb": m_store_tab_tabular, "expected": P(13) | F(12),
                               "basis": "Sales by Store rebuilt as a tabular table with the exact headers (13 passes), '<store> Total' subtotals and a Grand Total, without a PivotTable (12 fails); pairs, grouping, subtotals and totals hold (14-17, 25, 26)"},
     "R13_exact_brand_headers": {"kind": "rubric_relevant", "wb": m_exact_brand_headers, "expected": P(4), "basis": "Sales by Brand headers written as the rubric's labels (4 passes)"},
+    "R14_A1_blank_row_with_figures": {"kind": "rubric_relevant", "wb": m_blank_row_with_figures, "expected": F(14),
+                                      "basis": "rule A-1: a '(blank)' pivot row with a figure; the source has no row without a store or brand, so it reflects an incorrect source range or aggregation (14)"},
+    "R15_A1_pivot_range_unreadable": {"kind": "rubric_relevant", "wb": m_pivot_range_unreadable, "expected": {12: "cannot_assess", 14: "cannot_assess"},
+                                      "basis": "rule A-1: the pivot source as whole columns 'B:V': the range cannot be bounded (12) and the figure-less '(blank)' rows cannot be told from hidden data (14)"},
+    "R16_A1_unlabelled_data_row": {"kind": "rubric_relevant", "wb": m_unlabelled_data_row, "expected": F(14),
+                                   "basis": "rule A-1: a Data row inside the pivot source range with figures but no store or brand: the '(blank)' rows hide data (14); the labelled rows and their totals are unchanged"},
     "N01_sheet_order": {"kind": "neutral", "wb": n_sheet_order, "basis": "the Data tab moved to the first position"},
     "N02_notes_sheet": {"kind": "neutral", "wb": n_notes_sheet, "basis": "an extra Notes sheet"},
     "N03_brand_label_case": {"kind": "neutral", "wb": n_brand_label_case, "basis": "brand labels in upper case with a typographic apostrophe (KIEHL’S): same brands"},

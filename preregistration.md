@@ -383,11 +383,19 @@ item states otherwise.
   ranges starting in the header rows. C1 adds a content-identified column-set check and C2 the comparison of every
   brand and the grand total with the source recomputation (non-rubric checks in the critical status only).
   Expert workbook: 4, 7-9, 13, 18-22 and 29 fail; the C2 source comparison fails (K2); C1 and C3 pass, C2 and C4 fail.
-- A-1 (OPEN, provisional rule in grader v0; section 4): the expert "Sales by Store" pivot shows two figure-less rows
-  labelled "(blank)" (empty groups from the whole-column source range B1:V1048576). Read literally ("no extra ...
-  pairs") they are extra rows and item 14 fails, which also fails C3 for the expert. Grader v0 records a figure-less
-  "(blank)" row as an empty pivot group, not a (store, brand) pair; a "(blank)" row with figures still counts as an
-  extra row. The first pass under the literal reading is kept (item 14 fail).
+- A-1 (APPROVED by the human 2026-11-01; grader b5d2e6f1-2026-11-01.2). Rubric text (14): "rows are organized to show
+  exactly one row for each (Store, Brand Name) pair present in the 'Data' sheet (no extra or missing pairs)".
+  Independent result: the expert "Sales by Store" pivot shows two figure-less rows labelled "(blank)", empty groups of
+  the whole-column source range B1:V1048576; the source data and the expert Data tab have no row without a store or
+  brand. Adjudication: a "(blank)" pivot category is not automatically a failure. A figure-less "(blank)" row is a
+  permitted empty pivot group when the pivot's source range covers the Data table and no Data row inside the range
+  carries figures without a store or brand. Item 14 fails when such an unlabelled data row exists (incorrect source
+  range or data), and when a "(blank)" row carries figures while the source data has no unlabelled row (incorrect
+  source range or aggregation). Without a readable source range or Data table, item 14 is cannot_assess. Rationale:
+  an empty pivot group changes no figure and reflects no missing or extra pair of the data. Scoring effect: item 14
+  passes for the expert workbook (the provisional rule of grader .1 had the same effect; the first pass under the
+  literal reading, item 14 fail, is kept). Focused checks: variants R14-R16 of `grading/gold_variants_b5d2e6f1.py` and
+  the R01 / R04 expectations (no pivot sourced from the data sheet: item 14 cannot_assess).
 
 ### 2.2 `f841ddcf-2a28-4f6d-bac3-61b607219d3e` — June shipment recap (Order Clerks)
 Inputs: `PO Log.xlsx` (66 POs, all status "Shipped", no blank actual ship dates,
@@ -889,9 +897,10 @@ applies.
   Scoring effect: items 24, 25 graded as written; floor (1,319) fails 25 and passes 29
   within its 0.5 % tolerance; ceiling (1,290) fails 24 and passes 28 within 0.1 %.
   Status: APPROVED.
-- Item classification, corrected 2026-11-01 (editorial; for human confirmation): the list above omitted 37, 38, 39 and
-  41. C3 (approved) states "D for numbers" for rubric 37-42; 37, 38, 39 and 41 are the email's numbers, so they are D.
-  Classification used by grader v0: D 1, 3-39, 41-47, 49 (46 items); J 2, 40, 48, 50, 51; V 52.
+- Correction P-2.5-1 (APPROVED by the human 2026-11-01; grader c3525d4d-2026-11-01.1 onward): the list above omitted
+  37, 38, 39 and 41. C3 (approved) states "D for numbers" for rubric 37-42; 37, 38, 39 and 41 are the email's numbers, so
+  they are D. Classification: D 1, 3-39, 41-47, 49 (46 items); J 2, 40, 48, 50, 51 (5); V 52 (1); every item exactly once
+  (checked by `grading/tests/test_item_partition.py`).
 - Deterministic rules of grader v0 (2026-11-01; operational detail, for human review at the labeling checkpoint):
   - Tabs are identified by content, not position. The comparison tab is the sheet with the most budget labels. The
     final-list tab is a sheet other than the comparison tab with a store-number column. A list that exists only on
@@ -903,16 +912,23 @@ applies.
   - Added-store flags: a text flag in the row (added or new) decides. Otherwise a highlight style named by a legend
     cell decides. Otherwise the single non-baseline fill or font colour of the id cell decides. Several unexplained
     styles, or a highlight made only through conditional formatting, make 7 and 33 cannot_assess.
-  - Item 7: at least one row is flagged, more than half of the flagged rows are added stores, and any removed store
-    listed on the tab carries a removal flag. Item 33: the flagged set equals Final - Original exactly.
+  - Item 7 (amended 2026-11-01 on the human's conditional approval; grader c3525d4d-2026-11-01.2): the rubric text
+    ("highlights new store locations added (Final – Original); removed stores if mentioned, should be clearly
+    flagged") states no "most" or "majority", so the majority threshold of grader .1 is withdrawn. Every added store
+    must be on the tab and flagged as added; the flag must single out rows (not every listed row flagged); any removed
+    store listed on the tab carries a removal flag. Item 33: the flagged set equals Final - Original exactly.
+  - Added-store identity (amended 2026-11-01): an explicit status text in the row is used unless a highlight indicator
+    contradicts it (a legend-designated style marking other rows, or a highlight style overlapping the text-flagged
+    rows without matching them). Contradicting indicators make 7 and 33 cannot_assess.
   - Items 34-36: a removal phrase (removed, dropped, not included, no longer, excluded, ...) appears together with
     the id in one email paragraph or table row, in one workbook row, or the id is listed under a removal header.
     A positive inclusion statement for 4099 or 3737 fails. Contradictory statements are cannot_assess.
   - Item 21: 5 % is stated for both scenarios, as a label or a value, and each scenario's units equal stores x 1.05,
     either unrounded or under floor, half-up or ceiling rounding.
   - Items 26 and 27: the total equals the shown per-unit cost times the shown units, at cents.
-  - Items 37 and 41: the email contains the number. Items 38 and 39: "approximately" is the tolerance of the paired
-    workbook item (0.5 %, items 31 and 29).
+  - Items 37 and 41: the email contains the number. Items 38 and 39 (approved 2026-11-01): "approximately" uses the
+    paired workbook item's approved tolerance, 0.5 % relative to the recomputed value (items 31 and 29, the same
+    denominators), on the number as stated (no further rounding).
   - Item 42: the email contains the workbook's revised units, budget change and revised total exactly as displayed.
     When the change line is missing, the change is derived as revised total - original total.
   - A formula without a cached value is unreadable (cannot_assess).
@@ -976,10 +992,10 @@ displays (whole dollars or cents). Rounded figures need not add up (852,428 − 
   presentation rounding is not an arithmetic error (section 1.7). Scoring effect: items
   49, 50, 53, 54 graded on the quantized comparison; items 56–58 on unrounded values.
   Status: APPROVED.
-- Item classification, corrected 2026-11-01 (editorial; for human confirmation): the D list above (29–51) and the
-  J list (41–48) both contain 41–48, and item 52 is in neither list. Grader v0 follows the explicit J list, which gives
-  a rationale ("item attribution; match by amount and party, labels may differ"), and C3 (approved, rubric 52–58, D):
-  D 1, 3, 6–24, 29–40, 49–58 (43 items); J 2, 4, 25–28, 41–48 (14 items); V 5, 59.
+- Correction P-2.6-1 (APPROVED by the human 2026-11-01; grader 7b08cd4d-2026-11-01.1 onward): the D list above
+  (29–51) and the J list (41–48) both contain 41–48, and item 52 is in neither list. 41–48 are J (the explicit list and
+  its rationale: "item attribution; match by amount and party, labels may differ"); 52 is D (C3, rubric 52–58):
+  D 1, 3, 6–24, 29–40, 49–58 (43 items); J 2, 4, 25–28, 41–48 (14 items); V 5, 59 (2); every item exactly once.
 - Deterministic rules of grader v0 (2026-11-01; operational detail, for human review at the labeling checkpoint):
   - Each number is read with its row label, its section (the nearest label-only row above) and the party and
     measure of its column, taken from the nearest header row above.
@@ -1289,10 +1305,15 @@ compliance and permission correctness.
   - Item 68: every non-empty User Action, Test Scenario and Expected Result cell of a counted row has wrap text, or
     its text fits within the column width plus the widths of the empty cells to its right within the used columns.
     One character counts per width unit; the default width is 8.43.
-  - Item 69 ("or equivalent") is read narrowly: the Module label names cross-functional testing (cross-functional,
-    cross module, end-to-end). Labels of the outline's components, such as "Cross browser Testing", are recorded but
-    not accepted. Flagged for the human.
-  - Expert workbook: 4 (75 cases), 10 (20 rows without an Expected Result), 67 and 69 fail; C1 fails.
+  - Item 69 (APPROVED WITH JUDGE ROUTING by the human 2026-11-01; grader c357f0e2-2026-11-01.2; replaces the narrow
+    deterministic reading of grader .1): a counted row's Module label "Cross-functional Testing" or a legitimate
+    synonym (cross-functional / cross functional, with or without "testing" / "tests") passes deterministically.
+    Otherwise the item is routed to the judge (verdict route_to_judge; scored once, as a J row carrying the
+    deterministic evidence), which assesses "or equivalent" from the module content. "Cross-browser Testing" alone is
+    not a synonym; its rows' substantive content is evidence for the judge. No deterministic fail and no blanket
+    cannot_assess for a differing label.
+  - Expert workbook: 4 (75 cases), 10 (20 rows without an Expected Result) and 67 fail; 69 is routed to the judge
+    (grader .1 failed it); C1 fails.
 
 ### 2.10 `a45bc83b-22f9-4def-8d89-9c5661b2b86f` — GCP migration design (CIS Managers)
 Inputs: `Current_Architecture.pdf` (one-page diagram: user → NGFW → DNS → load
@@ -1386,9 +1407,11 @@ Requirement layers (APPROVED 2026-10-30):
 
 ## 4. Decisions still needed from the human before freeze
 
-- 2026-11-01, `b5d2e6f1…` A-1 (OPEN): whether a figure-less "(blank)" pivot row counts as an extra (store, brand) row
-  under rubric 14 (literal reading: fail, and C3 fails for the expert) or is an empty pivot group (grader v0's
-  provisional rule). Section 2.1.
+- 2026-11-01, `b5d2e6f1…` A-1: DECIDED the same day by the human (approved rule in section 2.1: a "(blank)" pivot
+  category is not automatically a failure; fails on an incorrect source range, aggregation or requirement violation;
+  cannot_assess without the source evidence).
+- 2026-11-01: DECIDED by the human - corrections P-2.5-1 and P-2.6-1 (item classifications), `c357f0e2…` item 69 with
+  judge routing, `c3525d4d…` item 7 and added-store identity rules (sections 2.5, 2.6, 2.9).
 
 - 2026-11-01, `a45bc83b…` item 70: DECIDED the same day by the human - human visual review is authoritative, the
   criterion is counted once; the judge verdict on it is used for judge-human agreement only (section 2.10).

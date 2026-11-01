@@ -1,9 +1,9 @@
 """Gold-derived variants for c357f0e2 (UAT test plan), each with its declared verdict map for the deterministic items.
 Every variant edits a copy of the expert workbook with openpyxl (styles kept).
 
-Gold baseline (grader c357f0e2-2026-11-01.1): fails 4 (75 counted cases; K1), 10 (20 counted rows without an Expected
-Result), 67 (the date column is mostly General; K1), 69 (the module label is 'Cross browser Testing', a component of
-outline section 7, not a cross-functional testing label). First pass: grading/validation/<task>/gold_first_pass.json."""
+Gold baseline (grader c357f0e2-2026-11-01.2): fails 4 (75 counted cases; K1), 10 (20 counted rows without an Expected
+Result), 67 (the date column is mostly General; K1); 69 is routed to the judge (no Cross-functional Testing label; the
+module 'Cross browser Testing' is not a synonym; grader .1 failed it). First pass: grading/validation/<task>/gold_first_pass.json."""
 import copy
 import hashlib
 import os
@@ -18,8 +18,8 @@ TASK = "c357f0e2-963d-4eb7-a6fa-3078fe55b3ba"
 GOLD_DIR = os.path.join(ROOT, "private", "gold", TASK)
 XLSX = "UAT Plan.xlsx"
 D_ITEMS = list(range(1, 12)) + [14, 67, 68, 69]
-GOLD_FAILS = (4, 10, 67, 69)
-GOLD_BASELINE = {i: ("fail" if i in GOLD_FAILS else "pass") for i in D_ITEMS}
+GOLD_FAILS = (4, 10, 67)
+GOLD_BASELINE = {i: ("fail" if i in GOLD_FAILS else "pass") for i in D_ITEMS} | {69: "route_to_judge"}
 
 
 def gold_sha256() -> dict:
@@ -134,6 +134,14 @@ def o_untouched(wb):
     pass
 
 
+def o_cross_module(wb):
+    o_cross_functional(wb)
+    ws = ws_(wb)
+    for r in range(3, last_row(ws) + 1):
+        if str(ws.cell(r, 3).value or "").strip() == "Cross-functional Testing":
+            ws.cell(r, 3).value = "Cross-module Testing"
+
+
 CATALOG = {
     "R01_ten_more_cases": {"kind": "rubric_relevant", "openpyxl": o_add_ten, "expected": P(4), "basis": "ten more counted cases (85), styles copied from the last row"},
     "R02_expected_filled": {"kind": "rubric_relevant", "openpyxl": o_fill_expected, "expected": P(10), "basis": "the 20 empty Expected Result cells filled (wrapped)"},
@@ -143,12 +151,14 @@ CATALOG = {
     "R06_tested_date_filled": {"kind": "rubric_relevant", "openpyxl": o_date_filled, "expected": F(6), "basis": "I10 = 2025-01-15 on a counted row (67 still fails on the other cells)"},
     "R07_role_blank": {"kind": "rubric_relevant", "openpyxl": o_empty_role, "expected": F(7), "basis": "the Role of a counted row emptied"},
     "R08_headers_in_row_1": {"kind": "rubric_relevant", "openpyxl": o_headers_row1, "expected": {}, "basis": "A-2: the title row removed, headers in row 1: graded as before"},
-    "R09_date_header_renamed": {"kind": "rubric_relevant", "openpyxl": o_header_renamed, "expected": F(*[i for i in D_ITEMS if i != 1]),
+    "R09_date_header_renamed": {"kind": "rubric_relevant", "openpyxl": o_header_renamed, "expected": F(*[i for i in D_ITEMS if i != 1]),  # no sheet: 69 fails with the rest (not delivered)
                                 "basis": "'Tested Date' renamed 'Test Date' (not one of the three accepted names): no test-case sheet, every sheet item fails"},
     "R10_hidden_sheet_first": {"kind": "rubric_relevant", "openpyxl": o_hidden_first, "expected": {},
                                "basis": "a hidden copy with 95 cases placed first: the first VISIBLE sheet is graded (4 still fails)"},
     "R11_scenario_unwrapped": {"kind": "rubric_relevant", "openpyxl": o_no_wrap_narrow, "expected": F(68), "basis": "Test Scenario unwrapped and column E 20 wide: long scenarios are cut off"},
     "R12_no_chrome": {"kind": "rubric_relevant", "openpyxl": o_no_chrome, "expected": F(14), "basis": "the Chrome case renamed to Opera: Firefox and Safari remain, Chrome is missing"},
+    "R13_cross_module_label": {"kind": "rubric_relevant", "openpyxl": o_cross_module, "expected": {},
+                               "basis": "module labelled 'Cross-module Testing': not a label match, routed to the judge as in the expert workbook"},
     "N01_whitespace_actual": {"kind": "neutral", "openpyxl": o_whitespace_actual, "basis": "H10 holds only spaces: blank after trimming"},
     "N02_resaved": {"kind": "neutral", "openpyxl": o_untouched, "basis": "the workbook re-saved by openpyxl without change"},
 }
