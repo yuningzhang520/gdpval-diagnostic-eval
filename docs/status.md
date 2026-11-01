@@ -3231,6 +3231,16 @@ ending rows, the first without February: 29 cannot_assess; 22, 27, 28 fail). On 
 | `unittest grading.tests.test_gold_7d7fc9a7` (55 + 3 docker-gated skipped) | 5.6 s | 0 | 55/55 |
 | `unittest grading.tests.test_grading_chain` / `harness.tests.test_docs_consistency` / `grading.tests.test_label_batch` | 3.2 / 1.0 / 12.2 s | 0 | 29 / 3 / 3 |
 
+## Concurrency restored to 2 (2026-11-01 13:59Z; authorized by the human if stable)
+
+The human closed unused applications. Re-measured 13:54-13:58Z (scheduler samples plus spot checks): memory-pressure
+level 1 in every sample (was 2), swap 6.11-6.15 GiB and flat (was 9.4 GiB), 64 % memory free, sandbox container
+12 MiB, no OOM event. Cap restored to the authorized 2 through `cap_override` (operator note with the baseline); the
+override bypasses the scheduler's own contention fallback, so the assistant's watcher alerts on swap growth above
+1 GiB from the 13:58Z baseline, pressure above level 1, Docker memory above 80 % or any OOM event, and the override
+goes back to 1 on any of them (no unit is terminated). Gemini validation launched at 13:59:29Z (`b5d2e6f1…`) beside dev
+`47ef842d…`. Scheduler not restarted; no unit killed or rerun.
+
 ## Known issues and findings (material check)
 
 - `rubric_json.form_content`: 8,036 items hold `null`, 2,417 items lack the key, zero
