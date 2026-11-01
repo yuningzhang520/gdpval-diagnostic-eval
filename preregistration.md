@@ -760,6 +760,18 @@ points for percentages.
   (in percent, one decimal). A formula without a cached value is unreadable (cannot_assess). Expert workbook: 4, 31,
   52 (A-31, A-52), 11, 12 and 17 fail; all four critical criteria pass.
 
+- Dev calibration .2 (2026-11-01). Before freeze; V0 kept; this run carries no human label. The leads came from sealed
+  AI QA and were checked against the deliverable.
+  - Defect 1: the out-of-stock count column headed "Stores Out of Stock (0 Inv)" was not recognised (items 5, 25,
+    32, 39, 46, 53).
+  - Defect 2: a chart delivered only as an embedded picture was graded as "no chart" (items 13, 14, 17), a FAIL that
+    rested on a format the check cannot read.
+  - Operational rules adopted:
+    - "Stores Out of Stock" and "Stores OOS" headers name the OOS count;
+    - with no native chart and an embedded picture (engine .5 lists media parts), items 13, 14 and 17 are
+      `cannot_assess` (visual review); without a picture an absent chart still fails.
+  - Synthetic regressions: `V1LayoutTests`. The gold-first suite is unchanged and passes.
+
 ### 2.4 `1137e2bb-bdf9-4876-b572-f29b7de5e595` — PO entry audit (Order Clerks, pilot task)
 Inputs: `Reference_PO Data.xlsx` (41 lines, UOM CASE 24 / EA 17, no blank case packs;
 prices carry float noise such as 5.090000000000001). Deliverables: .xlsx with error

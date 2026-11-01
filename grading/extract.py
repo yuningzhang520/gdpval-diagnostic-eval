@@ -230,7 +230,8 @@ def extract_xlsx(path: str) -> dict:
     package = {"drawing_texts": drawings, "charts": charts,
                "pivot_tables": sorted(n for n in names if n.startswith("xl/pivotTables/pivotTable") and n.endswith(".xml")),
                "pivot_cache_definitions": sorted(n for n in names if n.startswith("xl/pivotCache/pivotCacheDefinition") and n.endswith(".xml")),
-               "pivot_cache_records": sorted(n for n in names if n.startswith("xl/pivotCache/pivotCacheRecords") and n.endswith(".xml"))}
+               "pivot_cache_records": sorted(n for n in names if n.startswith("xl/pivotCache/pivotCacheRecords") and n.endswith(".xml")),
+               "media": sorted(n for n in names if n.startswith("xl/media/"))}  # embedded pictures (e.g. a chart delivered as an image), engine .5
     return {"path": path, "sheets": sheets, "sheet_order": wb_f.sheetnames, "package": package}
 
 

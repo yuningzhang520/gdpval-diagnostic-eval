@@ -142,5 +142,29 @@ class ProductionGradeRunTests(unittest.TestCase):
             TABLE["production_grade_run"] = {"rows": len(rows), "sources": {k: len(v) for k, v in by_src.items()}, "critical": {k: v["status"] for k, v in r["score"]["critical"].items()}}
 
 
+class V1LayoutTests(unittest.TestCase):
+    """Grader .2 (Dev calibration 2026-11-01)."""
+
+    def test_stores_out_of_stock_headers(self):
+        self.assertEqual(CK.column_of("Stores Out\nof Stock (0 Inv)"), "oos")
+        self.assertEqual(CK.column_of("Stores\nOOS"), "oos")
+        self.assertEqual(CK.column_of("Percent Stores\nOut of Stock (%)"), "pct")
+        self.assertNotEqual(CK.column_of("Stores In\nStock (>0 Inv)"), "oos")
+
+    def test_picture_chart_is_not_a_missing_chart(self):
+        tmp = tempfile.mkdtemp(prefix="v1_47ef_"); self.addCleanup(shutil.rmtree, tmp, True)
+        final = os.path.join(tmp, "final"); shutil.copytree(GV.GOLD_DIR, final)
+        ex = X.extract_all(final, os.path.join(tmp, "work"), recalc=False)
+        for wb in ex["xlsx"].values():
+            wb["package"]["charts"] = []
+            wb["package"]["media"] = ["xl/media/image1.png"]
+        res = CK.run_checks(ex, REFERENCE, RUBRIC, integrity={i["path"]: True for i in ex["inventory"]})
+        self.assertEqual({i: res["items"][i]["verdict"] for i in (13, 14, 17)}, {13: "cannot_assess", 14: "cannot_assess", 17: "cannot_assess"})
+        for wb in ex["xlsx"].values():
+            wb["package"]["media"] = []
+        res = CK.run_checks(ex, REFERENCE, RUBRIC, integrity={i["path"]: True for i in ex["inventory"]})
+        self.assertEqual(res["items"][13]["verdict"], "fail")  # without a picture, an absent chart still fails
+
+
 if __name__ == "__main__":
     unittest.main()

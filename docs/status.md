@@ -3938,6 +3938,10 @@ Re-grades went to the scratchpad; the official V1 Dev re-grade follows the per-t
 - `7b08cd4d…` grader .3: rules in preregistration 2.6 ("Dev calibration .3"). Tests: `V1LayoutTests`.
   - Effect on Dev run `6iqdXFGC…`: all 15 deterministic false-fail leads pass. No item without a lead changed.
   - The remaining lead is an attribution label (K1 tag in the evidence).
+- Engine `engine-2026-11-01.5`: the xlsx package lists embedded media parts (additive; for Codex Review 2).
+- `47ef842d…` grader .2: rules in preregistration 2.3 ("Dev calibration .2"). Tests: `V1LayoutTests`.
+  - Effect on Dev run `dGuK7hzr…`: the 6 OOS false fails pass; items 13, 14, 17 move from fail to `cannot_assess`
+    (picture chart, visual review). No item without a lead changed.
 
 ## Final review workload, policy v4 (2026-11-01; approved by the human before any label; supersedes v1-v3)
 
@@ -4009,7 +4013,7 @@ Packets:
 - Gemini validation generation: `a45bc83b…` running (the last of ten). Validation outputs stay sealed.
 - v4 Dev packets (`labeling/dev-v4/`, 6 labels) await the human.
 - Grader V1 calibration from sealed QA leads on the Dev tasks without a human label: `7d7fc9a7…`, `c3525d4d…` and
-  `7b08cd4d…` are committed; `47ef842d…` .2 and engine .5 are in progress; `1137e2bb…` is next.
+  `7b08cd4d…` and `47ef842d…` are committed; `1137e2bb…` is next.
 
 ## Decisions taken (date · what · commit)
 
@@ -4343,7 +4347,8 @@ Packets:
 - 2026-11-01 · engine .4 (truncated sheet names in the recalculation join) and `7d7fc9a7…` grader .6 (Dev calibration) · e80f775
 - 2026-11-01 · `c3525d4d…` grader .4 (Dev calibration: row labels and column captions) · b87972b
 - 2026-11-01 · `7b08cd4d…` grader .3 (Dev calibration: gross column, total-expenses row) · 4f71d3d
-- 2026-11-01 · final review workload v4 (36 item-level blind labels; supersedes v1-v3), queue_v4 frozen (seed 20261101) · (this commit)
+- 2026-11-01 · final review workload v4 (36 item-level blind labels; supersedes v1-v3), queue_v4 frozen (seed 20261101) · e995ea0
+- 2026-11-01 · engine .5 (xlsx media parts) and `47ef842d…` grader .2 (OOS header, picture chart) · (this commit)
 
 ## Next stage (not started)
 
