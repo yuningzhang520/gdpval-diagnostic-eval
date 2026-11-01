@@ -20,6 +20,7 @@ import csv
 import datetime as dt
 import hashlib
 import json
+import re
 import os
 import sys
 
@@ -116,10 +117,11 @@ def read_labels(csv_path: str) -> list[dict]:
         rows = list(csv.reader(f))
     out = []
     for row in rows[1:]:
-        if len(row) < 5 or not row[1].strip().isdigit():
+        key = row[1].strip() if len(row) > 1 else ""
+        if len(row) < 5 or not (key.isdigit() or re.fullmatch(r"C\d+", key)):  # an item number, or a critical criterion id (criterion-level label, policy v2)
             continue
         label = row[4].strip().lower().replace("cannot assess", "cannot_tell").replace("cannot_assess", "cannot_tell")
-        out.append({"run_uuid": row[0], "item": int(row[1]), "weight": row[2], "label": label or None, "evidence": row[5] if len(row) > 5 else "", "judged_at": row[6] if len(row) > 6 else "", "reviewer": row[7] if len(row) > 7 else ""})
+        out.append({"run_uuid": row[0], "item": int(key) if key.isdigit() else key, "weight": row[2], "label": label or None, "evidence": row[5] if len(row) > 5 else "", "judged_at": row[6] if len(row) > 6 else "", "reviewer": row[7] if len(row) > 7 else ""})
     return out
 
 
@@ -143,7 +145,7 @@ def save_label_checkpoint(out_dir: str, run_uuid: str, csv_path: str, labeller: 
     with open(csv_path, "rb") as src, open(copy, "xb") as dst:
         dst.write(src.read())
     cp = {"run_uuid": run_uuid, "saved_at": _now(), "labeller": labeller, "source_csv": os.path.realpath(csv_path), "copy": copy, "sha256": _sha(copy),
-          "labelled_items": sorted(r["item"] for r in labelled), "counts": {k: sum(1 for r in labelled if r["label"] == k) for k in LABELS}, "rows": len(rows)}
+          "labelled_items": sorted((r["item"] for r in labelled), key=lambda x: (isinstance(x, str), str(x).zfill(4))), "counts": {k: sum(1 for r in labelled if r["label"] == k) for k in LABELS}, "rows": len(rows)}
     path = os.path.join(ldir, f"checkpoint_{stamp}.json")
     with open(path, "x", encoding="utf-8") as f:
         json.dump(cp, f, indent=1)
@@ -160,7 +162,29 @@ def latest_checkpoint(out_dir: str, run_uuid: str) -> str | None:
     return os.path.join(ldir, cps[-1]) if cps else None
 
 
-def compare_labels(out_dir: str, run_uuid: str, grades: list[dict], checkpoint_path: str | None = None, queue_items: list[int] | None = None) -> dict:
+def compare_criteria(criterion_labels: dict, item_labels: dict, critical_status: dict, sensitivity: dict) -> dict:
+    """Criterion-level agreement (policy v2): the human's criterion label against the pass's critical status (revised /
+    current definition), reported apart from item-level agreement. ``sensitivity`` maps a criterion id to its
+    preregistered-definition status and the differing items; the human status under the preregistered definition is
+    derived from the criterion label and the differing items' labels (fail if any fails, pass if all pass)."""
+    rows = []
+    for cid in sorted(set(criterion_labels) | set(critical_status), key=lambda c: int(str(c)[1:]) if str(c)[1:].isdigit() else 0):
+        h = (criterion_labels.get(cid) or {}).get("label")
+        g = critical_status.get(cid)
+        cls = None if h is None or g is None else ("agree" if h == g else "human_cannot" if h == "cannot_tell" else "grader_not_confirmed" if g not in ("pass", "fail") else "disagree")
+        row = {"criterion": cid, "human": h, "grader": g, "class": cls}
+        if cid in sensitivity:
+            parts = [h] + [(item_labels.get(i) or {}).get("label") for i in sensitivity[cid]["differing_items"]]
+            hp = "fail" if "fail" in parts else "pass" if parts and all(p == "pass" for p in parts) else "cannot_tell"
+            gp = sensitivity[cid]["preregistered_status"]
+            row["preregistered"] = {"human_derived": hp, "grader": gp, "class": "agree" if hp == gp else "human_cannot" if hp == "cannot_tell" else "grader_not_confirmed" if gp not in ("pass", "fail") else "disagree"}
+        rows.append(row)
+    decided = [r for r in rows if r["class"] in ("agree", "disagree")]
+    return {"rows": rows, "agreement": f"{sum(1 for r in decided if r['class'] == 'agree')}/{len(decided)}", "unlabelled": sorted(c for c in critical_status if c not in criterion_labels)}
+
+
+def compare_labels(out_dir: str, run_uuid: str, grades: list[dict], checkpoint_path: str | None = None, queue_items: list[int] | None = None,
+                   critical_status: dict | None = None, sensitivity: dict | None = None) -> dict:
     """Independent labels (from a saved checkpoint only) against the grader rows of one pass. Never modifies grades.
     With ``queue_items`` (the frozen review queue, approved 2026-11-01) only queued items enter the agreement sample;
     queued items without a label are reported, labels outside the queue are ignored and counted."""
@@ -170,7 +194,9 @@ def compare_labels(out_dir: str, run_uuid: str, grades: list[dict], checkpoint_p
     cp = json.load(open(checkpoint_path, encoding="utf-8"))
     if _sha(cp["copy"]) != cp["sha256"]:
         raise RuntimeError("the checkpointed label copy no longer matches its recorded SHA-256")
-    labels = {r["item"]: r for r in read_labels(cp["copy"]) if r["label"]}
+    all_labels = {r["item"]: r for r in read_labels(cp["copy"]) if r["label"]}
+    criterion_labels = {k: v for k, v in all_labels.items() if isinstance(k, str)}
+    labels = {k: v for k, v in all_labels.items() if not isinstance(k, str)}
     outside = []
     if queue_items is not None:
         outside = sorted(i for i in labels if i not in set(queue_items))
@@ -196,6 +222,7 @@ def compare_labels(out_dir: str, run_uuid: str, grades: list[dict], checkpoint_p
     out = {"run_uuid": run_uuid, "checkpoint": checkpoint_path, "checkpoint_sha256": cp["sha256"], "compared_at": _now(), "grading_pass": (grades[0].get("grading_pass") if grades else None),
            "labelled_items": len(labels), "rows": rows, "summary": agg,
            **({"queue_items": sorted(queue_items), "queue_unlabelled": sorted(set(queue_items) - set(labels)), "labels_outside_queue_ignored": outside} if queue_items is not None else {}),
+           **({"criteria": compare_criteria(criterion_labels, labels, critical_status or {}, sensitivity or {})} if criterion_labels or critical_status else {}),
            "false_pass_items": [r["item"] for r in rows if r["class"] == "false_pass"], "false_fail_items": [r["item"] for r in rows if r["class"] == "false_fail"]}
     stamp = dt.datetime.now(dt.timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     path = os.path.join(out_dir, "labels", run_uuid, f"comparison_{stamp}.json")
@@ -215,6 +242,7 @@ def main(argv=None) -> int:
     p.add_argument("--checkpoint", default=None)
     p.add_argument("--grading-pass", default=None, help="compare against this pass (default: the authoritative selection)")
     p.add_argument("--queue", default=None, help="frozen review queue: the agreement sample is the run task's queued items")
+    p.add_argument("--phase", default="dev", choices=("dev", "validation", "formal"), help="phase plan of a v2 queue")
     args = p.parse_args(argv)
     if args.command == "save-labels":
         if not (args.csv and args.labeller):
@@ -237,14 +265,29 @@ def main(argv=None) -> int:
         with open(os.path.join(args.out_dir, "grades.jsonl"), encoding="utf-8") as f:
             grades = [json.loads(l) for l in f if l.strip()]
         grades = [g for g in grades if g.get("run_uuid") == args.run_uuid and g.get("grading_pass") == args.grading_pass]
-    queue_items = None
+    queue_items, critical_status, sensitivity = None, None, None
     if args.queue:
         q = json.load(open(args.queue, encoding="utf-8"))
         task = (grades[0] or {}).get("task_id") if grades else None
-        if task not in q["queues"]:
-            raise SystemExit(f"task {task!r} has no frozen queue in {args.queue}")
-        queue_items = [x["item"] for x in q["queues"][task]["items"]]
-    print(json.dumps({k: v for k, v in compare_labels(args.out_dir, args.run_uuid, grades, args.checkpoint, queue_items=queue_items).items() if k != "rows"}, indent=1, default=str))
+        if "plans" in q:  # policy v2: phase plan with criterion-level labels
+            plan = (q["plans"].get(task) or {}).get("phases", {}).get(args.phase)
+            if plan is None:
+                raise SystemExit(f"task {task!r} has no {args.phase} plan in {args.queue}")
+            queue_items = [x["item"] for x in plan["items"]]
+            gp = grades[0].get("grading_pass") if grades else None
+            prec = next((x for x in passes if x.get("grading_pass") == gp), {})
+            sc = prec.get("score") or {}
+            critical_status = {c: (sc.get("critical") or {}).get(c, {}).get("status") for c in plan["criteria"]}
+            pre = sc.get("critical_preregistered") or {}
+            members = {c["id"]: c for c in q["plans"][task]["criteria"]}
+            sensitivity = {c: {"preregistered_status": pre.get(c, {}).get("status"), "differing_items": sorted(set(members[c]["members"]) ^ set(members[c]["preregistered_members"]))}
+                           for c in plan["criteria"] if "preregistered_members" in members.get(c, {})}
+        else:
+            if task not in q["queues"]:
+                raise SystemExit(f"task {task!r} has no frozen queue in {args.queue}")
+            queue_items = [x["item"] for x in q["queues"][task]["items"]]
+    print(json.dumps({k: v for k, v in compare_labels(args.out_dir, args.run_uuid, grades, args.checkpoint, queue_items=queue_items, critical_status=critical_status,
+                                                      sensitivity=sensitivity).items() if k != "rows"}, indent=1, default=str))
     return 0
 
 

@@ -121,5 +121,75 @@ Y
         self.assertEqual((out["labelled_items"], out["queue_unlabelled"], out["labels_outside_queue_ignored"]), (1, [2], [9]))
 
 
+class PolicyV2Tests(unittest.TestCase):
+    """Policy v2 (amended 2026-11-01): dev full / smoke, validation and formal plans with criterion-level labels."""
+    SEED = 20261101
+
+    def test_plan_reads_nothing_but_the_rubric_file(self):
+        real_open = builtins.open
+
+        def guarded(path, *a, **k):
+            if not str(path).startswith(os.path.join(ROOT, "private", "rubric")):
+                raise AssertionError(f"plan selection opened {path}")
+            return real_open(path, *a, **k)
+        builtins.open = guarded
+        try:
+            for t in TASK_MODULES:
+                RQ.build_plan_v2(t, self.SEED)
+        finally:
+            builtins.open = real_open
+
+    def test_phases_follow_the_policy(self):
+        for t in TASK_MODULES:
+            ck = RQ.task_module(t)
+            plan = RQ.build_plan_v2(t, self.SEED)
+            crit = set(RQ._critical_items(getattr(ck, "CRITICAL_PREREGISTERED", None) or ck.CRITICAL)) | set(RQ._critical_items(ck.CRITICAL))
+            vis = set(getattr(ck, "V_ITEMS", []) or [])
+            dpool, jpool = set(ck.D_ITEMS) - crit - vis, set(ck.J_ITEMS) - crit - vis
+            self.assertEqual(plan, RQ.build_plan_v2(t, self.SEED))
+            dev = plan["phases"]["dev"]
+            with self.subTest(task=t):
+                if t in RQ.FULL_CALIBRATION_TASKS:
+                    self.assertEqual(dev["criteria"], sorted(ck.CRITICAL, key=lambda c: int(c[1:])))
+                    v1 = {x["item"] for x in RQ.build_queue(t, 20261101)["items"] if {"random_deterministic", "random_judge"} & set(x["categories"])}
+                    self.assertEqual({x["item"] for x in dev["items"] if any("v1 pick" in c for c in x["categories"])}, v1)
+                    self.assertTrue(vis <= {x["item"] for x in dev["items"]})
+                else:
+                    self.assertLessEqual(len(dev["criteria"]), 1); self.assertLessEqual(len([x for x in dev["items"] if any(c.startswith("smoke") for c in x["categories"])]), 1)
+                    self.assertIn("exploratory", dev["evidence_class"])
+                for ph in ("validation", "formal"):
+                    pp = plan["phases"][ph]
+                    rd = {x["item"] for x in pp["items"] if "random_noncritical_deterministic" in x["categories"]}
+                    rj = {x["item"] for x in pp["items"] if "random_noncritical_judge" in x["categories"]}
+                    self.assertTrue(rd <= dpool and rj <= jpool)
+                    self.assertEqual((len(rd), len(rj)), (min(3, len(dpool)), min(3, len(jpool))))
+                    self.assertEqual(pp["criteria"], sorted(ck.CRITICAL, key=lambda c: int(c[1:])))
+                    self.assertTrue(vis <= {x["item"] for x in pp["items"]})
+                self.assertEqual(plan["phases"]["formal"]["outputs"], 2)
+
+    def test_sensitivity_item_and_workload(self):
+        plan = RQ.build_plan_v2("2ea2e5b5-257f-42e6-a7dc-93763f28b19d", self.SEED)
+        self.assertEqual(plan["differing_items"], [10])
+        for ph in ("dev", "validation", "formal"):
+            self.assertIn(10, [x["item"] for x in plan["phases"][ph]["items"]])
+        w = RQ.workload(plan)
+        self.assertEqual((w["validation"]["criterion_labels_per_output"], w["validation"]["evidence_items_per_output"]), (3, 60))
+        self.assertEqual(w["formal"]["csv_labels_total"], 2 * w["formal"]["csv_labels_per_output"])
+
+    def test_criterion_rows_and_derived_preregistered_status(self):
+        with tempfile.TemporaryDirectory() as d:
+            csvp = os.path.join(d, "l.csv")
+            with open(csvp, "w", newline="") as f:
+                w = csv.writer(f); w.writerow(["run_uuid", "item", "weight", "criterion", "label", "evidence"])
+                w.writerow(["u", "C2", "", "Activity shares", "pass", "x"]); w.writerow(["u", 10, 1, "hours", "fail", "y"])
+            rows = R.read_labels(csvp)
+            self.assertEqual([r["item"] for r in rows], ["C2", 10])
+            R.save_label_checkpoint(d, "u", csvp, "tester")
+            out = R.compare_labels(d, "u", [{"item": 10, "verdict": "fail", "source": "D", "weight": 1}], queue_items=[10],
+                                   critical_status={"C2": "pass"}, sensitivity={"C2": {"preregistered_status": "fail", "differing_items": [10]}})
+        c2 = out["criteria"]["rows"][0]
+        self.assertEqual((c2["class"], c2["preregistered"]["human_derived"], c2["preregistered"]["class"]), ("agree", "fail", "agree"))
+
+
 if __name__ == "__main__":
     unittest.main()

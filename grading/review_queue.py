@@ -124,10 +124,20 @@ def verify(path: str) -> dict:
 
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description="fixed, verdict-independent human review queue")
-    ap.add_argument("command", choices=("freeze", "verify", "show"))
+    ap.add_argument("command", choices=("freeze", "verify", "show", "freeze-v2", "verify-v2"))
     ap.add_argument("--seed", type=int, default=None)
     ap.add_argument("--out", default=os.path.join(ROOT, "grading", "review_queue", "queue_v1.json"))
     args = ap.parse_args(argv)
+    if args.command in ("freeze-v2", "verify-v2"):
+        out = args.out if args.out != os.path.join(ROOT, "grading", "review_queue", "queue_v1.json") else os.path.join(ROOT, "grading", "review_queue", "queue_v2.json")
+        if args.command == "freeze-v2":
+            if args.seed is None:
+                raise SystemExit("freeze-v2 needs --seed (recorded in the queue)")
+            rec = freeze_v2(args.seed, out)
+            print(json.dumps(rec["workload"], indent=1))
+        else:
+            print(json.dumps(verify_v2(out), indent=1))
+        return 0
     if args.command == "freeze":
         if args.seed is None:
             raise SystemExit("freeze needs --seed (recorded in the queue)")
@@ -143,3 +153,146 @@ def main(argv=None) -> int:
 
 if __name__ == "__main__":
     sys.exit(main())
+
+
+# ============================================================================= policy v2 (amended 2026-11-01)
+POLICY_VERSION_V2 = "review-queue-2026-11-01.2"
+FULL_CALIBRATION_TASKS = ("f841ddcf-2a28-4f6d-bac3-61b607219d3e", "47ef842d-8eac-4b90-bda8-dd934c228c96", "1137e2bb-bdf9-4876-b572-f29b7de5e595",
+                          "2ea2e5b5-257f-42e6-a7dc-93763f28b19d", "a45bc83b-22f9-4def-8d89-9c5661b2b86f")
+FULL_CALIBRATION_RATIONALE = ("chosen for deliverable-type coverage, not for grader performance: three xlsx tasks with dev outputs available "
+                              "(f841ddcf, 47ef842d, 1137e2bb), one pptx (2ea2e5b5), one docx/pdf (a45bc83b)")
+SAMPLE_V2 = 3
+ALGORITHM_V2 = ("per task and phase: rng = random.Random(int(sha256(f'{seed}:{phase}:{task_id}').hexdigest()[:16], 16)). "
+                "critical = union of the preregistered and current definitions; non-critical pools exclude critical and visual items. "
+                "dev/full: every critical criterion at criterion level, every visual item, the v1 random picks (5 D + 5 J, seed 20261101, "
+                "review-queue-2026-11-01.1), individual labels for items that differ between a criterion's preregistered and revised "
+                "definition. dev/smoke: rng.choice of one critical criterion (sorted ids) and of one judge-only item (non-critical J pool, "
+                "else any J item). validation and formal: every critical criterion, every visual item, rng.sample of 3 non-critical D and "
+                "then 3 non-critical J (all when fewer), plus the differing items; formal uses the same item ids for both candidates.")
+
+
+def criterion_definitions(task_id: str) -> dict:
+    """{criterion id: {name, text}} parsed from the task's section of preregistration.md (read by the human packet only)."""
+    import re
+    with open(os.path.join(ROOT, "preregistration.md"), encoding="utf-8") as f:
+        t = f.read()
+    m = re.search(rf"\n### 2\.\d+ `{task_id}`(.*?)(?=\n### |\Z)", t, re.S)
+    out = {}
+    if m:
+        for c in re.finditer(r"\n- (C\d+) ([^\n]*?)\((APPROVED[^)]*)\)\.?\s*(.*?)(?=\n- |\n### |\Z)", m.group(1), re.S):
+            out[c.group(1)] = {"name": c.group(2).strip(), "approved": c.group(3), "text": re.sub(r"\s+", " ", c.group(4)).strip()}
+    return out
+
+
+def _members(spec: dict) -> list[int]:
+    return sorted(set(spec.get("items", [])) | set(spec.get("judge_items", [])) | set(spec.get("visual_items", [])))
+
+
+def build_plan_v2(task_id: str, seed: int, *, module=None, n_items: int | None = None) -> dict:
+    ck = module or task_module(task_id)
+    n = n_items if n_items is not None else rubric_length(task_id)
+    cur, pre = ck.CRITICAL, getattr(ck, "CRITICAL_PREREGISTERED", None) or ck.CRITICAL
+    crit_union = set(_critical_items(pre)) | set(_critical_items(cur))
+    visual = sorted(getattr(ck, "V_ITEMS", []) or [])
+    criteria = [{"id": cid, "members": _members(cur[cid]), **({"preregistered_members": _members(pre[cid])} if cid in pre and _members(pre[cid]) != _members(cur[cid]) else {})}
+                for cid in sorted(cur, key=lambda c: int(c[1:]))]
+    differing = sorted({i for c in criteria if "preregistered_members" in c for i in set(c["members"]) ^ set(c["preregistered_members"])})
+    d_pool = sorted(set(ck.D_ITEMS) - crit_union - set(visual))
+    j_pool = sorted(set(ck.J_ITEMS) - crit_union - set(visual))
+
+    def rng(phase):
+        return random.Random(int(hashlib.sha256(f"{seed}:{phase}:{task_id}".encode()).hexdigest()[:16], 16))
+
+    def item_rows(cat_map):
+        return [{"item": i, "categories": sorted(set(cs))} for i, cs in sorted(cat_map.items())]
+
+    phases = {}
+    if task_id in FULL_CALIBRATION_TASKS:
+        v1 = build_queue(task_id, 20261101, module=ck, n_items=n)
+        cats = {}
+        for i in visual:
+            cats.setdefault(i, []).append("visual")
+        for x in v1["items"]:
+            for c in x["categories"]:
+                if c in ("random_deterministic", "random_judge"):
+                    cats.setdefault(x["item"], []).append(c + " (v1 pick)")
+        for i in differing:
+            cats.setdefault(i, []).append("sensitivity: differs between the preregistered and revised criterion")
+        phases["dev"] = {"mode": "full", "evidence_class": "dev calibration (labels inform the judge prompt; not held-out agreement)",
+                         "criteria": [c["id"] for c in criteria], "items": item_rows(cats)}
+    else:
+        r = rng("dev")
+        cids = sorted(cur, key=lambda c: int(c[1:]))
+        pick_c = r.choice(cids) if cids else None
+        jp = j_pool or sorted(ck.J_ITEMS)
+        pick_j = r.choice(jp) if jp else None
+        cats = {}
+        if pick_j is not None:
+            cats[pick_j] = ["smoke: judge-only item" + ("" if j_pool else " (critical member; no non-critical judge item)")]
+        for i in differing if pick_c and any(c["id"] == pick_c and "preregistered_members" in c for c in criteria) else []:
+            cats.setdefault(i, []).append("sensitivity: differs between the preregistered and revised criterion")
+        phases["dev"] = {"mode": "smoke", "evidence_class": "exploratory calibration (not held-out agreement evidence)",
+                         "criteria": [pick_c] if pick_c else [], "items": item_rows(cats),
+                         "shortfall": {k: "none available" for k, v in (("judge_item", pick_j), ("critical_criterion", pick_c)) if v is None}}
+    for phase in ("validation", "formal"):
+        r = rng(phase)
+        rd = sorted(r.sample(d_pool, min(SAMPLE_V2, len(d_pool))))
+        rj = sorted(r.sample(j_pool, min(SAMPLE_V2, len(j_pool))))
+        cats = {}
+        for i in visual:
+            cats.setdefault(i, []).append("visual")
+        for i in rd:
+            cats.setdefault(i, []).append("random_noncritical_deterministic")
+        for i in rj:
+            cats.setdefault(i, []).append("random_noncritical_judge")
+        for i in differing:
+            cats.setdefault(i, []).append("sensitivity: differs between the preregistered and revised criterion")
+        phases[phase] = {"mode": "criteria+visual+3+3", "criteria": [c["id"] for c in criteria], "items": item_rows(cats),
+                         "shortfall": {k: SAMPLE_V2 - v for k, v in (("random_noncritical_deterministic", len(rd)), ("random_noncritical_judge", len(rj))) if v < SAMPLE_V2},
+                         **({"applies_to": "both candidates, identical item ids", "outputs": 2} if phase == "formal" else {"outputs": 1})}
+    bad = [x["item"] for p in phases.values() for x in p["items"] if not 1 <= x["item"] <= n]
+    if bad:
+        raise ValueError(f"{task_id}: plan items outside 1..{n}: {bad}")
+    return {"task_id": task_id, "rubric_items": n, "criteria": criteria, "visual_items": visual, "differing_items": differing,
+            "pools": {"noncritical_deterministic": len(d_pool), "noncritical_judge": len(j_pool)}, "phases": phases}
+
+
+def workload(plan: dict) -> dict:
+    """Per phase: CSV labels (criteria + item rows, per output) and the evidence-review load: the distinct rubric items
+    whose evidence a reviewer must examine (every member of each labelled criterion, judged on its full evidence, plus
+    the labelled items), per output and in total."""
+    members = {c["id"]: set(c["members"]) | set(c.get("preregistered_members", [])) for c in plan["criteria"]}
+    out = {}
+    for ph, p in plan["phases"].items():
+        outputs = p.get("outputs", 1)
+        evid = set().union(*[members[c] for c in p["criteria"]]) if p["criteria"] else set()
+        evid |= {x["item"] for x in p["items"]}
+        labels = len(p["criteria"]) + len(p["items"])
+        out[ph] = {"mode": p["mode"], "outputs": outputs, "csv_labels_per_output": labels, "criterion_labels_per_output": len(p["criteria"]),
+                   "item_labels_per_output": len(p["items"]), "evidence_items_per_output": len(evid), "csv_labels_total": labels * outputs, "evidence_items_total": len(evid) * outputs}
+    return out
+
+
+def freeze_v2(seed: int, out_path: str, task_ids: list[str] | None = None) -> dict:
+    from .grade import TASK_MODULES
+    task_ids = sorted(task_ids or TASK_MODULES)
+    plans = {t: build_plan_v2(t, seed) for t in task_ids}
+    rec = {"policy_version": POLICY_VERSION_V2, "amends": POLICY_VERSION + " (queue_v1.json, never labelled)",
+           "adopted": "2026-11-01, on the human's instruction, before any human label; not preregistered",
+           "frozen_at": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"), "seed": seed, "algorithm": ALGORITHM_V2,
+           "full_calibration_tasks": list(FULL_CALIBRATION_TASKS), "full_calibration_rationale": FULL_CALIBRATION_RATIONALE,
+           "inputs_sha256": input_hashes(task_ids), "verdict_independent": "membership is computed from item lists, critical mappings, visual categories and the seed only",
+           "plans": plans, "workload": {t: workload(p) for t, p in plans.items()}}
+    if os.path.exists(out_path):
+        raise FileExistsError(f"{out_path} exists; a frozen queue is never overwritten (write a new version)")
+    os.makedirs(os.path.dirname(out_path), exist_ok=True)
+    with open(out_path, "x", encoding="utf-8") as f:
+        json.dump(rec, f, indent=1)
+    return rec
+
+
+def verify_v2(path: str) -> dict:
+    rec = load(path)
+    diffs = sorted(t for t, p in rec["plans"].items() if build_plan_v2(t, rec["seed"]) != p)
+    return {"path": path, "seed": rec["seed"], "tasks": len(rec["plans"]), "reproduced": not diffs, "differs": diffs,
+            "inputs_changed": sorted(k for k, v in input_hashes(sorted(rec["plans"])).items() if rec["inputs_sha256"].get(k) != v)}

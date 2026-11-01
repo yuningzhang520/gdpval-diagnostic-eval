@@ -255,6 +255,34 @@ verdicts of the queued items only. A queued item the grader cannot assess stays 
 sample with its coverage reported. Items outside the queue are scored by the approved
 deterministic / judge / human-authoritative workflow without an extra human label.
 
+Amendment v2 (review-queue-2026-11-01.2; adopted 2026-11-01 on the human's instruction, before any human label; the v1
+queue `queue_v1.json` was never labelled and is kept; not preregistered; `grading/review_queue/queue_v2.json`):
+- Dev, full calibration for five tasks: `f841ddcf…`, `47ef842d…`, `1137e2bb…`, `2ea2e5b5…`, `a45bc83b…`. They were
+  chosen for deliverable-type coverage (three xlsx tasks with dev outputs available, one pptx, one docx/pdf), not for
+  grader performance. Labelled: every critical criterion at criterion level, every visual item, and the v1 random
+  picks (5 deterministic + 5 judge, seed 20261101).
+- Dev, the other five tasks: automated gold / synthetic / real-output calibration plus a smoke check of one preselected
+  critical criterion and one preselected judge-only item (where available). This is exploratory calibration, not
+  held-out agreement evidence.
+- The shared judge prompt is calibrated on dev labels before the first validation reveal. The shared judge prompt and
+  model settings are frozen globally before any validation output is revealed; the per-task evidence builders are
+  frozen separately.
+- Validation, all ten tasks: every critical criterion at criterion level, judged on the full necessary evidence; every
+  human-authoritative visual item; three non-critical deterministic and three non-critical judge-only items at random
+  (all when fewer). No per-member labels are required for criteria. Criterion-level agreement and item-level agreement
+  are reported separately.
+- Formal, all 20 outputs: the same policy, the same sampled item ids for both candidates of a task, labelling blind to
+  candidate identity and to automated verdicts. Judge-human, deterministic-human and critical agreement, coverage and
+  disagreement counts are reported per candidate.
+- Safeguards:
+  - A criterion label is a pass only if the whole requirement is met on the full evidence, not on sampled rows.
+  - For a revised critical definition, the differing items are labelled individually in every phase, so that both
+    definitions can be scored (section 1.18).
+  - Seeds, membership, label timestamps and hashes, and the original V0 and calibrated results are preserved.
+  - Outcome-driven `cannot_assess` items never join the agreement sample.
+  - Validation and formal results never tune the frozen grader; a later corrected re-grade is regression and
+    sensitivity evidence, not fresh held-out validation.
+
 ### 1.15 Budget, concurrency, timeouts
 Values are in `config.json` (high-reasoning configuration approved 2026-11-01 as the initial
 Pilot A/B condition; fixed at `freeze-v1` after the pilot cost report): `reasoning_effort` high on

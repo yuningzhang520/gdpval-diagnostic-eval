@@ -295,6 +295,147 @@ def assemble_queue(batch: str, runs: list[dict], passes: list[dict], out_root: s
     return {"folder": folder, "runs": len(runs), "manifest": os.path.join(folder, "manifest.json")}
 
 
+V2_README = """# Labeling batch {batch} ({phase}, policy {policy})
+
+Written for: the human labeller. Created {created}. Queue: `{queue}` (seed {seed}, frozen {frozen}).
+
+Evidence class: {evidence_class}.
+
+`items.md` has two parts. Part 1, critical criteria: label each criterion once (rows `C1`, `C2`, ... in `labels.csv`).
+A criterion passes only if the whole requirement is met on the full evidence. Every member requirement is listed and
+must be checked; a pass may not rest on sampled rows. Part 2, items: label each listed item. Neither part carries an
+automated verdict or a grader location. `deliverables/` holds the model's files and `inputs/` the task's input files
+(read-only copies).
+
+Use `pass`, `fail` or `cannot_tell` and name the evidence location. When the CSV is complete, save it before any
+automated verdict is shown:
+
+```
+.venv/bin/python -m grading.review save-labels --out-dir <grading_out_dir> --run-uuid <run_uuid> --csv <this folder>/<run>/labels.csv --labeller '<name>'
+```
+
+The comparison (`grading.review compare --queue {queue} --phase {phase}`) reports criterion-level agreement and
+item-level agreement separately. Unassessable items outside the plan are triaged separately and never added to the
+agreement sample.
+
+Runs:
+{runs}
+"""
+
+
+def _item_sections(src_md: str) -> tuple[str, dict]:
+    text = open(src_md, encoding="utf-8").read()
+    head, *sections = text.split("\n## Item ")
+    return head, {int(s.split(" ", 1)[0]): s for s in sections}
+
+
+def _clean(sec: str, judge_item: bool) -> list[str]:
+    lines = [l for l in sec.split("\n") if not l.startswith("**Where to look:**")]
+    if judge_item:
+        return lines
+    keep, skip = [], False
+    for l in lines:
+        if l.startswith("**Source material / independent reference:**") or l.startswith("**Deliverable excerpt:**"):
+            skip = True
+        elif skip and l.startswith("**"):
+            skip = False
+        if not skip:
+            keep.append(l)
+    return keep
+
+
+def assemble_v2(batch: str, runs: list[dict], passes: list[dict], out_root: str, queue_path: str, phase: str = "dev") -> dict:
+    """A labeling batch under review-queue policy v2 (amended 2026-11-01): criterion-level critical labels on full
+    evidence, plus the plan's item labels. Never overwrites a batch."""
+    import csv
+    from . import review_queue as RQ
+    q = RQ.load(queue_path)
+    folder = os.path.join(out_root, batch)
+    if os.path.exists(folder):
+        raise BatchError(f"batch folder {folder} exists; batches are never overwritten")
+    os.makedirs(folder)
+    manifest = {"batch": batch, "phase": phase, "created_at": _now(), "queue": os.path.relpath(queue_path, ROOT) if queue_path.startswith(ROOT) else queue_path,
+                "queue_sha256": _sha(queue_path), "queue_policy": q["policy_version"], "seed": q["seed"], "runs": [],
+                "note": "sealed verdict files are referenced by path only; open them only after the labels are checkpointed"}
+    lines, evidence_classes = [], set()
+    for r, p in zip(runs, passes):
+        plan_all = q["plans"].get(r["task_id"])
+        if plan_all is None:
+            raise BatchError(f"task {r['task_id']} has no plan in {queue_path}")
+        plan = plan_all["phases"][phase]
+        evidence_classes.add(plan.get("evidence_class", phase))
+        ck = RQ.task_module(r["task_id"])
+        jset = set(ck.J_ITEMS)
+        defs = RQ.criterion_definitions(r["task_id"])
+        rubric = json.load(open(os.path.join(ROOT, "private", "rubric", f"{r['task_id']}.json"), encoding="utf-8"))
+        rm = p.get("review_materials") or {}
+        head, secs = _item_sections(rm["items"])
+        sub = os.path.join(folder, f"{r['task_id'][:8]}_{r['run_uuid'][:8]}")
+        os.makedirs(os.path.join(sub, "deliverables")); os.makedirs(os.path.join(sub, "inputs"))
+        crit = {c["id"]: c for c in plan_all["criteria"]}
+        md = [head.rstrip(), "", f"Evidence class: {plan.get('evidence_class', phase)}.", "", "# Part 1: critical criteria (one label per criterion; full evidence)", ""]
+        for cid in plan["criteria"]:
+            d = defs.get(cid, {})
+            members = crit[cid]["members"]
+            md += [f"## Criterion {cid}: {d.get('name', '')}", "", f"**Preregistered definition ({d.get('approved', '')}):** {d.get('text', '')}", "",
+                   f"**Member rubric items ({len(members)}), all to be checked:**", ""]
+            for i in members:
+                md.append(f"- Item {i} (weight {rubric[i - 1]['score']}): {rubric[i - 1]['criterion']}")
+            if "preregistered_members" in crit[cid]:
+                md += ["", f"**Definition revised:** preregistered members {crit[cid]['preregistered_members']}; this label is for the current members above. "
+                       "The differing items are labelled individually in Part 2."]
+            for i in members:
+                if i in jset and i in secs:
+                    md += ["", f"### Evidence for member item {i} (judge excerpt)", ""] + _clean(secs[i], True)[1:]
+            md.append("")
+        md += ["# Part 2: items", ""]
+        cats = {x["item"]: x["categories"] for x in plan["items"]}
+        for i in sorted(cats):
+            if i in secs:
+                ls = _clean(secs[i], i in jset)
+                ls.insert(1, f"\n**Plan category:** {', '.join(cats[i])}")
+                md.append("## Item " + "\n".join(ls).rstrip() + "\n")
+        items_md = os.path.join(sub, "items.md")
+        with open(items_md, "x", encoding="utf-8") as f:
+            f.write("\n".join(md))
+        labels = os.path.join(sub, "labels.csv")
+        with open(rm["independent_template"], encoding="utf-8", newline="") as src, open(labels, "x", encoding="utf-8", newline="") as dst:
+            rd, wr = csv.reader(src), csv.writer(dst)
+            hdr = next(rd); wr.writerow(hdr + ["plan_category"])
+            for cid in plan["criteria"]:
+                d = defs.get(cid, {})
+                wr.writerow([r["run_uuid"], cid, "", f"Critical {cid} {d.get('name', '')}: {d.get('text', '')}", "", "", "", "", "critical criterion (criterion-level, full evidence)"])
+            for row in rd:
+                if row and row[1].strip().isdigit() and int(row[1]) in cats:
+                    wr.writerow(row + ["; ".join(cats[int(row[1])])])
+        files = []
+        for base, tgt in ((os.path.join(r["host_dir"], "final"), "deliverables"), (os.path.join(ROOT, "data", "inputs", r["task_id"]), "inputs")):
+            for dp, _, fs in os.walk(base):
+                for fn in sorted(fs):
+                    srcp = os.path.join(dp, fn)
+                    if os.path.islink(srcp) or not os.path.isfile(srcp):
+                        continue
+                    rel = os.path.relpath(srcp, base)
+                    dst = os.path.join(sub, tgt, rel)
+                    os.makedirs(os.path.dirname(dst), exist_ok=True)
+                    shutil.copyfile(srcp, dst)
+                    os.chmod(dst, stat.S_IRUSR | stat.S_IRGRP)
+                    files.append({"path": f"{tgt}/{rel}", "sha256": _sha(dst), "matches_original": _sha(dst) == _sha(srcp)})
+        w = RQ.workload(plan_all)[phase]
+        manifest["runs"].append({"task_id": r["task_id"], "run_uuid": r["run_uuid"], "run_label": r["label"], "folder": os.path.basename(sub), "grading_out": r["grading_out"],
+                                 "grading_pass": p.get("grading_pass"), "grader_version": p.get("grader_version"), "code_commit": (p.get("code") or {}).get("commit"),
+                                 "plan": {"mode": plan["mode"], "criteria": plan["criteria"], "items": sorted(cats)}, "workload": w,
+                                 "items_sha256": _sha(items_md), "labels_template_sha256": _sha(labels), "files": files, "sealed_verdicts_path": rm.get("judge_verdicts")})
+        lines.append(f"- `{os.path.basename(sub)}`: task {r['task_id']}, run {r['run_uuid']}: {w['criterion_labels_per_output']} criterion labels + "
+                     f"{w['item_labels_per_output']} item labels; evidence covers {w['evidence_items_per_output']} rubric items")
+    with open(os.path.join(folder, "manifest.json"), "x", encoding="utf-8") as f:
+        json.dump(manifest, f, indent=1)
+    with open(os.path.join(folder, "README.md"), "x", encoding="utf-8") as f:
+        f.write(V2_README.format(batch=batch, phase=phase, policy=q["policy_version"], created=manifest["created_at"], queue=manifest["queue"], seed=q["seed"], frozen=q["frozen_at"],
+                                 evidence_class="; ".join(sorted(evidence_classes)), runs="\n".join(lines)))
+    return {"folder": folder, "runs": len(runs), "manifest": os.path.join(folder, "manifest.json")}
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description="assemble a verdict-free labeling batch of three or more development runs")
     ap.add_argument("--batch", required=True)
@@ -306,7 +447,10 @@ def main(argv=None) -> int:
     runs = [tuple(x.split(":", 2)) for x in args.run]
     resolved = check_runs(runs)
     passes = [official_pass(r, no_recalc=args.no_recalc) for r in resolved]
-    res = assemble_queue(args.batch, resolved, passes, args.out, args.queue) if args.queue else assemble(args.batch, resolved, passes, args.out)
+    if args.queue and "plans" in json.load(open(args.queue, encoding="utf-8")):
+        res = assemble_v2(args.batch, resolved, passes, args.out, args.queue, phase="dev")
+    else:
+        res = assemble_queue(args.batch, resolved, passes, args.out, args.queue) if args.queue else assemble(args.batch, resolved, passes, args.out)
     print(json.dumps(res, indent=1))  # paths and counts only; no verdict
     return 0
 
