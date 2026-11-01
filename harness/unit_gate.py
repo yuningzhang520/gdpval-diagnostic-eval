@@ -137,7 +137,7 @@ def evaluate_unit(runs_root: str, rec: dict | None, *, gemini: bool, expected_ex
     reasons, facts = [], {"evaluated_at": _now()}
     if rec is None:
         return {"decision": "stop", "reasons": ["no inventory record for the unit: outcome unknown"], **facts}
-    facts.update({k: rec.get(k) for k in ("kind", "unit_id", "run_uuid", "task_id", "model", "settlement_cost_usd", "estimated", "manual_review_required", "stop_recorded", "engineering_failure", "config_sha256")})
+    facts.update({k: rec.get(k) for k in ("kind", "unit_id", "run_uuid", "task_id", "model", "settlement_cost_usd", "estimated", "inferred", "manual_review_required", "stop_recorded", "engineering_failure", "config_sha256")})
     if rec.get("kind") != "sample" or rec.get("engineering_failure"):
         reasons.append(f"not a completed sample record (kind {rec.get('kind')!r}, engineering failure {rec.get('engineering_failure')!r})")
     if rec.get("estimated") or rec.get("manual_review_required") or rec.get("stop_recorded"):

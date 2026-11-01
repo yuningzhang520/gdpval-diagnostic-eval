@@ -25,7 +25,7 @@ import sys
 import time
 from decimal import Decimal
 
-from .budget import BudgetExhausted, BudgetLedger, LedgerConflict, model_events_usage, usage_from_eval_sample
+from .budget import BudgetExhausted, BudgetLedger, LedgerConflict, model_events_usage, recovered_attempts, usage_from_eval_sample
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 KEY_ENV_BY_PROVIDER = {"anthropic": "ANTHROPIC_API_KEY", "openai": "OPENAI_API_KEY", "google": "GOOGLE_API_KEY"}
@@ -69,6 +69,60 @@ def missing_keys(providers: list[str], environ: dict | None = None) -> list[str]
     """Names of required provider keys that are absent or empty (names only, never values)."""
     environ = os.environ if environ is None else environ
     return [KEY_ENV_BY_PROVIDER[p] for p in providers if not environ.get(KEY_ENV_BY_PROVIDER[p])]
+
+
+GOOGLE_OVERRIDES = ("GEMINI_API_KEY", "VERTEX_API_KEY", "GOOGLE_GENAI_USE_VERTEXAI", "GOOGLE_API_KEY_OVERRIDE")
+# inspect_ai._util.platform.is_running_in_vscode(): when any of these is set, Inspect's eval() reloads the working
+# directory's .env with override=True (inspect_ai._util.dotenv.init_dotenv), which would replace the selected credential
+# with the .env value of the provider variable. Removed from the unit's own process environment only.
+DOTENV_OVERRIDE_MARKERS = ("VSCODE_IPYTHON_KERNEL", "VSCODE_CLI_REQUIRE_TOKEN", "VSCODE_PID", "VSCODE_CWD")
+
+
+def select_credential(provider: str, batch: dict, environ: dict, *, required: bool = True) -> dict:
+    """The run class's credential for this unit's own process (approved 2026-11-01: Gemini dev uses GOOGLE_API_KEY,
+    Gemini validation GOOGLE_API_KEY_VALIDATION, a separate Paid Tier 1 project). The selected variable's value is put
+    into the provider's standard variable in THIS process's environment only (each unit is its own subprocess; the
+    scheduler's environment is never touched), and the markers that make Inspect reload .env with override are removed
+    so the selection survives eval(). Fails closed (when ``required``) if the variable is missing or an override that
+    the Google provider or SDK would prefer is set. Returns names and the 4-character suffix only."""
+    std = KEY_ENV_BY_PROVIDER.get(provider)
+    var = (batch.get("credential_env") or {}).get(provider) or std
+    if std is None:
+        return {"provider": provider, "variable": None}
+    scrubbed = [k for k in DOTENV_OVERRIDE_MARKERS if k in environ] + (["TERM_PROGRAM"] if environ.get("TERM_PROGRAM") == "vscode" else [])
+    for k in scrubbed:
+        environ.pop(k, None)
+    present = [k for k in GOOGLE_OVERRIDES if environ.get(k)] if provider == "google" else []
+    value = environ.get(var)
+    if required and present:
+        raise LauncherError(f"credential override variable(s) {present} are set; the Google provider or SDK could use them instead of {var}; refusing to start")
+    if not value:
+        if required:
+            raise LauncherError(f"missing credential variable {var} for run class {batch.get('run_label')!r} (names only; nothing printed)")
+        return {"provider": provider, "variable": var, "provider_variable": std, "suffix": None, "dotenv_override_markers_removed": scrubbed, "overrides_present": present}
+    if var != std:
+        environ[std] = value
+    return {"provider": provider, "variable": var, "provider_variable": std, "suffix": value[-4:], "dotenv_override_markers_removed": scrubbed, "overrides_present": present}
+
+
+def verify_credential_after_dotenv(credential: dict, environ=None) -> dict:
+    """Run Inspect's own .env initialisation (the call eval() makes first) and confirm the provider variable still holds
+    the selected credential. Raises before any paid call otherwise. Names and suffixes only."""
+    if not credential.get("provider_variable"):
+        return {"checked": False}
+    env = os.environ if environ is None else environ
+    live = env is os.environ  # an injected test environment is not the one Inspect's eval() reads; .env is not loaded for it
+    if live:
+        from inspect_ai._util.dotenv import init_dotenv
+        from inspect_ai._util.platform import is_running_in_vscode
+        init_dotenv()
+        vscode = is_running_in_vscode()
+    else:
+        vscode = any(k in env for k in DOTENV_OVERRIDE_MARKERS) or env.get("TERM_PROGRAM") == "vscode"
+    got = (env.get(credential["provider_variable"]) or "")[-4:]
+    if vscode or got != credential.get("suffix"):
+        raise LauncherError(f"credential check failed after Inspect's .env initialisation: {credential['provider_variable']} does not hold {credential['variable']} (suffix {got or 'none'}); refusing to start")
+    return {"checked": True, "inspect_dotenv_applied": live, "provider_variable": credential["provider_variable"], "suffix": got}
 
 
 def refuse_disabled_model_api(environ: dict | None = None) -> None:
@@ -249,7 +303,8 @@ def sdk_model_args(model: str | None, layer_2: dict) -> dict:
     return {"max_retries": layer_2["max_retries"]}
 
 
-def eval_kwargs(cfg: dict, *, log_dir: str, token_limit: int | None = None, model: str | None = None, cost_limit_override=None, message_limit_override=INHERIT) -> dict:
+def eval_kwargs(cfg: dict, *, log_dir: str, token_limit: int | None = None, model: str | None = None, cost_limit_override=None, message_limit_override=INHERIT,
+                max_retries_override=INHERIT) -> dict:
     """The fixed execution and retry settings for inspect_ai.eval(); nothing here touches
     credentials. Four retry layers: Inspect request retries (max_retries), SDK retries
     (model_args max_retries=0), sample reruns (retry_on_error=0, fail_on_error=False), task
@@ -293,7 +348,8 @@ def eval_kwargs(cfg: dict, *, log_dir: str, token_limit: int | None = None, mode
         "time_limit": g["time_limit_s"], "working_limit": g["working_limit_s"], "message_limit": message_limit,
         "token_limit": effective_token_limit, "max_tokens": max_tokens,
         "reasoning_effort": reasoning_effort, "reasoning_summary": reasoning_summary,
-        "max_retries": l1["max_retries"], "timeout": l1["timeout_s"], "attempt_timeout": attempt_timeout,
+        "max_retries": l1["max_retries"] if max_retries_override is INHERIT else max_retries_override,  # Inspect GenerateConfig.max_retries (a class may raise it; never forwarded to an SDK)
+        "timeout": l1["timeout_s"], "attempt_timeout": attempt_timeout,
         "model_args": sdk_model_args(model, l2),
         "retry_on_error": 0, "fail_on_error": False, "task_retry_attempts": 0,
         "max_samples": c["max_samples"], "max_tasks": c["max_tasks"], "max_sandboxes": c["max_sandboxes"], "max_connections": c["max_connections"],
@@ -367,8 +423,15 @@ def batch_controls(cfg: dict, run_label: str) -> dict:
     if cost_limit is not None and (isinstance(cost_limit, bool) or not isinstance(cost_limit, (int, float))):
         raise LauncherError(f"config.batches.{run_label}.cost_limit_usd must be a number when set")
     message_limit = check_message_limit(b["message_limit"], f"config.batches.{run_label}.message_limit", allow_none=True) if "message_limit" in b else INHERIT
+    max_retries = b.get("inspect_max_retries", INHERIT)
+    if max_retries is not INHERIT and (isinstance(max_retries, bool) or not isinstance(max_retries, int) or max_retries < 0):
+        raise LauncherError(f"config.batches.{run_label}.inspect_max_retries must be a non-negative integer")
+    cred = b.get("credential_env") or {}
+    if not isinstance(cred, dict) or any(not isinstance(v, str) or not re.fullmatch(r"[A-Z][A-Z0-9_]*", v) for v in cred.values()):
+        raise LauncherError(f"config.batches.{run_label}.credential_env must map providers to variable names")
     return {"run_label": run_label, "budget_ceiling_usd": Decimal(str(ceiling).strip()), "models": list(b["models"]), "task_manifest": b.get("task_manifest", "data/selected_tasks.json"),
-            "reservation_usd_by_model": dict(b.get("reservation_usd_by_model") or {}), "cost_limit_usd": cost_limit, "message_limit": message_limit, "status": b.get("status")}
+            "reservation_usd_by_model": dict(b.get("reservation_usd_by_model") or {}), "cost_limit_usd": cost_limit, "message_limit": message_limit, "inspect_max_retries": max_retries,
+            "credential_env": dict(cred), "recovered_retry_settlement": bool(b.get("recovered_retry_settlement")), "status": b.get("status")}
 
 
 def check_run_class_paths(run_label: str, runs_root: str, ledger_path: str) -> None:
@@ -405,10 +468,13 @@ class PilotLauncher:
     """Orchestrates one unit at a time: check → reserve → run → settle → stop check."""
 
     def __init__(self, cfg: dict, *, runs_root: str, ledger: BudgetLedger, eval_fn, log_dir: str | None = None, record_dir: str | None = None,
-                 run_label: str | None = None, cost_limit_override=None, message_limit_override=INHERIT, provenance: dict | None = None):
+                 run_label: str | None = None, cost_limit_override=None, message_limit_override=INHERIT, max_retries_override=INHERIT, recovered_retry_settlement: bool = False,
+                 provenance: dict | None = None):
         self.run_label = run_label
         self.cost_limit_override = cost_limit_override
         self.message_limit_override = message_limit_override
+        self.max_retries_override = max_retries_override
+        self.recovered_retry_settlement = recovered_retry_settlement
         self.provenance = provenance or {}
         self.cfg = cfg
         self.runs_root = runs_root
@@ -468,7 +534,8 @@ class PilotLauncher:
         # Fail closed on the execution settings before the ledger is touched: a configuration
         # defect must not create a reservation or a conservative settlement.
         unit_log_dir = os.path.join(self.log_dir, unit_id.replace("/", "_").replace(":", "_"))  # this execution's own log directory: the binding usage recovery relies on
-        kw = eval_kwargs(self.cfg, log_dir=unit_log_dir, token_limit=token_limit, model=model, cost_limit_override=self.cost_limit_override, message_limit_override=self.message_limit_override)
+        kw = eval_kwargs(self.cfg, log_dir=unit_log_dir, token_limit=token_limit, model=model, cost_limit_override=self.cost_limit_override, message_limit_override=self.message_limit_override,
+                         max_retries_override=self.max_retries_override)
         # Single-task contract, before any call: the unit is one Task object. A list, tuple or set of
         # tasks (even of length 1) is refused here, before the stop check and the reservation.
         if task is None or isinstance(task, (list, tuple, set, frozenset, dict, str, bytes)):
@@ -519,11 +586,18 @@ class PilotLauncher:
             usage, retries = usage_from_eval_sample(sample) if sample else ({}, {})
             events = model_events_usage(sample) if sample else {"calls": {}, "unknown_calls": 0, "total_calls": 0}
             incomplete = (not usage) or events["unknown_calls"] > 0  # any model call whose usage is unknown makes the unit's cost incomplete
+            recovered = None
+            if usage and events["unknown_calls"] > 0 and self.recovered_retry_settlement:
+                ra = recovered_attempts(sample)
+                usable = self.outcome_usable(getattr(sample, "uuid", None))
+                if ra["unknown"] == events["unknown_calls"] and ra["recovered"] == ra["unknown"] and usable["usable"]:
+                    incomplete, recovered = False, {**ra, "outcome": usable}
+                meta["recovered_attempts"] = {**ra, "outcome": usable, "applied": recovered is not None}
             scope = {"same_sample": True, "sample_uuid": getattr(sample, "uuid", None), "samples_in_log": 1, "model_calls": events["total_calls"], "calls_without_usage": events["unknown_calls"],
                      "aggregate_source": "EvalSample.model_usage", "calls_source": "EvalSample.events[model].output.usage"}
             note = f"inspect status {log.status}" + (f"; {events['unknown_calls']} of {events['total_calls']} model call(s) reported no usage (cost unknown)" if events["unknown_calls"] else "")
             settlement = self.ledger.settle(unit_id, usage, retries_by_model=retries, calls_by_model=events["calls"], scope=scope, note=note,
-                                            fallback_to_reservation=not usage, incomplete=incomplete)  # approved 2026-10-31: missing/incomplete usage -> conservative estimate + persistent hold
+                                            fallback_to_reservation=not usage, incomplete=incomplete, recovered=recovered)  # approved 2026-10-31: missing/incomplete usage -> conservative estimate + persistent hold; 2026-11-01: recovered 429/5xx attempts (Gemini classes) -> inferred buffer
             post = self._after_unit(unit_id=unit_id, settlement=settlement, estimate_usd=estimate_usd, log=log)
             binding = self.write_ledger_binding(sample, unit_id=unit_id, model=model, task=task)
             artifacts = self.write_artifact_manifest(getattr(sample, "uuid", None))
@@ -546,6 +620,22 @@ class PilotLauncher:
             self.record("sample_error", meta)
             self.append_inventory("sample_error", meta)
             raise
+
+    def outcome_usable(self, run_uuid) -> dict:
+        """Whether a finished execution is usable for the recovered-attempt settlement: execution completed or limited by
+        an accepted budget (time, working, cost, token), grading-eligible, no harness error, collection complete with at
+        least one file. Reads only the collector's run_outcome.json."""
+        p = os.path.join(self.runs_root, str(run_uuid), "run_outcome.json") if run_uuid else None
+        if not p or not os.path.isfile(p):
+            return {"usable": False, "reason": "no run outcome"}
+        with open(p, encoding="utf-8") as f:
+            o = json.load(f)
+        ex, col = o.get("execution") or {}, o.get("collection") or {}
+        limits = set(ex.get("limit_types") or [])
+        ok_exec = ex.get("status") == "completed" or (ex.get("status") == "limited" and limits and limits <= {"time", "working", "cost", "token"})
+        usable = bool(o.get("final") and ok_exec and o.get("grading_eligible") and not o.get("harness_error") and not o.get("requires_adjudication")
+                      and col.get("status") == "complete" and (col.get("file_count") or 0) >= 1)
+        return {"usable": usable, "execution": ex.get("status"), "limits": sorted(limits), "collection": col.get("status"), "files": col.get("file_count")}
 
     def write_artifact_manifest(self, run_uuid) -> dict:
         """SHA-256 manifest of the collected deliverables of one execution (runs_root/<uuid>/artifact_manifest.json): every
@@ -606,12 +696,16 @@ class PilotLauncher:
         rec = {"recorded_at": _now(), "kind": kind, "run_label": self.run_label, "task_id": meta.get("task_id"), "model": meta.get("model"), "unit_id": meta.get("unit_id"),
                "run_uuid": binding.get("run_uuid"), "inspect_status": meta.get("inspect_status"), "dry_run": bool(meta.get("dry_run")), "error": meta.get("error"),
                "engineering_failure": (failure or {}).get("failure_class") or (meta.get("error") or "").split(":", 1)[0] or None,  # a sample or eval error: not a completed model attempt
-               "settlement_cost_usd": st.get("cost_usd"), "estimated": st.get("estimated"), "manual_review_required": bool(meta.get("manual_review_required") or st.get("manual_review_required")),
+               "settlement_cost_usd": st.get("cost_usd"), "estimated": st.get("estimated"), "inferred": bool(st.get("inferred")),
+               "manual_review_required": bool(meta.get("manual_review_required") or st.get("manual_review_required")),
                "stop_recorded": meta.get("stop_recorded") or (meta.get("post_run") or {}).get("stop_recorded"), "log_file": meta.get("log_file"), "log_dir": meta.get("log_dir"),
                "artifact_manifest": {k: (meta.get("artifact_manifest") or {}).get(k) for k in ("path", "sha256", "file_count")} if meta.get("artifact_manifest") else None,
                "ledger": meta.get("ledger"), "code_commit": (self.provenance.get("code") or {}).get("commit"),
                "code_loaded_commit": (self.provenance.get("code_loaded") or {}).get("commit"), "harness_source_sha256": ((self.provenance.get("code_loaded") or {}).get("harness_source") or {}).get("sha256"),
-               "config_sha256": self.provenance.get("config_sha256"),
+               "config_sha256": self.provenance.get("config_sha256"), "config_path": self.provenance.get("config_path"),
+               "inspect_max_retries": (meta.get("eval_kwargs") or {}).get("max_retries"),
+               "credential": {k: (self.provenance.get("credential") or {}).get(k) for k in ("variable", "suffix")} if self.provenance.get("credential") else None,
+               "recovered_attempts": {k: (meta.get("recovered_attempts") or {}).get(k) for k in ("unknown", "recovered", "applied")} if meta.get("recovered_attempts") else None,
                "started_at": meta.get("started_at"), "finished_at": meta.get("finished_at")}
         path = os.path.join(self.runs_root, "run_inventory.jsonl")
         with open(path, "a", encoding="utf-8") as f:
@@ -883,6 +977,7 @@ def main(argv=None, *, eval_fn=None, environ: dict | None = None, docker_runner=
             raise LauncherError(f"unknown provider {provider!r}: no credential requirement is defined for it; refusing to start")
     runs_root = resolve_runs_root(args.runs_root)
     loaded = load_env_file(args.env_file, env)
+    credential = select_credential(provider, batch, env, required=args.real_run)
     missing = missing_keys([provider], env) if provider in KEY_ENV_BY_PROVIDER else []
     if missing and args.real_run:
         raise LauncherError(f"missing credential variable(s): {missing} (names only; nothing printed)")
@@ -894,19 +989,23 @@ def main(argv=None, *, eval_fn=None, environ: dict | None = None, docker_runner=
                   "prompt": unit["prompt"], "image_id": image.get("daemon_id"), "image_platform": (image.get("os"), image.get("architecture")),
                   "image_tags_informational": image.get("repo_tags"), "runs_root": runs_root, "task_id": args.task_id, "model": args.model,
                   "sample_ids": unit["sample_ids"], "staging_verified": unit["staging_verified"], "tool_timeout_s": unit["tool_timeout_s"],
-                  "env_names_loaded": loaded, "missing_key_names": missing, "credential_required": provider in KEY_ENV_BY_PROVIDER}
+                  "env_names_loaded": loaded, "missing_key_names": missing, "credential_required": provider in KEY_ENV_BY_PROVIDER, "credential": credential}
     print(json.dumps({**provenance, "image_attempts": len(image["attempts"]), "ledger": ledger.snapshot(), "mode": "real-run" if args.real_run else "dry-run"}, indent=1, default=str))
     if args.dry_run:
-        launcher = PilotLauncher(cfg, runs_root=runs_root, ledger=ledger, eval_fn=None, run_label=args.run_label, cost_limit_override=batch["cost_limit_usd"], message_limit_override=batch["message_limit"], provenance=provenance)
+        launcher = PilotLauncher(cfg, runs_root=runs_root, ledger=ledger, eval_fn=None, run_label=args.run_label, cost_limit_override=batch["cost_limit_usd"], message_limit_override=batch["message_limit"], max_retries_override=batch["inspect_max_retries"],
+                                recovered_retry_settlement=batch["recovered_retry_settlement"], provenance=provenance)
         launcher.run_sample(task=unit["task"], model=args.model, unit_id=unit["unit_id"], estimate_usd=args.estimate_usd, token_limit=args.token_limit, dry_run=True, task_id=args.task_id)
         return 0
     # --real-run: the only paid path; inspect_ai.eval is imported here and nowhere else in this module
     if eval_fn is None:
         from inspect_ai import eval as inspect_eval
         eval_fn = inspect_eval
-    launcher = PilotLauncher(cfg, runs_root=runs_root, ledger=ledger, eval_fn=eval_fn, run_label=args.run_label, cost_limit_override=batch["cost_limit_usd"], message_limit_override=batch["message_limit"], provenance=provenance)
+    launcher = PilotLauncher(cfg, runs_root=runs_root, ledger=ledger, eval_fn=eval_fn, run_label=args.run_label, cost_limit_override=batch["cost_limit_usd"], message_limit_override=batch["message_limit"], max_retries_override=batch["inspect_max_retries"],
+                                recovered_retry_settlement=batch["recovered_retry_settlement"], provenance=provenance)
     authorization = {"by": args.authorized_by, "ref": args.authorization_ref, "confirm": args.confirm, "estimate_usd": str(args.estimate_usd),
                      "note": "operator-supplied audit metadata recorded verbatim; the launcher does not verify an approval"}
+    if provider in KEY_ENV_BY_PROVIDER:
+        provenance["credential_check"] = verify_credential_after_dotenv(credential, env)
     launcher.record("real_run_provenance", {**provenance, "unit_id": unit["unit_id"], "authorization": authorization, "started_at": _now()})
     meta = launcher.run_sample(task=unit["task"], model=args.model, unit_id=unit["unit_id"], estimate_usd=args.estimate_usd, token_limit=args.token_limit, task_id=args.task_id)
     settlement = meta.get("settlement") or {}

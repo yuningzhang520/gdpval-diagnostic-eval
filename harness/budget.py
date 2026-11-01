@@ -26,6 +26,7 @@ are kept, and the unit is held for manual review before any further paid start.
 import datetime as dt
 import fcntl
 import json
+import re
 import os
 import secrets
 from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
@@ -414,7 +415,7 @@ class BudgetLedger:
 
     def settle(self, unit_id: str, usage_by_model: dict, *, retries_by_model: dict | None = None, note: str = "",
                estimated: bool = False, fallback_to_reservation: bool = False, calls_by_model: dict | None = None, scope: dict | None = None,
-               hold: bool = False, incomplete: bool = False) -> dict:
+               hold: bool = False, incomplete: bool = False, recovered: dict | None = None) -> dict:
         """Settle a unit from actual usage ({model: usage dict}); releases its reservation exactly
         once (a repeat returns the first settlement unchanged). ``calls_by_model`` ({model: [per-call
         usage]}) enables exact per-call tier pricing. Each recorded retry adds one more uncached
@@ -495,6 +496,18 @@ class BudgetLedger:
                     flags.append(f"{model}: {n} retried request(s) with no priced usage; unknown cost")
                     estimated = True
             total = sum(breakdown.values(), Decimal(0)) + retry_est
+            inferred = None
+            if recovered and not (hold or incomplete) and not unpriced:
+                # Approved 2026-11-01 (Gemini dev / validation): usage-less attempts that are recovered HTTP 429 / 5xx
+                # retries are settled at the reported usage plus ONE average metered call per unit, marked inferred
+                # (not provider-confirmed), without a hold; the dashboard reconciliation stays a requirement.
+                metered = sum(len((calls_by_model or {}).get(m_) or []) for m_ in per_model)
+                priced = sum(breakdown.values(), Decimal(0))
+                buffer = _d(priced / metered) if metered else Decimal(0)
+                total += buffer
+                inferred = {"buffer_usd": str(buffer), "basis": f"one average metered call: {_d(priced)} USD / {metered} metered call(s)", "reported_usd": str(_d(priced)),
+                            "recovered_attempts": recovered, "reconciliation_required": "provider dashboard"}
+                flags.append(f"inferred: {recovered.get('recovered')} recovered 429/5xx attempt(s) without usage; settled at reported usage {_d(priced)} + buffer {buffer} USD (one average metered call); not provider-confirmed")
             if unpriced:
                 total = max(total, Decimal(res["estimated_usd"]))
                 estimated = True
@@ -522,7 +535,7 @@ class BudgetLedger:
                      "breakdown": {c: str(_d(v)) for c, v in breakdown.items()}, "retry_estimate_usd": str(_d(retry_est)),
                      "per_model": per_model, "raw_usage": usage_by_model or {}, "raw_calls": calls_by_model or {}, "usage_scope": scope,
                      "usage_reconciliation": reconciliation, "inspect_total_cost_usd": str(_d(inspect_cost_total)) if inspect_cost_known else None,
-                     "estimated": bool(estimated or retry_est > 0),
+                     "estimated": bool(estimated or retry_est > 0), "inferred": inferred,
                      "manual_review_required": manual_review, "flags": flags, "note": note, "reserved_usd": res["estimated_usd"], "at": _now()}
             return self._append(state, entry)
 
@@ -699,6 +712,40 @@ def model_events_usage(sample) -> dict:
             rec["total_cost"] = float(tc)  # Inspect's own pricing of this call (TTL-aware); kept as a floor
         calls.setdefault(e.model, []).append(rec)
     return {"calls": calls, "unknown_calls": unknown, "total_calls": total}
+
+
+# the HTTP status token that directly follows the exception name on an exception line, e.g.
+# "google.genai.errors.ClientError: 429 RESOURCE_EXHAUSTED" or "openai.InternalServerError: Error code: 502 - ..."
+_STATUS_LINE = re.compile(r"(?:ClientError|ServerError|APIError|APIStatusError|RateLimitError|InternalServerError):\s*(?:Error code:\s*)?(\d{3})\b")
+
+
+def _attempt_status(text: str) -> int | None:
+    """Status code of the LAST exception line in a recorded traceback / error text (the exception actually raised)."""
+    codes = [int(m.group(1)) for m in (_STATUS_LINE.search(line) for line in str(text or "").splitlines()) if m]
+    return codes[-1] if codes else None
+
+
+def recovered_attempts(sample) -> dict:
+    """Usage-less model attempts of an EvalSample and whether each is a RECOVERED HTTP 429 / 5xx attempt (approved
+    2026-11-01 for the Gemini dev and validation classes): the status code read from the recorded exception line of the
+    attempt's traceback (e.g. ``google.genai.errors.ClientError: 429 RESOURCE_EXHAUSTED``), a later model call of the
+    sample with reported usage (Inspect retried and the turn went on), and the attempt's output absent from the
+    transcript. Returns {"unknown": n, "recovered": k, "attempts": [{"index", "status", "recovered"}]}."""
+    evs = [e for e in (getattr(sample, "events", None) or []) if getattr(e, "event", None) == "model"]
+    asst = {getattr(m, "id", None) for m in (getattr(sample, "messages", None) or []) if getattr(m, "role", None) == "assistant"}
+    out = {"unknown": 0, "recovered": 0, "attempts": []}
+    for i, e in enumerate(evs):
+        if getattr(getattr(e, "output", None), "usage", None) is not None:
+            continue
+        out["unknown"] += 1
+        code = _attempt_status(getattr(e, "traceback", None) or getattr(e, "error", None) or "")
+        later = any(getattr(getattr(x, "output", None), "usage", None) is not None for x in evs[i + 1:])
+        choices = getattr(getattr(e, "output", None), "choices", None) or []
+        in_transcript = bool(choices) and getattr(getattr(choices[0], "message", None), "id", None) in asst
+        rec = code is not None and (code == 429 or 500 <= code <= 599) and later and not in_transcript
+        out["attempts"].append({"index": i, "status": code, "recovered": bool(rec)})
+        out["recovered"] += int(bool(rec))
+    return out
 
 
 def calls_from_eval_sample(sample) -> dict:

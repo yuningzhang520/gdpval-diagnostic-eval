@@ -3353,6 +3353,60 @@ construction error (R08's extra row without number formats) fixed in the variant
 | `unittest grading.tests.test_gold_f841ddcf` / `b5d2e6f1` / `1137e2bb` / `7d7fc9a7` / `2ea2e5b5` / `a45bc83b` | 3.7 / 50.0 / 15.9 / 6.7 / 2.4 / 3.3 s | 0 | 18 / 22 / 53 + 2 / 56 + 3 / 30 / 20 |
 | `unittest grading.tests.test_grading_chain` / `test_label_batch` / `harness.tests.test_docs_consistency` | 3.3 / 13.4 / 1.0 s | 0 | 29 / 3 / 3 |
 
+## Gemini two-project credentials, retry limit and recovered-attempt settlement (2026-11-01; approved by the human; offline verified; no paid call by this work)
+
+Credentials. `.env` (mode 0600, gitignored) holds `GOOGLE_API_KEY` (dev, original Paid Tier 1 project, suffix `KW5A`)
+and `GOOGLE_API_KEY_VALIDATION` (validation, separate Paid Tier 1 project with billing linked, confirmed by the human
+in Google AI Studio; suffix `CCAA`); both nonempty and distinct; no `GEMINI_API_KEY`, `VERTEX_API_KEY` or
+`GOOGLE_GENAI_USE_VERTEXAI`. `config.batches.<dev|validation>.credential_env` names the variable; the launcher
+(`select_credential`) copies it into `GOOGLE_API_KEY` of the unit's own process (each unit is its own
+`harness.batch` subprocess; the scheduler's environment is never changed), refuses the override variables above,
+and records the variable name and 4-character suffix only (real-run provenance and `run_inventory.jsonl`). Defect
+found while testing, fixed before any launch: Inspect's `eval()` re-loads the working directory's `.env` with
+`override=True` when VS Code markers are present (`inspect_ai._util.platform.is_running_in_vscode`: `VSCODE_PID`,
+`VSCODE_CWD`, ...; the operator shell has them), which would have replaced the validation key with the `.env` value of
+`GOOGLE_API_KEY` (dev). The launcher removes those markers from the unit's process environment and, before the paid
+call, runs Inspect's own `init_dotenv()` and re-checks the suffix (`verify_credential_after_dotenv`; refuses on a
+mismatch). Earlier units were unaffected (one key, same value either way).
+
+Retries. `config.batches.<dev|validation>.inspect_max_retries` 10: Inspect `GenerateConfig.max_retries` (layer 1)
+through `eval_kwargs`; nothing is forwarded to `google.genai` (Google model args stay `{}`); no other retry or backoff
+layer. Candidate classes inherit `retries.layer_1_inspect_model_request.max_retries` 3. Not model-visible. Units under
+snapshot `config_2b267fc18fa2.json` (max_retries 3) and under the new snapshot (10) are both canonical; each inventory
+line now records `config_sha256`, `config_path`, `inspect_max_retries` and the credential variable and suffix; older
+lines are not changed.
+
+Settlement. Dev `47ef842d…` (run `dGuK7hzr9wLHPPAAARo7bF`) resolved by the human at 5.000000 USD, inferred:
+2.694390 USD reported usage (Inspect total_cost of the 130 metered calls; ledger pricing 2.694430) + 2.305610 USD
+conservative buffer; the two failed attempts (model events 124 and 125: `google.genai.errors.ClientError: 429
+RESOURCE_EXHAUSTED`, metric `generate_content_paid_tier_input_token_count`, per-minute limit on Tier 1; the earlier
+entry quoted the message's leading sentence only) and the original reservation, estimated settlement and hold are kept
+(append-only `manual_resolution`); Google dashboard reconciliation still required; no rerun. The four-file `limited`
+(token) sample is designated canonical. Rule for future Gemini dev / validation units
+(`recovered_retry_settlement`): when every usage-less model event is an HTTP 429 or 5xx attempt (status code from the
+exception line of the event's traceback) followed by a metered call and absent from the transcript, and the unit's
+`run_outcome.json` is final, completed or limited by time / working / cost / token, grading-eligible, without harness
+error or adjudication, with a complete collection of at least one file, the ledger settles at the priced usage plus
+one average metered call (`inferred` block: buffer, basis, reported amount, attempts, reconciliation requirement),
+not estimated and without a hold; any other missing usage keeps the reservation floor and the hold. The 2× estimate
+stop, reservations, ceilings and the append-only ledger are unchanged.
+
+| Command (`/usr/bin/time -p`) | Wall clock | Exit | Result |
+|---|---|---|---|
+| `unittest harness.tests.test_gemini_class_controls_unit` (new) | 1.7 s | 0 | 17/17 |
+| `unittest harness.tests.test_launcher_regressions` / `test_budget_unit` / `test_generation_config` | 5.5 / 0.9 / 2.5 s | 0 | 52 / 34 / 8 |
+| `unittest harness.tests.test_scheduler_unit` / `test_batch_unit` / `test_docs_consistency` | 32.5 / 1.2 / 0.9 s | 0 | 20 / 3 / 3 |
+| `unittest harness.tests.test_outcome_policy_unit` (real-path `TMPDIR`, as `run_isolated.sh` sets it) | 0.9 s | 0 | 9/9 |
+
+The new suite covers: the selected key reaching `google.genai.Client` (`_api_client.api_key`) through Inspect's
+`.env` initialisation with a third synthetic key in the working directory's `.env` (and the negative control without
+the marker removal, where the `.env` key wins); fail-closed cases; max_retries 10 vs 3 per class and Inspect's own
+retry stop allowing 10 retries (11 attempts); the recovered and held settlement transitions through `run_sample`; a
+validation `--real-run` through `main()` whose records carry no key material. The classifier reads the status
+token that directly follows the exception name on the last exception line (a 400 whose message contains "500" or
+"429" is not recovered). Applied offline to the real `47ef842d…` log: 132 model events, 2 without usage, both
+classified as recovered 429 (events 124, 125); under the new rule that unit would settle at 2.694430 + 2.694430/130.
+
 ## Known issues and findings (material check)
 
 - `rubric_json.form_content`: 8,036 items hold `null`, 2,417 items lack the key, zero
@@ -3405,9 +3459,8 @@ construction error (R08's extra row without number formats) fixed in the variant
 
 ## In flight
 
-Scheduler `paid-2026-11-01b` (pid 66004): Gemini `b5d2e6f1…` replacement running; remaining dev and validation wait for
-its acceptance; compat stopped on the GPT accounting hold (human reconciliation needed). Task 3 grader v0 committed;
-code-bound records and tag next. Codex Review 1 closure pinned to `2c37d6a`.
+Gemini dev and validation resume under the new snapshot and scheduler plan (two projects, cap 2, dev first when the
+cap is 1). Remaining graders: `c3525d4d…`, `7b08cd4d…`, `c357f0e2…`. `b5d2e6f1…` waits for rule A-1.
 
 ## Decisions taken (date · what · commit)
 
@@ -3708,6 +3761,11 @@ code-bound records and tag next. Codex Review 1 closure pinned to `2c37d6a`.
   on exceptions, effective settlement as the cost-record source, attempt-aware (blocked) pass
   selection wired into run_grading, money validation before quantization · (uncommitted, awaiting
   Codex closure review)
+
+- 2026-11-01 · Gemini two-project credentials (dev `GOOGLE_API_KEY`, validation `GOOGLE_API_KEY_VALIDATION`), the
+  Inspect `.env`-override guard, Gemini-only Inspect max_retries 10, the recovered-429/5xx inferred settlement rule,
+  the `47ef842d…` hold resolved at 5.000000 USD inferred and its run designated canonical (approved by the human,
+  chat) · (this commit)
 
 ## Next stage (not started)
 
