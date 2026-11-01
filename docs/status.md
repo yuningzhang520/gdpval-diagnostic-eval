@@ -3946,6 +3946,19 @@ Re-grades went to the scratchpad; the official V1 Dev re-grade follows the per-t
   - Effect on Dev run `cjJkBnbB…`: items 14 and 16 pass; item 21 goes from `cannot_assess` to fail (A-21, absent
     indicator).
   - Items 25 and 26 stay `cannot_assess` (coverage loss). No item without a lead changed.
+- Versioned V1 Dev re-grades (deterministic; official entry; `~/turing-eval-runs/dev/grading_v1/<run>/`; V0 passes
+  untouched; engine .5). Changes against the V0 judged pass, deterministic items:
+
+  | Task | Run | Changes |
+  |---|---|---|
+  | `1137e2bb…` | `cjJkBnbB…` | 2 fail -> pass, 1 cannot_assess -> fail |
+  | `47ef842d…` | `dGuK7hzr…` | 6 fail -> pass, 3 fail -> cannot_assess |
+  | `7b08cd4d…` | `6iqdXFGC…` | 15 fail -> pass |
+  | `7d7fc9a7…` | `HqashRMi…` | 28 cannot_assess -> pass, 1 cannot_assess -> fail, 1 fail -> pass |
+  | `c3525d4d…` | `UzC6bRkv…` | 25 fail -> pass |
+  | `b5d2e6f1…` | `3mhbRUHW…` | none |
+
+  Judge items keep their Pass 1 verdicts; no judge call was made for V1.
 - Calibrated so far: the Dev tasks without a human label (`7d7fc9a7…`, `c3525d4d…`, `7b08cd4d…`, `47ef842d…`,
   `1137e2bb…`; `b5d2e6f1…` had no lead).
 - Still open:
