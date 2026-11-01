@@ -4479,6 +4479,44 @@ Tests (logs `logs/v1.2-20261101/`, `logs/docker-gated-v1.2-231621Z/`):
 | Docker: `regress_recalc_docker` | 16 PASS | 3.89 s |
 | Docker: `regress_grading_cli` | first run 60 PASS, 1 FAIL (summary keys); then 61 PASS | 6.66 s |
 
+## Validation labels checkpointed; second recovery; Codex package re-pinned to V1.2 (2026-11-01)
+
+Validation labels (human, `labeling/validation-v4/`, 10 items): all 10 valid (exactly the queue item, label, evidence,
+timestamp, reviewer).
+- Checkpointed at 2026-11-01T23:26:55Z by `grading.review.save_label_checkpoint`, before any Validation verdict was
+  revealed to the labeller.
+- Location: `validation/grading/<run>/labels/<run>/checkpoint_20261101T232655Z.json`. Each records the SHA-256 of
+  the saved copy and the grading passes existing at save time with their grader versions.
+- The source CSVs are unchanged.
+
+| Run | SHA-256 |
+|---|---|
+| `1137e2bb…` | `bf15fba9…` |
+| `2ea2e5b5…` | `e6ea7110…` |
+| `47ef842d…` | `5249ed30…` |
+| `7b08cd4d…` | `21ec6817…` |
+| `7d7fc9a7…` | `a1828430…` |
+| `a45bc83b…` | `7b20f770…` |
+| `b5d2e6f1…` | `b9770e52…` |
+| `c3525d4d…` | `6ca67d61…` |
+| `c357f0e2…` | `1c434702…` |
+| `f841ddcf…` | `1e1abc35…` |
+
+Second ledger recovery (`c357f0e2…` unit `GnjmsoZZ…:judge:20261101T221615177559Z-7980`, approved by the human):
+- Inferred settlement: 0.056719 USD = 0 known + 4 x 0.850788 / 60 (all successfully metered calls of the pass). Not
+  provider-confirmed.
+- The original 6.11 USD settlement is kept; the hold is lifted. Calculation:
+  `judge_validation/ledger_recovery_c357f0e2_GnjmsoZZ.json`.
+- Ledger after: settled 0.962754 USD, remaining 14.037246 USD.
+
+`a45bc83b…` schema recovery (items 18, 19, 20, 64; V1.2), started 23:18:15Z:
+- Items 18 and 19 completed in 6.6 s and 23.5 s.
+- Item 20 is in Inspect's retry backoff (no open connection); see the note on `max_retries` 10 in
+  `docs/codex_review_2.md` F.
+
+Codex Review 2 package re-pinned to `5121e1a` (tag `v1.2-judge-infrastructure`), adding section H and acceptance checks
+14-15.
+
 ## Known issues and findings (material check)
 
 - `rubric_json.form_content`: 8,036 items hold `null`, 2,417 items lack the key, zero
@@ -4879,7 +4917,8 @@ Tests (logs `logs/v1.2-20261101/`, `logs/docker-gated-v1.2-231621Z/`):
 - 2026-11-01 · V1.1 (approved): per-item judge recovery, inferred ledger resolutions, engine .7 provider_error / not_run, picture-chart visual-review flags (`2ea2e5b5…` .4, `47ef842d…` .3), evidence corrections; tag `v1.1-judge-item-recovery` · 57e2a25
 - 2026-11-01 · Validation ledger recovery (inferred 0.856327 USD), `a45bc83b…` items 69 and 71 recovered, item-59 evidence correction, second provider halt (`c357f0e2…`), Codex package re-pinned to `57e2a25`, backup gate failed on path references (no push) · eb781fd
 - 2026-11-01 · Formal preflight dry-run (20 units, no provider call) and backup inventory · 6b6eaeb
-- 2026-11-01 · V1.2 judge infrastructure (engine .8): provider error detail, max_retries 10, pacing, continuation with a 3-item stop, schema retry, invalid_judge_output, inferred buffer; tag `v1.2-judge-infrastructure` · (this commit)
+- 2026-11-01 · V1.2 judge infrastructure (engine .8): provider error detail, max_retries 10, pacing, continuation with a 3-item stop, schema retry, invalid_judge_output, inferred buffer; tag `v1.2-judge-infrastructure` · 5121e1a
+- 2026-11-01 · Validation labels checkpointed 10/10; `c357f0e2…` inferred settlement; Codex package re-pinned to `5121e1a` · (this commit)
 
 ## Next stage (not started)
 
