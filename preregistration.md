@@ -1266,8 +1266,10 @@ Requirement layers (APPROVED 2026-10-30):
   paragraphs opening with "Step <n>" (bullets are not ordered steps). Item 5 needs at least three bullet paragraphs (Word
   bullet numbering, a "List Bullet" style or a typed bullet glyph) making up at least half of the summary's non-empty,
   non-heading paragraphs. Expert deliverables: 1, 2, 3, 5 pass.
-- Item 70 routing (stated assumption, pending human confirmation; section 4): the item is listed under both J and V
-  above; grader v0 routes it to the judge with the summary text and the diagram's text labels as evidence.
+- Item 70 (DECIDED by the human 2026-11-01, recorded before any Task 10 development output is opened): human visual
+  review is authoritative and the criterion is scored once, as a V item. The judge also assesses item 70 (summary text
+  and the diagram's text labels as evidence) whenever a separately authorized judge batch runs; that verdict is used
+  only for judge-human agreement, never for scoring. Grader a45bc83b-2026-11-01.2.
 - DECISION (APPROVED 2026-10-30): the pre-staged resources enter the sandbox as the HTML
   snapshot plus the extracted text of each page plus the icon-pack zips (not pre-extracted),
   identical for both models: 2 task inputs + 11 HTML + 11 text + 3 zips = 27 files under
@@ -1279,9 +1281,8 @@ Requirement layers (APPROVED 2026-10-30):
 
 ## 4. Decisions still needed from the human before freeze
 
-- 2026-11-01, `a45bc83b…` item 70 (OPEN): section 2.10 lists item 70 ("Architecture diagram or summary annotates
-  regions and/or zones") under both J and V. Grader v0 routes it to the judge with the summary and the diagram's text
-  labels; the alternative is a visual review item. Needed before freeze.
+- 2026-11-01, `a45bc83b…` item 70: DECIDED the same day by the human - human visual review is authoritative, the
+  criterion is counted once; the judge verdict on it is used for judge-human agreement only (section 2.10).
 
 - 2026-11-01, `7d7fc9a7…` C2 composition: DECIDED the same day by the human - rubric 30 stays
   in C2 as preregistered. The requirement includes monthly GL Balance and Variance checks for

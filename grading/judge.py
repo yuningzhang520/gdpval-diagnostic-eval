@@ -209,8 +209,8 @@ def _excerpt_pdf(extraction: dict) -> str:
 
 
 def build_units_a45bc83b(task_prompt: str, rubric: list[dict], extraction: dict, reference: dict, checks: dict, run_uuid: str) -> list[dict]:
-    """Judge units for the GCP migration design (preregistration 2.10: J items 6-25 and 31-71, item 70 included with the
-    summary and the diagram labels). Source material: the requirement layers; the deliverable excerpt holds exactly the
+    """Judge units for the GCP migration design (preregistration 2.10: J items 6-25, 31-69 and 71; item 70 is built
+    too, flagged agreement_only: human visual review scores it, the judge verdict is kept for agreement only). Source material: the requirement layers; the deliverable excerpt holds exactly the
     documents the criterion names (summary, diagram labels, POC), each paragraph located by file and index."""
     task_id = checks["task"]
     docs = checks.get("documents") or {}
@@ -222,7 +222,8 @@ def build_units_a45bc83b(task_prompt: str, rubric: list[dict], extraction: dict,
         scope = A45_SCOPE[item]
         units.append({"unit_id": unit_id(task_id, item), "run_uuid": run_uuid, "task_id": task_id, "item": item, "weight": rubric[item - 1]["score"],
                       "criterion": rubric[item - 1]["criterion"], "task_requirement": task_prompt, "source_material": A45_LAYERS,
-                      "deliverable_excerpt": "\n\n".join(parts[scope]), "excerpt_kind": f"docs:{scope}", "assembled_at": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds")})
+                      "deliverable_excerpt": "\n\n".join(parts[scope]), "excerpt_kind": f"docs:{scope}", "agreement_only": item == 70,
+                      "assembled_at": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds")})
     return units
 
 

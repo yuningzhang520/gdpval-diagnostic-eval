@@ -3,9 +3,9 @@
 consistency of the design, judged on extracted text with the requirement layers as source); V items 4, 26-30 and 72
 (the diagram's icons and depictions, overall formatting), recorded for human review.
 
-Item 70 ("Architecture diagram or summary annotates regions and/or zones") is listed under both J and V in the
-preregistration; it is routed to the judge with the summary text and the diagram's text labels as evidence (stated
-assumption, flagged for the human).
+Item 70 ("Architecture diagram or summary annotates regions and/or zones"; decided by the human 2026-11-01): human
+visual review is authoritative and the item is scored once, as a visual item; the judge also assesses it (summary text
+and diagram labels as evidence) when a judge batch runs, and that verdict is used only for judge-human agreement.
 
 Document identity (no content verdict): a .docx is the summary when its file name or opening text names the proposed
 architecture summary, the POC when its file name or opening text names the POC, proof of concept or implementation
@@ -23,10 +23,11 @@ import re
 from .engine.decision import Decision, Result
 
 TASK = "a45bc83b-22f9-4def-8d89-9c5661b2b86f"
-VERSION = "a45bc83b-2026-11-01.1"
+VERSION = "a45bc83b-2026-11-01.2"
 D_ITEMS = [1, 2, 3, 5]
-J_ITEMS = list(range(6, 26)) + list(range(31, 72))
-V_ITEMS = [4, 26, 27, 28, 29, 30, 72]
+J_ITEMS = list(range(6, 26)) + list(range(31, 70)) + [71]  # scored by the judge
+V_ITEMS = [4, 26, 27, 28, 29, 30, 70, 72]  # scored by human visual review
+JUDGE_AGREEMENT_ONLY = [70]  # judged for judge-human agreement only; never a scored row
 CRITICAL = {"C1": {"items": [1, 2, 3, 5], "name": "Deliverable set"},
             "C2": {"items": [], "judge_items": [6, 7, 8, 9, 10, 11, 12, 13, 49], "name": "Hard requirements met as an architecture, consistently"},
             "C3": {"items": [], "visual_items": [4, 26, 27, 28, 29, 30], "name": "Diagram"}}

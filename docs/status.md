@@ -3165,6 +3165,14 @@ holds before and after. All seven match their declarations after the fix; expert
 Deferred: `GoldRecalcDockerTests` of 7d7fc9a7 (LibreOffice in the pinned image) until no paid sandbox unit runs; the
 recalculation path is untouched and the expert workbook takes the single-candidate path.
 
+## Task 10 item 70 decision implemented (2026-11-01; task version a45bc83b-2026-11-01.2; no model call)
+
+Human visual review is authoritative for item 70 and the criterion is scored once: item 70 moved from the judge list to
+the visual list (`V_ITEMS`); its judge unit is still built, flagged `agreement_only`, and `grade_run` records that
+verdict under `judge_agreement_only` in the results record, never as a grade row. Rows now: 4 D, 60 J, 8 V (72 items,
+each once). `unittest grading.tests.test_gold_a45bc83b` 20/20, `test_grading_chain` 29/29, `test_docs_consistency` 3/3.
+Recorded before any Task 10 development output exists (preregistration 2.10 and section 4).
+
 ## Known issues and findings (material check)
 
 - `rubric_json.form_content`: 8,036 items hold `null`, 2,417 items lack the key, zero

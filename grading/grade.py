@@ -37,7 +37,8 @@ ENGINE_VERSION = "engine-2026-11-01.1"
 TASK_MODULES = {CK.TASK: {"checks": CK.run_checks, "units": J.build_units_1137e2bb, "critical": CK.CRITICAL, "judge_items": CK.J_ITEMS, "visual_items": [], "version": CK.VERSION},
                 CK2.TASK: {"checks": CK2.run_checks, "units": J.build_units_7d7fc9a7, "critical": CK2.CRITICAL, "judge_items": CK2.J_ITEMS, "visual_items": CK2.V_ITEMS, "version": CK2.VERSION},
                 CK3.TASK: {"checks": CK3.run_checks, "units": J.build_units_2ea2e5b5, "critical": CK3.CRITICAL, "judge_items": CK3.J_ITEMS, "visual_items": CK3.V_ITEMS, "version": CK3.VERSION},
-                CK4.TASK: {"checks": CK4.run_checks, "units": J.build_units_a45bc83b, "critical": CK4.CRITICAL, "judge_items": CK4.J_ITEMS, "visual_items": CK4.V_ITEMS, "version": CK4.VERSION}}
+                CK4.TASK: {"checks": CK4.run_checks, "units": J.build_units_a45bc83b, "critical": CK4.CRITICAL, "judge_items": CK4.J_ITEMS, "visual_items": CK4.V_ITEMS,
+                           "judge_agreement_only": CK4.JUDGE_AGREEMENT_ONLY, "version": CK4.VERSION}}
 
 
 def grader_version_of(task_id: str) -> str:
@@ -290,6 +291,9 @@ def grade_run(host_dir: str, log, sample_uuid: str, *, task_id: str, rubric: lis
                 "recalc": {k: v.get("recalc", {}).get("status") for k, v in extraction["xlsx"].items()},
                 "recalc_comparison": {k: {kk: vv for kk, vv in v.get("recalc_comparison", {}).items() if kk != "details"} for k, v in extraction["xlsx"].items()},
                 "score": score, "judge_units": len(units), "judge_verdicts": len(verdicts),
+                # judged for judge-human agreement only: kept here, never a scored row (the item is scored once, by its V row)
+                "judge_agreement_only": [{"item": i, "verdict": (vb.get(i) or {}).get("verdict", "pending_judge"), "judge_id": (vb.get(i) or {}).get("judge_id")}
+                                         for i in mod.get("judge_agreement_only", [])],
                 "judge_call_summary": {"ok": sum(1 for v in verdicts if v.get("call_status") == "ok"), "provider_error": sum(1 for v in verdicts if v.get("error_class") == "provider_error"),
                                        "judge_parse_error": sum(1 for v in verdicts if v.get("error_class") == "judge_parse_error"), "not_attempted": sum(1 for v in verdicts if v.get("error_class") == "not_attempted"),
                                        "usage_uncertain": sum(1 for v in verdicts if v.get("usage_uncertain"))} if verdicts else None,

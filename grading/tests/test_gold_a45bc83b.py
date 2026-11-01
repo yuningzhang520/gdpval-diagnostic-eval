@@ -2,7 +2,7 @@
 1, 2, 3, 5 pass), every declared variant to its declared map, the extractor's list and PDF detection on their own
 (including the regression of an empty typed-bullet glyph that matched every paragraph), critical status with visual-only
 criteria, and the production entry grade_run on a run directory built through the real collector (judge disabled): 4
-deterministic, 61 judge and 7 visual rows. No model, judge, provider or Docker call. Observed transitions go to
+deterministic, 60 judge and 8 visual rows (item 70 is visual; its judge unit is agreement-only). No model, judge, provider or Docker call. Observed transitions go to
 $GRADING_REGRESSION_LOG_DIR/gold_transitions_a45bc83b.json."""
 import asyncio
 import json
@@ -159,8 +159,10 @@ class ProductionGradeRunTests(unittest.TestCase):
             rows = [json.loads(l) for l in open(os.path.join(out, "grades.jsonl"), encoding="utf-8")]
             self.assertEqual(sorted(g["item"] for g in rows), list(range(1, len(RUBRIC) + 1)))
             by_src = {s_: [g for g in rows if g["source"] == s_] for s_ in ("D", "J", "V")}
-            self.assertEqual((len(by_src["D"]), len(by_src["J"]), len(by_src["V"])), (4, 61, 7))
-            self.assertEqual(sorted(g["item"] for g in by_src["V"]), [4, 26, 27, 28, 29, 30, 72]); self.assertIn(70, [g["item"] for g in by_src["J"]])
+            self.assertEqual((len(by_src["D"]), len(by_src["J"]), len(by_src["V"])), (4, 60, 8))
+            self.assertEqual(sorted(g["item"] for g in by_src["V"]), [4, 26, 27, 28, 29, 30, 70, 72]); self.assertNotIn(70, [g["item"] for g in by_src["J"]])
+            self.assertEqual([g["item"] for g in rows].count(70), 1)  # item 70 is scored once (human visual review)
+            self.assertEqual(r["judge_agreement_only"], [{"item": 70, "verdict": "pending_judge", "judge_id": None}])
             self.assertTrue(all(g["weight"] == RUBRIC[g["item"] - 1]["score"] for g in rows))
             s_ = r["score"]
             self.assertEqual({k: v["status"] for k, v in s_["critical"].items()}, {"C1": "pass", "C2": "not_confirmed", "C3": "not_confirmed"})
@@ -168,6 +170,7 @@ class ProductionGradeRunTests(unittest.TestCase):
             checks = CK.run_checks(ex, {}, RUBRIC)
             units = J.build_units_a45bc83b(PROMPT, RUBRIC, ex, {}, checks, b["uuid"])
             self.assertEqual(len(units), 61)
+            self.assertEqual([x["item"] for x in units if x["agreement_only"]], [70])  # judged for agreement only
             u = {x["item"]: x for x in units}
             self.assertIn(f"[{GV.SUMMARY} p0]", u[51]["deliverable_excerpt"]); self.assertNotIn(GV.POC, u[51]["deliverable_excerpt"])  # summary-only item
             self.assertIn(f"[{GV.POC} p", u[41]["deliverable_excerpt"]); self.assertNotIn(f"[{GV.SUMMARY} p", u[41]["deliverable_excerpt"])  # POC-only item
