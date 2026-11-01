@@ -31,7 +31,7 @@ from .engine.sheets import first_text, month_of, row_cells, sheet_names, text_in
 from .engine.workbook import workbook_gate
 
 TASK = "7d7fc9a7-21a7-4b83-906f-416dea5ad04f"
-VERSION = "7d7fc9a7-2026-11-01.3"  # .1 first gold-first version; .2 Codex Review 1 B1-B4 (item contract, evidence states, label-first summary identity, item 53 without allowance)
+VERSION = "7d7fc9a7-2026-11-01.4"  # .1 first gold-first version; .2 Codex Review 1 B1-B4 (item contract, evidence states, label-first summary identity, item 53 without allowance)
 MONTHS = {1: "Jan", 2: "Feb", 3: "Mar", 4: "Apr"}
 D_ITEMS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 14, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 33, 34, 36, 37, 38, 39, 40, 41, 42, 43, 44, 47, 48, 49, 50, 53]
 J_ITEMS = [12, 15, 16, 17, 18, 31, 32, 35, 45, 46, 51, 52, 54, 55]
@@ -122,9 +122,11 @@ def register(d: Decision, field: str, cell, row=None, recalc=None) -> str:
 
 def across_candidates(d: Decision, candidates: list, evaluate, label: str) -> None:
     """Evaluate a check once per candidate reading (duplicate bottom rows, Codex R1 closure B2). One candidate: evaluated
-    on ``d`` directly (unchanged behaviour). Several: each on a scratch decision; any unassessable reading makes the
-    item unassessable; a violation is confirmed only when every candidate violates; candidates that disagree leave the
-    verdict to the unresolved choice of row, so the item is cannot_assess with the conflict as evidence."""
+    on ``d`` directly (unchanged behaviour). Several: each on a scratch decision, decided like any item (a violation
+    fails it even when another of its inputs is unassessable; otherwise an unassessable input leaves it unassessable;
+    otherwise it passes). The item fails only when every candidate fails - the violation is confirmed whichever row is
+    read, and unrelated unassessable evidence is kept beside it; otherwise any unassessable or failing candidate leaves
+    the verdict to an unresolved reading, so the item is cannot_assess with the evidence kept."""
     if len(candidates) <= 1:
         evaluate(d, candidates[0] if candidates else None)
         return
@@ -133,10 +135,9 @@ def across_candidates(d: Decision, candidates: list, evaluate, label: str) -> No
         sd = Decision(d.item, {})
         evaluate(sd, cand)
         scratch.append(sd)
-    if any(sd.unassessable for sd in scratch):
-        for sd in scratch:
-            d.unassessable.extend(sd.unassessable)
-    elif all(sd.violations for sd in scratch):
+    for sd in scratch:  # unassessable inputs are evidence in every outcome
+        d.unassessable.extend(sd.unassessable)
+    if all(sd.violations for sd in scratch):
         for v in scratch[0].violations:
             d.violation(v["kind"], f"{v['detail']} (in every one of {len(candidates)} candidate {label})", v.get("attribution", "model_caused"),
                         **{k: x for k, x in v.items() if k not in ("kind", "detail", "attribution")})
@@ -754,7 +755,7 @@ def run_checks(extraction: dict, reference: dict, rubric: list[dict], integrity:
                                 register(d, "bottom_summary", c, None, recalc_status)
                             elif st in ("blank", "absent"):
                                 d.violation("bottom_summary_missing", f"no {MONTHS[m]} {k} figure in a bottom summary row", month=MONTHS[m], figure_kind=k)  # 'kind' collided with violation()'s own parameter (TypeError)
-                across_candidates(d, pairs or [(None, ending_row)], eval_presence, "bottom summary rows")
+                across_candidates(d, pairs or [(None, e) for e in (ending_cands or [None])], eval_presence, "bottom summary rows")  # no totals row: every ending row
                 results[item] = d.result("bottom summary section present for Jan-Apr")
             d = Decision(spec["variance"], ev)
             bottom_dup(d, "gl", "variance")

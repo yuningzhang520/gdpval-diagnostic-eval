@@ -249,6 +249,19 @@ def m_totals_row_missing_jan_adds_1250(wb, final):
     ws.cell(47, 3).value = None  # the only totals row lacks January additions (crashed the grader before: 'kind' keyword collision)
 
 
+def m_totals_rows_both_wrong_one_unreadable_1250(wb, final):
+    ws = wb[S1250]; assert ws.cell(47, VENDOR).value == "Month Totals"
+    orig = ws.cell(47, 4).value
+    _insert_copy_above(ws, 47, {4: orig + 100, 7: "=G46"})  # first row: January +100 and an uncached February amortization formula
+    ws.cell(48, 4).value = orig + 200  # second row: January +200
+
+
+def m_no_totals_row_conflicting_ending_rows_1250(wb, final):
+    ws = wb[S1250]; assert ws.cell(47, VENDOR).value == "Month Totals" and ws.cell(48, VENDOR).value == "Ending Balance"
+    ws.delete_rows(47)  # no totals row
+    _insert_copy_above(ws, 47, {8: None})  # two ending-balance rows; the first lacks February
+
+
 def m_vendor_blank_on_one_line(wb, final):
     ws = wb[S1250]; assert ws.cell(46, VENDOR).value == "ZOHO Corporation"
     ws.cell(46, VENDOR).value = None  # figures without a vendor: an unidentified row, never silently dropped
@@ -427,6 +440,10 @@ CATALOG = {
         "basis": "a duplicate totals row read first without January additions: the bottom summary still shows them in the other row (27 cannot_assess, not a first-row FAIL); the amortization totals agree, so 11 holds"},
     "R35_totals_row_missing_jan_adds_1250": {"kind": "rubric_relevant", "wb": m_totals_row_missing_jan_adds_1250, "expected": F(27),
         "basis": "the single 1250 totals row without January additions: no bottom summary figure for January additions (27 fails; before the fix the grader raised a TypeError on this branch)"},
+    "R36_totals_rows_both_wrong_one_unreadable_1250": {"kind": "rubric_relevant", "wb": m_totals_rows_both_wrong_one_unreadable_1250, "expected": F(22) | CA(11, 23, 24, 25, 26, 27, 28, 29),
+        "basis": "Codex R1 closure B2: both totals rows misstate January amortization; the first also has an unreadable (uncached) February figure: the violation is confirmed in every candidate row and kept beside the unrelated unassessable cell (22 fails); 11 stays cannot_assess (one candidate's sum is unknown)"},
+    "R37_no_totals_row_conflicting_ending_rows_1250": {"kind": "rubric_relevant", "wb": m_no_totals_row_conflicting_ending_rows_1250, "expected": F(22, 27, 28) | CA(11, 23, 24, 25, 26, 29),
+        "basis": "Codex R1 closure B2: no totals row and two ending-balance rows, the first without February: every ending row is a candidate (29 cannot_assess, not a first-row FAIL); 22, 27, 28 fail on the missing totals row; 11 has no totals to sum; 23-26 keep their duplicate-row ambiguity"},
     "R27_duplicate_jan_end_column": {"kind": "rubric_relevant", "wb": m_duplicate_jan_end_column, "expected": CA(21, 22, 23, 29),
         "basis": "Codex B2: two January end-balance columns on 1250: the January ending figures cannot be located uniquely (21, 22, 23, 29 cannot_assess); item 30 keeps its independently confirmed FAIL (blank February-April variance figures)"},
     "R28_vendor_blank_on_one_line": {"kind": "rubric_relevant", "wb": m_vendor_blank_on_one_line, "expected": CA(13, 14, 22), "attribution": {13: "unknown"},

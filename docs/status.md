@@ -3213,6 +3213,24 @@ the official deterministic grading entry; the batch holds verdict-free packet co
 templates, read-only deliverable copies and a manifest; sealed verdict files are referenced by path only.
 `unittest grading.tests.test_label_batch` 3/3 (13.1 s). No development output of a ready task exists yet.
 
+## Codex Review 1 closure, B2 second round (2026-11-01; Codex check of `c04a788` relayed by the human; task version 7d7fc9a7-2026-11-01.4; no model call; logs `logs/codex-r1-b2-closure-20261101T132939Z/*round2*`)
+
+Two remaining B2 defects of the first closure fix: (1) `across_candidates` let any candidate's unassessable evidence
+override violations confirmed in every candidate; (2) with no totals row, the presence check read only the first
+ending-balance row. Fix: each candidate is decided like an item (a violation fails it even beside an unassessable
+input; otherwise an unassessable input leaves it unassessable), the item fails when every candidate fails and keeps
+the unassessable evidence beside the violation, otherwise any failing or unassessable candidate leaves it
+`cannot_assess`; without a totals row every ending row is a candidate. Regressions declared before observation: R36
+(both totals rows wrong, the first also with an uncached February figure: 22 fail) and R37 (no totals row, two
+ending rows, the first without February: 29 cannot_assess; 22, 27, 28 fail). On the module at `c04a788` (blob
+`80b9d64c…`): R36 gives 22 cannot_assess and R37 gives 29 fail (red); both match after the fix.
+
+| Command (`run_isolated.sh`, `/usr/bin/time -p`) | Wall clock | Exit | Result |
+|---|---|---|---|
+| R36, R37 on the `c04a788` module and on the fix | n/a | 0 | red before, declared map after |
+| `unittest grading.tests.test_gold_7d7fc9a7` (55 + 3 docker-gated skipped) | 5.6 s | 0 | 55/55 |
+| `unittest grading.tests.test_grading_chain` / `harness.tests.test_docs_consistency` / `grading.tests.test_label_batch` | 3.2 / 1.0 / 12.2 s | 0 | 29 / 3 / 3 |
+
 ## Known issues and findings (material check)
 
 - `rubric_json.form_content`: 8,036 items hold `null`, 2,417 items lack the key, zero
