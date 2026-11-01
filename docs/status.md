@@ -3173,6 +3173,46 @@ verdict under `judge_agreement_only` in the results record, never as a grade row
 each once). `unittest grading.tests.test_gold_a45bc83b` 20/20, `test_grading_chain` 29/29, `test_docs_consistency` 3/3.
 Recorded before any Task 10 development output exists (preregistration 2.10 and section 4).
 
+## GPT compat reconciliation, pricing check and compatibility findings (2026-11-01; no model or judge call)
+
+Reconciliation (authorized by the human): compat unit `87da214f…:openai/gpt-6.1-sol:20261101T124707Z` (run
+`U6UgKmucEdbsaNdiQXHcG5`) settled at 0.472138 USD by `ledger_admin resolve` (manual_resolution at 13:35:35Z, appended;
+reservation, the estimated 5.000000 settlement and the hold are kept). Basis recorded: inferred from the 24 calls that
+reported usage, not provider-invoice-verified; the human's OpenAI Usage dashboard showed about 0.55 USD and 25 requests
+for the selected period; the ~0.08 USD difference is not attributed (the missing-usage HTTP 502 request, pricing
+differences or dashboard aggregation). Compat ledger now: no open reservation, hold, unresolvable unit or stop.
+
+Pricing check (offline recomputation; published pricing read from developers.openai.com pricing, model, prompt-caching
+and reasoning pages on 2026-11-01): the configured `gpt-6.1-sol` facts equal the published Standard rates (short
+context 2.00 input / 0.10 cached / 10.00 output / 2.50 cache write 30m / 5.00 12h; above 272K input tokens per request
+4.00 / 0.20 / 15.00 / 5.00 / 10.00); the default retention without a TTL setting is 30m; reasoning tokens are billed as
+output tokens. Per-call recomputation of the 24 usage-reporting calls: 0.472131 USD (Inspect: 0.472131; ledger
+0.472138, per-category rounding to 6 decimals); every call in the standard tier (largest prompt 55,303 tokens);
+`total_tokens` = uncached + cache read + cache write + output on every call, so reasoning is not added twice. No
+pricing discrepancy confirmed. Not stated on the pages read: whether failed (5xx) requests are billed. Observation, not
+attribution: the call after the failed attempt produced 8,620 output tokens (largest of the run; median 506), worth
+about 0.087 USD at the output rate.
+
+Compatibility findings (run-level metadata and error records only):
+
+| Candidate | Outcome | Messages / 200 | Model events / assistant turns | Tool calls per turn (mean, max) | Errors |
+|---|---|---|---|---|---|
+| Opus 5.5 | completed, no limit event | 70 (35 %) | 27 / 27 | 1.52, 4 | none |
+| GPT-6.1 Sol | completed, no limit event | 56 (28 %) | 25 / 24 | 1.25, 3 | one provider HTTP 502 on a model attempt; one bash argument-parsing tool error |
+
+The GPT 502 ("Error code: 502" from the provider; no completion time, no output, no usage) is a failed attempt inside a
+turn: it starts at the same instant as the next model event (0.7 ms apart), its output never enters the transcript, and
+the next event completes the turn (25 model events, 24 assistant messages). Inspect's request-level retry recovered it;
+no evidence of a provider-adapter or model-configuration incompatibility. Remaining effect is accounting: an attempt
+without usage settles conservatively with a hold, which blocks the class until reconciled. No other compatibility
+blocker; both candidates collected a .pptx and a .pdf, structurally valid.
+
+Labeling materials: `grading/label_batch.py` assembles a batch of three or more ready development runs (tasks listed in
+`grading/readiness.json`: 1137e2bb, 2ea2e5b5, a45bc83b; 7d7fc9a7 not ready until the Codex closure is accepted) through
+the official deterministic grading entry; the batch holds verdict-free packet copies, the independent-judgments
+templates, read-only deliverable copies and a manifest; sealed verdict files are referenced by path only.
+`unittest grading.tests.test_label_batch` 3/3 (13.1 s). No development output of a ready task exists yet.
+
 ## Known issues and findings (material check)
 
 - `rubric_json.form_content`: 8,036 items hold `null`, 2,417 items lack the key, zero

@@ -1,0 +1,11 @@
+{
+ "_note": "Tasks whose development outputs may be opened by the grader and assembled into verdict-free labeling packets (Early Generate, Late Reveal). A task is listed only after its Grader v0 is committed and tagged and any task-specific readiness gate has passed. Validation outputs are never listed here: they stay sealed until the independent-validation checkpoint.",
+ "ready": {
+  "1137e2bb-bdf9-4876-b572-f29b7de5e595": {"tag": "grader-v0-1137e2bb", "basis": "grader finalized 2026-11-01 (task version 1137e2bb-2026-11-01.2)"},
+  "2ea2e5b5-257f-42e6-a7dc-93763f28b19d": {"tag": "grader-v0-2ea2e5b5", "basis": "grader v0 with the A-9 hours rule, 2026-11-01"},
+  "a45bc83b-22f9-4def-8d89-9c5661b2b86f": {"tag": "grader-v0-a45bc83b", "basis": "grader v0 2026-11-01; item 70 decision implemented in a45bc83b-2026-11-01.2"}
+ },
+ "not_ready": {
+  "7d7fc9a7-21a7-4b83-906f-416dea5ad04f": "Codex Review 1 closure pending (B2 remainder fixed in c04a788; closure check not yet returned)"
+ }
+}
