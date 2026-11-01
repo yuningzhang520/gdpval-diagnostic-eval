@@ -196,6 +196,59 @@ def m_duplicate_jan_end_column(wb, final):
         ws.cell(r, col).value = ws.cell(r, 5).value  # a second January end-balance column (Codex B2: ambiguous month columns)
 
 
+def _insert_copy_above(ws, row, changes):
+    """Insert a copy of ``row`` directly above it (values and number formats), then apply {col: new value} to the copy.
+    The copy becomes the first row of its kind (Codex R1 closure B2: a conflicting duplicate read first)."""
+    ws.insert_rows(row)
+    for c in range(1, ws.max_column + 1):
+        src = ws.cell(row + 1, c)
+        dst = ws.cell(row, c)
+        dst.value, dst.number_format = src.value, src.number_format
+    for c, v in changes.items():
+        ws.cell(row, c).value = v
+
+
+def m_conflicting_totals_row_1250(wb, final):
+    ws = wb[S1250]; assert ws.cell(47, VENDOR).value == "Month Totals"
+    _insert_copy_above(ws, 47, {4: ws.cell(47, 4).value + 100})
+
+
+def m_totals_rows_both_wrong_1250(wb, final):
+    ws = wb[S1250]; assert ws.cell(47, VENDOR).value == "Month Totals"
+    orig = ws.cell(47, 4).value
+    _insert_copy_above(ws, 47, {4: orig + 100})
+    ws.cell(48, 4).value = orig + 200  # the original row is wrong as well
+
+
+def m_conflicting_jan_amort_column_1250(wb, final):
+    ws = wb[S1250]; col = ws.max_column + 1
+    ws.cell(4, col).value = "Jan"; ws.cell(5, col).value = ws.cell(5, 4).value
+    for r in range(6, ws.max_row + 1):
+        ws.cell(r, col).value, ws.cell(r, col).number_format = ws.cell(r, 4).value, ws.cell(r, 4).number_format
+    assert ws.cell(47, VENDOR).value == "Month Totals"
+    ws.cell(47, 4).value = ws.cell(47, 4).value + 100  # the first (original) column's total is wrong, the duplicate is right
+
+
+def m_conflicting_totals_row_1251(wb, final):
+    ws = wb[S1251]; assert ws.cell(28, VENDOR).value == "Month Totals"
+    _insert_copy_above(ws, 28, {4: ws.cell(28, 4).value + 100})
+
+
+def m_conflicting_variance_row_1251(wb, final):
+    ws = wb[S1251]; assert str(ws.cell(30, VENDOR).value).strip().lower() == "variance"
+    _insert_copy_above(ws, 30, {5: 5.0})  # January variance 5.00 in the first variance row; the original row shows 0
+
+
+def m_totals_row_first_blank_adds_1250(wb, final):
+    ws = wb[S1250]; assert ws.cell(47, VENDOR).value == "Month Totals"
+    _insert_copy_above(ws, 47, {3: None})  # the first totals row lacks January additions; the second has them
+
+
+def m_totals_row_missing_jan_adds_1250(wb, final):
+    ws = wb[S1250]; assert ws.cell(47, VENDOR).value == "Month Totals"
+    ws.cell(47, 3).value = None  # the only totals row lacks January additions (crashed the grader before: 'kind' keyword collision)
+
+
 def m_vendor_blank_on_one_line(wb, final):
     ws = wb[S1250]; assert ws.cell(46, VENDOR).value == "ZOHO Corporation"
     ws.cell(46, VENDOR).value = None  # figures without a vendor: an unidentified row, never silently dropped
@@ -360,6 +413,20 @@ CATALOG = {
         "basis": "Codex B2: one January amortization cell uncached: that line's January identity (21) and the January amortization total check (22) cannot be completed; nothing is read as zero"},
     "R26_insurance_amortization_uncached": {"kind": "rubric_relevant", "wb": m_insurance_amortization_uncached, "expected": CA(36, 39, 40, 49),
         "basis": "Codex B2: one Good Insurance February amortization uncached: straight-line (36), identity (39), totals (40) and the no-negative check (49) cannot be completed; 49 is never a PASS on an unreadable cell"},
+    "R29_conflicting_totals_row_1250": {"kind": "rubric_relevant", "wb": m_conflicting_totals_row_1250, "expected": CA(11, 22, 23, 24, 25, 26, 27, 28, 29),
+        "basis": "Codex R1 closure B2: a second 'Month Totals' row above the original with January amortization +100: the totals and the YTD sum depend on which row is read (11, 22 cannot_assess, never a first-row FAIL); 23-29 keep their duplicate-row ambiguity"},
+    "R30_totals_rows_both_wrong_1250": {"kind": "rubric_relevant", "wb": m_totals_rows_both_wrong_1250, "expected": F(11, 22) | CA(23, 24, 25, 26, 27, 28, 29),
+        "basis": "both 1250 totals rows misstate January amortization (+100, +200): the violation holds in every candidate row (11, 22 fail)"},
+    "R31_conflicting_jan_amort_column_1250": {"kind": "rubric_relevant", "wb": m_conflicting_jan_amort_column_1250, "expected": CA(11, 20, 21, 22, 28),
+        "basis": "Codex R1 closure B2: a second January amortization column; the original column's total is +100, the duplicate is right: the schedule's Jan-Apr amortization is not uniquely determined (11 cannot_assess, never a first-column verdict); 20, 21, 22, 28 keep their ambiguity"},
+    "R32_conflicting_totals_row_1251": {"kind": "rubric_relevant", "wb": m_conflicting_totals_row_1251, "expected": CA(11, 40, 41, 42, 43, 44, 47),
+        "basis": "Codex R1 closure B2 on 1251: a conflicting 'Month Totals' row read first (11, 40 cannot_assess); 41-44 and 47 keep their duplicate-row ambiguity"},
+    "R33_conflicting_variance_row_1251": {"kind": "rubric_relevant", "wb": m_conflicting_variance_row_1251, "expected": CA(48),
+        "basis": "a second 1251 variance row read first with a January variance of 5.00 while the original shows 0: the variance verdict depends on the row (48 cannot_assess)"},
+    "R34_totals_row_first_blank_adds_1250": {"kind": "rubric_relevant", "wb": m_totals_row_first_blank_adds_1250, "expected": CA(22, 23, 24, 25, 26, 27, 28, 29),
+        "basis": "a duplicate totals row read first without January additions: the bottom summary still shows them in the other row (27 cannot_assess, not a first-row FAIL); the amortization totals agree, so 11 holds"},
+    "R35_totals_row_missing_jan_adds_1250": {"kind": "rubric_relevant", "wb": m_totals_row_missing_jan_adds_1250, "expected": F(27),
+        "basis": "the single 1250 totals row without January additions: no bottom summary figure for January additions (27 fails; before the fix the grader raised a TypeError on this branch)"},
     "R27_duplicate_jan_end_column": {"kind": "rubric_relevant", "wb": m_duplicate_jan_end_column, "expected": CA(21, 22, 23, 29),
         "basis": "Codex B2: two January end-balance columns on 1250: the January ending figures cannot be located uniquely (21, 22, 23, 29 cannot_assess); item 30 keeps its independently confirmed FAIL (blank February-April variance figures)"},
     "R28_vendor_blank_on_one_line": {"kind": "rubric_relevant", "wb": m_vendor_blank_on_one_line, "expected": CA(13, 14, 22), "attribution": {13: "unknown"},

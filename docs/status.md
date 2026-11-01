@@ -3137,6 +3137,34 @@ suite (12 errors) and fixed by renaming. Open: item 70 is listed under both J an
 | `unittest grading.tests.test_gold_2ea2e5b5` / `test_gold_7d7fc9a7` / `test_gold_1137e2bb` / `test_layout_regressions` | 2.1 / 4.8 / 15.1 / 5.1 s | 0 | 30 / 46 + 3 skipped / 53 + 2 skipped / 57 |
 | `unittest grading.tests.test_review_packets` / `harness.tests.test_docs_consistency` | 0.1 / 1.0 s | 0 | 2 / 3 |
 
+## Codex Review 1 closure, B2 remainder (2026-11-01; Codex closure check of `2c37d6a`: BLOCKED on item 11 and items 22/40; task version 7d7fc9a7-2026-11-01.3; no model call; logs `logs/codex-r1-b2-closure-20261101T132939Z/`)
+
+Reported by the human from the Codex closure check: item 11 with conflicting duplicate amortization columns and items
+22/40 with conflicting duplicate totals rows. Not fixed by any later commit (no commit after `2c37d6a` touched
+`grading/checks_7d7fc9a7.py`). Cause: duplicate bottom rows were flagged as ambiguous, but every check still read the
+first row and could confirm a violation from it; item 11 summed the first amortization column of a month without
+consulting the header's ambiguity. Fix (task specification only; shared engine unchanged): `across_candidates` evaluates
+a check once per candidate reading (each duplicate totals / ending / GL / variance row) on a scratch decision - one
+candidate: unchanged path; any unreadable candidate: unassessable; a violation only when every candidate violates;
+disagreeing candidates: `cannot_assess` with the conflict as evidence. Applied to items 22/40, the bottom-summary
+presence items (27-29, 47), the variance items (30, 48) and item 11 (per account over its totals rows); item 11 also
+treats an amortization column that appears twice for a month as ambiguous. Found while reproducing: the presence check
+passed `kind=` to `Decision.violation`, whose first parameter is `kind`, so any deliverable with a missing bottom
+summary figure raised TypeError (pre-fix and in the first fixed draft); renamed to `figure_kind`.
+Reproduction on the pre-fix module (blob `c5d8dbbc…` at `2c37d6a`), `red_prefix_b2.log`: R29 (11, 22 fail), R31 (11
+fail), R32 (11, 40 fail), R33 (48 fail), R34 and R35 (TypeError); R30 (both rows wrong: 11, 22 fail) is the guard and
+holds before and after. All seven match their declarations after the fix; expert and twin verdicts unchanged.
+
+| Command (`run_isolated.sh`, `/usr/bin/time -p`) | Wall clock | Exit | Result |
+|---|---|---|---|
+| `unittest grading.tests.test_gold_7d7fc9a7` before the new variants (existing 46 + 3 skipped) | 5.2 s | 0 | unchanged verdicts |
+| pre-fix module on the seven new variants (expected red) | n/a | 0 | 6 of 7 differ or raise; guard R30 holds |
+| `unittest grading.tests.test_gold_7d7fc9a7` (53 + 3 docker-gated skipped) | 5.7 s | 0 | 53/53 |
+| `unittest grading.tests.test_grading_chain` / `test_review_packets` / `harness.tests.test_docs_consistency` / `grading.tests.test_gold_1137e2bb` | 3.4 / 0.1 / 1.4 / 14.6 s | 0 | 29 / 2 / 3 / 53 + 2 skipped |
+
+Deferred: `GoldRecalcDockerTests` of 7d7fc9a7 (LibreOffice in the pinned image) until no paid sandbox unit runs; the
+recalculation path is untouched and the expert workbook takes the single-candidate path.
+
 ## Known issues and findings (material check)
 
 - `rubric_json.form_content`: 8,036 items hold `null`, 2,417 items lack the key, zero
