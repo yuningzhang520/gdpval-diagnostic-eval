@@ -4145,6 +4145,93 @@ Pre-freeze tests (logs `logs/v1-freeze-20261101/`):
 - Grading suite: 426 tests, 5 skipped, 121.97 s, rc 0.
 - Harness modules via `run_isolated.sh`: 14 modules, 215 tests, all OK, 51 s.
 
+## Validation reveal, Judge Validation halt, Validation packets, Docker-gated suites (2026-11-01; code at `0c8efcb`, tag `v1-calibration-freeze`)
+
+Judge Validation (authorized: one pass, 15 USD; runner `grading.judge_validation`; registry
+`~/turing-eval-runs/judge_validation/registry.jsonl`):
+- Started 21:25:39Z after the freeze gate passed (tag commit `0c8efcb`). First run: `a45bc83b…` `3gTajbGy…`.
+- `a45bc83b…`: 61 calls.
+  - 58 ok.
+  - Item 69: `provider_error`, `RetryError` wrapping a google `ClientError` after Inspect's retries (25.9 s); usage
+    uncertain.
+  - Items 70 and 71: `not_attempted`; the judge halted on the uncertain-cost call under the approved policy.
+  - Priced known part: 0.801080 USD.
+  - Ledger: the unit settled at its reservation (7.06 USD), estimated, on manual-review hold.
+  - Remaining: 7.94 USD. Stops: none.
+- The hold refuses every further paid start until a human reconciles the unit with `settled_amount` (a verified amount)
+  or `clear_review` (account checked). The runner stopped (`halted`, `pass_end` 21:31:45Z). Eight judge runs have no
+  judge pass yet. **Blocked on the human.**
+- `a45bc83b…` Validation pass `pass-20261101T212539712811Z-be5b` (`deterministic_plus_judge`, judge completeness
+  `partial`): items 69 and 71 are `cannot_assess` (no judge verdict); item 70 is the V item (`pending_human`; human
+  review authoritative).
+- Re-judging the run through `run_grading --rejudge` would re-judge all 61 items, a whole-sample rerun outside the
+  authorization; not done.
+
+Validation reveal, deterministic, no paid call (log `~/turing-eval-runs/validation/grading/deterministic_reveal.jsonl`):
+- The freeze gate was re-checked before the first run.
+- The other nine canonical Validation runs were graded through the official entry with the frozen versions, all rc 0
+  and gate passed.
+- `b5d2e6f1…` has no judge items, so this pass is its complete Validation grading. It is recorded as `run_done` in the
+  Judge Validation registry.
+- The eight others get their judged pass when the pass resumes. Same code, so their deterministic verdicts are
+  re-derived identically.
+- Verdicts are not shown to the human before the Validation labels are saved.
+
+Validation packets, `~/turing-eval-runs/labeling/validation-v4/`: 10 packets, one queue-v4 item each.
+
+| Task | Item | Stratum |
+|---|---|---|
+| `1137e2bb…` | 28 | J |
+| `2ea2e5b5…` | 45 | D |
+| `47ef842d…` | 57 | J |
+| `7b08cd4d…` | 19 | D |
+| `7d7fc9a7…` | 18 | J |
+| `a45bc83b…` | 2 | D |
+| `b5d2e6f1…` | 18 | D |
+| `c3525d4d…` | 32 | D |
+| `c357f0e2…` | 24 | J |
+| `f841ddcf…` | 2 | D |
+
+- Built with `label_batch.assemble_v2(phase="validation")` from each run's latest pass, by the scratch script
+  `validation_packets.py`; the repository code is unchanged.
+- Checked:
+  - every packet holds exactly its queue item, in both `items.md` and the CSV;
+  - no pre-filled cell;
+  - no grader location or verdict wording; the only hits are the packet's own instructions and a document title in
+    one deliverable;
+  - every copied file matches its original.
+
+Dev runs re-graded under the frozen versions (deterministic; `dev/grading_v1/<run>/`; log
+`dev/grading_v1/frozen_v1_regrade.jsonl`; 19.95 s; `2ea2e5b5…` already had a frozen-version pass from Judge Dev Pass
+2). Deterministic items, the first V0 pass against frozen V1 (retrospective re-grades of calibration outputs, not
+held-out evidence):
+
+| Task | V0 pass / fail / cannot_assess | V1 pass / fail / cannot_assess | Changed |
+|---|---|---|---|
+| `1137e2bb…` | 50 / 2 / 3 | 52 / 1 / 2 | 3 |
+| `2ea2e5b5…` | 20 / 14 / 22 | 35 / 1 / 20 | 27 |
+| `47ef842d…` | 45 / 9 / 0 | 51 / 0 / 3 | 9 |
+| `7b08cd4d…` | 22 / 21 / 0 | 37 / 6 / 0 | 15 |
+| `7d7fc9a7…` | 6 / 1 / 34 | 38 / 3 / 0 | 35 |
+| `a45bc83b…` | 3 / 1 / 0 | 3 / 1 / 0 | 0 |
+| `b5d2e6f1…` | 26 / 5 / 0 | 26 / 5 / 0 | 0 |
+| `c3525d4d…` | 21 / 25 / 0 | 43 / 1 / 2 | 24 |
+| `c357f0e2…` | 13 / 2 / 0 | 13 / 2 / 0 | 0 |
+| `f841ddcf…` | 40 / 11 / 0 | 49 / 2 / 0 | 9 |
+| Total (396 items) | cannot_assess 59 | cannot_assess 27 | 122 |
+
+Docker-gated suites (`run_isolated.sh`, at `0c8efcb`, clean frozen tree; logs `logs/docker-gated-20261101T213418Z/`):
+
+| Command | Exit | Result | Wall time |
+|---|---|---|---|
+| `GOLD_RECALC_DOCKER=1 unittest grading.tests.test_gold_7d7fc9a7.GoldRecalcDockerTests` | 0 | 3/3 | 5.43 s |
+| `GOLD_RECALC_DOCKER=1 unittest grading.tests.test_gold_1137e2bb.GoldRecalcDockerTests` | 0 | 2/2 | 10.30 s |
+| `grading.tests.regress_recalc_docker` | 0 | 16 PASS, 0 FAIL | 3.98 s |
+| `grading.tests.regress_grading_cli` | 0 | 61 PASS, 0 FAIL | 7.51 s |
+
+Codex Review 2 package: `docs/codex_review_2.md`. It pins `0c8efcb` against the baseline `a9a1f88`, states facts
+only, and includes a copy-paste prompt that tells Codex to verify every claim against the code.
+
 ## Known issues and findings (material check)
 
 - `rubric_json.form_content`: 8,036 items hold `null`, 2,417 items lack the key, zero
@@ -4199,9 +4286,11 @@ Pre-freeze tests (logs `logs/v1-freeze-20261101/`):
 
 - Gemini generation complete (Dev and Validation 10 of 10); Validation outputs stay sealed.
 - Dev labels saved and compared (4/6); Dev calibration of all ten tasks done.
-- Judge Dev Pass 2 done; V1 calibration frozen (tag `v1-calibration-freeze`).
-- Next: the Validation reveal and Judge Validation (one pass, 15 USD ceiling), then the 10 verdict-free Validation
-  packets.
+- Judge Dev Pass 2 done; V1 calibration frozen (tag `v1-calibration-freeze`); Validation revealed (deterministic).
+- Judge Validation halted after `a45bc83b…`: the unit is on manual-review hold. The human reconciles it
+  (`settled_amount` or `clear_review`) before the pass resumes for the eight remaining judge runs.
+- The 10 Validation packets (`labeling/validation-v4/`) await the human's labels.
+- Codex Review 2 package ready (`docs/codex_review_2.md`); the human runs it after Validation, before `freeze-v1`.
 
 ## Decisions taken (date · what · commit)
 
@@ -4540,7 +4629,8 @@ Pre-freeze tests (logs `logs/v1-freeze-20261101/`):
 - 2026-11-01 · `1137e2bb…` grader .3 (summary measures, workbook pivots, variance headers) · 8e6ad63
 - 2026-11-01 · `c357f0e2…` grader .3 (edge case is not the Edge browser) · 146ce2a
 - 2026-11-01 · Dev labels checkpointed and compared (4/6); labelled-task calibration (`2ea2e5b5…` .3, `f841ddcf…` .2, `a45bc83b…` .3, engine .6); rubric decisions R-2.7-11, R-2.7-21 (`7d7fc9a7…` .7), R-2.5-27 (`c3525d4d…` .5); Judge Dev Pass 2 plan · e2208d3
-- 2026-11-01 · Judge Dev Pass 2 (`2ea2e5b5…`, 4 calls, 0.031 USD; 57 and 59 now agree); per-call judge pricing; V1 calibration freeze (shared judge + all task V1, `grading/freeze/v1_manifest.json`, tag `v1-calibration-freeze`); Judge Validation runner and plan · (this commit)
+- 2026-11-01 · Judge Dev Pass 2 (`2ea2e5b5…`, 4 calls, 0.031 USD; 57 and 59 now agree); per-call judge pricing; V1 calibration freeze (shared judge + all task V1, `grading/freeze/v1_manifest.json`, tag `v1-calibration-freeze`); Judge Validation runner and plan · 0c8efcb
+- 2026-11-01 · Validation revealed under the frozen versions; Judge Validation halted on a provider error (hold, 7.06 USD settled conservatively); 10 Validation packets; Dev frozen re-grades; Docker-gated suites; Codex Review 2 package · (this commit)
 
 ## Next stage (not started)
 
