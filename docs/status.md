@@ -3671,6 +3671,19 @@ was committed before any queue packet was built.
 The critical and visual columns can overlap (an item is listed once with all its categories). Every shortfall is a
 pool exhausted by the critical and visual items.
 
+Labeling batch 1 was rebuilt under the queue as `~/turing-eval-runs/labeling/batch-1q/` (queue sha256 `5890ae468961…`).
+It reuses the three official passes of 16:28-16:29Z. Each packet has its queued items only, with the queue category;
+no grader location or verdict; judge excerpts for judge items; the deliverables and the task inputs.
+
+| Task | Queued items |
+|---|---|
+| `f841ddcf…` | 35 |
+| `47ef842d…` | 38 |
+| `1137e2bb…` | 59 |
+
+Each labels.csv equals the frozen queue. The earlier full-item folder `batch-1/` is kept unchanged and is superseded for
+the agreement sample.
+
 | Command (`run_isolated.sh`, `/usr/bin/time -p`) | Wall clock | Exit | Result |
 |---|---|---|---|
 | `unittest grading.tests.test_review_queue` / `test_item_partition` | 1.4 / 1.1 s | 0 | 6 / 2 |
