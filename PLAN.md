@@ -213,7 +213,7 @@ items wait for a recorded human adjudication; only model-caused rejections let t
 proceed, with the rejected files treated as not delivered), grades eligible runs
 including budget-limited ones, and writes `grades.jsonl` and `results.jsonl`. Its
 integration tests run on synthetic run directories built from fixtures through the real
-collector; no real model or judge has been called yet. Collection limits are cumulative per sample across the
+collector. Collection limits are cumulative per sample across the
 scorer and cleanup passes (file count and total bytes over the merged set; an idempotent
 re-collection is not counted twice) with a hard per-pass deadline enforced on in-flight
 reads; limit hits are recorded per file and leave collected originals untouched. Before a
@@ -240,6 +240,20 @@ the judge only in tests and is refused by the grading entry point outside an exp
 mode; the batch form of the judge call (all units of one task in one request) is accepted
 only when every unit id comes back exactly once, otherwise the whole batch is recorded as a
 parse error and its criteria stay ungraded.
+
+**Judge calibration on development outputs.**
+- Model and settings: `google/gemini-3.1-pro-preview`, pinned to thinking level high, temperature 1.0, at most 16,384
+  output tokens including thinking, and Inspect `max_retries` 3.
+- Recorded with every call: the prompt hash, the settings, the evidence-builder version and the usage.
+- Failed responses: a truncated, malformed or evidence-free response is recorded as an assessment failure and the
+  criterion stays ungraded. It is never a rubric fail.
+- Coverage: on the development outputs, the judge runs on every judge-scored criterion.
+- Stability: a fixed random subset of 20 judged criteria, drawn before any verdict was seen, is judged a second time
+  with an identical request. The agreement between the two runs measures stability, not correctness.
+- Prompt revisions: allowed only on development outputs, after comparison with saved human labels, with at most three
+  passes in all.
+- Freeze: the shared prompt and settings are frozen before any validation output is revealed.
+- Budget: judge calibration costs have their own ledger and ceiling.
 
 **Human review.** Every deliverable is opened (rendered where needed). All critical
 criteria and pre-defined visual requirements are checked by hand. Disagreements between
@@ -294,6 +308,12 @@ agreement reported per model with numerators and denominators, debug and validat
 sets kept separate, ungraded items, cost, grader status, pre-staged resources, the
 protocol difference from the GDPval paper, unknown authorship independence across
 tasks, and the rule that models with different coverage are not compared by P/E alone.
+Two further limits:
+- The judge and the development model come from the same provider family (Gemini Pro judging Gemini Flash
+  outputs). Agreement measured on development and validation samples may be inflated by shared style or shared blind
+  spots, and does not transfer directly to the candidate models.
+- 100% rubric coverage does not mean 100% definitive grading or 100% grading accuracy. Evaluated-item coverage,
+  definitive-verdict coverage and human agreement are reported separately.
 For the pilot task (`1137e2bb…`) every judge-only criterion was used to debug the judge
 assembly, so no held-out criterion exists on that task: judge agreement is reported from
 the other tasks, and the pilot task's judge verdicts are checked by human review only.
