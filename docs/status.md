@@ -3492,6 +3492,19 @@ units in 0.56 h (about 3.6 units/hour overall; one per class). The single-unit b
 canonical units is 27.8 min per unit (about 2.2 units/hour). The sample is small; the comparison is repeated as units
 finish.
 
+### Efficiency and progress check (2026-11-01 16:03Z; requested by the human; metadata only for validation)
+
+Active: validation `47ef842d…` (24.5 min, 91 model calls, 7.99 M tokens, about 1.28 USD estimated; 40 % of the token
+limit) and dev `c3525d4d…` (14 min, 46 calls, 2.52 M tokens, about 0.67 USD). Usable canonical samples: dev 4 of 10
+(`b5d2e6f1…` and `f841ddcf…` completed; `47ef842d…` and `1137e2bb…` token-limited, required file types delivered), validation
+2 of 10. Token structure of the three openable dev units: 97.7-99.0 % of tokens are re-sent prompt (95-97 % of it cache
+reads), with the prompt growing to 224-332 k tokens per call. Model time is 92-96 % of working time. There is one tool
+call per turn, so a unit runs 72-131 sequential turns. Recovered 429s: 0-3 per unit; no error loops. `1137e2bb…` wrote
+its last deliverable at tool call 93 of 130 (then mostly render checks); `47ef842d…` wrote its workbook at call 99 and
+its memo at 121-128. Every delivered workbook formula lacks a cached value (recalculation needed for grading). Assistant
+recommendation: CONTINUE without a strategy change (a second unit per project risks the 2 M input-token-per-minute
+Tier 1 quota; a lower dev token limit would cut deliverables and break dev / validation comparability).
+
 Labeling batch 1 is deferred. Its three ready canonical dev runs (`f841ddcf…`, `47ef842d…`, `1137e2bb…`) carry
 workbooks whose formulas have no cached values (491, 457 and 923 formulas). Their deterministic pass therefore needs the
 LibreOffice recalculation in Docker, which is not started while paid sandboxes are active.
