@@ -23,7 +23,7 @@ import re
 from .engine.decision import Decision, Result
 
 TASK = "a45bc83b-22f9-4def-8d89-9c5661b2b86f"
-VERSION = "a45bc83b-2026-11-01.2"
+VERSION = "a45bc83b-2026-11-01.3"  # .3 (Dev calibration 2026-11-01): judge excerpts list each docx table directly after the paragraph it follows (engine .6 body order); checks unchanged
 D_ITEMS = [1, 2, 3, 5]
 J_ITEMS = list(range(6, 26)) + list(range(31, 70)) + [71]  # scored by the judge
 V_ITEMS = [4, 26, 27, 28, 29, 30, 70, 72]  # scored by human visual review

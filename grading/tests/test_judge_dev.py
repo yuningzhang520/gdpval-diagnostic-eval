@@ -136,6 +136,33 @@ class GuardTierTests(unittest.TestCase):
             self.assertRegex(guard(3_000) or "", "Pass 1 ceiling")
 
 
+class Pass2GuardTests(unittest.TestCase):
+    """Pass 2: the plan's own ceiling is checked before every call, beside the Pass 1 and aggregate ceilings."""
+
+    def test_pass_ceiling_refuses_before_the_call(self):
+        from unittest import mock
+        from decimal import Decimal
+        from grading import judge_dev as JD
+        cfg = JD.cfg(); cfg["judge"]["ceilings_usd"] = {"pass_1": "20", "judge_dev_aggregate": "30"}
+        nxt = JD.worst_case_usd(7_000, 16_384, "long")
+        with mock.patch.object(JD, "cfg", return_value=cfg), mock.patch.dict(os.environ, {"GOOGLE_API_KEY": "x" + JD.DEV_KEY_SUFFIX}, clear=False):
+            for k in ("GEMINI_API_KEY", "VERTEX_API_KEY", "GOOGLE_GENAI_USE_VERTEXAI"):
+                os.environ.pop(k, None)
+            base = {"pass_1": Decimal(0), "aggregate": Decimal(0)}
+            tight = JD.make_guard({"judge": SimpleNamespace(calls=[])}, 16_384, base, ("judge-dev-pass-2", Decimal("0.90"), Decimal("1.0")))
+            self.assertRegex(tight(7_000) or "", "judge-dev-pass-2 ceiling")  # 0.90 spent + the worst case of the next call > 1.0
+            roomy = JD.make_guard({"judge": SimpleNamespace(calls=[])}, 16_384, base, ("judge-dev-pass-2", Decimal(0), nxt + Decimal("0.01")))
+            self.assertIsNone(roomy(7_000))
+
+    def test_pass2_refuses_an_uncommitted_plan(self):
+        from unittest import mock
+        from grading import judge_dev as JD
+        dirty = SimpleNamespace(stdout=" M grading/judge_dev/pass2_plan.json\n")
+        with mock.patch.object(JD.subprocess, "run", return_value=dirty):
+            with self.assertRaises(SystemExit):
+                JD.run_pass2()
+
+
 class AddendumTests(unittest.TestCase):
     """Runs that become eligible after the plan get one append-only addendum; the frozen repeat subset is untouched."""
 

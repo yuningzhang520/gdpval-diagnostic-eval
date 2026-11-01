@@ -1,0 +1,23 @@
+{
+ "pass": "judge-dev-pass-2",
+ "created_at": "2026-11-01T21:10:00+00:00",
+ "reason": "Calibration after the saved human Dev labels (v4 checkpoints 2026-11-01T20:36:44Z): on 2ea2e5b5 run PTD5aFkm the human passed items 57 and 59 and Judge Dev Pass 1 failed them because the evidence excerpt showed only title placeholders ('title None'); evidence builder 2ea2e5b5-2026-11-01.3 lists the slides' visible text shapes. The shared judge prompt, model and settings are unchanged (prompt_sha256 1de955e6...). One re-judge of the run's four judge items; no repeat.",
+ "runs": [
+  {
+   "run_uuid": "PTD5aFkmot7AeTS2N9g2GK",
+   "task_id": "2ea2e5b5-257f-42e6-a7dc-93763f28b19d",
+   "items": [
+    57,
+    58,
+    59,
+    60
+   ],
+   "evidence_builder": "grading.judge.build_units_2ea2e5b5@2ea2e5b5-2026-11-01.3"
+  }
+ ],
+ "ceiling_usd": 1.0,
+ "judge_dev_aggregate_ceiling_usd": 30,
+ "passes_max": 3,
+ "authorization": "docs/judge_dev_authorization.md (Judge Dev, approved 2026-11-01): passes 2-3 for documented calibration after comparison with saved human labels, within the 30 USD aggregate; the human's instruction of 2026-11-01 to fix confirmed implementation bugs after the label comparison",
+ "output": "dev/grading_v1/<run>/ (V0 dev/grading/<run>/ and its Pass 1 verdicts unchanged)"
+}

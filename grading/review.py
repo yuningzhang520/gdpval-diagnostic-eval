@@ -307,7 +307,13 @@ def main(argv=None) -> int:
         from .run_grading import authoritative_selection
         import json as _j
         cfg = _j.load(open(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "config.json"), encoding="utf-8"))
-        host_dir = os.path.join(os.path.dirname(os.path.realpath(args.out_dir)), "runs", args.run_uuid)
+        # the grading-run records name the run's host directory; the layout guesses (a per-run out dir or the phase's
+        # grading root, beside 'runs') are fallbacks
+        import glob as _glob
+        recs = [_j.load(open(f, encoding="utf-8")) for f in sorted(_glob.glob(os.path.join(args.out_dir, f"grading_run_{args.run_uuid}_*.json")))]
+        root = os.path.realpath(args.out_dir)
+        guesses = [os.path.join(os.path.dirname(os.path.dirname(root)), "runs", args.run_uuid), os.path.join(os.path.dirname(root), "runs", args.run_uuid)]
+        host_dir = next((r_.get("host_dir") for r_ in reversed(recs) if r_.get("host_dir")), None) or next((g for g in guesses if os.path.isdir(g)), guesses[-1])
         sel = authoritative_selection(cfg, host_dir, args.out_dir, args.run_uuid)
         if sel.get("blocked") or not sel.get("grades"):
             raise SystemExit(f"no authoritative pass to compare against: {sel.get('basis')}")

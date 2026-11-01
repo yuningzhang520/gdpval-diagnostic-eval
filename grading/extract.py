@@ -532,10 +532,22 @@ def extract_docx(path: str) -> dict:
     fmts = _numbering_formats(doc)
     paragraphs = [{"index": i, "style": p.style.name if p.style is not None else None, "text": p.text, "list": _list_info(p, fmts)} for i, p in enumerate(doc.paragraphs)]
     tables = [[[cell.text for cell in row.cells] for row in t.rows] for t in doc.tables]
+    # engine .6: body order. doc.paragraphs and doc.tables are the body's direct w:p and w:tbl children; each table
+    # records the index of the body paragraph it follows (None before the first paragraph).
+    from docx.oxml.ns import qn
+    after, pi = [], -1
+    for child in doc.element.body.iterchildren():
+        if child.tag == qn("w:p"):
+            pi += 1
+        elif child.tag == qn("w:tbl"):
+            after.append(pi if pi >= 0 else None)
+    if len(after) != len(tables):  # never guess an order
+        after = None
     text = "\n".join(p["text"] for p in paragraphs if p["text"].strip())
     for t in tables:
         text += "\n" + "\n".join(" | ".join(r) for r in t)
-    return {"path": path, "paragraphs": paragraphs, "tables": tables, "text": text, "headings": [p for p in paragraphs if p["style"] and p["style"].lower().startswith("heading")]}
+    return {"path": path, "paragraphs": paragraphs, "tables": tables, "table_after_paragraph": after, "text": text,
+            "headings": [p for p in paragraphs if p["style"] and p["style"].lower().startswith("heading")]}
 
 
 _CHART_KINDS = ("pie3DChart", "pieChart", "doughnutChart", "barChart", "bar3DChart", "lineChart", "line3DChart", "areaChart", "scatterChart", "radarChart", "ofPieChart")

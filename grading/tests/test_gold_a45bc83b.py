@@ -179,5 +179,27 @@ class ProductionGradeRunTests(unittest.TestCase):
             TABLE["production_grade_run"] = {"rows": len(rows), "sources": {k: len(v) for k, v in by_src.items()}, "judge_units": len(units)}
 
 
+class V1LayoutTests(unittest.TestCase):
+    """Engine .6 / builder .3 (Dev calibration 2026-11-01): docx tables keep their body position, and the judge excerpt
+    lists each table directly after the paragraph it follows, so a POC step's purpose box and commands stay under it."""
+
+    def test_tables_are_listed_under_the_paragraph_they_follow(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            doc = Document()
+            doc.add_table(rows=1, cols=1).cell(0, 0).text = "cover box"
+            doc.add_paragraph("Step 1.1: Create the VPC")
+            doc.add_table(rows=1, cols=1).cell(0, 0).text = "PURPOSE: isolate the tiers"
+            doc.add_table(rows=1, cols=1).cell(0, 0).text = "gcloud compute networks create vpc-main"
+            doc.add_paragraph("Step 1.2: Create the subnets")
+            path = os.path.join(tmp, "poc.docx"); doc.save(path)
+            d = X.extract_docx(path)
+            self.assertEqual(d["table_after_paragraph"], [None, 0, 0])
+            out = J._excerpt_named_docx({"docx": {"poc.docx": d}}, "poc.docx", "POC").splitlines()[1:]
+            self.assertEqual([l.split("] ")[0] + "]" for l in out], ["[poc.docx table 1 row 1]", "[poc.docx p0]", "[poc.docx table 2 row 1]", "[poc.docx table 3 row 1]", "[poc.docx p1]"])
+            legacy = {k: v for k, v in d.items() if k != "table_after_paragraph"}  # out of scope: an extraction without body order keeps the earlier layout
+            old = J._excerpt_named_docx({"docx": {"poc.docx": legacy}}, "poc.docx", "POC").splitlines()[1:]
+            self.assertEqual([l.split("] ")[0] + "]" for l in old], ["[poc.docx p0]", "[poc.docx p1]", "[poc.docx table 1 row 1]", "[poc.docx table 2 row 1]", "[poc.docx table 3 row 1]"])
+
+
 if __name__ == "__main__":
     unittest.main()

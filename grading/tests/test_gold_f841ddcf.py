@@ -140,5 +140,29 @@ class ProductionGradeRunTests(unittest.TestCase):
             TABLE["production_grade_run"] = {"rows": len(rows), "sources": {k: len(v) for k, v in by_src.items()}, "critical": {k: v["status"] for k, v in r["score"]["critical"].items()}}
 
 
+class V1LayoutTests(unittest.TestCase):
+    """Grader .2 (Dev calibration 2026-11-01): obvious header forms, the June-window cohort among several July PO
+    tables, and the completion sentence of item 56."""
+
+    def test_obvious_header_forms_map_to_one_field_and_retail_never_does(self):
+        for header, field in (("Ship Start Date", "start"), ("% of Order Shipped", "pct"), ("Short-Shipped ($ Cost)", "short"), ("Total Order Value ($ Cost)", "order_value"),
+                              ("Total Shipped Value ($ Cost)", "shipped_value"), ("Ship Start", "start"), ("Ship Date", "actual_ship"), ("Percent of Order Shipped", "pct")):
+            self.assertEqual(CK.field_of(header), field, header)
+        for header in ("Order Value $ Retail", "Short-Shipped ($ Retail)", "Total", "Status", "Notes"):  # out of scope: another measure, or no field
+            self.assertIsNone(CK.field_of(header), header)
+
+    def _sheet(self, rows):
+        return {"cells": {}, "rows": rows}
+
+    def test_several_july_po_tables_prefer_the_june_window_cohort(self):
+        sheet = {"cells": {"D2": {"literal": "07/15/2025"}, "D3": {"literal": "06/30/2025"}}, "rows": []}
+        late = {"kind": "slipped", "level": "po", "sheet": "S", "fields": {"cancel": 3}, "data_rows": [2]}
+        window = {"kind": "slipped", "level": "po", "sheet": "S", "fields": {"cancel": 3}, "data_rows": [3]}
+        self.assertIs(CK.pick([late, window], "slipped", {"S": sheet}), window)
+        self.assertIs(CK.pick([late, window], "slipped"), late)  # without the sheets the earlier behaviour is kept
+        no_cancel = {**window, "fields": {}}
+        self.assertIs(CK.pick([late, no_cancel], "slipped", {"S": sheet}), late)  # out of scope: no unique June-window table, no preference
+
+
 if __name__ == "__main__":
     unittest.main()

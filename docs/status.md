@@ -3995,6 +3995,87 @@ Packets:
 - Final run: Validation `a45bc83b…` run `3gTajbGy…`, completed, 1.175022 USD.
 - Ledger state: no open reservation, held unit or stop in either ledger. No Gemini or class stop.
 
+## Dev labels saved and compared; labelled-task calibration; rubric decisions (2026-11-01; decided by the human)
+
+Human labels (v4 Dev, 6 item labels, labeller Yuning Zhang), checkpointed with `grading.review save-labels` before any
+verdict was shown. Every label is pass; no `cannot_tell`.
+
+| Packet | Items | Checkpoint (2026-11-01, UTC) | SHA-256 of the saved copy |
+|---|---|---|---|
+| `2ea2e5b5_PTD5aFkm` | 57, 59 | 20:36:44 | `eebde117292f144241dd3a254d600ba913b296ede3ae86e4c2a8ed3e77469960` |
+| `a45bc83b_jQBk9JXX` | 6, 46 | 20:36:44 | `d702f48eeae05e7a9a958584ed2fb19d2c2b722c89265a901ca4c053fb113bea` |
+| `f841ddcf_XqKh2bn4` | 42, 44 | 20:36:44 | `f10c292f52b97fd226083468dd1e89809f7e898887bdc7ac410579eb17d91c80` |
+
+- Paths: `~/turing-eval-runs/dev/grading/<run>/labels/<run>/checkpoint_20261101T203644Z.json`, with the copy
+  `labels_20261101T203644Z.csv` and the append-only `labels/checkpoints.jsonl`. The source CSVs in
+  `labeling/dev-v4/` are unchanged.
+- The human's own earlier checkpoint of the `2ea2e5b5…` CSV (19:59:09Z, `00c58b86…`) is kept. It differs only in its
+  first line ("labels" against "labels,,,,,,,,", a spreadsheet re-save); labels, evidence and timestamps are identical.
+- Item 59's evidence text repeats item 57's ("slide 2 ... Activity Analysis"). The label is kept as saved; reported to
+  the human.
+
+Comparison (`grading.review compare --queue grading/review_queue/queue_v4.json --phase dev`). All six are judge-only
+items, so the first-pass verdict is Judge Dev Pass 1 (the V0 judged pass); no judge verdict changed before the
+comparison.
+
+| Run | Agreement | Disagreements |
+|---|---|---|
+| `a45bc83b…` | 2/2 | none |
+| `f841ddcf…` | 2/2 | none |
+| `2ea2e5b5…` | 0/2 | 57 and 59: human pass, judge fail |
+| Total | 4/6 | 2 |
+
+- Coverage: 6 of 6 decided on both sides.
+- Cause of both disagreements: the `2ea2e5b5…` evidence excerpt showed title placeholders only ("title None"). The
+  deck's headings are text boxes on Blank layouts. This is an evidence-builder defect, not a shared-prompt finding.
+- n = 6 is a calibration check, not an accuracy estimate.
+- Comparison files: `labels/<run>/comparison_20261101T2037*.json`.
+- `grading.review compare` now reads the run's host directory from its grading-run records (the earlier path guess
+  failed for per-run out dirs). Authoritative selection checked on `XqKh2bn4…`.
+
+Sealed QA leads opened after the checkpoints: `2ea2e5b5…` 40, `f841ddcf…` 20, `a45bc83b…` 9.
+
+Fixes (rules in preregistration 2.2, 2.8, 2.10; for Codex Review 2):
+- `2ea2e5b5…` grader and evidence builder .3:
+  - text-box headings;
+  - picture charts are `cannot_assess` (visual review);
+  - group-row levels;
+  - the % of total column;
+  - grand totals naming no level.
+  - Offline effect on the Dev deck: 26 items change.
+  - Item 27 keeps the literal "Margin Impact" label; it fails, and C3 fails on this Dev output.
+- `f841ddcf…` .2:
+  - obvious header forms (all nine false-fail leads pass);
+  - item 56 reads "fulfillment rate";
+  - several July PO tables prefer the June-window cohort.
+- Engine `engine-2026-11-01.6`: docx tables record the body paragraph they follow.
+- `a45bc83b…` builder .3: tables are listed in document order. Checks unchanged.
+
+Rubric decisions applied (preregistration R-2.7-11, R-2.7-21, R-2.5-27; general rules, identical for every output):
+- `7d7fc9a7…` .7:
+  - item 11: a one-cent difference passes only when it is demonstrably caused by rounding order (two paths on the
+    deliverable's own cells);
+  - items 21, 39, 50: additions are never inferred; confirmed absence fails;
+  - items 27, 47: a bottom-block additions row is read.
+  - Dev effect: 11 and 27, 47 pass; 21, 39, 50 fail.
+- `c3525d4d…` .5: B2 candidates for items 26-30 and 49.
+  - Dev effect: 27 and 30 `cannot_assess`; 49 fails (E50 24,672.80).
+
+Tests (logs `logs/v1-labelled-20261101/`):
+- Full offline grading suite: 421 tests, 5 skipped, 117.34 s, rc 0.
+- Harness unit modules via `run_isolated.sh`: 14 modules, 214 tests, all OK, 51 s. A plain `unittest discover` of
+  `harness/tests` fails on macOS `/var` symlinks (environment, as documented in the runner).
+- New regressions: `V1LayoutTests` (`2ea2e5b5…`, `f841ddcf…`, `a45bc83b…`), `V1DecisionTests` (`7d7fc9a7…`,
+  `c3525d4d…`), `Pass2GuardTests`.
+- Gold suites green. The `2ea2e5b5…` excerpt assertion was updated to the builder .3 wording, with a pictures
+  assertion added.
+
+Judge Dev Pass 2 (targeted; plan `grading/judge_dev/pass2_plan.json`):
+- One re-judge of `2ea2e5b5…` `PTD5aFkm…` items 57-60 with builder .3.
+- Shared prompt, model and settings unchanged.
+- Ceiling 1 USD within the Judge Dev aggregate; output to `dev/grading_v1/`.
+- Runs after this commit.
+
 ## Known issues and findings (material check)
 
 - `rubric_json.form_content`: 8,036 items hold `null`, 2,417 items lack the key, zero
@@ -4048,9 +4129,9 @@ Packets:
 ## In flight
 
 - Gemini generation complete (Dev and Validation 10 of 10); Validation outputs stay sealed.
-- v4 Dev packets (`labeling/dev-v4/`, 6 labels) await the human.
-- Grader V1 calibration from sealed QA leads on the Dev tasks without a human label: `7d7fc9a7…`, `c3525d4d…` and
-  `7b08cd4d…`, `47ef842d…` and `1137e2bb…` are committed.
+- Dev labels saved and compared (4/6); Dev calibration of all ten tasks done.
+- Next: Judge Dev Pass 2 (`2ea2e5b5…`, 4 calls), then the shared judge freeze and the per-task V1 freeze, then the
+  Validation reveal and Judge Validation (authorized, 15 USD ceiling).
 
 ## Decisions taken (date · what · commit)
 
@@ -4387,7 +4468,8 @@ Packets:
 - 2026-11-01 · final review workload v4 (36 item-level blind labels; supersedes v1-v3), queue_v4 frozen (seed 20261101) · e995ea0
 - 2026-11-01 · engine .5 (xlsx media parts) and `47ef842d…` grader .2 (OOS header, picture chart) · 29fdaaa
 - 2026-11-01 · `1137e2bb…` grader .3 (summary measures, workbook pivots, variance headers) · 8e6ad63
-- 2026-11-01 · `c357f0e2…` grader .3 (edge case is not the Edge browser) · (this commit)
+- 2026-11-01 · `c357f0e2…` grader .3 (edge case is not the Edge browser) · 146ce2a
+- 2026-11-01 · Dev labels checkpointed and compared (4/6); labelled-task calibration (`2ea2e5b5…` .3, `f841ddcf…` .2, `a45bc83b…` .3, engine .6); rubric decisions R-2.7-11, R-2.7-21 (`7d7fc9a7…` .7), R-2.5-27 (`c3525d4d…` .5); Judge Dev Pass 2 plan · (this commit)
 
 ## Next stage (not started)
 

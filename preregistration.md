@@ -672,6 +672,21 @@ Three matters are recorded and graded separately; none offsets another (APPROVED
   when no PO number appears; a required column that is absent fails the item that tests it, 32 included; a formula
   without a cached value is unreadable (cannot_assess), never blank or wrong. Expert workbook: 5, 6, 8-10, 12, 17-20,
   32, 37 and 55 fail; 22-24 cannot_assess; C1 and C4 pass, C2 and C5 fail, C3 not confirmed.
+- Dev calibration .2 (2026-11-01). Before freeze; V0 and the Judge Dev Pass 1 verdicts kept. This run carries two v4 human
+  labels (judge-only items 42 and 44; both agree with the judge). The sealed AI QA leads were opened after the labels
+  were checkpointed and checked against the deliverable.
+  - Defect: a header mapped to a field only when its key equalled a listed label exactly, so "Ship Start Date",
+    "% of Order Shipped", "Short-Shipped ($ Cost)" and "Total Order Value ($ Cost)" mapped to nothing (false fails on
+    9, 14, 15, 18, 27, 28, 30, 31, 34; the account summary of 47-54 went undetected).
+  - Operational rule adopted (the existing "obvious forms" rule made explicit): '%' = 'percent'; a leading "Total"; a
+    trailing "Date" on a date field; a trailing "Cost" on the short-shipped amount; a header naming "retail" never maps;
+    two candidate fields map to none.
+  - Item 56: "fulfillment rate" and "fill rate" state completion; when the sentence holds several percentages, one
+    within 96 ± 0.5 passes, a single other value fails, several other values leave it `cannot_assess`.
+  - Several PO-level July tables: the slipped table is the one whose cancel dates are all in June when exactly one is.
+  - Item 57 (a cents figure for "$5,211") is decided by the existing general rule (narrative figures at the precision
+    shown); unchanged.
+  - Synthetic regressions: `V1LayoutTests`. The gold-first suite is unchanged and passes.
 
 ### 2.3 `47ef842d-8eac-4b90-bda8-dd934c228c96` — Weeks of supply (Order Clerks)
 Inputs: `Reference Inventory.xlsx` (sheet DATA, 6,612 rows, one snapshot: 2025 week 28,
@@ -1125,6 +1140,16 @@ applies.
   - Synthetic regressions: `V1LayoutTests`. The gold-first suite is unchanged and passes.
   - Open question for the human (section 4): when two revised program totals disagree, items 27 and 49 currently use
     the first one.
+- R-2.5-27 (DECIDED by the human 2026-11-01; grader c3525d4d-2026-11-01.5; applied identically to every output; the
+  approved B2 duplicate-candidate semantics). Old rule: items 26-30 and 49 read the first labelled total program cost
+  of each scenario. Evidence: a Dev output labels three revised totals (D14 and F28 24,670.80; E50 24,672.80, a 2.00
+  difference). New rule: every labelled total program cost is a candidate, combined with every per-unit cost and unit
+  count candidate where the item uses them; an item fails only when every candidate reading fails; when some fail and
+  others do not and no independent evidence decides which total is the deliverable's, it is `cannot_assess`, with each
+  candidate's cells and outcome kept; never resolved by position. Item 49 requires each total program cost to equal
+  per-unit x units, so a total that fails under every reading of its inputs is a confirmed consistency violation and
+  fails 49 even when another total is consistent. Item 30 evaluates its located change line against every
+  original/revised total pair. Effect on the Dev output: 27 and 30 `cannot_assess`; 49 fails (E50).
 
 ### 2.6 `7b08cd4d-df60-41ae-9102-8aaa49306ba2` — Tour profit and loss (Accountants and Auditors)
 Inputs: `Fall Music Tour Ref File.xlsx` (three sheets: tour manager income and costs,
@@ -1338,6 +1363,26 @@ also 929,354.31 (A-10).
   - Item 53: percentage cells and account numbers are not monetary cells.
   - Synthetic regressions: `V1LayoutTests`. The gold-first suite is unchanged and passes.
   - Two interpretation questions for the human (section 4); the grader keeps its current rule meanwhile.
+- R-2.7-11 (DECIDED by the human 2026-11-01; grader 7d7fc9a7-2026-11-01.7; applied identically to every output). Item 11
+  rounding. Old rule: any cent difference between the summary YTD and the sum of the schedule's monthly totals fails.
+  Evidence: a Dev output's summary shows 198,721.52 (the exact YTD rounded once) while its monthly totals, each rounded
+  to cents, add to 198,721.53. New rule: a difference of at most $0.01 passes only when it is demonstrably caused by
+  the order of legitimate rounding (half-up or half-even), established on the deliverable's own cells along one of two
+  paths: (A) every monthly total is the cent rounding of the sum of its line cells and the summary is the cent
+  rounding of the unrounded line sum; (B) every nonzero line cell is the cent rounding of its own amount / term, the
+  monthly totals add those cells exactly and the summary is the cent rounding of the exact amounts. An unreadable cell,
+  an unexplained total, rows with figures but no vendor, or any other difference is not excused; there is no general
+  one-cent tolerance. The evidence names the path and both sums.
+- R-2.7-21 (DECIDED by the human 2026-11-01; grader 7d7fc9a7-2026-11-01.7). Items 21, 27, 39, 47, 50: additions are
+  never inferred from invoice amounts, start months or source data. Old rule: a missing additions column left these
+  items `cannot_assess`. New rule, consistent with the rubric 30 decision: when the rubric requires the monthly
+  additions figure and the deliverable does not present it, the item fails. "Not presented" is established when every
+  column under each month header is classified and none as additions (`additions_absent`); an unclassified or
+  ambiguous month column may hold them and leaves the item `cannot_assess` (present but not reliably readable). Item
+  50 fails only where a line's balance rises in a month without a documented addition. Items 27 and 47 read a bottom
+  summary's additions from an additions row in a separate monthly block below the lines (for example "Add: New Invoices
+  Added (Prepaid Additions)") as well as from the totals row; a row below the lines that names additions but cannot be
+  read leaves them `cannot_assess`. Effect on the Dev output: 11 pass (path A); 21, 39 and 50 fail; 27 and 47 pass.
 - Gold-first verification (2026-11-01; grader 7d7fc9a7-2026-11-01.1; records in
   `grading/validation/7d7fc9a7-…/`). First pass of the new grader on the expert workbook:
   39 pass, 2 fail, 0 `cannot_assess`; C1 pass, C3 pass, C2 fail, C4 fail. Findings:
@@ -1481,6 +1526,28 @@ with the rubric's own tolerance; hours compared at two decimals (half-up).
   keeps its separate requirement to display hours; items 34, 55 and 56 are not failed for
   the same missing display when the independently verifiable hours agree. Rubric
   requirements and the C3 composition are unchanged.
+- Dev calibration .3 (2026-11-01). Before freeze; V0 and the Judge Dev Pass 1 verdicts kept. This run carries two v4 human
+  labels (judge-only items 57 and 59): both pass by the human, both fail by the judge. The judge's evidence excerpt
+  listed only title placeholders ("title None") and the deck's headings are text boxes on Blank layouts, so the judge
+  never saw them: an evidence-builder defect, not a judge-prompt finding. The sealed AI QA leads were opened after the
+  labels were checkpointed.
+  - Evidence builder .3: each slide lists its title placeholder (or none), its text shapes top to bottom with their
+    vertical position, native charts and pictures.
+  - Deterministic rules adopted:
+    - a slide without a title placeholder takes its heading from its topmost text shape in the top quarter (the first
+      line locates the section; such a heading locates only a slide with a table, chart or picture); an empty title
+      placeholder is no title;
+    - a pie chart delivered only as a picture is not machine-readable: the chart-dependent items are `cannot_assess`
+      (visual review), never "no pie chart" (the `47ef842d…` .2 precedent; "evidence present but not reliably
+      readable"); a native chart that is not a pie still fails;
+    - segment levels shown as group rows ("HIGH STRATEGIC LEVEL (...)") label the category rows below them;
+    - with several % columns the one naming the total is the % of total hours; none or several is ambiguous;
+    - a total row naming no segment level is the grand total (A-9).
+  - Item 27 keeps the literal label: a column or row labelled "Margin Impact" (header or group row). The Dev deck's
+    group rows read "COST IMPACT ..." and "INVESTMENT IMPACT ..." with no "Margin Impact" label, so 27 fails and C3
+    fails on this Dev output.
+  - Synthetic regressions: `V1LayoutTests`. The gold-first suite passes (one excerpt assertion updated to the builder
+    .3 wording).
 
 ### 2.9 `c357f0e2-963d-4eb7-a6fa-3078fe55b3ba` — UAT test plan (CIS Managers)
 Inputs: `UAT Plan - Template.xlsx` (one sheet; row 1 holds the title "UAT Test Plan",
@@ -1642,6 +1709,14 @@ Requirement layers (APPROVED 2026-10-30):
   review is authoritative and the criterion is scored once, as a V item. The judge also assesses item 70 (summary text
   and the diagram's text labels as evidence) whenever a separately authorized judge batch runs; that verdict is used
   only for judge-human agreement, never for scoring. Grader a45bc83b-2026-11-01.2.
+- Dev calibration .3 (2026-11-01). Before freeze; V0 and the Judge Dev Pass 1 verdicts kept. This run carries two v4 human
+  labels (judge-only items 6 and 46; both agree with the judge). The sealed AI QA leads were opened after the labels were
+  checkpointed. One engineering lead was confirmed: the excerpt listed every POC table after all paragraphs, detaching
+  each step's purpose box and command block from its step heading. Engine .6 records the body paragraph each docx table
+  follows, and evidence builder .3 lists each table directly after it (no verdict of the Dev pass was found to rest on
+  the old layout; the Dev judge verdicts were produced with the old layout and are not re-run). The other eight leads
+  are low-confidence judge-interpretation leads (items 5, 16, 31, 35, 48, 49, 55, 64, 69), recorded, not acted on: AI
+  QA is not ground truth and the human labels of this run agree with the judge. Checks unchanged.
 - DECISION (APPROVED 2026-10-30): the pre-staged resources enter the sandbox as the HTML
   snapshot plus the extracted text of each page plus the icon-pack zips (not pre-extracted),
   identical for both models: 2 task inputs + 11 HTML + 11 text + 3 zips = 27 files under
@@ -1668,7 +1743,9 @@ Requirement layers (APPROVED 2026-10-30):
   - `c357f0e2…` item 4 is literal (80-100).
   - The fixed review queue (1.19) and the sensitivity reporting (1.18) are adopted.
 
-- 2026-11-01, OPEN (from the `7d7fc9a7…` Dev calibration, grader .6), two questions:
+- 2026-11-01, DECIDED by the human the same day (R-2.7-11, R-2.7-21 in section 2.7; R-2.5-27 in section 2.5): the three
+  questions below. Kept as asked:
+- 2026-11-01, asked (from the `7d7fc9a7…` Dev calibration, grader .6), two questions:
   - Item 11 rounding. The summary YTD for 1251 shows 198,721.52, the cent value of the exact YTD and the reference.
     The schedule's monthly totals round each line's monthly charge and add up to 198,721.53. Rubric 11 asks for "the
     sum of Jan–Apr amortization totals from the respective detailed tabs". Should the 0.01 difference fail (current
@@ -1678,7 +1755,7 @@ Requirement layers (APPROVED 2026-10-30):
     checked without inferring additions (amount in the start month, 0 otherwise). They are `cannot_assess` meanwhile.
     Should the grader infer them?
 
-- 2026-11-01, OPEN (from the `c3525d4d…` Dev calibration, grader .4): a deliverable shows two revised program totals.
+- 2026-11-01, asked (from the `c3525d4d…` Dev calibration, grader .4): a deliverable shows two revised program totals.
   The dashboard D14 (24,670.80 = 1,320 × 18.69) agrees with the per-unit cost and units. The Section IV
   reconciliation E50 shows 24,672.80 (= E44 + E48 + E49): a 2.00 internal inconsistency. Items 27 (revised total =
   per-unit × units) and 49 (internal consistency) currently test the first candidate only, and pass. Should every

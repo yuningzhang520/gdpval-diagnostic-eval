@@ -141,16 +141,30 @@ def build_units_7d7fc9a7(task_prompt: str, rubric: list[dict], extraction: dict,
 def build_units_2ea2e5b5(task_prompt: str, rubric: list[dict], extraction: dict, reference: dict, checks: dict, run_uuid: str) -> list[dict]:
     """Judge units for the work-time study deck (preregistration 2.8: J items 57-60, slide titles by position, semantic
     equivalents). Source material: the prompt's required slide list; the deliverable excerpt lists every slide of the
-    deck in order with its title, layout and first table header (no grader verdict)."""
+    deck in order with its layout, its title placeholder (or none), its visible text shapes top to bottom with their
+    vertical position, its first table header, native charts and pictures (no grader verdict). Builder .3 (Dev
+    calibration 2026-11-01): earlier builders showed the title placeholder only, so a heading held in a text box on a
+    Blank layout was invisible to the judge."""
     task_id = checks["task"]
     decks = {k: v for k, v in (extraction.get("pptx") or {}).items() if "slides" in v}
     if decks:
         name = sorted(decks)[0]
-        lines = [f"Presentation {name}: {decks[name]['slide_count']} slide(s)."]
+        height = int(decks[name].get("slide_height") or 6858000)
+        lines = [f"Presentation {name}: {decks[name]['slide_count']} slide(s). A slide whose layout has no title placeholder shows its heading, if any, "
+                 "in a text shape; each slide's text shapes are listed top to bottom with the distance of their top edge from the top of the slide."]
         for sl in decks[name]["slides"]:
             tables = [sh["table"] for sh in sl["shapes"] if "table" in sh]
             charts = [sh["chart"].get("kinds") for sh in sl["shapes"] if "chart" in sh]
-            lines.append(f"Slide {sl['index']}: title {sl.get('title')!r}; layout {sl.get('layout')!r}; first table header {tables[0][0] if tables else None}; charts {charts}")
+            pictures = sum(1 for sh in sl["shapes"] if sh.get("picture"))
+            placeholder = "none" if sl.get("title") is None else repr(sl.get("title"))
+            lines.append(f"Slide {sl['index']}: layout {sl.get('layout')!r}; title placeholder {placeholder}; first table header {tables[0][0] if tables else None}; "
+                         f"native charts {charts}; pictures {pictures}")
+            texts = sorted((sh for sh in sl["shapes"] if (sh.get("text") or "").strip() and "table" not in sh and not str(sh.get("placeholder") or "").startswith(("TITLE", "CENTER_TITLE"))),
+                           key=lambda sh: (int(sh.get("top") or 0), int(sh.get("left") or 0)))
+            for sh in texts[:4]:
+                paras = [p.strip() for p in (sh.get("paragraphs") or [sh["text"]]) if p.strip()]
+                body = " / ".join(paras[:2]) + (" / ..." if len(paras) > 2 else "")
+                lines.append(f"  text shape {sh.get('name')!r}, top at {100 * int(sh.get('top') or 0) / height:.0f}% of the slide height: {body[:240]}")
         excerpt = "\n".join(lines)
     else:
         excerpt = "No readable .pptx presentation was located in the deliverable."
@@ -185,14 +199,28 @@ def _excerpt_named_docx(extraction: dict, name: str | None, label: str) -> str:
     d = (extraction.get("docx") or {}).get(name) or {}
     if "paragraphs" not in d:
         return f"The {label} document {name} could not be read."
-    lines = [f"{label} document {name} (paragraph index; '•' bullet, '#' numbered list item, indentation by list level):"]
+    tables = d.get("tables") or []
+    after = d.get("table_after_paragraph")
+    in_order = after is not None and len(after) == len(tables)
+    lines = [f"{label} document {name} (paragraph index; '•' bullet, '#' numbered list item, indentation by list level"
+             + ("; tables in document order, each directly after the paragraph it follows):" if in_order else "; tables listed after the paragraphs):")]
+    table_lines = lambda ti, t: [f"[{name} table {ti + 1} row {ri + 1}] " + " | ".join(r) for ri, r in enumerate(t)]
+    by_para: dict = {}
+    if in_order:  # a45bc83b .3 (Dev calibration 2026-11-01): a step's purpose box and commands stay under its heading
+        for ti, a in enumerate(after):
+            by_para.setdefault(a, []).append(ti)
+        for ti in by_para.get(None, []):
+            lines += table_lines(ti, tables[ti])
     for p in d["paragraphs"]:
         if p["text"].strip():
             li = p.get("list") or {}
             mark = "• " if li.get("bullet") else "# " if li.get("numbered") else ""
             lines.append(f"[{name} p{p['index']}] " + "  " * int(li.get("level") or 0) + mark + p["text"].strip())
-    for ti, t in enumerate(d.get("tables") or []):
-        lines += [f"[{name} table {ti + 1} row {ri + 1}] " + " | ".join(r) for ri, r in enumerate(t)]
+        for ti in by_para.get(p["index"], []):
+            lines += table_lines(ti, tables[ti])
+    if not in_order:
+        for ti, t in enumerate(tables):
+            lines += table_lines(ti, t)
     return "\n".join(lines)
 
 

@@ -127,6 +127,63 @@ class RepresentedHoursTests(unittest.TestCase):
         self.assertEqual(CK.dec("44,258.685"), Decimal("44258.685")); self.assertIsNone(CK.dec("44258.685 h"))
 
 
+class V1LayoutTests(unittest.TestCase):
+    """Grader .3 (Dev calibration 2026-11-01): text-box headings on slides without a title placeholder, picture charts,
+    group-row tables, the % of total column among several % columns, and grand totals naming no segment level."""
+    H = 6858000
+
+    def tb(self, name, top, paragraphs, **kw):
+        return {"name": name, "top": top, "left": 548640, "placeholder": kw.get("placeholder"), "text": "\n".join(paragraphs), "paragraphs": list(paragraphs)}
+
+    def slide(self, index, shapes, title=None, layout="Blank"):
+        return {"index": index, "title": title, "layout": layout, "shapes": shapes}
+
+    def pic(self):
+        return {"name": "Picture 3", "top": 1234440, "picture": True}
+
+    def table_shape(self, rows):
+        return {"name": "Table 5", "top": 1234440, "table": rows}
+
+    def test_heading_from_the_topmost_text_shape_only_without_a_title_placeholder(self):
+        s = self.slide(5, [self.tb("Low note", 5000000, ["TIME note at the bottom"]), self.tb("TextBox 2", 320040, ["STRATEGIC LEVEL ANALYSIS | TOIL VS. GROWTH", "Only 25.5% of Engineering Time Drives Growth"]), self.pic()])
+        h = CK.slide_heading(s, self.H)
+        self.assertEqual(h["first_line"], "STRATEGIC LEVEL ANALYSIS | TOIL VS. GROWTH")
+        self.assertIn("no title placeholder", h["basis"])
+        self.assertEqual(CK.locate_sections([s], self.H)["strategic"]["slides"], [5])  # 'Time' in the second line does not locate the time section
+        low_only = self.slide(6, [self.tb("Low", 5000000, ["Margin impact footnote"]), self.pic()])
+        self.assertIsNone(CK.slide_heading(low_only, self.H)["text"])  # out of scope: a text shape below the top quarter is not a heading
+        empty_placeholder = self.slide(3, [self.tb("TextBox 2", 320040, ["MARGIN IMPACT ANALYSIS"]), self.pic()], title="")
+        self.assertEqual(CK.slide_heading(empty_placeholder, self.H)["text"], "")  # out of scope: an empty title placeholder is no title; no fallback
+        title_only = self.slide(1, [self.tb("TextBox 3", 530352, ["ENTERPRISE IT | WORK-TIME STUDY", "Activity, Urgency & Strategic Alignment"])])
+        self.assertEqual(CK.locate_sections([title_only], self.H), {k: {"slides": [], "basis": None} for k in ("activity", "margin", "time", "strategic")})  # a text heading locates content slides only
+
+    def test_group_rows_label_categories_and_the_total_percent_column_is_chosen(self):
+        rows = [["Strategic Tier / Activity Category", "Hours", "% Category", "% Total IT"],
+                ["HIGH STRATEGIC LEVEL (Growth)", "11,298.5", "100.0%", "25.5%"], ["  Automation", "3,717.3", "32.9%", "8.4%"],
+                ["MEDIUM STRATEGIC LEVEL (Support)", "21,332.3", "100.0%", "48.2%"], ["  Training", "1,697.9", "8.0%", "3.8%"],
+                ["TOTAL IT DEPARTMENT ACTIVITIES", "44,258.7", "—", "100.0%"]]
+        t = CK.parse_table(rows, CK.SECTION_HEADER["strategic"], tuple(CK.SEGMENTS["strategic"]))
+        self.assertEqual([(x["category"], x["segment"]) for x in t["rows"]], [("Automation", "High"), ("Training", "Medium")])
+        self.assertEqual([g["level"] for g in t["groups"]], ["High", "Medium"])
+        self.assertEqual((t["percent_header"], t["percent_ambiguous"], t["others"]), ("% Total IT", False, []))
+        self.assertTrue(CK.is_grand_total(t["totals"][0]))
+        self.assertFalse(CK.is_grand_total({"label": "Cost Total", "segment_cell": ""}))  # out of scope: a subtotal naming a level
+        two = CK.parse_table([["Activity", "% Category", "% Share"], ["Training", "8.0%", "3.8%"]], None)
+        self.assertTrue(two["percent_ambiguous"])  # several % columns, none naming the total
+
+    def test_picture_chart_is_not_assessable_but_a_native_non_pie_chart_still_fails(self):
+        rubric = RUBRIC
+        def deck(chart_shape):
+            act = [["Activity Category", "Hours", "% Total IT"]] + [[c, "1", f"{p:.2f}%"] for c, p in REFERENCE["pct"].items()] + [["Total", "12", "100.00%"]]
+            shapes = [self.tb("TextBox 2", 320040, ["ACTIVITY ANALYSIS | 12 CATEGORIES"]), self.table_shape(act), chart_shape]
+            return {"inventory": [{"path": "d.pptx", "kind": "pptx"}], "pptx": {"d.pptx": {"slide_count": 1, "slide_height": self.H, "slides": [self.slide(2, shapes)]}}}
+        pic = CK.run_checks(deck(self.pic()), REFERENCE, rubric)["items"]
+        self.assertEqual((pic[4]["verdict"], pic[25]["verdict"], pic[26]["verdict"], pic[9]["verdict"], pic[12]["verdict"]), ("cannot_assess", "cannot_assess", "cannot_assess", "cannot_assess", "pass"))
+        bar = {"name": "Chart 3", "top": 1234440, "chart": {"kinds": ["barChart"], "series": []}}
+        nat = CK.run_checks(deck(bar), REFERENCE, rubric)["items"]
+        self.assertEqual((nat[4]["verdict"], nat[25]["verdict"]), ("fail", "fail"))  # out of scope: a native chart that is not a pie is a confirmed violation
+
+
 class GoldVariantTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -201,7 +258,8 @@ class ProductionGradeRunTests(unittest.TestCase):
             units = __import__("grading.judge", fromlist=["build_units_2ea2e5b5"]).build_units_2ea2e5b5(PROMPT, RUBRIC, X.extract_all(os.path.join(host, "final"), os.path.join(base, "w"), recalc=False),
                                                                                                         REFERENCE, {"task": GV.TASK}, b["uuid"])
             self.assertEqual([u["item"] for u in units], [57, 58, 59, 60])
-            self.assertIn("Slide 2: title 'Activity Analysis'", units[0]["deliverable_excerpt"])
+            self.assertIn("Slide 2: layout 'Title and Content'; title placeholder 'Activity Analysis'", units[0]["deliverable_excerpt"])  # builder .3 wording
+            self.assertIn("native charts [['pie3DChart']]; pictures 0", units[0]["deliverable_excerpt"])
             TABLE["production_grade_run"] = {"rows": len(rows), "sources": {k: len(v) for k, v in by_src.items()}, "score": {k: s_[k] for k in ("W", "E", "P")}, "grader_version": r["grader_version"]}
 
 

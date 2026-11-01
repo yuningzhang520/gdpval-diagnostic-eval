@@ -21,7 +21,8 @@ confirmed violation FAILs even when another input is unreliable; otherwise any u
 gives cannot_assess; only a complete, reliable comparison PASSes. Account identity on the summary is decided from
 labels and headings before any value is compared (B3); the expected answer is never used to find a cell."""
 import re
-from decimal import Decimal
+from decimal import ROUND_HALF_EVEN, ROUND_HALF_UP, Decimal
+from fractions import Fraction
 
 from .engine import headers as H
 from .engine.cells import UNRELIABLE_KINDS, cell_coord, norm_text, numeric_cell, read_cell
@@ -31,7 +32,7 @@ from .engine.sheets import first_text, month_of, row_cells, sheet_names, text_in
 from .engine.workbook import workbook_gate
 
 TASK = "7d7fc9a7-21a7-4b83-906f-416dea5ad04f"
-VERSION = "7d7fc9a7-2026-11-01.6"  # .1 first gold-first version; .2 Codex Review 1 B1-B4 (item contract, evidence states, label-first summary identity, item 53 without allowance); .6 Dev calibration (2026-11-01): one-row header labels, 'term (mos)', a separate monthly table below the lines, half-up cent totals, column-aware summary (captions, month columns, beginning rows, account numbers, percentages, 'Less:' magnitude, 'amortization expense')
+VERSION = "7d7fc9a7-2026-11-01.7"  # .7 (human decisions 2026-11-01): item 11 one-cent difference passes only when demonstrably caused by rounding order; per-line additions never inferred (confirmed absent fails 21/39/50; bottom-block additions row read for 27/47); .1 first gold-first version; .2 Codex Review 1 B1-B4 (item contract, evidence states, label-first summary identity, item 53 without allowance); .6 Dev calibration (2026-11-01): one-row header labels, 'term (mos)', a separate monthly table below the lines, half-up cent totals, column-aware summary (captions, month columns, beginning rows, account numbers, percentages, 'Less:' magnitude, 'amortization expense')
 MONTHS = {1: "Jan", 2: "Feb", 3: "Mar", 4: "Apr"}
 D_ITEMS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 14, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 33, 34, 36, 37, 38, 39, 40, 41, 42, 43, 44, 47, 48, 49, 50, 53]
 J_ITEMS = [12, 15, 16, 17, 18, 31, 32, 35, 45, 46, 51, 52, 54, 55]
@@ -73,6 +74,7 @@ SUB_KINDS = (("end", ("end bal", "ending", "end balance", "balance", "remaining"
              ("add", ("add", "debit", "purchase", "invoice", "increase", "new")))
 BOTTOM = {"totals": r"^(month(ly)?\s+)?totals?\b|^totals?\b|^sum\b|^grand total", "ending": r"^(total\s+)?(ending|end|closing)\s+bal", "variance": r"^variance|^difference|^diff\b|^var\b",
           "gl": r"^g\.?\s?l\.?\b|^general ledger|^gl bal|^per gl|^balance per gl|^gl$", "adjust": r"adjust|rounding"}
+ADDS_ROW = r"^(add|additions?|plus)\b|\badditions\b|^new (invoices?|prepaid|polic)"  # .7: a bottom-block row presenting the monthly additions
 NOT_A_LINE = r"^(month(ly)?\s+)?totals?\b|^totals?\b|^sum\b|^grand total|^(total\s+)?(ending|end|closing)\s+bal|^variance|^difference|^diff\b|^var\b|^g\.?\s?l\.?\b|^general ledger|^gl bal|^per gl|^balance per gl|^gl$|\btotal$|^subtotal|^note|^legend|^prepared|^source"
 CURRENCY = re.compile(r"[$€£¥]|\[\$")
 
@@ -268,7 +270,10 @@ def parse_schedule(sheet: dict, name: str) -> dict:
             continue
         if block is not None:  # rows of the separate monthly table are bottom rows read under its own month columns, never lines (.6)
             key = next((k for k, rx in BOTTOM.items() if label and re.search(rx, norm_text(label), re.I)), None)
-            rec = {"row": r, "label": label, "months": {m: {"end": read_cell(sheet, r, c)} for m, c in block["cols"].items()}, "other": {}, "block_header_row": block["header_row"]}
+            if key is None and label and re.search(ADDS_ROW, norm_text(label), re.I):
+                key = "adds"  # .7: the block's additions row (read as the monthly additions figure, kind 'add')
+            rec = {"row": r, "label": label, "months": {m: {("add" if key == "adds" else "end"): read_cell(sheet, r, c)} for m, c in block["cols"].items()}, "other": {},
+                   "block_header_row": block["header_row"]}
             if key and key not in bottom:
                 bottom[key] = rec
             else:
@@ -399,6 +404,71 @@ def match_invoices(lines: list[dict], invoices: list[dict], unidentified: int = 
 
 def line_cell(line: dict, m: int, kind: str):
     return line["months"].get(m, {}).get(kind)
+
+
+def additions_absent(sch: dict, need) -> list[int]:
+    """.7 (human decision 2026-11-01: per-line additions are never inferred): the months whose header groups classify
+    every column and none as additions - the line table presents no additions column (confirmed absent). A month with
+    an unclassified or ambiguous column may hold them and is not listed (unassessable, as before)."""
+    groups, amb = sch.get("groups") or {}, set((sch.get("header") or {}).get("ambiguous", {}))
+    unclassified_months = {um for um, _ in (sch.get("unclassified_columns") or [])}
+    return [m for m in need if "add" not in groups.get(m, {}) and (m, "add") not in amb and m not in unclassified_months]
+
+
+def _round_cents(x, half_up: bool) -> Decimal:
+    """Exact cent rounding of a Decimal or Fraction, half-up or half-even (both are legitimate rounding operations)."""
+    q = Fraction(x) * 100
+    n = q.numerator // q.denominator
+    rem = q - n
+    if rem > Fraction(1, 2) or (rem == Fraction(1, 2) and (half_up or n % 2 == 1)):
+        n += 1
+    return Decimal(n) / 100
+
+
+def rounding_order_only(lines: list[dict], totals_by_month: dict, summary_value) -> dict:
+    """Item 11 (human decision 2026-11-01): a difference of at most 0.01 between the summary YTD and the sum of the
+    schedule's monthly totals passes only when it is demonstrably caused by the order of legitimate rounding, i.e. one
+    side sums rounded amounts and the other rounds the unrounded sum once. Two demonstrable paths, both on the
+    deliverable's own figures: (A) every monthly total is the cent rounding of the sum of its line cells and the
+    summary is the cent rounding of the unrounded line sum; (B) every nonzero line cell is the cent rounding of its own
+    amount / term, every monthly total is the exact sum of its line cells and the summary is the cent rounding of the
+    exact amounts / terms. Anything else (an unreadable cell, an unexplained total, another difference) is not
+    excused. Never a general one-cent tolerance."""
+    out = {"applies": False, "summary": str(cents(summary_value)) if summary_value is not None else None,
+           "schedule_sum": str(sum(totals_by_month.values(), Decimal(0)))}
+    S, T = cents(summary_value), sum(totals_by_month.values(), Decimal(0))
+    if S is None or abs(S - T) != Decimal("0.01"):
+        out["reason"] = "the difference is not exactly one cent"
+        return out
+    cells = {}
+    for m in totals_by_month:
+        for ln in lines:
+            st, v = cell_state(line_cell(ln, m, "amort"))
+            if st not in ("ok", "blank"):
+                out["reason"] = f"row {ln['row']} {MONTHS[m]} amortization {st}"
+                return out
+            cells[(ln["row"], m)] = (ln, v)
+    U = sum((v for _, v in cells.values()), Decimal(0))
+    month_sum = {m: sum((v for (r, mm), (_, v) in cells.items() if mm == m), Decimal(0)) for m in totals_by_month}
+    rounded = lambda x: (_round_cents(x, True), _round_cents(x, False))
+    if all(totals_by_month[m] in rounded(month_sum[m]) for m in totals_by_month) and S in rounded(U):
+        return {**out, "applies": True, "path": "A: monthly totals are the rounded sums of the line cells; the summary rounds the unrounded total once", "unrounded_sum": str(U)}
+    exact, ok_b = Fraction(0), True
+    for (row, m), (ln, v) in cells.items():
+        if v == 0:
+            continue
+        if ln.get("amount_state") != "ok" or not isinstance(ln.get("term"), int) or ln["term"] <= 0:
+            ok_b = False
+            break
+        e = Fraction(ln["amount"]) / ln["term"]
+        if v not in (_round_cents(e, True), _round_cents(e, False)):
+            ok_b = False
+            break
+        exact += e
+    if ok_b and all(totals_by_month[m] == month_sum[m] for m in totals_by_month) and S in rounded(exact):
+        return {**out, "applies": True, "path": "B: line cells are their own amount / term rounded; the summary rounds the exact amounts once", "exact_sum": str(Decimal(exact.numerator) / Decimal(exact.denominator))}
+    out["reason"] = "neither rounding path reproduces both figures from the schedule's own cells"
+    return out
 
 
 def column_sum(lines: list[dict], m: int, kind: str) -> dict:
@@ -635,10 +705,19 @@ def run_checks(extraction: dict, reference: dict, rubric: list[dict], integrity:
             lines = sch["lines"]
             need = [m for m in (1, 2, 3, 4) if m in groups]
 
+            # .7 (human decision 2026-11-01): per-line additions are never inferred. A month whose header groups classify
+            # every column, none as additions, presents no additions column: confirmed absent. An unclassified or
+            # ambiguous column in the month may hold them: unassessable, as before.
+            add_absent = additions_absent(sch, need)
+
             def month_usable(d_, m, kinds):
-                """Register ambiguity or unmapped columns for (m, kind); True when every kind is uniquely located."""
+                """Register ambiguity or unmapped columns for (m, kind); True when every kind is uniquely located. A
+                confirmed-absent additions column is the caller's finding and is not registered as unmapped."""
                 ok = True
                 for k in kinds:
+                    if k == "add" and m in add_absent:
+                        ok = False
+                        continue
                     if (m, k) in amb:
                         d_.unreliable("ambiguous", "month_columns", f"{MONTHS[m]} {k}: {len(sch['header']['ambiguous'][(m, k)])} candidate columns")
                         ok = False
@@ -648,6 +727,9 @@ def run_checks(extraction: dict, reference: dict, rubric: list[dict], integrity:
                 return ok
             # per-line identity (21 / 39)
             d = Decision(spec["identity"], ev)
+            if add_absent:
+                d.violation("additions_not_presented", f"the schedule presents no per-line additions for {[MONTHS[m] for m in add_absent]} (every month column is classified, none as additions); "
+                            "Beginning + Adds - Amortization = Ending cannot be shown and additions are never inferred (human decision 2026-11-01)")
             bad = []
             for ln in lines:
                 beg = ln["other"].get("beginning")
@@ -792,6 +874,7 @@ def run_checks(extraction: dict, reference: dict, rubric: list[dict], integrity:
                     if cents(total_shown) != cents(gl[acct][m]):
                         d.violation("gl_mismatch", f"{MONTHS[m]} ending balance {cents(total_shown)} != GL {gl[acct][m]} (difference {cents(total_shown) - gl[acct][m]})")
                 results[item] = d.result(f"{MONTHS[m]} ending balance equals the GL balance at cents (HALF_UP)" + (" after the quantified adjustment" if adj is not None else ""))
+            adds_mentioned = any(re.search(ADDS_ROW, norm_text(n.get("label") or ""), re.I) for n in (sch.get("notes") or []) if n.get("row", 0) > max([ln["row"] for ln in lines] + [0]))
             for key, kinds, item in (("bottom_adds", ("add",), spec.get("bottom_adds")), ("bottom_amort", ("amort",), spec.get("bottom_amort")), ("bottom_end", ("end",), spec.get("bottom_end")), ("bottom_all", ("add", "amort", "end"), spec.get("bottom_all"))):
                 if item is None:
                     continue
@@ -802,9 +885,16 @@ def run_checks(extraction: dict, reference: dict, rubric: list[dict], integrity:
                     t_row, e_row = pair if pair else (None, None)
                     for m in need:
                         for k in kinds:
-                            if not month_usable(d, m, (k,)):
+                            if k == "add" and bottom.get("adds"):  # .7: the bottom block's additions row
+                                st, v, c = bottom_cell(bottom["adds"], m, ("add",))
+                            elif not month_usable(d, m, (k,)):
+                                if k == "add" and m in add_absent and not adds_mentioned:
+                                    d.violation("bottom_summary_missing", f"no {MONTHS[m]} additions figure in a bottom summary row (no additions row or column)", month=MONTHS[m], figure_kind=k)
+                                elif k == "add" and m in add_absent:
+                                    d.unreliable("unmapped", "bottom_summary", f"{MONTHS[m]} additions: a row below the lines names additions but is not a readable monthly row")
                                 continue
-                            st, v, c = bottom_cell(t_row, m, (k,)) if t_row else ("absent", None, None)
+                            else:
+                                st, v, c = bottom_cell(t_row, m, (k,)) if t_row else ("absent", None, None)
                             if st in ("blank", "absent") and k == "end" and e_row:
                                 st, v, c = bottom_cell(e_row, m, ("end",))
                             if st in ("unreliable", "invalid"):
@@ -909,11 +999,11 @@ def run_checks(extraction: dict, reference: dict, rubric: list[dict], integrity:
                     if beg is not None and prev is None:
                         register(d, "beginning", beg, ln["row"], recalc_status)
                     for m in need:
-                        if not month_usable(d, m, ("add", "end")):
+                        if not month_usable(d, m, ("end",) if m in add_absent else ("add", "end")):
                             prev = None
                             continue
                         se, end = cell_state(line_cell(ln, m, "end"))
-                        sa, add = cell_state(line_cell(ln, m, "add"))
+                        sa, add = ("absent", None) if m in add_absent else cell_state(line_cell(ln, m, "add"))  # .7: no additions column, no documented addition
                         for c in (line_cell(ln, m, "end"), line_cell(ln, m, "add")):
                             if cell_state(c)[0] == "unreliable":
                                 register(d, "schedule", c, ln["row"], recalc_status)
@@ -927,7 +1017,8 @@ def run_checks(extraction: dict, reference: dict, rubric: list[dict], integrity:
                                 ups.append({"row": ln["row"], "month": MONTHS[m], "from": str(prev), "to": str(end)})
                         prev = end
                 if ups:
-                    d.violation("balance_increase_without_addition", f"{len(ups)} line-month(s) where the balance rises without an addition, e.g. {ups[:3]}", rows=sorted({u['row'] for u in ups})[:20])
+                    d.violation("balance_increase_without_addition", f"{len(ups)} line-month(s) where the balance rises without an addition, e.g. {ups[:3]}"
+                                + (f" (no per-line additions column for {[MONTHS[m] for m in add_absent]})" if add_absent else ""), rows=sorted({u['row'] for u in ups})[:20])
                 results[50] = d.result("no balance increases without a documented addition")
         # ---- summary sheet
         sname = located["summary"]
@@ -1000,12 +1091,13 @@ def run_checks(extraction: dict, reference: dict, rubric: list[dict], integrity:
                     continue
                 sums = []
 
-                def eval_ytd(d_, t_row, acct=acct, sums=sums):
-                    tot, ok = Decimal(0), True
+                def eval_ytd(d_, t_row, acct=acct, sums=sums, sch=sch):
+                    tot, ok, by_month = Decimal(0), True, {}
                     for m in (1, 2, 3, 4):
                         st, v, c = bottom_cell(t_row, m, ("amort",))
                         if st == "ok":
                             tot += v
+                            by_month[m] = v
                         else:
                             ok = False
                             if st == "unreliable":
@@ -1014,7 +1106,15 @@ def run_checks(extraction: dict, reference: dict, rubric: list[dict], integrity:
                                 d_.unreliable("unknown", "detail_totals", f"{acct} {MONTHS[m]} amortization total {st}")
                     sums.append(tot if ok else None)
                     if ok:
-                        compare_target(d_, found[f"ytd_{acct}"], tot, f"{acct} YTD amortization (sum of the schedule's monthly totals)")
+                        f_ = found[f"ytd_{acct}"]
+                        one = f_["status"] not in ("none", "none_with_unknowns", "ambiguous") and f_["cells"] and f_["cells"][0]["state"] == "ok"
+                        ro = rounding_order_only(sch["lines"], by_month, f_["cells"][0]["value"]) if (one and cents(f_["cells"][0]["value"]) != cents(tot) and not sch.get("unidentified")) else None
+                        if ro is not None:
+                            d_.evidence = {**d_.evidence, f"rounding_order_{acct}": ro}
+                        if ro and ro["applies"]:  # human decision 2026-11-01: the one-cent difference is the order of rounding only
+                            compare_target(d_, f_, Decimal(ro["summary"]), f"{acct} YTD amortization (sum of the schedule's monthly totals; one-cent rounding-order difference)")
+                        else:
+                            compare_target(d_, f_, tot, f"{acct} YTD amortization (sum of the schedule's monthly totals)")
                     elif found[f"ytd_{acct}"]["status"] == "none":
                         d_.violation("absent", f"no summary cell is labelled as the {acct} YTD amortization")
                 across_candidates(d, [sch["bottom"]["totals"]] + (sch.get("bottom_duplicate_rows") or {}).get("totals", []), eval_ytd, f"{acct} totals rows")

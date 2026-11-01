@@ -14,7 +14,13 @@ runs concerned are saved. Usage:
   python -m grading.judge_dev plan    # write the pass plan (eligible runs, pending tasks, frozen repeat subset)
   python -m grading.judge_dev add-eligible  # append an addendum for Dev runs that became eligible after the plan
   python -m grading.judge_dev run     # execute the plan (paid; the plan must be committed first)
-  python -m grading.judge_dev status  # cost and coverage so far"""
+  python -m grading.judge_dev status  # cost and coverage so far
+  python -m grading.judge_dev pass2   # execute the committed Pass 2 plan (paid; targeted calibration re-judge)
+
+Pass 2 (calibration after the saved human Dev labels, within the Judge Dev aggregate ceiling and passes_max): the runs
+listed in grading/judge_dev/pass2_plan.json are re-judged once through the official entry (--rejudge, a new unit and
+reservation in the Judge Dev ledger) into dev/grading_v1/<run>/, so the V0 records and the Pass 1 verdicts stay as they
+are; the plan states the reason and its own ceiling, checked before every call with the Pass 1 and aggregate guards."""
 import argparse
 import datetime as dt
 import glob
@@ -32,7 +38,8 @@ JDIR = os.path.join(BASE, "judge_dev")
 LEDGER = os.path.join(JDIR, "ledger.json")
 REGISTRY = os.path.join(JDIR, "registry.jsonl")
 PLAN = os.path.join(ROOT, "grading", "judge_dev", "pass1_plan.json")
-ADDENDA = os.path.join(ROOT, "grading", "judge_dev", "pass1_addenda")  # runs that became eligible after the plan; never the repeat subset
+ADDENDA = os.path.join(ROOT, "grading", "judge_dev", "pass1_addenda")
+PASS2_PLAN = os.path.join(ROOT, "grading", "judge_dev", "pass2_plan.json")  # runs that became eligible after the plan; never the repeat subset
 PASS_ID = "judge-dev-pass-1"
 DEV_KEY_SUFFIX = "KW5A"  # GOOGLE_API_KEY, the Dev project (docs/status.md, 2026-11-01)
 SEED = 20261101
@@ -84,10 +91,10 @@ def call_cost_usd(usage: dict, tier_name: str = "std") -> Decimal:
             + Decimal(usage.get("output_tokens", 0)) * tier["output"]) / Decimal(1_000_000)
 
 
-def registry(event: dict) -> None:
+def registry(event: dict, pass_id: str = PASS_ID) -> None:
     os.makedirs(JDIR, exist_ok=True)
     with open(REGISTRY, "a", encoding="utf-8") as f:
-        f.write(json.dumps({"at": _now(), "pass": PASS_ID, **event}, default=str) + "\n")
+        f.write(json.dumps({"at": _now(), "pass": pass_id, **event}, default=str) + "\n")
         f.flush()
         os.fsync(f.fileno())
 
@@ -199,7 +206,22 @@ def spent() -> dict:
     return {"pass_1": p1, "aggregate": Decimal(snap["settled_usd"]) + Decimal(snap["reserved_usd"]), "snapshot": snap}
 
 
-def make_guard(judge_holder: dict, max_tokens: int, base: dict):
+def pass_spent(pass_id: str) -> Decimal:
+    """Settled (or reserved, while open) cost of the judge units registered under one pass."""
+    from harness.budget import BudgetLedger
+    from harness.launcher import prices_from_config
+    L = BudgetLedger.open_existing(LEDGER, prices_from_config(cfg()))
+    total = Decimal(0)
+    for uid in {e["unit_id"] for e in registry_events() if e.get("unit_id") and e.get("pass") == pass_id}:
+        eff = L.effective_settlement(uid)
+        if eff["effective"]:
+            total += Decimal(eff["effective"]["cost_usd"])
+        elif eff["open"]:
+            total += Decimal(next((e["estimated_usd"] for e in eff["events"] if e["type"] == "reservation"), "0"))
+    return total
+
+
+def make_guard(judge_holder: dict, max_tokens: int, base: dict, extra_cap: tuple | None = None):
     c = cfg()["judge"]
     cap1, capall = Decimal(str(c["ceilings_usd"]["pass_1"])), Decimal(str(c["ceilings_usd"]["judge_dev_aggregate"]))
 
@@ -218,11 +240,13 @@ def make_guard(judge_holder: dict, max_tokens: int, base: dict):
             return f"Pass 1 ceiling {cap1} USD would be exceeded (spent {base['pass_1'] + so_far:.4f} + worst case {nxt:.4f})"
         if base["aggregate"] + so_far + nxt > capall:
             return f"Judge Dev aggregate ceiling {capall} USD would be exceeded"
+        if extra_cap is not None and extra_cap[1] + so_far + nxt > extra_cap[2]:
+            return f"{extra_cap[0]} ceiling {extra_cap[2]} USD would be exceeded (spent {extra_cap[1] + so_far:.4f} + worst case {nxt:.4f})"
         return None
     return guard
 
 
-def judge_run(r: dict, log) -> dict:
+def judge_run(r: dict, log, force_rejudge: bool = False, extra_cap: tuple | None = None) -> dict:
     """One eligible run: official grading with the judge (recalculation on), judge costs in the Judge Dev ledger."""
     from grading import run_grading as RG
     from grading.judge import ProviderJudge
@@ -234,7 +258,7 @@ def judge_run(r: dict, log) -> dict:
 
     def factory(model, cfgd):
         j = ProviderJudge(model, temperature=c["temperature"], max_tokens=c["max_tokens"], max_retries=c["max_retries"], reasoning_effort=c["reasoning_effort"],
-                          cost_guard=make_guard(holder, c["max_tokens"], base))
+                          cost_guard=make_guard(holder, c["max_tokens"], base, extra_cap))
         holder["judge"] = j
         return j
     os.makedirs(r["grading_out"], exist_ok=True)
@@ -242,7 +266,7 @@ def judge_run(r: dict, log) -> dict:
             "--unit-id", r["unit_id"], "--judge", "--judge-model", c["model"], "--judge-estimate-usd", str(est), "--confirm-judge", f"{r['run_uuid']}|{c['model']}|{est}",
             "--authorized-by", "Yuning Zhang (approved in chat 2026-11-01)", "--authorization-ref", AUTH_REF, "--env-file", os.path.join(ROOT, ".env"), "--judge-ledger", LEDGER]
     prior = [p.get("grading_pass") for p in RG.grading_passes(r["grading_out"], r["run_uuid"]) if p.get("judge_mode") == "real"]
-    if prior:
+    if prior or force_rejudge:
         argv.append("--rejudge")
     import contextlib
     with contextlib.redirect_stdout(log):
@@ -350,6 +374,38 @@ def run() -> int:
     return 0
 
 
+def run_pass2() -> int:
+    """Execute the committed Pass 2 plan once per listed run (never automatically repeated)."""
+    plan = json.load(open(PASS2_PLAN, encoding="utf-8"))
+    if subprocess.run(["git", "status", "--porcelain", "--untracked-files=all", "--", PASS2_PLAN], cwd=ROOT, capture_output=True, text=True).stdout.strip():
+        raise SystemExit("the Pass 2 plan must be committed before any paid call")
+    if len({e.get("pass") for e in registry_events()} - {PASS_ID}) > int(cfg()["judge"]["ceilings_usd"]["passes_max"]) - 1:
+        raise SystemExit("passes_max reached")
+    os.environ.pop("GOOGLE_API_KEY_VALIDATION", None)
+    pid, cap = plan["pass"], Decimal(str(plan["ceiling_usd"]))
+    log = open(os.path.join(JDIR, f"{pid}_{dt.datetime.now(dt.timezone.utc).strftime('%Y%m%dT%H%M%SZ')}.log"), "a", encoding="utf-8")
+    registry({"kind": "pass_start", "plan_sha256": hashlib.sha256(open(PASS2_PLAN, "rb").read()).hexdigest(), "reason": plan["reason"]}, pid)
+    runs = {r["run_uuid"]: r for r in eligible_runs()[0]}
+    done = {e["run_uuid"] for e in registry_events() if e.get("kind") == "run_done" and e.get("pass") == pid}
+    for spec in plan["runs"]:
+        u = spec["run_uuid"]
+        if u in done or u not in runs:
+            registry({"kind": "skipped", "run_uuid": u, "reason": "done" if u in done else "not eligible"}, pid); continue
+        r = {**runs[u], "grading_out": os.path.join(BASE, "dev", "grading_v1", u)}
+        if sorted(r["judge_items"]) != sorted(spec["items"]):
+            registry({"kind": "skipped", "run_uuid": u, "reason": f"judge items {r['judge_items']} differ from the plan {spec['items']}"}, pid); continue
+        registry({"kind": "run_start", "run_uuid": u, "task_id": r["task_id"], "judge_items": len(r["judge_items"])}, pid)
+        try:
+            out = judge_run(r, log, force_rejudge=True, extra_cap=(pid, pass_spent(pid), cap))
+        except Exception as ex:  # recorded, never retried automatically
+            registry({"kind": "run_error", "run_uuid": u, "error": f"{type(ex).__name__}: {str(ex)[:300]}"}, pid); continue
+        registry({"kind": "run_done", "run_uuid": u, "task_id": r["task_id"], "unit_id": out["judge_unit"], **{k: v for k, v in out.items() if k != "judge_unit"}}, pid)
+        if out.get("halted"):
+            registry({"kind": "halted", "run_uuid": u, "reason": out["halted"]}, pid); break
+    registry({"kind": "pass_end", "spent_pass_usd": str(pass_spent(pid)), "spent": {k: str(v) for k, v in spent().items() if k != "snapshot"}}, pid)
+    return 0
+
+
 def status() -> dict:
     ev = registry_events()
     s = spent()
@@ -362,8 +418,8 @@ def status() -> dict:
 
 
 def main(argv=None) -> int:
-    ap = argparse.ArgumentParser(description="Judge Dev Pass 1")
-    ap.add_argument("command", choices=("plan", "add-eligible", "run", "status"))
+    ap = argparse.ArgumentParser(description="Judge Dev Pass 1 and the targeted Pass 2")
+    ap.add_argument("command", choices=("plan", "add-eligible", "run", "status", "pass2"))
     a = ap.parse_args(argv)
     if a.command == "plan":
         p = write_plan()
@@ -373,6 +429,8 @@ def main(argv=None) -> int:
         print(json.dumps({k: add[k] for k in ("addendum", "eligible_runs", "pending_tasks", "added_judge_units")} if add else {"added": 0}, indent=1))
     elif a.command == "run":
         return run()
+    elif a.command == "pass2":
+        return run_pass2()
     else:
         print(json.dumps(status(), indent=1, default=str))
     return 0

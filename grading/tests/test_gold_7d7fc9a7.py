@@ -9,6 +9,7 @@ import os
 import shutil
 import tempfile
 import unittest
+from decimal import Decimal
 
 import openpyxl
 
@@ -288,6 +289,39 @@ class V1LayoutTests(unittest.TestCase):
         self.assertEqual(next(c["value"] for c in cells if c["coord"] == "G9"), 90)  # 'Less:' deduction compared by magnitude
         self.assertEqual(cls["F8"][0], "beginning")
         self.assertEqual(cls["F10"], ("balance", "1251"))
+
+
+class V1DecisionTests(unittest.TestCase):
+    """Grader .7 (human decisions 2026-11-01): the item-11 rounding-order rule and additions that are never inferred."""
+    sheet = V1LayoutTests.sheet
+    HDR_NO_ADDS = ["Vendor", "Original Amount", "Term", "Jan 2025 Amortization", "Jan 2025 Ending Balance", "Feb 2025 Amortization", "Feb 2025 Ending Balance",
+                   "Mar 2025 Amortization", "Mar 2025 Ending Balance", "Apr 2025 Amortization", "Apr 2025 Ending Balance"]
+
+    def line(self, row, cells):
+        return {"row": row, "months": {m: {"amort": {"status": "ok", "value": v, "coord": f"X{row}"}} for m, v in cells.items()}, "amount_state": "ok", "amount": Decimal("100"), "term": 12}
+
+    def test_one_cent_passes_only_when_rounding_order_explains_it(self):
+        lines = [self.line(8, {m: 100.004 for m in (1, 2, 3, 4)}), self.line(9, {m: 100.004 for m in (1, 2, 3, 4)})]
+        a = CK.rounding_order_only(lines, {m: Decimal("200.01") for m in (1, 2, 3, 4)}, 800.03)  # monthly totals rounded; the summary rounds 800.032 once
+        self.assertTrue(a["applies"]); self.assertTrue(a["path"].startswith("A"))
+        b = CK.rounding_order_only([{**self.line(8, {m: 8.33 for m in (1, 2, 3, 4)})}], {m: Decimal("8.33") for m in (1, 2, 3, 4)}, 33.33)  # 100/12 rounded per line; exact 33.333...
+        self.assertTrue(b["applies"]); self.assertTrue(b["path"].startswith("B"))
+        unrelated = CK.rounding_order_only(lines, {1: Decimal("200.02"), 2: Decimal("200.01"), 3: Decimal("200.01"), 4: Decimal("200.01")}, 800.04)  # out of scope: a total that is no rounding of its lines
+        self.assertFalse(unrelated["applies"])
+        two = CK.rounding_order_only(lines, {m: Decimal("200.01") for m in (1, 2, 3, 4)}, 800.02)  # out of scope: never a general tolerance beyond one cent
+        self.assertFalse(two["applies"]); self.assertIn("not exactly one cent", two["reason"])
+
+    def test_additions_are_confirmed_absent_only_when_every_month_column_is_classified(self):
+        line = ["Good Insurance", 1200, 12, 100, 1100, 100, 1000, 100, 900, 100, 800]
+        rows = [self.HDR_NO_ADDS, line, ["Total", None, None, 100, 1100, 100, 1000, 100, 900, 100, 800], [],
+                [None, "Activity", "January 2025", "February 2025", "March 2025", "April 2025"], [None, "Add: New Policies (Additions)", 1200, 0, 0, 0],
+                [None, "Less: Amortization", 100, 100, 100, 100]]
+        sch = CK.parse_schedule(self.sheet(rows), "S")
+        self.assertEqual(CK.additions_absent(sch, [1, 2, 3, 4]), [1, 2, 3, 4])
+        self.assertEqual(CK.bottom_cell(sch["bottom"]["adds"], 1, ("add",))[:2], ("ok", 1200))  # the block's additions row is read, not inferred
+        odd = [h if h != "Feb 2025 Amortization" else "Feb 2025 Movement" for h in self.HDR_NO_ADDS]  # out of scope: an unclassified February column may hold the additions
+        sch2 = CK.parse_schedule(self.sheet([odd, line]), "S")
+        self.assertNotIn(2, CK.additions_absent(sch2, [1, 2, 3, 4]))
 
 
 if __name__ == "__main__":

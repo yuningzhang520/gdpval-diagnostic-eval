@@ -39,7 +39,7 @@ from .engine.money import parse_money
 from .engine.workbook import workbook_gate
 
 TASK = "c3525d4d-2012-45df-853e-2d2a0e902991"
-VERSION = "c3525d4d-2026-11-01.4"  # .4 (Dev calibration 2026-11-01): the row label is the leftmost text naming a metric; captions naming production units, store counts, spend, piece counts, percentages and component totals decide over entity-style labels; Orig/Rev; placeholder headers skipped; base demand vs units to produce  # .3 (calibration on the dev output, 2026-11-01): the store-list header is a store-field column label, not any text naming a store  # .2: item 7 per the rubric text (every added store flagged; no majority); conflicting flag indicators cannot_assess (approved 2026-11-01)
+VERSION = "c3525d4d-2026-11-01.5"  # .5 (human decision 2026-11-01, B2 semantics): every labelled total program cost is a candidate for items 26-30 and 49; fail only when every candidate fails, cannot_assess when they disagree; 49 fails on any total inconsistent with per-unit x units  # .4 (Dev calibration 2026-11-01): the row label is the leftmost text naming a metric; captions naming production units, store counts, spend, piece counts, percentages and component totals decide over entity-style labels; Orig/Rev; placeholder headers skipped; base demand vs units to produce  # .3 (calibration on the dev output, 2026-11-01): the store-list header is a store-field column label, not any text naming a store  # .2: item 7 per the rubric text (every added store flagged; no majority); conflicting flag indicators cannot_assess (approved 2026-11-01)
 D_ITEMS = [1] + list(range(3, 40)) + list(range(41, 48)) + [49]
 J_ITEMS = [2, 40, 48, 50, 51]
 V_ITEMS = [52]
@@ -310,6 +310,42 @@ def model_of(facts: list[dict]) -> dict:
 def first(model: dict, metric: str, scen: str):
     fs = sorted((model["metrics"].get(metric) or {}).get(scen) or [], key=lambda f: (f["r"], f["c"]))
     return fs[0] if fs else None
+
+
+def candidates(model: dict, metric: str, scen: str) -> list:
+    """.5: every labelled fact of a metric and scenario, in sheet order (B2: a duplicate is never resolved by position)."""
+    return sorted((model["metrics"].get(metric) or {}).get(scen) or [], key=lambda f: (f["r"], f["c"]))
+
+
+def over_candidates(d: Decision, combos: list, evaluate, what: str) -> None:
+    """.5 (human decision 2026-11-01, approved B2 duplicate-candidate semantics): one combination of input facts is
+    evaluated on ``d`` directly. Several are each evaluated on a scratch decision: the item fails only when every
+    combination fails (each keeps its own evidence); when some fail and others do not, the competing candidates
+    disagree and no independent evidence decides, so the item is cannot_assess with every candidate's outcome kept;
+    an unreadable input of any candidate stays unassessable evidence."""
+    if len(combos) <= 1:
+        evaluate(d, *(combos[0] if combos else ()))
+        return
+    outcomes = []
+    for combo in combos:
+        sd = Decision(d.item, {})
+        evaluate(sd, *combo)
+        outcomes.append((combo, sd))
+    d.evidence = {**d.evidence, "candidates": [{"cells": {f["coord"]: str(f["value"]) for f in combo if f}, "violations": [v["detail"] for v in sd.violations],
+                                                 "unassessable": [u.get("detail") for u in sd.unassessable]} for combo, sd in outcomes]}
+    for _, sd in outcomes:
+        d.unassessable.extend(sd.unassessable)
+    failing = [combo for combo, sd in outcomes if sd.violations]
+    if len(failing) == len(outcomes):
+        seen = {(v["kind"], str(v["detail"])) for v in d.violations}
+        for _, sd in outcomes:
+            for v in sd.violations:
+                if (v["kind"], str(v["detail"])) not in seen:  # one entry per distinct candidate finding
+                    seen.add((v["kind"], str(v["detail"])))
+                    d.violations.append(v)
+    elif failing:
+        d.unreliable("ambiguous", what, f"{len(failing)} of {len(outcomes)} candidate readings fail and the others do not; no independent evidence decides which "
+                     f"{what} is the deliverable's: failing {[[f['coord'] for f in c if f] for c in failing][:4]}")
 
 
 def comp_values(model: dict, comp: str, scen: str) -> dict:
@@ -673,15 +709,20 @@ def check_comparison(results, model, sh, ev0, reference, shown_vals):
             if sv != refv:
                 d.violation("wrong_value", f"{what} {x} (shown {sv}) != {refv}")
         results[item] = d.result(f"{what} {refv}")
-    # 26, 27: total = per-unit x units (shown values)
-    for item, uf, nf, pf, s in ((26, uo, no, po, "original"), (27, ur, nr, pr, "revised")):
-        d = Decision(item, ev(uf, nf, pf))
+    # 26, 27: total = per-unit x units (shown values); .5: every candidate total, per-unit cost and unit count (B2)
+    C = lambda m, s: candidates(model, m, s)
+    combos_of = lambda *lists: [tuple(x) for x in __import__("itertools").product(*[l or [None] for l in lists])]
+
+    def eval_product(d, uf, nf, pf, s=None):
         u_, n_, p_ = _need(d, uf, f"{s} per-unit cost"), _need(d, nf, f"{s} total units"), _need(d, pf, f"{s} total program cost")
         if None not in (u_, n_, p_):
             prod = c2(shown(u_, uf["fmt"], True) * shown(n_, nf["fmt"], False))
             d.deliverable, d.reference = str(p_), str(prod)
             if c2(p_) != prod:
-                d.violation("not_product", f"{s} total {c2(p_)} != per-unit {u_} x units {n_} = {prod}")
+                d.violation("not_product", f"{s} total {c2(p_)} at {pf['coord']} != per-unit {u_} x units {n_} = {prod}")
+    for item, uf, nf, pf, s in ((26, uo, no, po, "original"), (27, ur, nr, pr, "revised")):
+        d = Decision(item, ev(uf, nf, pf))
+        over_candidates(d, combos_of(C("unit_cost", s), C("total_units", s), C("program_cost", s)), lambda d_, a, b, c, s=s: eval_product(d_, a, b, c, s), f"{s} total program cost")
         results[item] = d.result(f"{s} total = per-unit cost x units")
     # 28, 29, 31: tolerances
     dp = F("delta_program", "delta")
@@ -689,11 +730,15 @@ def check_comparison(results, model, sh, ev0, reference, shown_vals):
                                     (29, pr, Decimal(reference["revised"]["cost_adopted"]), Decimal("0.005"), "revised total program cost"),
                                     (31, dp, Decimal(reference["delta_adopted"]), Decimal("0.005"), "budget change")):
         d = Decision(item, ev(f))
-        x = _need(d, f, what)
-        if x is not None:
-            d.deliverable, d.reference = str(x), f"{refv} +/- {tol * 100}%"
-            if abs(x - refv) > refv * tol:
-                d.violation("out_of_tolerance", f"{what} {x} not within {tol * 100}% of {refv}")
+
+        def eval_tol(d_, f_, refv=refv, tol=tol, what=what):
+            x = _need(d_, f_, what)
+            if x is not None:
+                d_.deliverable, d_.reference = str(x), f"{refv} +/- {tol * 100}%"
+                if abs(x - refv) > refv * tol:
+                    d_.violation("out_of_tolerance", f"{what} {x} at {f_['coord']} not within {tol * 100}% of {refv}")
+        cands_ = C("program_cost", "original" if item == 28 else "revised") if item in (28, 29) else [f]  # .5: every candidate total (B2); the change line as located
+        over_candidates(d, [(c,) for c in cands_] or [(None,)], eval_tol, what)
         results[item] = d.result(f"{what} within {tol * 100}% of {refv}")
     # 30, 47: the budget change line
     d30, d47 = Decision(30, ev(dp, po, pr)), Decision(47, ev(dp))
@@ -701,9 +746,11 @@ def check_comparison(results, model, sh, ev0, reference, shown_vals):
     if dp is None:
         d47.violation("missing", "no total budget change line on the comparison")
     if x is not None:
-        a, b = _need(d30, po, "original total"), _need(d30, pr, "revised total")
-        if a is not None and b is not None and c2(x) != c2(b - a):
-            d30.violation("wrong_change", f"budget change {c2(x)} != revised - original = {c2(b - a)}")
+        def eval_change(d_, po_, pr_):
+            a, b = _need(d_, po_, "original total"), _need(d_, pr_, "revised total")
+            if a is not None and b is not None and c2(x) != c2(b - a):
+                d_.violation("wrong_change", f"budget change {c2(x)} != revised {pr_['coord']} - original {po_['coord']} = {c2(b - a)}")
+        over_candidates(d30, combos_of(C("program_cost", "original"), C("program_cost", "revised")), eval_change, "total program cost")  # .5: every candidate total (B2)
     results[30] = d30.result("budget change = revised - original total")
     results[47] = d47.result("total budget change line shown")
     # 43: currency formats and labels
@@ -735,13 +782,24 @@ def check_comparison(results, model, sh, ev0, reference, shown_vals):
     results[46] = d.result("per-unit cost change line = 1.00")
     # 49: internal consistency
     d = Decision(49, ev(so, sr, no, nr, uo, ur, po, pr))
-    for item_ in (21, 26, 27):
-        r_ = results[item_]
-        for v in (r_.evidence.get("violations") or []):
-            if v["kind"] in ("overage_not_applied", "not_product"):
-                d.violation(v["kind"], v["detail"])
-        for u in (r_.evidence.get("unassessable") or []):
-            d.unreliable(u["kind"], u["field"], u.get("detail"))
+    r_ = results[21]
+    for v in (r_.evidence.get("violations") or []):
+        if v["kind"] == "overage_not_applied":
+            d.violation(v["kind"], v["detail"])
+    for u in (r_.evidence.get("unassessable") or []):
+        d.unreliable(u["kind"], u["field"], u.get("detail"))
+    # .5 (human decision 2026-11-01): 49 requires EACH total program cost to equal per-unit x units, so every labelled
+    # total is checked: a total that fails under every reading of its per-unit cost and units is a confirmed
+    # consistency violation (never concealed by another, consistent total)
+    for s in ("original", "revised"):
+        for pf in C("program_cost", s):
+            sub = Decision(49, {})
+            over_candidates(sub, combos_of(C("unit_cost", s), C("total_units", s), [pf]), lambda d_, a, b, c, s=s: eval_product(d_, a, b, c, s), f"{s} total program cost")
+            seen = {(v["kind"], str(v["detail"])) for v in d.violations}
+            d.violations.extend(v for v in sub.violations if (v["kind"], str(v["detail"])) not in seen)
+            d.unassessable.extend(sub.unassessable)
+        if not C("program_cost", s):
+            d.violation("missing", f"no {s} total program cost shown")
     pv = {s: [f["value"] for f in (model["metrics"].get("overage_pct", {}).get(s) or []) if f["value"] is not UNRECALC] for s in ("original", "revised")}
     if pv["original"] and pv["revised"] and pv["original"][0] != pv["revised"][0]:
         d.violation("different_overage", f"overage {pv['original'][0]} vs {pv['revised'][0]}")
