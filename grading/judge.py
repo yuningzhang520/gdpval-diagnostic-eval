@@ -389,6 +389,43 @@ def build_units_7b08cd4d(task_prompt: str, rubric: list[dict], extraction: dict,
     return units
 
 
+def build_units_c357f0e2(task_prompt: str, rubric: list[dict], extraction: dict, reference: dict, checks: dict, run_uuid: str) -> list[dict]:
+    """Judge units for the UAT test plan (preregistration 2.9: J items 12, 13, 15-66). The excerpt is the test-case
+    sheet's header row and every counted row (Role, Module, User Action, Test Scenario, Other Conditions / Notes,
+    Expected Result), each located by sheet and row; the source material is the task's implementation and permission
+    outline with the approved naming rule (labels for 12 and 13; meaning for the permission and coverage items)."""
+    task_id = checks["task"]
+    sheet = (checks.get("extraction_status") or {}).get("test_case_sheet")
+    xs = {k: v for k, v in (extraction.get("xlsx") or {}).items() if "sheets" in v}
+    excerpt = "No test-case sheet with the required headers was located in the workbook."
+    if sheet and xs:
+        from . import checks_c357f0e2 as CKU
+        name = sorted(xs)[0]; sh = xs[name]["sheets"][sheet]
+        hdr = CKU.find_header(sh)
+        if hdr:
+            cols = [c for c in range(1, len(sh["rows"][hdr["row"] - 1]) + 1) if c not in (hdr["cols"]["actual"], hdr["date"])]
+            head = " | ".join(str(sh["rows"][hdr["row"] - 1][c - 1] or "") for c in cols)
+            lines = [f"[{name} '{sheet}' header row {hdr['row']}] {head}"]
+            for r in CKU.counted_rows(sh, hdr):
+                vals = [str(CKU.raw(sh, r, c)).strip() if CKU.raw(sh, r, c) is not None else "" for c in cols]
+                lines.append(f"[{name} '{sheet}' row {r}] " + " | ".join(vals))
+            excerpt = "\n".join(lines)
+    source = ("Implementation outline (task): 1 Idea Management (idea form; reject, promote to proposal); 2 Proposal Management (promote, hold, reject; summary with an "
+              "approval chain; fields 2.1-2.7 including Business Case: project description, business driver, business risk, additional comments/notes); 3 Project "
+              "Management (direct creation; types Standard and Infrastructure; resources and team members; milestones and tasks; listing and search); 4 Programs; "
+              "5 System Administration; 6 IRAD (issues, risks, actions, decisions); 7 Cross-functional Testing: permissions by role - Viewers: view all projects only; "
+              "Project Managers: create and manage their own Ideas, Proposals and Projects; System Admins: manage their organization and all Ideas, Proposals and "
+              "Projects within it; Super Admins: full admin access across multiple organizations; various browsers. Approved naming rule (preregistration 2.9): items "
+              "that demand exact labels (12, 13) are judged by label (case-insensitive exact match); permission and coverage items by the meaning of the row, "
+              "'System Administrator', 'System Admin' and 'Sys Admin' being the same role. Counted rows are rows whose Test Scenario has a letter or digit.")
+    units = []
+    for item in [12, 13] + list(range(15, 67)):
+        units.append({"unit_id": unit_id(task_id, item), "run_uuid": run_uuid, "task_id": task_id, "item": item, "weight": rubric[item - 1]["score"], "criterion": rubric[item - 1]["criterion"],
+                      "task_requirement": task_prompt, "source_material": source, "deliverable_excerpt": excerpt, "excerpt_kind": "sheet:counted_test_cases",
+                      "assembled_at": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds")})
+    return units
+
+
 def render_unit(unit: dict) -> str:
     return (f"TASK REQUIREMENT (as given to the worker):\n{unit['task_requirement']}\n\n"
             f"CRITERION (item {unit['item']}, weight {unit['weight']}):\n{unit['criterion']}\n\n"

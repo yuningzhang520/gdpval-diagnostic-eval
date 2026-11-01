@@ -1,0 +1,56 @@
+{
+ "task_id": "c357f0e2-963d-4eb7-a6fa-3078fe55b3ba",
+ "record": "gold first pass of grader c357f0e2-2026-11-01.1 before any variant was built",
+ "recorded_at": "2026-11-01T15:50:12+00:00",
+ "declared_before_run": {
+  "fail": [
+   4,
+   10,
+   67,
+   69
+  ],
+  "cannot_assess": []
+ },
+ "runs": [
+  {
+   "run": 1,
+   "non_pass": {
+    "4": "fail",
+    "10": "fail",
+    "67": "fail",
+    "69": "fail"
+   },
+   "equals_declaration": true
+  }
+ ],
+ "checks_sha256": "884078988afb2d260441f22d190ad6a795a1335887d5022ee313577928cf2b01",
+ "extract_sha256": "96f5deece85341f2d6ec16e8ec2fa2feb5634b710aad710229ad3a30d1ab157a",
+ "repo_head_at_run": "dd4a955bb06422b41a9087be1089777858789b2b",
+ "tree": "uncommitted grader and extractor changes (identified by the hashes above)",
+ "verdicts": {
+  "1": "pass",
+  "2": "pass",
+  "3": "pass",
+  "4": "fail",
+  "5": "pass",
+  "6": "pass",
+  "7": "pass",
+  "8": "pass",
+  "9": "pass",
+  "10": "fail",
+  "11": "pass",
+  "14": "pass",
+  "67": "fail",
+  "68": "pass",
+  "69": "fail"
+ },
+ "notes": {
+  "4": "confirmed violation: 75 counted test cases, not between 80 and 100 [count]",
+  "10": "confirmed violation: 20 counted row(s) with an empty Expected Result, e.g. ['G19', 'G55', 'G56', 'G57', 'G58'] [empty]",
+  "67": "confirmed violation: 64 date cell(s) without a date number format, e.g. ['I3', 'I4', 'I5', 'I6', 'I7'] [not_date]",
+  "69": "confirmed violation: no counted row's Module names cross-functional testing (component labels found: ['cross browser testing']) [missing]"
+ },
+ "gold_sha256": {
+  "UAT Plan.xlsx": "910f9b1f327643eaaa52a842c0fbe679166824e3bfdcda7659641d977e6cb74f"
+ }
+}

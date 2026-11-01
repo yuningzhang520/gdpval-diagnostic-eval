@@ -1276,6 +1276,23 @@ compliance and permission correctness.
   gold is used only to calibrate what a reasonable scenario looks like.
 - K2: rubric 67 requires an Excel date type on blank cells; checked via the cells'
   number format.
+- Deterministic rules of grader v0 (2026-11-01; operational detail, for human review at the labeling checkpoint):
+  - The test-case sheet is the first visible sheet whose header row, in any of the first 10 rows (A-2), contains
+    Role, Module, User Action, Test Scenario, Expected Result and Actual Result (each contained in a header cell,
+    e.g. the template's "Source Event (User Action)"). It also needs a date header equal to Tested Date, Execution
+    Date or Date. Without such a sheet, every sheet item fails.
+  - Blank (5, 6): no value, a whitespace-only value counting as blank; a formula is content.
+  - Items 5-11 fail when there is no counted row.
+  - Item 14: one counted row names Chrome and another names Edge, Firefox or Safari.
+  - Item 67: every counted row's date cell has a date number format. That is the cell's own format; an empty cell
+    without its own style takes the column's format.
+  - Item 68: every non-empty User Action, Test Scenario and Expected Result cell of a counted row has wrap text, or
+    its text fits within the column width plus the widths of the empty cells to its right within the used columns.
+    One character counts per width unit; the default width is 8.43.
+  - Item 69 ("or equivalent") is read narrowly: the Module label names cross-functional testing (cross-functional,
+    cross module, end-to-end). Labels of the outline's components, such as "Cross browser Testing", are recorded but
+    not accepted. Flagged for the human.
+  - Expert workbook: 4 (75 cases), 10 (20 rows without an Expected Result), 67 and 69 fail; C1 fails.
 
 ### 2.10 `a45bc83b-22f9-4def-8d89-9c5661b2b86f` — GCP migration design (CIS Managers)
 Inputs: `Current_Architecture.pdf` (one-page diagram: user → NGFW → DNS → load

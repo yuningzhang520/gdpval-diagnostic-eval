@@ -99,7 +99,32 @@ def _style(c) -> dict:
         out["font_color"] = fc
     if c.font is not None and c.font.b:
         out["bold"] = True
+    if getattr(c.alignment, "wrap_text", None):
+        out["wrap"] = True
     return out
+
+
+def _column_layout(ws) -> dict:
+    """Column widths and column-level styles (number format, wrap) by column letter (added 2026-11-01 for c357f0e2,
+    shared): a <col> range applies to every column from min to max."""
+    from openpyxl.utils import get_column_letter
+    widths, styles = {}, {}
+    for cd in ws.column_dimensions.values():
+        lo, hi = cd.min or 0, cd.max or 0
+        if not lo or hi - lo > 200:
+            continue
+        for i in range(lo, hi + 1):
+            L = get_column_letter(i)
+            if cd.width:
+                widths[L] = cd.width
+            st = {}
+            if cd.number_format and cd.number_format != "General":
+                st["number_format"] = cd.number_format
+            if getattr(cd.alignment, "wrap_text", None):
+                st["wrap"] = True
+            if st:
+                styles[L] = st
+    return {"column_widths": widths, "column_styles": styles}
 
 
 def _conditional_formats(ws) -> list[dict]:
@@ -128,6 +153,7 @@ def extract_xlsx(path: str) -> dict:
         wv = wb_v[ws.title]
         cells = {}
         rows = []
+        blank_styles, blank_cap = {}, 20000
         for row in ws.iter_rows():
             vals = []
             for c in row:
@@ -135,6 +161,14 @@ def extract_xlsx(path: str) -> dict:
                 cached = wv[c.coordinate].value
                 if v is None and cached is None:
                     vals.append(None)
+                    if c.has_style and len(blank_styles) < blank_cap:  # an empty cell's own format / wrap (e.g. a pre-formatted date column)
+                        st = {}
+                        if c.number_format and c.number_format != "General":
+                            st["number_format"] = c.number_format
+                        if getattr(c.alignment, "wrap_text", None):
+                            st["wrap"] = True
+                        if st:
+                            blank_styles[c.coordinate] = st
                     continue
                 formula = v if isinstance(v, str) and v.startswith("=") else None
                 if formula and cached is None and wv[c.coordinate].data_type == "str":
@@ -164,7 +198,8 @@ def extract_xlsx(path: str) -> dict:
                             "pivots": pivots, "tables": sorted(ws.tables.keys()) if hasattr(ws, "tables") else [], "merged": [str(m) for m in ws.merged_cells.ranges],
                             "table_objects": {t.displayName or t.name: {"ref": t.ref, "autofilter": t.autoFilter is not None, "header_rows": t.headerRowCount}
                                               for t in (ws.tables.values() if hasattr(ws, "tables") else [])},  # TableList.items() yields (name, ref string); values() the Table objects
-                            "auto_filter": ws.auto_filter.ref if ws.auto_filter and ws.auto_filter.ref else None, "conditional_formats": _conditional_formats(ws)}
+                            "auto_filter": ws.auto_filter.ref if ws.auto_filter and ws.auto_filter.ref else None, "conditional_formats": _conditional_formats(ws),
+                            "state": ws.sheet_state, "blank_styles": blank_styles, "blank_styles_truncated": len(blank_styles) >= blank_cap, **_column_layout(ws)}
     import zipfile
     with zipfile.ZipFile(path) as z:
         names = z.namelist()
