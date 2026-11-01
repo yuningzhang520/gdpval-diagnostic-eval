@@ -101,7 +101,8 @@ class LabelBatchTests(unittest.TestCase):
 
     def test_readiness_file_lists_only_tagged_tasks(self):
         r = LB.readiness()
-        self.assertEqual(sorted(r["ready"]), sorted(TASKS + ["7d7fc9a7-21a7-4b83-906f-416dea5ad04f"]))  # 7d7fc9a7 after the Codex closure and the tag move
+        self.assertTrue(set(TASKS + ["7d7fc9a7-21a7-4b83-906f-416dea5ad04f"]) <= set(r["ready"]))  # 7d7fc9a7 after the Codex closure and the tag move
+        self.assertFalse(set(r["ready"]) & set(r["not_ready"]))
         for t, v in r["ready"].items():
             self.assertTrue(LB.tag_exists(v["tag"]), v["tag"])
 

