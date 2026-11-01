@@ -27,7 +27,7 @@ from .engine.money import parse_money
 from .engine.workbook import workbook_gate
 
 TASK = "7b08cd4d-df60-41ae-9102-8aaa49306ba2"
-VERSION = "7b08cd4d-2026-11-01.2"  # .2 (calibration on the dev output, 2026-11-01): cell-aware header rows; aggregate rows are no stops; revenue total row by measure
+VERSION = "7b08cd4d-2026-11-01.3"  # .3 (Dev calibration 2026-11-01): a column headed as the gross decides over a party-split total; total-expenses rows allow words between total and expenses and prefer a non-negative row over a waterfall deduction  # .2 (calibration on the dev output, 2026-11-01): cell-aware header rows; aggregate rows are no stops; revenue total row by measure
 D_ITEMS = [1, 3] + list(range(6, 25)) + list(range(29, 41)) + list(range(49, 59))
 J_ITEMS = [2, 4, 25, 26, 27, 28] + list(range(41, 49))
 V_ITEMS = [5, 59]
@@ -190,6 +190,9 @@ def stop_rows(model: dict) -> dict:
 
 
 def combined_gross(row: dict):
+    explicit = [x for c, x in sorted(row["nums"].items()) if re.search(r"\bgross\b", norm(x["header"])) and x["party"] in (None, "total")]
+    if explicit:  # a column headed as the gross decides over a party-split total, which may hold the net (.3)
+        return explicit[0]
     pc = party_cells(row)
     if "total" in pc:
         return pc["total"]
@@ -197,6 +200,15 @@ def combined_gross(row: dict):
     if gross:
         return gross[0]
     return pc.get("tm")
+
+
+def expense_total_row(model: dict):
+    """The total expenses row (.3): words may stand between 'total' and 'expenses' ('Total Operating Expenses'); of
+    several total rows, the first whose party figures are not negative deductions (an executive waterfall repeats the
+    total as a minus line); the first match when every candidate is negative."""
+    rx, ex = r"total\s*(?:\w+\s+){0,2}?(expens|costs?\b)", r"other|band|hotel|travel|tour\s*cost"
+    rows = [row for row in model["rows"] if not row["label_only"] and re.search(rx, norm(row["label"])) and not re.search(ex, norm(row["label"]))]
+    return next((row for row in rows if party_cells(row) and all(x["value"] is UNRECALC or x["value"] >= 0 for x in party_cells(row).values())), rows[0] if rows else None)
 
 
 def find_label_row(model: dict, rx: str, *, exclude: str | None = None, section_rx: str | None = None):
@@ -484,7 +496,7 @@ def check_pl(results, model, ev0, reference, status):
                     if results[item].verdict == "fail":
                         results[item].evidence["tag"] = "allocation ambiguity (task material): Other Tour + Other Travel equals the recomputation; the split differs (K1)"
     # 49-51: total expenses
-    te = find_label_row(model, r"total\s*(expens|cost)", exclude=r"other|band|hotel|travel|tour\s*cost")
+    te = expense_total_row(model)
     tep = party_cells(te) if te else {}
     for item, party, refv in ((49, "total", reference["expenses_total"]), (50, "tm", reference["tm_total"]), (51, "pc", reference["pc_total"])):
         d = Decision(item, {**ev0, "row": te and te["r"]})

@@ -3935,6 +3935,9 @@ Re-grades went to the scratchpad; the official V1 Dev re-grade follows the per-t
   - Effect on Dev run `UzC6bRkv…`: all 25 deterministic false-fail leads pass. No item without a lead changed. The
     3 evidence-location leads already had the right verdict.
   - Open question: the second revised total (preregistration section 4).
+- `7b08cd4d…` grader .3: rules in preregistration 2.6 ("Dev calibration .3"). Tests: `V1LayoutTests`.
+  - Effect on Dev run `6iqdXFGC…`: all 15 deterministic false-fail leads pass. No item without a lead changed.
+  - The remaining lead is an attribution label (K1 tag in the evidence).
 
 ## Known issues and findings (material check)
 
@@ -4322,7 +4325,8 @@ Re-grades went to the scratchpad; the official V1 Dev re-grade follows the per-t
 - 2026-11-01 · Pass 1 addendum 2 (`a45bc83b…`) and the `b5d2e6f1…` packet reference · b062e33
 - 2026-11-01 · review policy v3 (time-bounded human review; critical-FAIL verification before reporting), queue_v3 frozen (seed 20261101) · 306e49d
 - 2026-11-01 · engine .4 (truncated sheet names in the recalculation join) and `7d7fc9a7…` grader .6 (Dev calibration) · e80f775
-- 2026-11-01 · `c3525d4d…` grader .4 (Dev calibration: row labels and column captions) · (this commit)
+- 2026-11-01 · `c3525d4d…` grader .4 (Dev calibration: row labels and column captions) · b87972b
+- 2026-11-01 · `7b08cd4d…` grader .3 (Dev calibration: gross column, total-expenses row) · (this commit)
 
 ## Next stage (not started)
 

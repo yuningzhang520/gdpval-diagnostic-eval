@@ -1148,6 +1148,20 @@ displays (whole dollars or cents). Rounded figures need not add up (852,428 − 
   - A formula without a cached value is unreadable (cannot_assess).
   - Expert workbook: 16 and 17 fail (withholding is shown only by country), so C1 fails; C2 and C3 pass.
 
+- Dev calibration .3 (2026-11-01). Before freeze; V0 kept; this run carries no v3 human label. The leads came from
+  sealed AI QA and were checked against the deliverable.
+  - Defect 1: the stop table carried party-split net columns ("Total Combined (USD)") next to "Gross Revenue (USD)",
+    and the party total was read as the combined gross (items 7-13, 16, 17).
+  - Defect 2: the total-expenses row was taken from an executive waterfall that repeats it as a negative deduction
+    (items 49-51, 56-58).
+  - Operational rules adopted:
+    - a column headed as the gross decides over a party-split total;
+    - a total-expenses row may have words between "total" and "expenses";
+    - of several such rows, the first with non-negative party figures is used.
+  - The K1 allocation failures keep the attribution label `model_caused`, with the K1 tag in their evidence. The
+    failure analysis reads the tag; the engine has no task-material attribution value.
+  - Synthetic regression: `V1LayoutTests`. The gold-first suite is unchanged and passes.
+
 ### 2.7 `7d7fc9a7-21a7-4b83-906f-416dea5ad04f` — Prepaid amortization (Accountants and Auditors)
 Inputs: `COA.xlsx` (46 expense accounts, including 6760 IT Services/Agreements, 6762
 Subscription Fees/Service Agreements, 7001 Technical Services Fee, 6020 Building
