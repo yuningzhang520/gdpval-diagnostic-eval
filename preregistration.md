@@ -502,6 +502,18 @@ Three matters are recorded and graded separately; none offsets another (APPROVED
 - K3: rubric 22/24 name the input "Reference_PO_Log.xlsx"; the actual file is
   `PO Log.xlsx`. No grading effect.
 - K4: narratives may sit in a text box; extraction reads drawings (section 1.9).
+- Deterministic rules of grader v0 (2026-11-01; operational definitions, class c, fixed before any output of this
+  task was opened; for human review at the labeling checkpoint): tables are header rows naming at least two recap
+  fields with an account or PO column (the rubric's labels and the log's own labels, case, punctuation, "Sum of", "$"
+  and "at" ignored), their rows down to the first blank row, labelled total rows, and caption text above the table's
+  own columns; PO-level tables are classified by their actual ship months (all June, all July; mixed months = another
+  table such as a log copy), account-level tables by their caption; "the June shipments table" is the PO-level June
+  table, else the June account-level table (likewise for the slipped table); the account-level summary of 47-54 is the
+  June account-level table. Conditional items (29, 31, 41, 47-57) whose condition does not arise pass ("condition not
+  met"); 22 and 24 are cannot_assess without PO numbers (matter 3), 23 without an actual-ship column; 26 and 40 hold
+  when no PO number appears; a required column that is absent fails the item that tests it, 32 included; a formula
+  without a cached value is unreadable (cannot_assess), never blank or wrong. Expert workbook: 5, 6, 8-10, 12, 17-20,
+  32, 37 and 55 fail; 22-24 cannot_assess; C1 and C4 pass, C2 and C5 fail, C3 not confirmed.
 
 ### 2.3 `47ef842d-8eac-4b90-bda8-dd934c228c96` — Weeks of supply (Order Clerks)
 Inputs: `Reference Inventory.xlsx` (sheet DATA, 6,612 rows, one snapshot: 2025 week 28,

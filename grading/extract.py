@@ -95,7 +95,9 @@ def extract_xlsx(path: str) -> dict:
                     # LibreOffice both write t="str" with an empty value for "" results); openpyxl returns None for
                     # it, exactly as for a formula with no cached value, which is typed "n". Keep the two apart.
                     cached = ""
-                cells[c.coordinate] = {"formula": formula, "cached": _cell_value(cached), "literal": None if formula else _cell_value(v), "number_format": c.number_format}
+                raw = cached if formula else v
+                cells[c.coordinate] = {"formula": formula, "cached": _cell_value(cached), "literal": None if formula else _cell_value(v), "number_format": c.number_format,
+                                       "value_type": type(raw).__name__}  # before ISO conversion: datetime / date / time cells stay distinguishable from text
                 vals.append(_cell_value(cached if formula else v))
             rows.append(vals)
         pivots = []
@@ -113,11 +115,31 @@ def extract_xlsx(path: str) -> dict:
                 pivots.append({"name": getattr(pt, "name", None), "error": f"{type(ex).__name__}"})
         sheets[ws.title] = {"dimensions": ws.dimensions, "max_row": ws.max_row, "max_col": ws.max_column, "cells": cells, "rows": rows,
                             "pivots": pivots, "tables": sorted(ws.tables.keys()) if hasattr(ws, "tables") else [], "merged": [str(m) for m in ws.merged_cells.ranges],
+                            "table_objects": {t.displayName or t.name: {"ref": t.ref, "autofilter": t.autoFilter is not None, "header_rows": t.headerRowCount}
+                                              for t in (ws.tables.values() if hasattr(ws, "tables") else [])},  # TableList.items() yields (name, ref string); values() the Table objects
                             "auto_filter": ws.auto_filter.ref if ws.auto_filter and ws.auto_filter.ref else None}
     import zipfile
     with zipfile.ZipFile(path) as z:
         names = z.namelist()
-    package = {"pivot_tables": sorted(n for n in names if n.startswith("xl/pivotTables/pivotTable") and n.endswith(".xml")),
+    drawings = []
+    import xml.etree.ElementTree as ET
+    with zipfile.ZipFile(path) as z:
+        for n in sorted(x for x in names if x.startswith("xl/drawings/drawing") and x.endswith(".xml")):
+            try:
+                root = ET.fromstring(z.read(n))
+            except ET.ParseError:
+                drawings.append({"part": n, "error": "xml"}); continue
+            A = "{http://schemas.openxmlformats.org/drawingml/2006/main}"
+            texts = []
+            for tx in root.iter():
+                if tx.tag.endswith("}txBody"):
+                    paras = ["".join(t.text or "" for t in para.iter(f"{A}t")) for para in tx.iter(f"{A}p")]
+                    txt = "\n".join(x for x in paras if x)
+                    if txt.strip():
+                        texts.append(txt)
+            drawings.append({"part": n, "texts": texts})
+    package = {"drawing_texts": drawings,
+               "pivot_tables": sorted(n for n in names if n.startswith("xl/pivotTables/pivotTable") and n.endswith(".xml")),
                "pivot_cache_definitions": sorted(n for n in names if n.startswith("xl/pivotCache/pivotCacheDefinition") and n.endswith(".xml")),
                "pivot_cache_records": sorted(n for n in names if n.startswith("xl/pivotCache/pivotCacheRecords") and n.endswith(".xml"))}
     return {"path": path, "sheets": sheets, "sheet_order": wb_f.sheetnames, "package": package}

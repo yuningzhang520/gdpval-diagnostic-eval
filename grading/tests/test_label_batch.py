@@ -91,7 +91,7 @@ class LabelBatchTests(unittest.TestCase):
         with self.assertRaisesRegex(LB.BatchError, "stay sealed"):
             self.resolved(v)
         nr = [("dev", "b5d2e6f1-62a2-433a-bcdd-95b260cdd860", self.runs[0][2], None)] + self.runs[1:]  # no grader yet
-        with self.assertRaisesRegex(LB.BatchError, "not listed in grading/readiness.json"):
+        with self.assertRaisesRegex(LB.BatchError, "not ready for opening"):
             self.resolved(nr)
         with self.assertRaisesRegex(LB.BatchError, "does not exist"):
             self.resolved(tag_check=lambda tag: False)

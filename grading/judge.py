@@ -232,6 +232,38 @@ def no_judge_units(task_prompt: str, rubric: list[dict], extraction: dict, refer
     return []
 
 
+def build_units_f841ddcf(task_prompt: str, rubric: list[dict], extraction: dict, reference: dict, checks: dict, run_uuid: str) -> list[dict]:
+    """Judge units for the June shipment recap (preregistration 2.2: J items 38, 42-46, 58, phrasing). Source material:
+    the task's window definitions; the deliverable excerpt holds every sheet's title and caption rows (the text cells
+    of the first rows and the rows above each discovered table) and the narrative text (cells and drawing text boxes),
+    each located by sheet and cell or by drawing part."""
+    task_id = checks["task"]
+    xs = {k: v for k, v in (extraction.get("xlsx") or {}).items() if "sheets" in v}
+    lines = []
+    if xs:
+        name = sorted(xs)[0]; wb = xs[name]
+        from .engine.cells import cell_coord
+        for sn in wb["sheet_order"]:
+            sh = wb["sheets"][sn]
+            for r, row in enumerate(sh["rows"][:30], 1):
+                for c, v in enumerate(row):
+                    if isinstance(v, str) and v.strip() and not re.fullmatch(r"[\d.,$%\s-]+", v):
+                        lines.append(f"[{name} '{sn}'!{cell_coord(r, c)}] {v.strip()}")
+        for d in (wb.get("package") or {}).get("drawing_texts", []):
+            for t in d.get("texts", []):
+                lines.append(f"[{name} {d['part']} text box] {t.strip()}")
+    excerpt = "\n".join(lines[:200]) if lines else "No readable workbook was delivered."
+    source = ("Task definitions: the June recap covers POs whose actual ship date is 06/01/2025-06/30/2025 (status Shipped); the slipped analysis covers POs whose requested "
+              "ship window falls in June (start ship date on or after 06/01/2025 and cancel date on or before 06/30/2025) and that actually shipped in July 2025 "
+              "(they move into July for record keeping). Judge only the wording the criterion names; figures are graded elsewhere.")
+    units = []
+    for item in (38, 42, 43, 44, 45, 46, 58):
+        units.append({"unit_id": unit_id(task_id, item), "run_uuid": run_uuid, "task_id": task_id, "item": item, "weight": rubric[item - 1]["score"],
+                      "criterion": rubric[item - 1]["criterion"], "task_requirement": task_prompt, "source_material": source,
+                      "deliverable_excerpt": excerpt, "excerpt_kind": "workbook:titles_captions_narrative", "assembled_at": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds")})
+    return units
+
+
 def render_unit(unit: dict) -> str:
     return (f"TASK REQUIREMENT (as given to the worker):\n{unit['task_requirement']}\n\n"
             f"CRITERION (item {unit['item']}, weight {unit['weight']}):\n{unit['criterion']}\n\n"

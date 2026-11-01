@@ -25,6 +25,7 @@ from . import checks_7d7fc9a7 as CK2
 from . import checks_2ea2e5b5 as CK3
 from . import checks_a45bc83b as CK4
 from . import checks_b5d2e6f1 as CK5
+from . import checks_f841ddcf as CK6
 from . import judge as J
 from .extract import extract_all
 from .review import write_review_materials
@@ -40,7 +41,8 @@ TASK_MODULES = {CK.TASK: {"checks": CK.run_checks, "units": J.build_units_1137e2
                 CK3.TASK: {"checks": CK3.run_checks, "units": J.build_units_2ea2e5b5, "critical": CK3.CRITICAL, "judge_items": CK3.J_ITEMS, "visual_items": CK3.V_ITEMS, "version": CK3.VERSION},
                 CK4.TASK: {"checks": CK4.run_checks, "units": J.build_units_a45bc83b, "critical": CK4.CRITICAL, "judge_items": CK4.J_ITEMS, "visual_items": CK4.V_ITEMS,
                            "judge_agreement_only": CK4.JUDGE_AGREEMENT_ONLY, "version": CK4.VERSION},
-                CK5.TASK: {"checks": CK5.run_checks, "units": J.no_judge_units, "critical": CK5.CRITICAL, "judge_items": CK5.J_ITEMS, "visual_items": CK5.V_ITEMS, "version": CK5.VERSION}}
+                CK5.TASK: {"checks": CK5.run_checks, "units": J.no_judge_units, "critical": CK5.CRITICAL, "judge_items": CK5.J_ITEMS, "visual_items": CK5.V_ITEMS, "version": CK5.VERSION},
+                CK6.TASK: {"checks": CK6.run_checks, "units": J.build_units_f841ddcf, "critical": CK6.CRITICAL, "judge_items": CK6.J_ITEMS, "visual_items": CK6.V_ITEMS, "version": CK6.VERSION}}
 
 
 def grader_version_of(task_id: str) -> str:

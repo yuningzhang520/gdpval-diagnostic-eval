@@ -3315,6 +3315,28 @@ the sum of the store rows, although the rubric allows the store subtotals too. A
 | `unittest grading.tests.test_gold_1137e2bb` / `test_gold_7d7fc9a7` / `test_gold_2ea2e5b5` / `test_gold_a45bc83b` | 13.8 / 5.9 / 2.0 / 3.0 s | 0 | 53 + 2 / 56 + 3 / 30 / 20 |
 | `unittest grading.tests.test_grading_chain` / `harness.tests.test_docs_consistency` | 3.6 / 1.0 s | 0 | 29 / 3 |
 
+## Task 3 `f841ddcf…` gold-first grader v0 (2026-11-01; task version f841ddcf-2026-11-01.1; no model, judge or paid call; logs `logs/gold-first-f841ddcf-20261101T144632Z/`)
+
+Deterministic items 1-37, 39-41, 47-57 (`grading/checks_f841ddcf.py`; rules in preregistration 2.2), judge units for
+38, 42-46, 58 (`grading/judge.py::build_units_f841ddcf`: sheet titles, captions and narrative, located by cell or
+drawing part), visual item 59; 14 declared variants (`grading/gold_variants_f841ddcf.py`; PO-level tables built from
+the input log; every variant carries the expert narrative in a cell because openpyxl drops text boxes, N01 verifies
+the move is neutral; variants start from a values-only copy because openpyxl drops cached formula values). Shared
+extractor changes (recorded for Codex Review 2): drawing text-box text per drawing part, Excel Table objects (range,
+AutoFilter), each cell's original value type (dates stay distinguishable from text). First pass equal to the
+declaration (fails 5, 6, 8-10, 12, 17-20, 32, 37, 55; 22-24 cannot_assess). Defects found by the variants and fixed
+before the commit: (1) the Excel Table extraction iterated `TableList.items()`, which yields range strings, so every
+workbook with an Excel Table failed to parse; (2) caption detection read whole rows, so text beside a table could
+reclassify it; (3) formula cells without a cached value were read as blank and failed items instead of being
+unassessable. One declaration corrected after its first run (R10 also fails 28: without a PO-level table the
+account summary is the June table). All 14 variants match.
+
+| Command (`run_isolated.sh`, `/usr/bin/time -p`) | Wall clock | Exit | Result |
+|---|---|---|---|
+| `unittest grading.tests.test_gold_f841ddcf` | 4.3 s | 0 | 18/18 |
+| `unittest grading.tests.test_gold_b5d2e6f1` / `1137e2bb` / `7d7fc9a7` / `2ea2e5b5` / `a45bc83b` | 48.4 / 13.8 / 5.9 / 2.0 / 3.0 s | 0 | 22 / 53 + 2 / 56 + 3 / 30 / 20 |
+| `unittest grading.tests.test_grading_chain` / `test_label_batch` / `harness.tests.test_docs_consistency` | 3.4 / 13.1 → 13.3 / 1.2 s | 0 / 1 → 0 / 0 | 29 / 3 (gate message pin updated for the readiness reason) / 3 |
+
 ## Known issues and findings (material check)
 
 - `rubric_json.form_content`: 8,036 items hold `null`, 2,417 items lack the key, zero

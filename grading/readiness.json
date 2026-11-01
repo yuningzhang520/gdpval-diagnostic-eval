@@ -16,6 +16,10 @@
   "7d7fc9a7-21a7-4b83-906f-416dea5ad04f": {
    "tag": "grader-v0-7d7fc9a7",
    "basis": "Codex Review 1 closure accepted 2026-11-01; tag moved to 1b92af83c6e5 (task version 7d7fc9a7-2026-11-01.5)"
+  },
+  "f841ddcf-2a28-4f6d-bac3-61b607219d3e": {
+   "tag": "grader-v0-f841ddcf",
+   "basis": "grader v0 2026-11-01 (task version f841ddcf-2026-11-01.1)"
   }
  },
  "not_ready": {
