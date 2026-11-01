@@ -3505,7 +3505,7 @@ classified as recovered 429 (events 124, 125); under the new rule that unit woul
 ## In flight
 
 Gemini dev and validation resume under the new snapshot and scheduler plan (two projects, cap 2, dev first when the
-cap is 1). `c3525d4d…` grader v0 tagged (`grader-v0-c3525d4d` at `5435534`; code-bound records `grading/validation/c3525d4d…/code_5435534/`). `7b08cd4d…` grader v0 committed (tag and code-bound records next). Remaining grader: `c357f0e2…`. `b5d2e6f1…` waits for rule A-1.
+cap is 1). `c3525d4d…` grader v0 tagged (`grader-v0-c3525d4d` at `5435534`; code-bound records `grading/validation/c3525d4d…/code_5435534/`). `7b08cd4d…` grader v0 tagged (`grader-v0-7b08cd4d` at `393a7bc`; code-bound records `grading/validation/7b08cd4d…/code_393a7bc/`). Remaining grader: `c357f0e2…`. `b5d2e6f1…` waits for rule A-1.
 
 ## Decisions taken (date · what · commit)
 
@@ -3817,7 +3817,7 @@ cap is 1). `c3525d4d…` grader v0 tagged (`grader-v0-c3525d4d` at `5435534`; co
   under C3; pending human confirmation) · 5435534 (tag `grader-v0-c3525d4d`)
 
 - 2026-11-01 · `7b08cd4d…` grader v0 (task version 7b08cd4d-2026-11-01.1) and the editorial correction of the
-  preregistration 2.6 classification (41-48 J, 52 D; pending human confirmation) · (this commit)
+  preregistration 2.6 classification (41-48 J, 52 D; pending human confirmation) · 393a7bc (tag `grader-v0-7b08cd4d`)
 
 ## Next stage (not started)
 
