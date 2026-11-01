@@ -145,5 +145,16 @@ class ProductionGradeRunTests(unittest.TestCase):
             TABLE["production_grade_run"] = {"rows": len(rows), "sources": {k: len(v) for k, v in by_src.items()}, "critical": {k: v["status"] for k, v in r["score"]["critical"].items()}}
 
 
+class V1LayoutTests(unittest.TestCase):
+    """Grader .3 (Dev calibration 2026-11-01)."""
+
+    def test_edge_case_is_not_the_edge_browser(self):
+        self.assertFalse(CK.names_other_browser("verify the edge case of a blank title"))
+        self.assertFalse(CK.names_other_browser("edge-cases: maximum file size"))
+        self.assertTrue(CK.names_other_browser("open the proposal form in microsoft edge"))
+        self.assertTrue(CK.names_other_browser("repeat on edge (latest)"))
+        self.assertTrue(CK.names_other_browser("cross-browser check on firefox"))
+
+
 if __name__ == "__main__":
     unittest.main()

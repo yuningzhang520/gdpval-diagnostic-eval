@@ -1553,6 +1553,14 @@ compliance and permission correctness.
   - Expert workbook: 4 (75 cases), 10 (20 rows without an Expected Result) and 67 fail; 69 is routed to the judge
     (grader .1 failed it); C1 fails.
 
+- Dev calibration .3 (2026-11-01). Before freeze; V0 kept; this run carries no human label.
+  - Item 14: "edge case" no longer counts as naming the Edge browser. This removes a latent false pass; the Dev
+    verdict is unchanged. Test: `V1LayoutTests`.
+  - Item 1 records an existing rule: two or more delivered workbooks fail "a single Excel workbook" (engine
+    `workbook_gate`, `single_file`), and the checks then read the alphabetically first workbook.
+  - The judge-consistency leads (items 18, 23, 40, 42, 51, 59-62) are inputs to the Dev judge-prompt calibration
+    after the human labels; no rule was changed.
+
 ### 2.10 `a45bc83b-22f9-4def-8d89-9c5661b2b86f` — GCP migration design (CIS Managers)
 Inputs: `Current_Architecture.pdf` (one-page diagram: user → NGFW → DNS → load
 balancer → web server → app server → SQL Server; Redis user profiles),

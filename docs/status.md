@@ -3959,10 +3959,17 @@ Re-grades went to the scratchpad; the official V1 Dev re-grade follows the per-t
   | `b5d2e6f1…` | `3mhbRUHW…` | none |
 
   Judge items keep their Pass 1 verdicts; no judge call was made for V1.
+- `c357f0e2…` grader .3: "edge case" is not the Edge browser (item 14, latent false pass). The V1 re-grade of
+  `fx58g4L2…` changes no deterministic verdict.
+- Judge-calibration input from the sealed QA of `c357f0e2…` (leads, not ground truth; to be weighed against the human
+  Dev labels before any prompt revision):
+  - "created and visible" is read with uneven literalness (items 59-62, and 40 by analogy);
+  - a module clause is taken as a label instead of the 2.9 meaning rule (item 51);
+  - section-number display versus the word "Summary" (items 23-25, 33);
+  - a seeded listing as evidence that the listing loads (item 42).
 - Calibrated so far: the Dev tasks without a human label (`7d7fc9a7…`, `c3525d4d…`, `7b08cd4d…`, `47ef842d…`,
   `1137e2bb…`; `b5d2e6f1…` had no lead).
 - Still open:
-  - `c357f0e2…` and `a45bc83b…`: no QA yet.
   - The v4 Dev-labelled runs (`2ea2e5b5…`, `f841ddcf…`, `a45bc83b…`): their leads stay unopened until the labels
     are checkpointed.
 
@@ -4379,7 +4386,8 @@ Packets:
 - 2026-11-01 · `7b08cd4d…` grader .3 (Dev calibration: gross column, total-expenses row) · 4f71d3d
 - 2026-11-01 · final review workload v4 (36 item-level blind labels; supersedes v1-v3), queue_v4 frozen (seed 20261101) · e995ea0
 - 2026-11-01 · engine .5 (xlsx media parts) and `47ef842d…` grader .2 (OOS header, picture chart) · 29fdaaa
-- 2026-11-01 · `1137e2bb…` grader .3 (summary measures, workbook pivots, variance headers) · (this commit)
+- 2026-11-01 · `1137e2bb…` grader .3 (summary measures, workbook pivots, variance headers) · 8e6ad63
+- 2026-11-01 · `c357f0e2…` grader .3 (edge case is not the Edge browser) · (this commit)
 
 ## Next stage (not started)
 

@@ -28,7 +28,7 @@ from .engine.decision import Decision, Result
 from .engine.workbook import workbook_gate
 
 TASK = "c357f0e2-963d-4eb7-a6fa-3078fe55b3ba"
-VERSION = "c357f0e2-2026-11-01.2"  # .2: item 69 routed to the judge unless a label match decides it (approved 2026-11-01)
+VERSION = "c357f0e2-2026-11-01.3"  # .3 (Dev calibration 2026-11-01): "edge case" does not name the Edge browser (item 14)  # .2: item 69 routed to the judge unless a label match decides it (approved 2026-11-01)
 D_ITEMS = list(range(1, 12)) + [14, 67, 68, 69]
 J_ITEMS = [12, 13] + list(range(15, 67))
 V_ITEMS = [70]
@@ -109,6 +109,11 @@ def readable(sh, r, c) -> tuple[bool, dict]:
         avail += widths.get(get_column_letter(cc), DEFAULT_WIDTH)
         cc += 1
     return len(text) <= avail, {"wrap": False, "length": len(text), "available_width": round(avail, 2)}
+
+
+def names_other_browser(text: str) -> bool:
+    """Edge, Firefox or Safari named in a test row; 'edge case' is not the Edge browser (.3)."""
+    return re.search(r"\bedge\b(?![\s-]*cases?\b)|firefox|safari", text) is not None
 
 
 def run_checks(extraction: dict, reference: dict, rubric: list[dict], integrity: dict | None = None) -> dict:
@@ -192,7 +197,7 @@ def check_rows(results, sh, hdr, ev0, status):
     d = Decision(14, ev0)
     text = {r: norm(f"{raw(sh, r, cols['action']) or ''} {raw(sh, r, cols['scenario']) or ''}") for r in rows}
     chrome = [r for r, t in text.items() if "chrome" in t]
-    other = [r for r, t in text.items() if re.search(r"\bedge\b|firefox|safari", t)]
+    other = [r for r, t in text.items() if names_other_browser(t)]
     d.evidence.update({"chrome_rows": chrome[:5], "other_browser_rows": other[:5]})
     if not chrome or not other or (len(set(chrome) | set(other)) < 2):
         d.violation("browsers", "no pair of counted rows naming Chrome and Edge / Firefox / Safari")
