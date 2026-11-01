@@ -3068,6 +3068,17 @@ a warn baseline the raise to 3 is not available (it needs normal pressure throug
 | compat Opus 5.5 (`WAdNGvRiqFvDegQPcpcwAd`) | completed, no limit event | 70 / 27 / 41 (0 tool errors) | 1.52, 4 | 1.571204 USD, complete |
 | compat GPT-6.1 Sol (`U6UgKmucEdbsaNdiQXHcG5`) | completed, no limit event | 56 / 24 assistant messages, 25 model calls / 30 (1 bash argument-parsing error) | 1.25, 3 | 5.000000 USD estimated, HOLD |
 
+Message-limit assessment (counts only; one small compat task per candidate, so indicative, not conclusive): both
+candidates finished far from the shared 200-message limit (Opus 70, 35 %; GPT 56, 28 %). Each turn adds one assistant
+message plus one tool message per call, so 200 messages buy about 198 / (1 + calls per turn) turns: Opus at 1.52 calls
+per turn about 79 turns (about 120 tool calls), GPT at 1.25 about 88 turns (about 110 tool calls), the Gemini dev
+attempt at 1.00 exactly 99 turns (99 tool calls). The limit therefore acts close to a budget of roughly 100-120 tool
+calls whatever the batching style; batching parallel calls is not penalised per call. The risk is elsewhere: on the
+larger formal tasks the Gemini attempt needed more than 99 single-call turns and did not finish, so the 200-message limit
+may bind for both candidates before time or tokens, and results would then measure work under a tool-call budget. The
+uncapped Gemini dev units will give per-task message counts; deciding whether 200 stays is a freeze-v1 question for the
+human (no candidate setting changed).
+
 GPT compat accounting blocker: model call 7 of 25 ended with a provider HTTP 502 recorded on the model event (no
 output, no usage); the next call proceeded and the sample completed. The ledger priced the 24 reported calls at
 0.472138 USD (Inspect total 0.472131) and settled conservatively at the 5.00 reservation with a hold; the compat class
