@@ -573,6 +573,7 @@ def build_variant(name: str, twin_final: str, out_dir: str) -> str:
 
 def write_catalog(path: str) -> dict:
     cat = {"task_id": TASK, "gold_files_sha256": gold_sha256(), "baseline": GOLD_BASELINE,
+           "scope": "expectations cover the deterministic items only; 'neutral' means deterministic-neutral; effects on judge-only items (11, 23, 24, 27-30) are not asserted",
            "variants": {n: {"kind": s["kind"], "basis": s["basis"], "expected_overrides": s.get("expected", {}), "expected_attribution": s.get("attribution", {})} for n, s in CATALOG.items()}}
     with open(path, "w", encoding="utf-8") as f:
         json.dump(cat, f, indent=1)

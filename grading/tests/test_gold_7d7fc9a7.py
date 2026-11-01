@@ -3,6 +3,7 @@ cached values, and under GOLD_RECALC_DOCKER=1 through LibreOffice), the values-o
 (item 7 additionally fails: no formulas), and every catalog variant grades to its declared full map. Observed
 transitions go to $GRADING_REGRESSION_LOG_DIR/gold_transitions_7d7fc9a7.json.
 Run: harness/tests/run_isolated.sh <root> unittest grading.tests.test_gold_7d7fc9a7"""
+import asyncio
 import json
 import os
 import shutil
@@ -11,12 +12,17 @@ import unittest
 
 import openpyxl
 
+from harness import collect as C
+from harness.tests.test_collect_unit import RUN, FakeSandbox
 from grading import checks_7d7fc9a7 as CK, extract as X
 from grading import gold_variants_7d7fc9a7 as GV
+from grading.grade import ENGINE_VERSION, code_provenance, grade_run
+from grading.tests.test_grading_chain import EXEC_OK, fake_log, fixture_listing
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 RUBRIC = json.load(open(os.path.join(ROOT, "private", "rubric", f"{GV.TASK}.json"), encoding="utf-8"))
 REFERENCE = json.load(open(os.path.join(ROOT, "private", "checks", "recalc", f"{GV.TASK}.json"), encoding="utf-8"))
+PROMPT = open(os.path.join(ROOT, "data", "prompts", f"{GV.TASK}.txt"), encoding="utf-8").read()
 TABLE: dict = {}
 
 
@@ -39,7 +45,7 @@ def _dump(name):
     if out:
         os.makedirs(out, exist_ok=True)
         with open(os.path.join(out, name), "w", encoding="utf-8") as f:
-            json.dump(TABLE, f, indent=1, default=str)
+            json.dump({"_provenance": {**code_provenance(), "task_grader_version": CK.VERSION, "engine_version": ENGINE_VERSION}, **TABLE}, f, indent=1, default=str)  # full commit + dirty state (Codex P1)
 
 
 class GoldAnchorTests(unittest.TestCase):
@@ -63,13 +69,14 @@ class GoldAnchorTests(unittest.TestCase):
         self.assertEqual(self.gold["map"], GV.GOLD_BASELINE, {i: v for i, v in self.gold["map"].items() if v != GV.GOLD_BASELINE[i]})
         self.assertEqual(self.gold["critical"], {"C1": "pass", "C2": "fail", "C3": "pass", "C4": "fail"})
         items = self.gold["res"]["items"]
-        self.assertIn("no cell on the summary shows the total prepaid balance", items[10]["note"])  # expert defect: no total cell (A-10b)
+        self.assertIn("no summary cell is labelled as the total prepaid balance", items[10]["note"])  # expert defect: no total cell (A-10b)
         self.assertIn("no variance figure", items[30]["note"])  # expert defect: 1250 variance row without monthly figures (A-30)
         sch = self.gold["res"]["schedules"]
         self.assertEqual((sch["1250"]["lines"], sch["1251"]["lines"], len(sch["1250"]["match"]["matched"]), len(sch["1251"]["match"]["matched"])), (41, 22, 41, 25))  # BCBS: four invoices on one consolidated line
-        found = self.gold["res"]["summary"]["found"]
-        self.assertEqual({k: v["how"] for k, v in found.items()}, {"balance_1250": "value", "balance_1251": "value", "total": "absent", "ytd_1250": "value", "ytd_1251": "value"})
-        self.assertTrue(all(found[k]["formula"] for k in ("balance_1250", "balance_1251", "ytd_1250", "ytd_1251")))
+        found = self.gold["res"]["summary"]["found"]  # identity from labels and headings, never from the expected value (Codex B3)
+        self.assertEqual({k: (v["status"], v["cells"]) for k, v in found.items()}, {"balance_1250": ("unique", ["B9"]), "balance_1251": ("unique", ["B14"]), "total": ("none", []),
+                                                                                  "ytd_1250": ("unique", ["B8"]), "ytd_1251": ("unique", ["B13"])})
+        self.assertTrue(all(found[k]["formulas"][0] for k in ("balance_1250", "balance_1251", "ytd_1250", "ytd_1251")))
 
     def test_values_only_twin_grades_to_the_twin_baseline(self):
         self.assertEqual(self.twin["map"], GV.TWIN_BASELINE, {i: v for i, v in self.twin["map"].items() if v != GV.TWIN_BASELINE[i]})
@@ -98,6 +105,9 @@ class GoldVariantTests(unittest.TestCase):
         TABLE[name] = {"kind": spec["kind"], "expected_overrides": spec.get("expected", {}), "observed_fail": sorted(i for i, v in g["map"].items() if v == "fail"),
                        "observed_cannot_assess": sorted(i for i, v in g["map"].items() if v == "cannot_assess"), "critical": g["critical"], "diff": diff}
         self.assertEqual(set(g["map"]), set(CK.D_ITEMS))
+        self.assertIn(spec["kind"], ("rubric_relevant", "neutral", "d_neutral"))
+        if spec["kind"] in ("neutral", "d_neutral"):
+            self.assertNotIn("expected", spec, f"{name}: a (D-)neutral variant declares no deterministic change")
         self.assertEqual(diff, {}, f"{name} ({spec['kind']}): " + json.dumps(diff, indent=1, default=str))
         for i, a in spec.get("attribution", {}).items():
             self.assertEqual(g["res"]["items"][i].get("attribution"), a, f"{name}: item {i} attribution")
@@ -113,6 +123,45 @@ def _make(name):
 
 for _name in GV.CATALOG:
     setattr(GoldVariantTests, f"test_{_name}", _make(_name))
+
+
+class ProductionGradeRunTests(unittest.TestCase):
+    """Codex B1: the production entry grade_run on a 7d7fc9a7 run directory built through the real collector and outcome
+    writer (fake sandbox listing the expert workbook), judge disabled, no recalculation: one results record and one row per
+    rubric item - 41 deterministic rows with weight and criterion, 14 judge rows pending, 1 visual row pending human - with
+    the combined grader version and the full commit in the pass, scores computed from the rows, verdict-free review packet."""
+    def test_grade_run_production_path_with_the_judge_disabled(self):
+        with tempfile.TemporaryDirectory(prefix="grade_run_7d7f_") as tmp:
+            base = os.path.realpath(tmp)
+            b = {**RUN, "uuid": "prod7d7f0000000000000", "sample_id": GV.TASK, "task_id": "gdpval-dev", "eval_id": "evalProd7d7f"}
+            host = os.path.join(base, "runs", b["uuid"])
+            C.bind_run(host, b, "dev", "solver")
+            lst, contents = fixture_listing(GV.GOLD_DIR)
+            rec = asyncio.run(C.collect_final_outputs(host, "scorer", b, sb=FakeSandbox(lst, contents)))
+            C.write_run_outcome(host, b, rec, EXEC_OK)
+            out = os.path.join(host, "grading")
+            r = grade_run(host, fake_log(b), b["uuid"], task_id=GV.TASK, rubric=RUBRIC, task_prompt=PROMPT, reference=REFERENCE, out_dir=out, judge=None, recalc=False)
+            self.assertEqual((r["gate"], r["graded"], r["pass_kind"], r["judge_mode"]), ("passed", True, "deterministic_only", "none"))
+            self.assertEqual(r["grader_version"], f"{ENGINE_VERSION}+{CK.VERSION}"); self.assertEqual(len(r["code"]["commit"] or ""), 40); self.assertIn("untracked_paths", r["code"])
+            rows = [json.loads(l) for l in open(os.path.join(out, "grades.jsonl"), encoding="utf-8")]
+            self.assertEqual(len(rows), len(RUBRIC)); self.assertEqual(sorted(g["item"] for g in rows), list(range(1, len(RUBRIC) + 1)))
+            by_src = {s_: [g for g in rows if g["source"] == s_] for s_ in ("D", "J", "V")}
+            self.assertEqual((len(by_src["D"]), len(by_src["J"]), len(by_src["V"])), (41, 14, 1))
+            self.assertTrue(all(g["verdict"] == "pending_judge" for g in by_src["J"])); self.assertEqual(by_src["V"][0]["verdict"], "pending_human")
+            self.assertTrue(all(g["weight"] == RUBRIC[g["item"] - 1]["score"] and g["criterion"] == RUBRIC[g["item"] - 1]["criterion"] for g in rows))
+            self.assertEqual({g["item"]: g["verdict"] for g in by_src["D"]}, GV.GOLD_BASELINE)
+            s_ = r["score"]
+            d_weight = sum(g["weight"] for g in by_src["D"])
+            self.assertEqual((s_["W"], s_["E"], s_["P"]), (sum(x["score"] for x in RUBRIC), d_weight, d_weight - RUBRIC[9]["score"] - RUBRIC[29]["score"]))  # 10 and 30 fail (expert defects)
+            self.assertEqual(s_["critical"]["C2"]["status"], "fail"); self.assertEqual(s_["critical"]["C4"]["status"], "fail")
+            results = [json.loads(l) for l in open(os.path.join(out, "results.jsonl"), encoding="utf-8")]
+            self.assertEqual(len(results), 1)
+            md = open(r["review_materials"]["items"], encoding="utf-8").read()
+            for leak in ("confirmed violation", "no variance figure", "wrong_value", "variance_missing_month"):
+                self.assertNotIn(leak, md)
+            sealed = json.load(open(r["review_materials"]["judge_verdicts"], encoding="utf-8"))
+            self.assertEqual(sealed["deterministic"]["30"]["verdict"], "fail")
+            TABLE["production_grade_run"] = {"rows": len(rows), "sources": {k: len(v) for k, v in by_src.items()}, "score": {k: s_[k] for k in ("W", "E", "P")}, "grader_version": r["grader_version"], "code": r["code"]}
 
 
 @unittest.skipUnless(os.environ.get("GOLD_RECALC_DOCKER") == "1", "set GOLD_RECALC_DOCKER=1 to run the LibreOffice path in the pinned image")
@@ -156,7 +205,7 @@ class GoldRecalcDockerTests(unittest.TestCase):
 
     def test_total_prepaid_added_as_a_formula_passes_item_10(self):
         def mutate(wb):
-            ws = wb[GV.SUMMARY]; ws.cell(16, 1).value = "Total Prepaid Balance - 4/30/2025"; ws.cell(16, 2).value = "=B9+B14"
+            ws = wb[GV.SUMMARY]; ws.cell(16, 1).value = "Total Prepaid Balance - 4/30/2025"; ws.cell(16, 2).value = "=B9+B14"; ws.cell(16, 2).number_format = ws.cell(9, 2).number_format
         g = self._variant("total_formula", mutate)
         expected = {**GV.GOLD_BASELINE, 10: "pass"}
         TABLE["total_formula_recalc"] = {"map": g["map"]}

@@ -590,7 +590,9 @@ class PilotLauncher:
                "settlement_cost_usd": st.get("cost_usd"), "estimated": st.get("estimated"), "manual_review_required": bool(meta.get("manual_review_required") or st.get("manual_review_required")),
                "stop_recorded": meta.get("stop_recorded") or (meta.get("post_run") or {}).get("stop_recorded"), "log_file": meta.get("log_file"), "log_dir": meta.get("log_dir"),
                "artifact_manifest": {k: (meta.get("artifact_manifest") or {}).get(k) for k in ("path", "sha256", "file_count")} if meta.get("artifact_manifest") else None,
-               "ledger": meta.get("ledger"), "code_commit": (self.provenance.get("code") or {}).get("commit"), "config_sha256": self.provenance.get("config_sha256"),
+               "ledger": meta.get("ledger"), "code_commit": (self.provenance.get("code") or {}).get("commit"),
+               "code_loaded_commit": (self.provenance.get("code_loaded") or {}).get("commit"), "harness_source_sha256": ((self.provenance.get("code_loaded") or {}).get("harness_source") or {}).get("sha256"),
+               "config_sha256": self.provenance.get("config_sha256"),
                "started_at": meta.get("started_at"), "finished_at": meta.get("finished_at")}
         path = os.path.join(self.runs_root, "run_inventory.jsonl")
         with open(path, "a", encoding="utf-8") as f:
@@ -744,6 +746,31 @@ def git_provenance(root: str = ROOT) -> dict:
         return {"commit": None, "dirty": None, "changed_paths": None, "error": type(ex).__name__}
 
 
+def harness_source_fingerprint(root: str = ROOT) -> dict:
+    """SHA-256 over the harness package sources (path + bytes, sorted) as they are on disk now."""
+    h = hashlib.sha256()
+    files = sorted(os.path.relpath(os.path.join(dp, f), root) for dp, _, fs in os.walk(os.path.join(root, "harness")) for f in fs
+                   if f.endswith((".py", ".yaml", ".txt")) and "__pycache__" not in dp and "/tests" not in dp.replace(os.sep, "/"))
+    for rel in files:
+        h.update(rel.encode() + b"\0")
+        with open(os.path.join(root, rel), "rb") as fh:
+            h.update(fh.read())
+        h.update(b"\0")
+    return {"sha256": h.hexdigest(), "files": len(files)}
+
+
+# The code this process actually runs: captured once at import. A long batch process keeps executing the modules it
+# imported even when the repository moves on, so every unit records this beside the repository state at its own start.
+CODE_AT_IMPORT = None
+
+
+def code_loaded() -> dict:
+    global CODE_AT_IMPORT
+    if CODE_AT_IMPORT is None:
+        CODE_AT_IMPORT = {**git_provenance(), "harness_source": harness_source_fingerprint(), "captured_at": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds")}
+    return CODE_AT_IMPORT
+
+
 def verify_system_prompt(cfg: dict, root: str = ROOT) -> dict:
     """The system prompt file actually used by make_task must hash to the value recorded in the
     config (the file bytes, or the stripped text that make_task sends; the matching form is recorded).
@@ -844,7 +871,7 @@ def main(argv=None, *, eval_fn=None, environ: dict | None = None, docker_runner=
     ledger = BudgetLedger(args.ledger, batch["budget_ceiling_usd"], prices_from_config(cfg), label=args.run_label)
     unit = build_unit(cfg, task_id=args.task_id, model=args.model, runs_root=runs_root, config_path=args.config, run_label=args.run_label, task_set=task_set)
     provenance = {"run_label": args.run_label, "batch": {k: (str(v) if isinstance(v, Decimal) else v) for k, v in batch.items()}, "task_set": task_set,
-                  "code": git_provenance(), "config_path": args.config, "config_sha256": config_sha256(args.config), "config_status": cfg["_status"][:5], "ledger": ledger.identity(),
+                  "code": git_provenance(), "code_loaded": code_loaded(), "config_path": args.config, "config_sha256": config_sha256(args.config), "config_status": cfg["_status"][:5], "ledger": ledger.identity(),
                   "prompt": unit["prompt"], "image_id": image.get("daemon_id"), "image_platform": (image.get("os"), image.get("architecture")),
                   "image_tags_informational": image.get("repo_tags"), "runs_root": runs_root, "task_id": args.task_id, "model": args.model,
                   "sample_ids": unit["sample_ids"], "staging_verified": unit["staging_verified"], "tool_timeout_s": unit["tool_timeout_s"],

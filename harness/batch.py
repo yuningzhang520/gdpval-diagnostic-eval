@@ -139,7 +139,7 @@ def main(argv=None, *, eval_fn=None, environ: dict | None = None, docker_runner=
     os.makedirs(record_dir, exist_ok=True)
     stamp = dt.datetime.now(dt.timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     summary = {"run_label": args.run_label, "model": args.model, "task_set": task_set, "mode": "real-run" if args.real_run else "dry-run", "estimate_usd_per_unit": str(estimate),
-               "batch": {k: (str(v) if isinstance(v, Decimal) else v) for k, v in batch.items()}, "config_sha256": L.config_sha256(args.config), "code": L.git_provenance(),
+               "batch": {k: (str(v) if isinstance(v, Decimal) else v) for k, v in batch.items()}, "config_sha256": L.config_sha256(args.config), "code": L.git_provenance(), "code_loaded": L.code_loaded(),
                "authorization": {"by": args.authorized_by, "ref": args.authorization_ref, "confirm_batch": args.confirm_batch} if args.real_run else None,
                "plan": plan, "units": [], "started_at": _now()}
     path = os.path.join(record_dir, f"batch_{args.run_label}_{stamp}.json")

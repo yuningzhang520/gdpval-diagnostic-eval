@@ -991,6 +991,8 @@ class RunClassTests(_Base):
         self.assertEqual(len(inv), 1); i = inv[0]
         self.assertEqual((i["kind"], i["run_label"], i["task_id"], i["model"], i["dry_run"], i["inspect_status"]), ("sample", "formal", self.TASK, self.MODEL, False, "success"))
         self.assertTrue(i["run_uuid"] and i["settlement_cost_usd"] and i["artifact_manifest"]["path"] and i["artifact_manifest"]["sha256"])
+        self.assertEqual(len(i["code_loaded_commit"] or ""), 40); self.assertEqual(len(i["harness_source_sha256"] or ""), 64)  # the code the process runs, captured at import
+        self.assertEqual(i["harness_source_sha256"], L.code_loaded()["harness_source"]["sha256"])
         man = json.loads(Path(i["artifact_manifest"]["path"]).read_text())
         self.assertEqual((man["run_uuid"], man["run_label"], man["files"], man["file_count"]), (i["run_uuid"], "formal", [], 0))  # the synthetic log collected nothing: an empty, hashed manifest
         run_json = json.loads(Path(self.runs, i["run_uuid"], "ledger_binding.json").read_text())
@@ -998,3 +1000,14 @@ class RunClassTests(_Base):
         launcher = L.PilotLauncher(self.cfg, runs_root=self.runs, ledger=b.BudgetLedger.open_existing(self.ledger_path, PRICES), eval_fn=None, run_label="formal")
         again = launcher.write_artifact_manifest(i["run_uuid"])
         self.assertEqual((again["written"], again["consistent_with_existing"]), (False, True))  # written once, verified afterwards
+
+
+class CodeLoadedTests(_Base):
+    """A long batch process keeps running the modules it imported: the fingerprint is captured once and never refreshed."""
+    def test_code_loaded_is_captured_once_and_fingerprints_the_harness_sources(self):
+        first = L.code_loaded()
+        self.assertIs(L.code_loaded(), first)
+        fp = L.harness_source_fingerprint()
+        self.assertEqual(first["harness_source"], fp)  # the tree has not changed during this test
+        self.assertGreater(fp["files"], 5)
+

@@ -187,6 +187,20 @@ validation evidence; the development model's samples do not establish cross-fami
 generalisation. Compatibility runs (`compat`, task `87da214f…`, outside the formal
 ten) verify provider, tool, artifact, rendering and accounting behaviour only.
 
+### 1.17 Rubric-to-capability mapping (DRAFT, 2026-11-01; approved at `freeze-v1`)
+Every rubric item of the ten tasks carries one primary capability for the cross-task analysis:
+requirements (deliverable-spec compliance), grounding (figures and items taken from the attached
+sources), rule_execution (computed figures, flags, classifications by the task's rules), coverage
+(every required element present, no omissions or extras), consistency (one part of the deliverable
+agrees with another, incl. document versus workbook), mechanics (formulas and links, pivot and chart
+objects, error-free and sortable cells), presentation (formatting, readability, style). The map is
+built deterministically by `scripts/capability_map.py` from the rubric text with an ordered rule list
+(the first matching rule decides; the rule is recorded per item) into `grading/capability_map.json`;
+item-level overrides are recorded in the script with their reason. Status: rule-based draft; a full
+item-by-item review (assistant pass, then human approval) is required before freeze, and the mapping
+is fixed before any formal result is seen. Capability results are reported per task and capability
+with numerators and denominators; items are never pooled into a single headline percentage.
+
 ### 1.14 Review entry and result boundaries
 All failures, incomplete runs, `cannot_assess` items, and critical disagreements enter
 review; passes are sampled for false passes. Investigation order: task material,
@@ -1009,6 +1023,40 @@ also 929,354.31 (A-10).
   title rows, label variants, "$" formats, no beginning-balance column) lands on its declared
   maps; formula-dependent cases (summary linkage) run through LibreOffice when the docker
   path is free.
+- Amendments after Codex Review 1 (2026-11-01; grader 7d7fc9a7-2026-11-01.2; review
+  `logs/shared-core-review-wm_mg0v2/review.md`; no model output of this task had been graded or
+  opened, nothing to re-grade). Grading rules unchanged; implementation brought in line with them:
+  - Evidence states (B2). Old implementation: an unreadable cell (formula without a cached
+    value) was summed as zero, treated as an absent figure, or skipped; an ambiguous month
+    column took the first candidate; rows with figures but no vendor were dropped as notes.
+    Evidence it was wrong: Codex B2 and gold variants R23-R28 (each gave a model FAIL or a PASS
+    on the pre-fix code). New implementation: cells are ok / blank / unreliable / invalid;
+    a blank cell is zero in schedule arithmetic (the spreadsheet's own evaluation) and an
+    absent figure where a figure must be shown; unreliable cells, ambiguous month columns or
+    bottom rows and unmapped or ambiguous vendor columns make the dependent items
+    `cannot_assess` (grader side); rows with figures but no vendor are unidentified rows that
+    bound the confirmed missing-invoice count (as in 1137 2.4) and turn an unexplained totals
+    difference into `cannot_assess`; independently confirmed violations still FAIL.
+  - Summary identity (B3). Old implementation: a summary figure was located by searching for
+    the expected value first. New: each summary figure's account and measure are read from its
+    row label and the heading above it (1250 / expense, 1251 / insurance; balance, amortization,
+    additions; a labelled total balance naming no single account is the total); the value is
+    compared only afterwards; no labelled candidate with every figure identified as another
+    measure is a confirmed absence, unrecognised labels give `cannot_assess`, several labelled
+    candidates with different values give `cannot_assess` unless all differ from the target.
+    Regression: R22 (B9 / B14 amounts exchanged under unchanged labels fail 8 and 9).
+  - Rubric 53 (B4). Old implementation: 53 failed only when more than 10 % of the schedule
+    amount cells lacked the format - an allowance neither the rubric nor the operational
+    definition above grants. New: every nonzero monetary cell (schedule lines, bottom rows,
+    summary figures) must carry a currency symbol or a two-decimal thousands format; blank or
+    zero cells carry no amount and are not tested; an unreadable figure with a non-currency
+    format gives `cannot_assess`. Regression: R21 (one General-formatted invoice amount fails 53).
+  - Item contract (B1): every deterministic item row carries weight, criterion, dependencies;
+    the production `grade_run` path is pinned by an integration regression (judge disabled).
+  - Catalog scope (P1): expectations cover deterministic items only; N11 (lines sorted by
+    amount) is D-neutral only - judge-only item 17 (organised by vendor) is expected to change.
+  The expert workbook's deterministic verdicts are unchanged (39 of 41 pass; 10 and 30 fail
+  as before, A-10b / A-30); C2 keeps rubric 30 (decided 2026-11-01).
 
 ### 2.8 `2ea2e5b5-257f-42e6-a7dc-93763f28b19d` — Work-time study deck (CIS Managers)
 Inputs: `Work Time Study - Source.xlsx` (15,918 rows; labels "Audit / Compliance" (546

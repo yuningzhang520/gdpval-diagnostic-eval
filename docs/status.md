@@ -2939,6 +2939,55 @@ second held dev unit (the free-tier project's usage page at 10:10Z is the eviden
 `b5d2e6f1…` attempt, and the chain resume. Note: the prepaid balance, not the harness ceilings, would bound the Gemini
 batches.
 
+## Gemini recovery and third attempt (2026-11-01; reconciliation, paid replacement; chain not resumed: message limit)
+
+Key: a newly launched process loads `GOOGLE_API_KEY` from the project `.env` with the Paid Tier 1 suffix (verified by suffix
+only, mode 0600, no shell / profile / `GEMINI_API_KEY` / Vertex override). The second held dev unit was reconciled at 0.00 USD
+(manual_resolution; basis: the run's own 429 answers naming the free-tier request metric for the key then in `.env`, the
+per-project tier rule of the Gemini documentation; recorded as an inference - no billing console, usage page or invoice of
+that project was checked by anyone). All earlier events are kept (reservation, estimated settlement, engineering failure,
+manual resolution for both attempts).
+
+Third attempt (authorized; unit `b5d2e6f1…:google/gemini-3.8-flash:20261101T110000Z`, run uuid `LJbb8ZyPWZgPE8VCFRbLGD`,
+detached in its own session, config snapshot `config_f3d87934ed1b.json`, launched from clean commit `2e3d3e1`): reached the
+paid-tier provider; 99 model calls (0 failed, 0 without usage, stop reasons all `stop`), 99 tool calls (bash, python,
+render_document); usage 385,544 input / 7,222,613 cache-read / 109,191 output (62,629 reasoning) tokens; settled 1.240337 USD
+(Inspect 1.24032), not estimated, no hold; dev ledger clear (settled 1.240337, remaining 98.759663). Outcome: execution status
+`limited`, limit type `message` (message_limit 200 reached after 21 min 34 s; time limit 7,200 s, token limit 20 M and the
+10 USD cost limit not reached; solver not finished); collection `complete`, outcome class `collected`; one deliverable
+(`Weekly Sales Data.xlsx`, 127,761 bytes, the expected .xlsx type, structurally valid, artifact manifest consistent with the
+collector). Deliverable content not opened (no Grader v0 for this task yet).
+
+The chain was NOT resumed: the gate requires a successful replacement, and a `limited` result requires investigation before
+any decision on development resource settings. Cause (run-level evidence): 1 system + 1 user + 99 assistant + 99 tool
+messages = 200 = message_limit; the model works in one-tool-call steps, so the message limit binds long before time, tokens
+or cost. Decision needed (see the report in chat).
+
+## Codex Review 1 fixes (2026-11-01; review `logs/shared-core-review-wm_mg0v2/review.md` of `bd5713b`; task version 7d7fc9a7-2026-11-01.2; no model call; logs `logs/codex-r1-fixes-20261101T*/`)
+
+B1 item contract and production path, B2 evidence states, B3 label-first summary identity, B4 item 53 without allowance,
+P1 N11 (D-neutral only, judge item 17 expected to change), P1 provenance (`code_provenance` counts untracked files; suite
+dumps carry `_provenance`; launcher records the code loaded at process start and a harness source fingerprint per unit).
+Each blocker has a reproducing test that fails on the pre-fix module (blob `057a4180…`, identical to `bd5713b`):
+`red_prefix_7d7fc9a7.log` - 8 failures and 1 error (`KeyError: 'weight'`) - and passes after the fix. The shared engine and
+the 1137 grader are byte-identical to the reviewed target. Expert verdicts unchanged (7d7fc9a7: 10 and 30 fail; 1137: 21).
+Closure table and package: `docs/codex_review_1_closure.md`.
+
+| Command (`run_isolated.sh`, `/usr/bin/time -p`) | Wall clock | Exit | Result |
+|---|---|---|---|
+| `unittest grading.tests.test_gold_7d7fc9a7` (+ R21-R28, production grade_run) | 5.6 → 5.9 s | 1 / 0 | 46/46 + 3 docker-gated skipped (first run: one pinned message and the R10 cell format in the test material) |
+| pre-fix module, the nine new cases (expected red) | 2.1 s | 1 | 8 failures, 1 error |
+| `unittest grading.tests.test_gold_1137e2bb` | 14.5 s | 0 | 53/53 + 2 skipped |
+| `unittest grading.tests.test_layout_regressions` | 4.1 s | 0 | 57/57 |
+| `unittest grading.tests.test_grading_chain` (+ CodeProvenanceTests) | 3.4 s | 0 | 29/29 |
+| `unittest grading.tests.test_review_packets` | 0.1 s | 0 | 2/2 |
+| `unittest harness.tests.test_launcher_regressions` (+ CodeLoadedTests) | 6.2 s | 0 | 49/49 |
+| `unittest harness.tests.test_batch_unit` / `test_budget_unit` / `test_staging_unit` / `test_generation_config` / `test_docs_consistency` | 1.1 / 1.0 / 0.8 / 2.6 / 0.9 s | 0 | 3 / 34 / 12 / 8 / 3 |
+
+Docker-gated suites: run after this commit on the idle sandbox (records bound to the commit; next status entry).
+Also drafted (not committed with the fixes): the rubric-to-capability map (`scripts/capability_map.py`,
+`grading/capability_map.json`, preregistration 1.17 DRAFT).
+
 ## Known issues and findings (material check)
 
 - `rubric_json.form_content`: 8,036 items hold `null`, 2,417 items lack the key, zero
@@ -2991,11 +3040,9 @@ batches.
 
 ## In flight
 
-Paid chain stopped on a provider quota blocker (section "Replacement unit result and second paid blocker"); waiting for
-the human's decisions on the Google quota, the held unit and a further replacement. Codex Review 1 pending (package
-sent by the human). The `7d7fc9a7…` development output stays sealed until the C2 composition is adjudicated (the
-approved composition stands meanwhile). Offline: verdict-free review packets and label checkpoints done; PPTX
-extraction and the Task 3 (`2ea2e5b5…`) grader in progress; capability mapping next; docker-gated suites deferred.
+Paid chain stopped after the third `b5d2e6f1…` attempt ended `limited` (message limit); waiting for the human's decision on
+the development resource setting before the remaining dev units, compat and validation run. Codex Review 1 fixes committed;
+closure package `docs/codex_review_1_closure.md`. Task 3 (`2ea2e5b5…`) grader drafted offline (not yet committed).
 
 ## Decisions taken (date · what · commit)
 

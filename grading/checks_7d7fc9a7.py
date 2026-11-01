@@ -10,8 +10,16 @@ against the independently parsed invoice lists, the reconciliation rule (prereg 
 summary linkage. The reference is the independent recalculation (private/checks/recalc/<task>.json), never the
 expert workbook. Every comparison with a GL or rubric figure is HALF_UP to cents on the Decimal of the delivered
 value; identities on the deliverable's own values use a 0.005 tolerance (float noise), never a tolerance against the
-GL. No comparison is ever skipped into a PASS: a confirmed violation FAILs, an unreliable required input gives
-cannot_assess, everything else PASSes."""
+GL.
+
+Evidence states (version .2, Codex Review 1 B2): every cell an item needs is read as ok (a number), blank (a reliably
+empty cell: zero in schedule arithmetic, exactly as the spreadsheet itself evaluates it; a missing figure where a
+figure must be shown), unreliable (a formula without a cached value: grader side) or invalid (an error value or text
+where a number is required: a confirmed invalid value). Ambiguous structure (two columns for one month and kind, two
+bottom rows of one kind, an unmapped or ambiguous vendor column, rows with figures but no vendor) is kept as such. A
+confirmed violation FAILs even when another input is unreliable; otherwise any unreliable or ambiguous required input
+gives cannot_assess; only a complete, reliable comparison PASSes. Account identity on the summary is decided from
+labels and headings before any value is compared (B3); the expected answer is never used to find a cell."""
 import re
 from decimal import Decimal
 
@@ -19,11 +27,11 @@ from .engine import headers as H
 from .engine.cells import UNRELIABLE_KINDS, cell_coord, norm_text, numeric_cell, read_cell
 from .engine.decision import Decision, Result
 from .engine.money import cents, cents_equal, close, parse_money
-from .engine.sheets import find_label_rows, first_text, month_of, row_cells, sheet_names, text_in_rows
+from .engine.sheets import first_text, month_of, row_cells, sheet_names, text_in_rows
 from .engine.workbook import workbook_gate
 
 TASK = "7d7fc9a7-21a7-4b83-906f-416dea5ad04f"
-VERSION = "7d7fc9a7-2026-11-01.1"
+VERSION = "7d7fc9a7-2026-11-01.2"  # .1 first gold-first version; .2 Codex Review 1 B1-B4 (item contract, evidence states, label-first summary identity, item 53 without allowance)
 MONTHS = {1: "Jan", 2: "Feb", 3: "Mar", 4: "Apr"}
 D_ITEMS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 14, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 33, 34, 36, 37, 38, 39, 40, 41, 42, 43, 44, 47, 48, 49, 50, 53]
 J_ITEMS = [12, 15, 16, 17, 18, 31, 32, 35, 45, 46, 51, 52, 54, 55]
@@ -39,6 +47,11 @@ SCHED = {"1250": {"sheet_item": 3, "complete": 13, "amount": 14, "months": 19, "
          "1251": {"sheet_item": 4, "complete": 33, "amount": 34, "months": 38, "identity": 39, "totals": 40, "gl": {1: 41, 2: 42, 3: 43, 4: 44},
                   "bottom_all": 47, "variance": 48, "negative": 49, "monotone": 50, "invoices": "insurance_invoices"}}
 SCHED_ITEMS = {"1250": [3, 13, 14, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30], "1251": [4, 33, 34, 36, 37, 38, 39, 40, 41, 42, 43, 44, 47, 48, 49, 50]}
+# Inputs each item depends on (the production item contract, B1); "schedule_<acct>" covers that sheet's lines and bottom rows
+ITEM_INPUTS = {1: ["workbook"], 2: ["summary_sheet"], 5: ["summary_sheet"], 6: ["summary_sheet"], 7: ["summary_cells", "schedule_1250", "schedule_1251"],
+               8: ["summary_cells"], 9: ["summary_cells"], 10: ["summary_cells"], 11: ["summary_cells", "schedule_1250", "schedule_1251"], 53: ["schedule_1250", "schedule_1251", "summary_cells"],
+               **{i: ["schedule_1250", "expense_invoices"] if i in (13, 14, 20) else ["schedule_1250"] for i in SCHED_ITEMS["1250"]},
+               **{i: ["schedule_1251", "insurance_invoices"] if i in (33, 34) else ["schedule_1251"] for i in SCHED_ITEMS["1251"]}}
 
 # Non-month columns of a schedule (header text = month-row text + sub-row text, normalised)
 SCHEMA = {
@@ -61,6 +74,7 @@ SUB_KINDS = (("end", ("end bal", "ending", "end balance", "balance", "remaining"
 BOTTOM = {"totals": r"^(month(ly)?\s+)?totals?\b|^totals?\b|^sum\b|^grand total", "ending": r"^(total\s+)?(ending|end|closing)\s+bal", "variance": r"^variance|^difference|^diff\b|^var\b",
           "gl": r"^g\.?\s?l\.?\b|^general ledger|^gl bal|^per gl|^balance per gl|^gl$", "adjust": r"adjust|rounding"}
 NOT_A_LINE = r"^(month(ly)?\s+)?totals?\b|^totals?\b|^sum\b|^grand total|^(total\s+)?(ending|end|closing)\s+bal|^variance|^difference|^diff\b|^var\b|^g\.?\s?l\.?\b|^general ledger|^gl bal|^per gl|^balance per gl|^gl$|\btotal$|^subtotal|^note|^legend|^prepared|^source"
+CURRENCY = re.compile(r"[$€£¥]|\[\$")
 
 
 def _d(x):
@@ -78,6 +92,34 @@ def vendors_match(a: str, b: str) -> bool:
     return bool(ka) and bool(kb) and (ka == kb or ka in kb or kb in ka)
 
 
+# ----------------------------------------------------------------------------- evidence states
+def cell_state(cell) -> tuple[str, Decimal | None]:
+    """('ok', number) | ('blank', 0) | ('unreliable', None) | ('invalid', raw value) | ('absent', None) for no cell."""
+    if cell is None:
+        return "absent", None
+    if cell["status"] == "empty":
+        return "blank", Decimal(0)
+    if cell["status"] in UNRELIABLE_KINDS:
+        return "unreliable", None
+    st, v = numeric_cell(cell)
+    if st == "ok":
+        d = _d(v)
+        return ("ok", d) if d is not None else ("invalid", cell["value"])
+    return "invalid", cell["value"]
+
+
+def register(d: Decision, field: str, cell, row=None, recalc=None) -> str:
+    """Record what a cell implies for an item: unreliable -> unassessable (grader side), invalid -> confirmed violation.
+    Returns the cell's state."""
+    st, _ = cell_state(cell)
+    if st == "unreliable":
+        d.cell(field, cell["status"], cell["value"], cell["coord"], row, recalc)
+    elif st == "invalid":
+        nst, v = numeric_cell(cell)
+        d.cell(field, nst if nst != "ok" else "non_numeric", v, cell["coord"], row, recalc)
+    return st
+
+
 # ----------------------------------------------------------------------------- schedule parsing
 def sub_kind(text) -> str | None:
     t = norm_text(text)
@@ -91,8 +133,9 @@ def sub_kind(text) -> str | None:
 
 def month_header(sheet: dict, max_rows: int = 15) -> dict | None:
     """Locate the month-grouped header: the first row within max_rows with month tokens in at least three distinct
-    columns. Returns {"month_row", "sub_row" (row holding the add/amort/end kinds, may equal month_row), "header_end",
-    "groups": {month: {"add": col, "amort": col, "end": col}}, "other": [(col, header text)]}."""
+    columns. Returns {"month_row", "sub_row", "header_end", "groups": {month: {kind: col}} (first column of each month
+    and kind), "ambiguous": {(month, kind): [cols]} (two or more columns for one month and kind: the evidence cannot be
+    located uniquely), "unclassified": [(month, col)], "other": [(col, header text)]}."""
     rows = sheet["rows"]
     for r in range(1, min(max_rows, len(rows)) + 1):
         cells = row_cells(sheet, r)
@@ -106,6 +149,8 @@ def month_header(sheet: dict, max_rows: int = 15) -> dict | None:
             continue
         sub_cells = row_cells(sheet, r + 1) if r < len(rows) else []
         groups: dict = {}
+        ambiguous: dict = {}
+        unclassified = []
         other = []
         for idx, c in enumerate(cells):
             col = idx
@@ -118,19 +163,28 @@ def month_header(sheet: dict, max_rows: int = 15) -> dict | None:
                     kind = sub_kind(text)
                 if kind is None:
                     kind = "end" if sub is None else None
-                if kind and kind not in groups.setdefault(m, {}):
-                    groups[m][kind] = col
+                if kind is None:
+                    unclassified.append((m, col))
+                    continue
+                g = groups.setdefault(m, {})
+                if kind in g:
+                    ambiguous.setdefault((m, kind), [g[kind]]).append(col)
+                else:
+                    g[kind] = col
                 continue
             label = " ".join(x for x in (norm_text(text) if text is not None and not hasattr(text, "year") else "", norm_text(sub) if sub is not None and not hasattr(sub, "year") else "") if x).strip()
             if label:
                 other.append((col, label))
         two_row = any(sub_cells[i]["status"] == "ok" and sub_kind(sub_cells[i]["value"]) for i in range(len(sub_cells)) if not hasattr(sub_cells[i]["value"], "year"))
-        return {"month_row": r, "sub_row": r + 1 if two_row else r, "header_end": r + 1 if two_row else r, "groups": {m: g for m, g in sorted(groups.items())}, "other": other}
+        return {"month_row": r, "sub_row": r + 1 if two_row else r, "header_end": r + 1 if two_row else r, "groups": {m: g for m, g in sorted(groups.items())},
+                "ambiguous": ambiguous, "unclassified": unclassified, "other": other}
     return None
 
 
 def parse_schedule(sheet: dict, name: str) -> dict:
-    """Lines, bottom rows and the column map of one schedule sheet (every cell through read_cell)."""
+    """Lines, bottom rows and the column map of one schedule sheet (every cell through read_cell). Rows with business
+    figures but no vendor are kept as ``unidentified`` (never dropped as notes); duplicate bottom rows of one kind are
+    kept in ``bottom_duplicates``."""
     hdr = month_header(sheet)
     if hdr is None:
         return {"sheet": name, "status": "no_month_header", "lines": [], "bottom": {}, "groups": {}}
@@ -139,36 +193,69 @@ def parse_schedule(sheet: dict, name: str) -> dict:
         other_header[col] = label
     mapping = H.map_columns(other_header, SCHEMA)
     cols = mapping["cols"]
-    vendor_col = cols.get("vendor", 0 if 0 not in {c for g in hdr["groups"].values() for c in g.values()} else None)
-    lines, bottom, notes = [], {}, []
+    month_cols = {c for g in hdr["groups"].values() for c in g.values()} | {c for cs in hdr["ambiguous"].values() for c in cs}
+    if "vendor" in cols:
+        vendor_col, vendor_basis = cols["vendor"], "mapped from its header"
+    elif mapping["field_status"].get("vendor") == "ambiguous":
+        return {"sheet": name, "status": "vendor_ambiguous", "lines": [], "bottom": {}, "groups": hdr["groups"], "header": hdr, "vendor_candidates": mapping["ambiguous"].get("vendor")}
+    elif 0 not in month_cols and not other_header[0]:
+        vendor_col, vendor_basis = 0, "first column without a header (fallback)"
+    else:
+        return {"sheet": name, "status": "vendor_unmapped", "lines": [], "bottom": {}, "groups": hdr["groups"], "header": hdr, "unmapped_headers": mapping["unmapped_headers"]}
+    amb = set(hdr["ambiguous"])
+    lines, bottom, bottom_dups, notes, unidentified = [], {}, {}, [], []
     stop = len(sheet["rows"])
     for r in range(hdr["header_end"] + 1, stop + 1):
-        label = first_text(sheet, r, max_cols=max(3, (vendor_col or 0) + 1))
+        label = first_text(sheet, r, max_cols=max(3, vendor_col + 1))
         cells = row_cells(sheet, r)
         if not any(c["status"] != "empty" for c in cells):
             continue
+        month_cells = {m: {k: read_cell(sheet, r, c) for k, c in g.items()} for m, g in hdr["groups"].items()}
         if label and re.search(NOT_A_LINE, norm_text(label), re.I):
             key = next((k for k, rx in BOTTOM.items() if re.search(rx, norm_text(label), re.I)), None)
+            rec = {"row": r, "label": label, "months": month_cells, "other": {f: read_cell(sheet, r, c) for f, c in cols.items()}}
             if key and key not in bottom:
-                bottom[key] = {"row": r, "label": label, "months": {m: {k: read_cell(sheet, r, c) for k, c in g.items()} for m, g in hdr["groups"].items()},
-                               "other": {f: read_cell(sheet, r, c) for f, c in cols.items()}}
+                bottom[key] = rec
+            elif key:
+                bottom_dups.setdefault(key, [bottom[key]["row"]]).append(r)
             else:
                 notes.append({"row": r, "label": label})
             continue
-        vendor = cells[vendor_col]["value"] if vendor_col is not None and vendor_col < len(cells) and cells[vendor_col]["status"] == "ok" else None
-        month_cells = {m: {k: read_cell(sheet, r, c) for k, c in g.items()} for m, g in hdr["groups"].items()}
-        has_numbers = any(numeric_cell(cc)[0] == "ok" for mc in month_cells.values() for cc in mc.values()) or (cols.get("amount") is not None and numeric_cell(read_cell(sheet, r, cols["amount"]))[0] == "ok")
-        if not (isinstance(vendor, str) and vendor.strip()) or not has_numbers:
+        vendor = cells[vendor_col]["value"] if vendor_col < len(cells) and cells[vendor_col]["status"] == "ok" else None
+        amount_cell = read_cell(sheet, r, cols["amount"]) if cols.get("amount") is not None else None
+        figure_states = [cell_state(cc)[0] for mc in month_cells.values() for cc in mc.values()] + ([cell_state(amount_cell)[0]] if amount_cell else [])
+        has_figures = any(s_ in ("ok", "unreliable", "invalid") and not (s_ == "ok" and False) for s_ in figure_states)
+        if not has_figures:
             if label:
                 notes.append({"row": r, "label": label})
             continue
+        if not (isinstance(vendor, str) and vendor.strip()):
+            unidentified.append({"row": r, "label": label, "reason": "business figures without a vendor"})
+            continue
         line = {"row": r, "vendor": vendor.strip(), "months": month_cells, "other": {f: read_cell(sheet, r, c) for f, c in cols.items()}}
-        adds = {m: numeric_cell(mc["add"])[1] if "add" in mc and numeric_cell(mc["add"])[0] == "ok" else None for m, mc in month_cells.items()}
-        line["adds"] = adds
-        amt_cell = line["other"].get("amount")
-        amt = numeric_cell(amt_cell)[1] if amt_cell and numeric_cell(amt_cell)[0] == "ok" else None
-        line["amount"] = _d(amt) if amt is not None else (sum((_d(v) for v in adds.values() if v is not None), Decimal(0)) if any(v is not None for v in adds.values()) else None)
-        line["amount_source"] = "amount column" if amt is not None else "sum of monthly adds"
+        add_state, adds = {}, {}
+        for m in hdr["groups"]:
+            if (m, "add") in amb:
+                add_state[m], adds[m] = "ambiguous", None
+            elif "add" not in month_cells[m]:
+                add_state[m], adds[m] = "unmapped", None
+            else:
+                st, v = cell_state(month_cells[m]["add"])
+                add_state[m], adds[m] = st, (v if st in ("ok", "blank") else None)
+        line["add_state"], line["adds"] = add_state, adds
+        if amount_cell is not None and cell_state(amount_cell)[0] != "blank":
+            st, v = cell_state(amount_cell)
+            line["amount"], line["amount_state"], line["amount_source"] = (v if st == "ok" else None), st, "amount column"
+        else:
+            states = set(add_state.values())
+            if not adds:
+                line["amount"], line["amount_state"] = None, "unmapped"
+            elif states & {"unreliable", "ambiguous", "invalid", "unmapped"}:
+                bad = next(s_ for s_ in ("unreliable", "ambiguous", "invalid", "unmapped") if s_ in states)
+                line["amount"], line["amount_state"] = None, bad
+            else:
+                line["amount"], line["amount_state"] = sum(adds.values(), Decimal(0)), "ok"
+            line["amount_source"] = "sum of monthly adds"
         start = None
         sc = line["other"].get("start")
         if sc and sc["status"] == "ok":
@@ -178,7 +265,7 @@ def parse_schedule(sheet: dict, name: str) -> dict:
             if dc and dc["status"] == "ok":
                 start = month_of(dc["value"])
         if start is None:
-            firsts = [m for m, v in sorted(adds.items()) if v is not None and _d(v) and _d(v) > 0]
+            firsts = [m for m, v in sorted(adds.items()) if v is not None and v > 0]
             start = firsts[0] if firsts else None
         line["start"] = start
         tc = line["other"].get("term")
@@ -186,26 +273,28 @@ def parse_schedule(sheet: dict, name: str) -> dict:
         line["term"] = int(term) if term is not None and float(term).is_integer() else term
         lines.append(line)
     return {"sheet": name, "status": "ok", "header": hdr, "mapping": {k: v for k, v in mapping.items() if k in ("cols", "field_status", "unmapped_headers", "ambiguous")},
-            "groups": hdr["groups"], "lines": lines, "bottom": bottom, "notes": notes, "vendor_col": vendor_col}
+            "groups": hdr["groups"], "ambiguous_columns": amb, "unclassified_columns": hdr["unclassified"], "lines": lines, "bottom": bottom, "bottom_duplicates": bottom_dups,
+            "notes": notes, "unidentified": unidentified, "vendor_col": vendor_col, "vendor_basis": vendor_basis}
 
 
-def match_invoices(lines: list[dict], invoices: list[dict]) -> dict:
+def match_invoices(lines: list[dict], invoices: list[dict], unidentified: int = 0) -> dict:
     """Invoices against lines. Pass 1: vendor + month + exact amount on the month's add cell (a consolidated line may
     satisfy several invoices through different months). Pass 2: vendor + exact amount on the line's original amount.
-    Pass 3: vendor + month with a different amount (present, wrong amount). Leftover invoices are missing; leftover
-    lines are extra."""
+    An unmatched invoice is ``uncertain`` when a line of its vendor has an unreadable or ambiguous figure that could hold
+    it; otherwise a line of its vendor with a reliably read different amount makes it a wrong amount; otherwise it is
+    missing. Rows with figures but no vendor bound the confirmed missing count: max(0, missing - unidentified)."""
     used_adds: set = set()
     used_lines: set = set()
-    matched, wrong_amount, missing = [], [], []
+    matched, wrong_amount, missing, uncertain = [], [], [], []
     inv_amount = lambda inv: Decimal(inv["amount_text"].replace(",", ""))
+    keep = lambda inv: {k: inv[k] for k in ("vendor", "invoice", "month", "amount_text", "file", "page")}
     for inv in invoices:
         amt, m = inv_amount(inv), inv["month"]
         hit = None
         for i, ln in enumerate(lines):
             if not vendors_match(ln["vendor"], inv["vendor"]):
                 continue
-            v = ln["adds"].get(m)
-            if v is not None and (i, m) not in used_adds and cents_equal(v, amt):
+            if ln["add_state"].get(m) == "ok" and (i, m) not in used_adds and cents_equal(ln["adds"][m], amt):
                 hit = {"line": i, "row": ln["row"], "via": f"{MONTHS.get(m, m)} add"}
                 used_adds.add((i, m))
                 break
@@ -213,42 +302,65 @@ def match_invoices(lines: list[dict], invoices: list[dict]) -> dict:
             for i, ln in enumerate(lines):
                 if i in used_lines or not vendors_match(ln["vendor"], inv["vendor"]):
                     continue
-                if ln["amount"] is not None and cents_equal(ln["amount"], amt) and not any((i, mm) in used_adds for mm in ln["adds"]):
+                if ln["amount_state"] == "ok" and cents_equal(ln["amount"], amt) and not any((i, mm) in used_adds for mm in ln["adds"]):
                     hit = {"line": i, "row": ln["row"], "via": ln["amount_source"]}
                     used_lines.add(i)
                     break
         if hit:
-            matched.append({**{k: inv[k] for k in ("vendor", "invoice", "month", "amount_text", "file", "page")}, **hit})
+            matched.append({**keep(inv), **hit})
         else:
             missing.append(inv)
     still_missing = []
     for inv in missing:
         amt, m = inv_amount(inv), inv["month"]
-        cand = next((i for i, ln in enumerate(lines) if i not in used_lines and vendors_match(ln["vendor"], inv["vendor"]) and (ln["start"] in (None, m)) and not any((i, mm) in used_adds for mm in ln["adds"])), None)
+        vendor_lines = [(i, ln) for i, ln in enumerate(lines) if vendors_match(ln["vendor"], inv["vendor"])]
+        doubt = [(i, ln) for i, ln in vendor_lines if ln["add_state"].get(m) in ("unreliable", "ambiguous") or ln["amount_state"] in ("unreliable", "ambiguous")]
+        if doubt:
+            i, ln = doubt[0]
+            uncertain.append({**keep(inv), "line": i, "row": ln["row"], "reason": f"{MONTHS.get(m, m)} add {ln['add_state'].get(m)}, amount {ln['amount_state']}"})
+            continue
+        cand = next((i for i, ln in vendor_lines if i not in used_lines and ln["amount_state"] == "ok" and (ln["start"] in (None, m)) and not any((i, mm) in used_adds for mm in ln["adds"])), None)
         if cand is not None:
             ln = lines[cand]
             used_lines.add(cand)
-            wrong_amount.append({**{k: inv[k] for k in ("vendor", "invoice", "month", "amount_text", "file", "page")}, "line": cand, "row": ln["row"], "delivered_amount": str(ln["amount"]) if ln["amount"] is not None else None})
+            wrong_amount.append({**keep(inv), "line": cand, "row": ln["row"], "delivered_amount": str(ln["amount"])})
         else:
             still_missing.append(inv)
-    consumed = used_lines | {i for i, _ in used_adds}
-    extra = [{"line": i, "row": ln["vendor"] and ln["row"], "vendor": ln["vendor"], "amount": str(ln["amount"]) if ln["amount"] is not None else None} for i, ln in enumerate(lines) if i not in consumed]
-    return {"matched": matched, "wrong_amount": wrong_amount, "missing": still_missing, "extra_lines": extra, "invoices": len(invoices), "lines": len(lines)}
+    consumed = used_lines | {i for i, _ in used_adds} | {u["line"] for u in uncertain}
+    extra = [{"line": i, "row": ln["row"], "vendor": ln["vendor"], "amount": str(ln["amount"]) if ln["amount"] is not None else None} for i, ln in enumerate(lines) if i not in consumed]
+    return {"matched": matched, "wrong_amount": wrong_amount, "missing": still_missing, "uncertain": uncertain, "extra_lines": extra, "invoices": len(invoices), "lines": len(lines),
+            "unidentified_rows": unidentified, "confirmed_missing_lower_bound": max(0, len(still_missing) - unidentified)}
 
 
-def _num(cell):
-    """Decimal of an ok numeric cell, Decimal(0) for an empty cell (blank = zero in a schedule), None otherwise."""
-    if cell is None:
-        return None
-    if cell["status"] == "empty":
-        return Decimal(0)
-    st, v = numeric_cell(cell)
-    return _d(v) if st == "ok" else None
+def line_cell(line: dict, m: int, kind: str):
+    return line["months"].get(m, {}).get(kind)
 
 
-def line_values(line: dict, m: int, kind: str):
-    mc = line["months"].get(m, {})
-    return mc.get(kind)
+def column_sum(lines: list[dict], m: int, kind: str) -> dict:
+    """Sum of one month/kind over the lines with the cells that keep it from being known (unreliable) or valid (invalid)."""
+    total, unknown, invalid = Decimal(0), [], []
+    for ln in lines:
+        c = line_cell(ln, m, kind)
+        st, v = cell_state(c)
+        if st in ("ok", "blank"):
+            total += v
+        elif st == "unreliable":
+            unknown.append(c["coord"])
+        elif st == "invalid":
+            invalid.append(c["coord"])
+    return {"sum": total, "unknown": unknown, "invalid": invalid}
+
+
+def bottom_cell(rowrec, m: int, prefer=("end", "amort", "add")):
+    """(state, value, cell) of a bottom row's figure for month m: the first non-blank cell among the preferred kinds."""
+    if not rowrec or m not in rowrec["months"]:
+        return "absent", None, None
+    for k in prefer:
+        c = rowrec["months"][m].get(k)
+        st, v = cell_state(c)
+        if st in ("ok", "unreliable", "invalid"):
+            return st, v, c
+    return "blank", None, None
 
 
 def locate_sheets(x: dict) -> dict:
@@ -289,40 +401,67 @@ def locate_sheets(x: dict) -> dict:
     return out
 
 
-# ----------------------------------------------------------------------------- summary sheet
-SUMMARY_TARGETS = {"balance_1250": (r"1250|expense", r"balance|ending|gl", None), "balance_1251": (r"1251|insur", r"balance|ending|gl", None),
-                   "total": (r"total", r"prepaid|balance", r"1250|1251|expense|insur|amort|addition|invoice"),  # the grand total, never one account's figure
-                   "ytd_1250": (r"1250|expense", r"amort", None), "ytd_1251": (r"1251|insur", r"amort", None)}
+# ----------------------------------------------------------------------------- summary sheet (identity before value, B3)
+def account_of(text) -> str | None:
+    t = norm_text(text)
+    a = "1250" in t or re.search(r"\bexpenses?\b|\bexp\b", t) is not None
+    b = "1251" in t or "insur" in t
+    return "both" if a and b else "1250" if a else "1251" if b else None
+
+
+def kind_of(label) -> str | None:
+    t = norm_text(label)
+    if re.search(r"amorti[sz]", t):
+        return "ytd"
+    if re.search(r"\bbalance\b|\bending\b|\bg\.?\s?l\b|end of period", t):
+        return "balance"
+    if re.search(r"\btotal\b|addition|prepaid|invoice|\bytd\b|year-to-date|purchas", t):
+        return "additions"
+    return None
 
 
 def summary_cells(sheet: dict, max_rows: int = 60) -> list[dict]:
-    """Numeric cells of the summary sheet with their row label (and the sub-heading above the block) and formula."""
+    """Every figure cell of the summary sheet - numbers, formulas without a cached value, error values - with its state,
+    the row label, the sub-heading above the block, its formula and its number format."""
     out, heading = [], ""
     for r in range(1, min(max_rows, len(sheet["rows"])) + 1):
         cells = row_cells(sheet, r)
-        texts = [c["value"] for c in cells if c["status"] == "ok" and isinstance(c["value"], str) and c["value"].strip()]
-        nums = [(c, numeric_cell(c)[1]) for c in cells if numeric_cell(c)[0] == "ok" and not isinstance(c["value"], bool)]
-        if texts and not nums:
-            heading = texts[0]
-        for c, v in nums:
+        texts = [c["value"] for c in cells if c["status"] == "ok" and isinstance(c["value"], str) and c["value"].strip() and numeric_cell(c)[0] != "ok"]
+        figures = []
+        for c in cells:
             raw = sheet["cells"].get(c["coord"], {})
-            out.append({"coord": c["coord"], "row": r, "value": _d(v), "label": " ".join(texts), "heading": heading, "formula": raw.get("formula"), "cell": c})
+            st, v = cell_state(c)
+            if st == "ok" and not isinstance(c["value"], bool) and not (isinstance(c["value"], str) and not raw.get("formula")):
+                figures.append((c, st, v))
+            elif st == "unreliable" or (st == "invalid" and c["status"] == "error_value"):
+                figures.append((c, st, v))
+        if texts and not figures:
+            heading = texts[0]
+        for c, st, v in figures:
+            raw = sheet["cells"].get(c["coord"], {})
+            label = " ".join(texts)
+            kind, acct = kind_of(label), account_of(label)
+            if kind == "balance" and (acct == "both" or (acct is None and re.search(r"\btotal\b|combined|overall|grand|all accounts", norm_text(label)))):
+                cls = ("total", None)
+            else:
+                a = acct if acct not in (None, "both") else (account_of(heading) if acct is None else None)
+                cls = (kind, a if a != "both" else None)
+            out.append({"coord": c["coord"], "row": r, "state": st, "value": v, "label": label, "heading": heading, "formula": raw.get("formula"),
+                        "number_format": raw.get("number_format"), "class": cls, "cell": c})
     return out
 
 
-def find_summary_value(cells: list[dict], expected: Decimal | None, label_rx: tuple, exclude: set) -> tuple[dict | None, str]:
-    """A summary cell for a target: by value (cents equal to the expected figure), else by its label keywords (with an
-    exclusion pattern so a single account's figure never stands in for the grand total)."""
-    if expected is not None:
-        for c in cells:
-            if c["coord"] not in exclude and c["value"] is not None and cents(c["value"]) == cents(expected):
-                return c, "value"
-    acct_rx, kind_rx, not_rx = label_rx
-    for c in cells:
-        lab = norm_text(c["label"] + " " + c["heading"])
-        if c["coord"] not in exclude and re.search(acct_rx, lab) and re.search(kind_rx, lab) and not (not_rx and re.search(not_rx, lab)):
-            return c, "label"
-    return None, "absent"
+def resolve_target(cells: list[dict], kind: str, acct: str | None) -> dict:
+    """The summary cell(s) whose labels identify the target; values are never used to find them."""
+    cands = [c for c in cells if c["class"] == (kind, acct)]
+    unknown = [c for c in cells if c["class"][0] is None or (c["class"][0] in ("balance", "ytd", "additions") and c["class"][1] is None)]
+    if not cands:
+        return {"status": "none_with_unknowns" if unknown else "none", "cells": [], "unknown": [c["coord"] for c in unknown]}
+    if len(cands) == 1:
+        return {"status": "unique", "cells": cands, "unknown": []}
+    if all(c["state"] == "ok" for c in cands) and len({cents(c["value"]) for c in cands}) == 1:
+        return {"status": "unique_value", "cells": cands, "unknown": []}
+    return {"status": "ambiguous", "cells": cands, "unknown": []}
 
 
 def references_sheet(formula: str | None, sheet_name: str) -> bool:
@@ -330,6 +469,13 @@ def references_sheet(formula: str | None, sheet_name: str) -> bool:
         return False
     f = formula.replace("$", "")
     return f"'{sheet_name}'!" in f or re.search(rf"(?<![A-Za-z0-9_']){re.escape(sheet_name)}!", f) is not None
+
+
+def money_format_ok(nf: str | None) -> bool:
+    """Preregistration 2.7, rubric 53 (operational definition): a currency symbol, or exactly two decimals with thousands
+    separators (accounting or number format)."""
+    nf = nf or "General"
+    return bool(CURRENCY.search(nf)) or "#,##0.00" in nf
 
 
 # ----------------------------------------------------------------------------- checks
@@ -364,61 +510,82 @@ def run_checks(extraction: dict, reference: dict, rubric: list[dict], integrity:
             sch = parse_schedule(x["sheets"][name], name)
             schedules[acct] = sch
             if sch["status"] != "ok":
-                fill([i for i in SCHED_ITEMS[acct] if i != spec["sheet_item"]], "cannot_assess", f"extraction_failed: no month-grouped header found on sheet {name!r} (rows with Jan-Apr column groups)", "grader_extraction", ev_base)
+                reason = {"no_month_header": "no month-grouped header found (rows with Jan-Apr column groups)", "vendor_ambiguous": f"vendor column ambiguous ({sch.get('vendor_candidates')})",
+                          "vendor_unmapped": f"no vendor column identified (unrecognised headers {sch.get('unmapped_headers')})"}[sch["status"]]
+                fill([i for i in SCHED_ITEMS[acct] if i != spec["sheet_item"]], "cannot_assess", f"extraction_failed: sheet {name!r}: {reason}", "grader_extraction", ev_base)
                 continue
-            groups = sch["groups"]
+            groups, amb = sch["groups"], sch["ambiguous_columns"]
             months_present = sorted(m for m in (1, 2, 3, 4) if m in groups)
             ev = {**ev_base, "header_rows": (sch["header"]["month_row"], sch["header"]["header_end"]), "groups": {MONTHS.get(m, m): {k: cell_coord(sch["header"]["month_row"], c) for k, c in g.items()} for m, g in groups.items()},
-                  "lines": len(sch["lines"]), "bottom_rows": {k: v["row"] for k, v in sch["bottom"].items()}, "column_mapping": sch["mapping"]["cols"]}
+                  "lines": len(sch["lines"]), "bottom_rows": {k: v["row"] for k, v in sch["bottom"].items()}, "column_mapping": sch["mapping"]["cols"], "vendor_basis": sch["vendor_basis"]}
+            if amb:
+                ev["ambiguous_columns"] = {f"{MONTHS.get(m, m)}:{k}": [cell_coord(sch["header"]["month_row"], c) for c in cs] for (m, k), cs in sch["header"]["ambiguous"].items()}
+            if sch["unidentified"]:
+                ev["unidentified_rows"] = [u["row"] for u in sch["unidentified"]][:20]
+            U = len(sch["unidentified"])
             # months displayed
             results[spec["months"]] = Result(spec["months"], "pass" if months_present == [1, 2, 3, 4] else "fail", ev, [MONTHS[m] for m in months_present], "Jan, Feb, Mar, Apr",
                                              "" if months_present == [1, 2, 3, 4] else f"month groups found: {[MONTHS[m] for m in months_present]}", None if months_present == [1, 2, 3, 4] else "model_caused")
             # invoice completeness and amounts
-            mt = match_invoices(sch["lines"], reference[spec["invoices"]])
+            mt = match_invoices(sch["lines"], reference[spec["invoices"]], unidentified=U)
             sch["match"] = mt
             d = Decision(spec["complete"], ev)
-            if mt["missing"]:
-                d.violation("missing_invoices", f"{len(mt['missing'])} of {mt['invoices']} invoices absent: " + "; ".join(f"{i['vendor']} {i['invoice']} {i['amount_text']} ({i['file']} p{i['page']})" for i in mt["missing"][:6]),
+            if mt["confirmed_missing_lower_bound"] > 0:
+                d.violation("missing_invoices", f"at least {mt['confirmed_missing_lower_bound']} of {mt['invoices']} invoices absent: " + "; ".join(f"{i['vendor']} {i['invoice']} {i['amount_text']} ({i['file']} p{i['page']})" for i in mt["missing"][:6]),
                             missing=[{k: i[k] for k in ("vendor", "invoice", "month", "amount_text", "file", "page")} for i in mt["missing"]])
-            d.deliverable, d.reference = {"matched": len(mt["matched"]), "wrong_amount": len(mt["wrong_amount"]), "missing": len(mt["missing"]), "extra_lines": len(mt["extra_lines"])}, mt["invoices"]
+            elif mt["missing"]:
+                d.unreliable("unidentified", "invoice_lines", f"{len(mt['missing'])} invoice(s) not found on a vendor line; {U} row(s) with figures but no vendor could hold them")
+            if mt["uncertain"]:
+                d.unreliable("grader_error" if any("unreliable" in u["reason"] for u in mt["uncertain"]) else "ambiguous", "invoice_lines",
+                             f"{len(mt['uncertain'])} invoice(s) whose vendor line has an unreadable or ambiguous figure: {mt['uncertain'][:3]}")
+            d.deliverable, d.reference = {"matched": len(mt["matched"]), "wrong_amount": len(mt["wrong_amount"]), "missing": len(mt["missing"]), "uncertain": len(mt["uncertain"]), "extra_lines": len(mt["extra_lines"])}, mt["invoices"]
             results[spec["complete"]] = d.result(f"every one of the {mt['invoices']} invoices is present (matched by vendor, month and exact amount)")
             d = Decision(spec["amount"], ev)
             if mt["wrong_amount"]:
                 d.violation("amount_mismatch", "; ".join(f"{w['vendor']} {w['invoice']} {w['amount_text']} delivered as {w['delivered_amount']} (row {w['row']})" for w in mt["wrong_amount"][:6]), rows=[w["row"] for w in mt["wrong_amount"]])
-            d.deliverable, d.reference = len(mt["wrong_amount"]), 0  # absent invoices are item 13's finding; 14 judges the delivered lines
+            if mt["uncertain"]:
+                d.unreliable("grader_error" if any("unreliable" in u["reason"] for u in mt["uncertain"]) else "ambiguous", "invoice_lines", f"{len(mt['uncertain'])} invoice amount(s) unreadable on their line")
+            if mt["missing"] and U:
+                d.unreliable("unidentified", "invoice_lines", f"{len(mt['missing'])} invoice(s) not on a vendor line; {U} row(s) with figures but no vendor may carry them with any amount")
+            d.deliverable, d.reference = len(mt["wrong_amount"]), 0  # confirmed absent invoices are item 13's finding; 14 judges the delivered lines
             results[spec["amount"]] = d.result("every delivered invoice amount equals its source invoice")
-            # per-line identity and window
             lines = sch["lines"]
             need = [m for m in (1, 2, 3, 4) if m in groups]
+
+            def month_usable(d_, m, kinds):
+                """Register ambiguity or unmapped columns for (m, kind); True when every kind is uniquely located."""
+                ok = True
+                for k in kinds:
+                    if (m, k) in amb:
+                        d_.unreliable("ambiguous", "month_columns", f"{MONTHS[m]} {k}: {len(sch['header']['ambiguous'][(m, k)])} candidate columns")
+                        ok = False
+                    elif k not in groups.get(m, {}):
+                        d_.unreliable("unmapped", "month_columns", f"{MONTHS[m]} {k} column not identified")
+                        ok = False
+                return ok
+            # per-line identity (21 / 39)
             d = Decision(spec["identity"], ev)
-            missing_kind = [(MONTHS[m], k) for m in need for k in ("end",) if k not in groups[m]]
-            if missing_kind:
-                d.unreliable("unmapped", "month_columns", f"end-balance column not identified for {missing_kind}")
             bad = []
-            prev_cells = {}
             for ln in lines:
-                beg_cell = ln["other"].get("beginning")
-                prev = _num(beg_cell) if beg_cell else Decimal(0)
-                if beg_cell and prev is None:
-                    d.cell("beginning", beg_cell["status"], beg_cell["value"], beg_cell["coord"], ln["row"], recalc_status)
-                    prev = Decimal(0)
+                beg = ln["other"].get("beginning")
+                if beg is None:
+                    prev = Decimal(0)  # no beginning-balance column: operations began in January (prompt)
+                else:
+                    st = register(d, "beginning", beg, ln["row"], recalc_status)
+                    prev = cell_state(beg)[1] if st in ("ok", "blank") else None
                 for m in need:
-                    if "end" not in groups[m]:
+                    if not month_usable(d, m, ("add", "amort", "end")):
+                        prev = None
                         continue
-                    add, amort, end = (_num(line_values(ln, m, "add")) if "add" in groups[m] else Decimal(0)), (_num(line_values(ln, m, "amort")) if "amort" in groups[m] else Decimal(0)), _num(line_values(ln, m, "end"))
-                    cells_ = [line_values(ln, m, k) for k in ("add", "amort", "end") if k in groups[m]]
-                    for cc in cells_:
-                        if cc["status"] in UNRELIABLE_KINDS:
-                            d.cell("schedule", cc["status"], cc["value"], cc["coord"], ln["row"], recalc_status)
-                    if None in (add, amort, end):
-                        bad_cell = next((cc for cc in cells_ if _num(cc) is None), None)
-                        if bad_cell and bad_cell["status"] not in UNRELIABLE_KINDS:
-                            d.violation("invalid_value", f"row {ln['row']} {MONTHS[m]}: {bad_cell['coord']} is not a number ({bad_cell['value']!r})", cell=bad_cell["coord"], row=ln["row"])
-                        prev = end if end is not None else prev
-                        continue
-                    if not close(prev + add - amort, end):
-                        bad.append({"row": ln["row"], "month": MONTHS[m], "beginning": str(prev), "add": str(add), "amort": str(amort), "end": str(end), "expected_end": str(prev + add - amort)})
-                    prev = end
+                    cs = {k: line_cell(ln, m, k) for k in ("add", "amort", "end")}
+                    states = {k: register(d, "schedule", c, ln["row"], recalc_status) for k, c in cs.items()}
+                    vals = {k: cell_state(c)[1] for k, c in cs.items()}
+                    known = all(states[k] in ("ok", "blank") for k in cs)
+                    if known and prev is not None and not close(prev + vals["add"] - vals["amort"], vals["end"]):
+                        bad.append({"row": ln["row"], "month": MONTHS[m], "beginning": str(prev), "add": str(vals["add"]), "amort": str(vals["amort"]), "end": str(vals["end"]), "expected_end": str(prev + vals["add"] - vals["amort"])})
+                    if prev is None and known:
+                        d.unreliable("unknown", "schedule", f"row {ln['row']} {MONTHS[m]}: the opening figure is unknown (previous month unreadable or ambiguous)")
+                    prev = vals["end"] if states["end"] in ("ok", "blank") else None
             if bad:
                 d.violation("identity", f"{len(bad)} line-month(s) where beginning + adds - amortization != ending, e.g. {bad[:3]}", rows=sorted({b['row'] for b in bad})[:20])
             d.deliverable = len(bad)
@@ -426,100 +593,154 @@ def run_checks(extraction: dict, reference: dict, rubric: list[dict], integrity:
             if "window" in spec:
                 d = Decision(spec["window"], ev)
                 outside = []
+                first_month = {}
                 for mm in mt["matched"]:
-                    ln = lines[mm["line"]]
+                    first_month[mm["line"]] = min(first_month.get(mm["line"], 99), mm["month"])
+                for li, start_m in sorted(first_month.items()):
+                    ln = lines[li]
                     for m in need:
-                        if m < mm["month"] and "amort" in groups[m]:
-                            v = _num(line_values(ln, m, "amort"))
-                            if v is not None and v != 0:
-                                outside.append({"row": ln["row"], "month": MONTHS[m], "amortization": str(v), "invoice_month": MONTHS[mm["month"]]})
+                        if m >= start_m:
+                            continue
+                        if not month_usable(d, m, ("amort",)):
+                            continue
+                        c = line_cell(ln, m, "amort")
+                        st, v = cell_state(c)
+                        if st == "unreliable":
+                            register(d, "amortization", c, ln["row"], recalc_status)
+                        elif st == "invalid" or (st == "ok" and v != 0):
+                            outside.append({"row": ln["row"], "month": MONTHS[m], "amortization": str(v if st == "ok" else c["value"]), "invoice_month": MONTHS[start_m]})
                 if outside:
                     d.violation("amortization_outside_period", f"{len(outside)} line-month(s) with amortization before the invoice month, e.g. {outside[:3]}", rows=sorted({o['row'] for o in outside})[:20])
                 d.deliverable = len(outside)
                 results[spec["window"]] = d.result("no amortization recorded before a line's start month (Jan-Apr)")
             # totals, ending balances, GL, variance
-            bottom = sch["bottom"]
-            sums = {m: {k: sum((_num(line_values(ln, m, k)) or Decimal(0)) for ln in lines) for k in ("add", "amort", "end") if k in groups[m]} for m in need}
+            bottom, dups = sch["bottom"], sch["bottom_duplicates"]
             totals_row, ending_row, var_row, gl_row = bottom.get("totals"), bottom.get("ending"), bottom.get("variance"), bottom.get("gl")
 
-            def bottom_value(rowrec, m, prefer=("end", "amort", "add")):
-                if not rowrec or m not in rowrec["months"]:
-                    return None, None
-                for k in prefer:
-                    c = rowrec["months"][m].get(k)
-                    if c and numeric_cell(c)[0] == "ok":
-                        return _d(numeric_cell(c)[1]), c["coord"]
-                return None, None
+            def bottom_dup(d_, *keys):
+                for k in keys:
+                    if k in dups:
+                        d_.unreliable("ambiguous", "bottom_rows", f"{len(dups[k])} '{k}' rows ({dups[k]}): the figure cannot be located uniquely")
+                        return True
+                return False
             d = Decision(spec["totals"], ev)
+            bottom_dup(d, "totals", "ending")
             if not totals_row:
                 d.violation("no_totals_row", "no monthly totals row below the lines")
             else:
                 for m in need:
                     for k in ("amort", "end"):
-                        if k not in groups[m]:
+                        if not month_usable(d, m, (k,)):
                             continue
-                        c = totals_row["months"][m].get(k)
-                        v = _d(numeric_cell(c)[1]) if c and numeric_cell(c)[0] == "ok" else None
-                        if k == "end" and v is None and ending_row:
-                            v, _ = bottom_value(ending_row, m, ("end",))
-                        if v is None:
+                        st, v, c = bottom_cell(totals_row, m, (k,))
+                        if st in ("blank", "absent") and k == "end" and ending_row:
+                            st, v, c = bottom_cell(ending_row, m, ("end",))
+                        if st == "unreliable":
+                            register(d, "totals", c, totals_row["row"], recalc_status)
+                            continue
+                        if st == "invalid":
+                            register(d, "totals", c, totals_row["row"], recalc_status)
+                            continue
+                        if st in ("blank", "absent"):
                             d.violation("total_missing", f"{MONTHS[m]} {k} total absent", month=MONTHS[m])
-                        elif not close(v, sums[m][k]):
-                            d.violation("total_not_sum", f"{MONTHS[m]} {k} total {v} != sum of lines {sums[m][k]}", month=MONTHS[m])
+                            continue
+                        cs_ = column_sum(lines, m, k)
+                        if cs_["invalid"]:
+                            d.violation("invalid_value", f"{MONTHS[m]} {k}: line cell(s) {cs_['invalid'][:5]} are not numbers; the per-line sum is undefined", cells=cs_["invalid"][:10])
+                        elif cs_["unknown"]:
+                            d.unreliable("grader_error", "schedule", {"month": MONTHS[m], "kind": k, "cells": cs_["unknown"][:10]})
+                        elif not close(v, cs_["sum"]):
+                            if U:
+                                d.unreliable("unidentified", "schedule", f"{MONTHS[m]} {k} total {v} != sum of vendor lines {cs_['sum']}; {U} row(s) with figures but no vendor")
+                            else:
+                                d.violation("total_not_sum", f"{MONTHS[m]} {k} total {v} != sum of lines {cs_['sum']}", month=MONTHS[m])
             results[spec["totals"]] = d.result("monthly totals equal the sums of the lines")
             for m, item in spec["gl"].items():
                 d = Decision(item, ev)
-                if m not in groups or "end" not in groups[m]:
-                    d.unreliable("unmapped", "month_columns", f"no {MONTHS[m]} end-balance column")
+                if m not in groups or not month_usable(d, m, ("end",)):
+                    if m not in groups:
+                        d.unreliable("unmapped", "month_columns", f"no {MONTHS[m]} column group")
                     results[item] = d.result("")
                     continue
-                v, coord = bottom_value(ending_row, m, ("end",)) if ending_row else (None, None)
-                src = "ending-balance row"
-                if v is None:
-                    v, coord = bottom_value(totals_row, m, ("end",)) if totals_row else (None, None)
-                    src = "totals row"
-                if v is None:
-                    v, coord, src = sums[m].get("end"), None, "sum of the line ending balances (no totals row)"
+                if bottom_dup(d, "ending", "totals"):
+                    results[item] = d.result("")
+                    continue
+                st, v, c, src = "absent", None, None, None
+                for rowrec, label in ((ending_row, "ending-balance row"), (totals_row, "totals row")):
+                    st, v, c = bottom_cell(rowrec, m, ("end",))
+                    src = label
+                    if st not in ("blank", "absent"):
+                        break
+                shown = None
+                if st == "ok":
+                    shown = v
+                elif st in ("unreliable", "invalid"):
+                    register(d, "ending_balance", c, None, recalc_status)
+                else:
+                    cs_ = column_sum(lines, m, "end")
+                    src = "sum of the line ending balances (no ending or totals row figure)"
+                    if cs_["invalid"]:
+                        d.violation("invalid_value", f"{MONTHS[m]}: line ending balance cell(s) {cs_['invalid'][:5]} are not numbers", cells=cs_["invalid"][:10])
+                    elif cs_["unknown"]:
+                        d.unreliable("grader_error", "schedule", {"month": MONTHS[m], "cells": cs_["unknown"][:10]})
+                    else:
+                        shown = cs_["sum"]
                 adj = None
-                if v is not None and cents(v) != cents(gl[acct][m]) and bottom.get("adjust"):
-                    a, _ = bottom_value(bottom["adjust"], m)
-                    if a is not None and cents(v + a) == cents(gl[acct][m]):
+                if shown is not None and cents(shown) != cents(gl[acct][m]) and bottom.get("adjust"):
+                    sa, a, ca = bottom_cell(bottom["adjust"], m)
+                    if sa == "ok" and cents(shown + a) == cents(gl[acct][m]):
                         adj = a
-                shown = v if adj is None else v + adj
-                d.deliverable, d.reference = str(cents(shown)) if shown is not None else None, str(gl[acct][m])
-                d.evidence = {**ev, "source": src, "cell": coord, "exact": str(shown) if shown is not None else None, "adjustment": str(adj) if adj is not None else None}
-                if shown is None:
-                    d.violation("no_ending_balance", f"no {MONTHS[m]} ending balance on the schedule")
-                elif cents(shown) != cents(gl[acct][m]):
-                    d.violation("gl_mismatch", f"{MONTHS[m]} ending balance {cents(shown)} != GL {gl[acct][m]} (difference {cents(shown) - gl[acct][m]})")
+                    elif sa == "unreliable":
+                        register(d, "adjustment", ca, bottom["adjust"]["row"], recalc_status)
+                        shown = None
+                d.evidence = {**ev, "source": src, "cell": c["coord"] if c else None, "exact": str(shown) if shown is not None else None, "adjustment": str(adj) if adj is not None else None}
+                d.reference = str(gl[acct][m])
+                if shown is not None:
+                    total_shown = shown if adj is None else shown + adj
+                    d.deliverable = str(cents(total_shown))
+                    if cents(total_shown) != cents(gl[acct][m]):
+                        d.violation("gl_mismatch", f"{MONTHS[m]} ending balance {cents(total_shown)} != GL {gl[acct][m]} (difference {cents(total_shown) - gl[acct][m]})")
                 results[item] = d.result(f"{MONTHS[m]} ending balance equals the GL balance at cents (HALF_UP)" + (" after the quantified adjustment" if adj is not None else ""))
             for key, kinds, item in (("bottom_adds", ("add",), spec.get("bottom_adds")), ("bottom_amort", ("amort",), spec.get("bottom_amort")), ("bottom_end", ("end",), spec.get("bottom_end")), ("bottom_all", ("add", "amort", "end"), spec.get("bottom_all"))):
                 if item is None:
                     continue
                 d = Decision(item, ev)
+                bottom_dup(d, "totals")
                 for m in need:
                     for k in kinds:
-                        v, _ = bottom_value(totals_row, m, (k,)) if totals_row else (None, None)
-                        if v is None and k == "end" and ending_row:
-                            v, _ = bottom_value(ending_row, m, ("end",))
-                        if v is None:
+                        if not month_usable(d, m, (k,)):
+                            continue
+                        st, v, c = bottom_cell(totals_row, m, (k,)) if totals_row else ("absent", None, None)
+                        if st in ("blank", "absent") and k == "end" and ending_row:
+                            st, v, c = bottom_cell(ending_row, m, ("end",))
+                        if st in ("unreliable", "invalid"):
+                            register(d, "bottom_summary", c, None, recalc_status)
+                        elif st in ("blank", "absent"):
                             d.violation("bottom_summary_missing", f"no {MONTHS[m]} {k} figure in a bottom summary row", month=MONTHS[m], kind=k)
                 results[item] = d.result("bottom summary section present for Jan-Apr")
             d = Decision(spec["variance"], ev)
+            bottom_dup(d, "gl", "variance")
             if not gl_row:
                 d.violation("no_gl_row", "no GL balance row")
             if not var_row:
                 d.violation("no_variance_row", "no variance row")
             if gl_row and var_row:
                 for m in need:
-                    g_, _ = bottom_value(gl_row, m)
-                    vv, vc = bottom_value(var_row, m)
-                    if g_ is None:
+                    if any((m, k) in amb for k in ("end", "amort", "add")):
+                        d.unreliable("ambiguous", "month_columns", f"{MONTHS[m]}: the month's figure column is ambiguous")
+                        continue
+                    sg, g_, cg = bottom_cell(gl_row, m)
+                    sv, vv, cv = bottom_cell(var_row, m)
+                    if sg in ("blank", "absent"):
                         d.violation("gl_missing_month", f"{MONTHS[m]}: no GL balance figure", month=MONTHS[m])
-                    if vv is None:
+                    elif sg in ("unreliable", "invalid"):
+                        register(d, "gl_balance", cg, gl_row["row"], recalc_status)
+                    if sv in ("blank", "absent"):
                         d.violation("variance_missing_month", f"{MONTHS[m]}: no variance figure", month=MONTHS[m])
+                    elif sv in ("unreliable", "invalid"):
+                        register(d, "variance", cv, var_row["row"], recalc_status)
                     elif cents(vv) != Decimal("0.00"):
-                        d.violation("variance_nonzero", f"{MONTHS[m]}: variance {cents(vv)} at {vc}", month=MONTHS[m], cell=vc)
+                        d.violation("variance_nonzero", f"{MONTHS[m]}: variance {cents(vv)} at {cv['coord']}", month=MONTHS[m], cell=cv["coord"])
             results[spec["variance"]] = d.result("GL balance and variance present for every month, variance 0.00")
             if acct == "1251":
                 good = [ln for ln in lines if vendors_match(ln["vendor"], "Good Insurance")]
@@ -528,54 +749,90 @@ def run_checks(extraction: dict, reference: dict, rubric: list[dict], integrity:
                 if not good:
                     d.violation("no_good_insurance_lines", "no Good Insurance line on the 1251 schedule")
                 for ln in good:
-                    if ln["amount"] is None:
+                    if ln["term"] is not None and ln["term"] != 12:
+                        d.violation("term_not_12", f"row {ln['row']}: term {ln['term']} months, policy period is 12", row=ln["row"])
+                    if ln["amount_state"] != "ok":
+                        d.unreliable("grader_error" if ln["amount_state"] == "unreliable" else "unknown", "amount", f"row {ln['row']}: original amount {ln['amount_state']}")
                         continue
                     monthly = ln["amount"] / 12
                     for m in need:
-                        if "amort" in groups[m]:
-                            v = _num(line_values(ln, m, "amort"))
-                            if v is None or abs(v - monthly) > Decimal("0.01"):
-                                d.violation("not_straight_line_12", f"row {ln['row']} {MONTHS[m]}: amortization {v} != amount/12 = {cents(monthly)}", row=ln["row"], month=MONTHS[m])
-                    if ln["term"] is not None and ln["term"] != 12:
-                        d.violation("term_not_12", f"row {ln['row']}: term {ln['term']} months, policy period is 12", row=ln["row"])
+                        if not month_usable(d, m, ("amort",)):
+                            continue
+                        c = line_cell(ln, m, "amort")
+                        st, v = cell_state(c)
+                        if st == "unreliable":
+                            register(d, "amortization", c, ln["row"], recalc_status)
+                        elif st == "invalid" or abs(v - monthly) > Decimal("0.01"):
+                            d.violation("not_straight_line_12", f"row {ln['row']} {MONTHS[m]}: amortization {v if st != 'invalid' else c['value']!r} != amount/12 = {cents(monthly)}", row=ln["row"], month=MONTHS[m])
                 d.deliverable = len(good)
                 results[36] = d.result("Good Insurance lines amortize straight-line over 12 months from January")
                 d = Decision(37, ev)
                 if not bcbs:
                     d.violation("no_bcbs_lines", "no BCBS line on the 1251 schedule")
                 else:
-                    jan = sum((_num(line_values(ln, 1, "amort")) or Decimal(0)) for ln in bcbs if 1 in groups and "amort" in groups[1])
-                    feb = sum((_num(line_values(ln, 2, "amort")) or Decimal(0)) for ln in bcbs if 2 in groups and "amort" in groups[2])
-                    if jan != 0:
-                        d.violation("bcbs_january_amortization", f"BCBS amortization in January is {jan}, coverage starts 2/1/2025")
-                    if feb <= 0:
-                        d.violation("bcbs_no_february_amortization", f"BCBS amortization in February is {feb}; it must begin in February 2025")
-                    d.deliverable = {"jan": str(jan), "feb": str(feb)}
+                    sums37 = {}
+                    for m in (1, 2):
+                        if m not in groups or not month_usable(d, m, ("amort",)):
+                            sums37[m] = None
+                            continue
+                        cs_ = column_sum(bcbs, m, "amort")
+                        for coord in cs_["unknown"]:
+                            d.unreliable("grader_error", "amortization", {"month": MONTHS[m], "cell": coord})
+                        if cs_["invalid"]:
+                            d.violation("invalid_value", f"BCBS {MONTHS[m]} amortization cell(s) {cs_['invalid'][:3]} are not numbers")
+                        sums37[m] = None if (cs_["unknown"] or cs_["invalid"]) else cs_["sum"]
+                    if sums37.get(1) is not None and sums37[1] != 0:
+                        d.violation("bcbs_january_amortization", f"BCBS amortization in January is {sums37[1]}, coverage starts 2/1/2025")
+                    if sums37.get(2) is not None and sums37[2] <= 0:
+                        d.violation("bcbs_no_february_amortization", f"BCBS amortization in February is {sums37[2]}; it must begin in February 2025")
+                    d.deliverable = {MONTHS[m]: (str(v) if v is not None else None) for m, v in sums37.items()}
                 results[37] = d.result("BCBS amortization begins in February 2025 (none in January)")
                 d = Decision(49, ev)
-                neg = [(ln["row"], MONTHS[m], str(_num(line_values(ln, m, "amort")))) for ln in lines for m in need if "amort" in groups[m] and (_num(line_values(ln, m, "amort")) or Decimal(0)) < 0]
+                neg = []
+                for ln in lines:
+                    for m in need:
+                        if not month_usable(d, m, ("amort",)):
+                            continue
+                        c = line_cell(ln, m, "amort")
+                        st, v = cell_state(c)
+                        if st == "unreliable":
+                            register(d, "amortization", c, ln["row"], recalc_status)
+                        elif st == "ok" and v < 0:
+                            neg.append((ln["row"], MONTHS[m], str(v)))
                 if neg:
                     d.violation("negative_amortization", f"{len(neg)} negative amortization entr(ies), e.g. {neg[:3]}", rows=[n[0] for n in neg][:20])
                 results[49] = d.result("no negative amortization entries")
                 d = Decision(50, ev)
                 ups = []
                 for ln in lines:
-                    prev = _num(ln["other"]["beginning"]) if ln["other"].get("beginning") else Decimal(0)
+                    beg = ln["other"].get("beginning")
+                    prev = Decimal(0) if beg is None else (cell_state(beg)[1] if cell_state(beg)[0] in ("ok", "blank") else None)
+                    if beg is not None and prev is None:
+                        register(d, "beginning", beg, ln["row"], recalc_status)
                     for m in need:
-                        if "end" not in groups[m]:
+                        if not month_usable(d, m, ("add", "end")):
+                            prev = None
                             continue
-                        end = _num(line_values(ln, m, "end")); add = _num(line_values(ln, m, "add")) if "add" in groups[m] else Decimal(0)
-                        if end is None or prev is None:
-                            prev = end
+                        se, end = cell_state(line_cell(ln, m, "end"))
+                        sa, add = cell_state(line_cell(ln, m, "add"))
+                        for c in (line_cell(ln, m, "end"), line_cell(ln, m, "add")):
+                            if cell_state(c)[0] == "unreliable":
+                                register(d, "schedule", c, ln["row"], recalc_status)
+                        if se not in ("ok", "blank") or prev is None:
+                            prev = end if se in ("ok", "blank") else None
                             continue
-                        if end > prev + Decimal("0.005") and not (add and add > 0):
-                            ups.append({"row": ln["row"], "month": MONTHS[m], "from": str(prev), "to": str(end)})
+                        if end > prev + Decimal("0.005"):
+                            if sa == "unreliable":
+                                pass  # an unreadable addition could explain the increase: registered above
+                            elif not (sa == "ok" and add > 0):
+                                ups.append({"row": ln["row"], "month": MONTHS[m], "from": str(prev), "to": str(end)})
                         prev = end
                 if ups:
                     d.violation("balance_increase_without_addition", f"{len(ups)} line-month(s) where the balance rises without an addition, e.g. {ups[:3]}", rows=sorted({u['row'] for u in ups})[:20])
                 results[50] = d.result("no balance increases without a documented addition")
         # ---- summary sheet
         sname = located["summary"]
+        cells_ = []
         if sname is None:
             fill(SUMMARY_ITEMS, "fail", "no summary worksheet (no sheet named or recognisable as the Prepaid Summary)", "model_caused_missing", {"file": xlsx_name, "sheets": sheet_names(x)})
         else:
@@ -583,107 +840,172 @@ def run_checks(extraction: dict, reference: dict, rubric: list[dict], integrity:
             ev = {"file": xlsx_name, "sheet": sname, "basis": located["basis"].get("summary")}
             ok2 = "prepaid" in norm_text(sname) and "summary" in norm_text(sname)
             results[2] = Result(2, "pass" if ok2 else "fail", ev, sname, "sheet title includes 'Prepaid' and 'Summary'", "" if ok2 else f"sheet named {sname!r}", None if ok2 else "model_caused")
-            # the header block: the rows above the first row that carries an amount (title, company, period, column captions)
-            header_rows = next((r - 1 for r in range(1, min(len(s["rows"]), 40) + 1) if any(numeric_cell(c)[0] == "ok" and not isinstance(c["value"], bool) for c in row_cells(s, r))), min(len(s["rows"]), 12))
-            header_rows = max(header_rows, 1)
+            cells_ = summary_cells(s)
+            # the header block: the rows above the first row that carries a figure (title, company, period, column captions)
+            first_fig = min((c["row"] for c in cells_), default=min(len(s["rows"]), 12) + 1)
+            header_rows = max(first_fig - 1, 1)
             hits = text_in_rows(s, r"aurisic", rows=header_rows)
             results[5] = Result(5, "pass" if hits else "fail", {**ev, "cells": hits[:5], "header_rows": header_rows}, bool(hits), "Aurisic in the header", "" if hits else f"company name not found in the header block (rows 1-{header_rows})", None if hits else "model_caused")
             period = text_in_rows(s, r"(4\s*/\s*30\s*/\s*(20)?25)|(04\s*/\s*30\s*/\s*2025)|(2025-04-30)|(apr(il)?\.?\s*30,?\s*2025)|(30\s*apr(il)?\.?,?\s*2025)|(april\s*2025)|(apr\.?\s*2025)|(through\s*april)", rows=header_rows)
             results[6] = Result(6, "pass" if period else "fail", {**ev, "cells": period[:5], "header_rows": header_rows}, bool(period), "reporting period up to April 30, 2025 in the header", "" if period else f"no reporting period through April 30, 2025 in the header block (rows 1-{header_rows})", None if period else "model_caused")
-            cells_ = summary_cells(s)
-            summary_info = {"sheet": sname, "cells": [{k: (str(v) if k == "value" else v) for k, v in c.items() if k != "cell"} for c in cells_]}
-            # delivered detail totals for item 11 (YTD amortization = sum of the schedule's monthly amortization totals)
+            targets = {"balance_1250": ("balance", "1250"), "balance_1251": ("balance", "1251"), "total": ("total", None), "ytd_1250": ("ytd", "1250"), "ytd_1251": ("ytd", "1251")}
+            found = {k: resolve_target(cells_, *t) for k, t in targets.items()}
+            summary_info = {"sheet": sname, "cells": [{k: (str(v) if k == "value" else v) for k, v in c.items() if k != "cell"} for c in cells_],
+                            "found": {k: {"status": f["status"], "cells": [c["coord"] for c in f["cells"]], "values": [str(c["value"]) if c["value"] is not None else None for c in f["cells"]],
+                                          "formulas": [c["formula"] for c in f["cells"]], "unknown": f["unknown"]} for k, f in found.items()}}
+
+            def compare_target(d_, f, expected, label):
+                """Decide one summary figure located by its label: absent / unidentifiable / ambiguous / unreadable / value."""
+                if f["status"] == "none":
+                    d_.violation("absent", f"no summary cell is labelled as the {label}; every figure on the sheet is identified as another measure")
+                    return
+                if f["status"] == "none_with_unknowns":
+                    d_.unreliable("unmapped", "summary_cells", f"no cell labelled as the {label}; figure(s) with unrecognised labels: {f['unknown'][:5]}")
+                    return
+                vals = [(c, c["state"], c["value"]) for c in f["cells"]]
+                if f["status"] == "ambiguous":
+                    if all(st == "ok" for _, st, _ in vals) and all(cents(v) != cents(expected) for _, _, v in vals):
+                        d_.violation("wrong_value", f"{label}: every labelled candidate differs from {cents(expected)}: {[(c['coord'], str(cents(v))) for c, _, v in vals]}")
+                    else:
+                        d_.unreliable("ambiguous", "summary_cells", f"{label}: {len(vals)} labelled candidates with different values {[(c['coord'], str(v)) for c, _, v in vals]}")
+                    return
+                c, st, v = vals[0]
+                d_.evidence = {**d_.evidence, "cell": c["coord"], "label": c["label"], "heading": c["heading"]}
+                if st in ("unreliable", "invalid"):
+                    register(d_, "summary_cells", c["cell"], c["row"], recalc_status)
+                    return
+                d_.deliverable = str(cents(v))
+                if cents(v) != cents(expected):
+                    d_.violation("wrong_value", f"{label}: {cents(v)} at {c['coord']} ({c['label']!r}) != {cents(expected)}", cell=c["coord"])
+            for item, key, expected, label in ((8, "balance_1250", gl["1250"][4], "April 2025 GL balance for 1250"), (9, "balance_1251", gl["1251"][4], "April 2025 GL balance for 1251"),
+                                               (10, "total", Decimal(reference["total_prepaid_2025_04_30"]["path_ii_quantize_exact_sum_once"]), "total prepaid balance as of 4/30/2025")):
+                d = Decision(item, {**ev, "located_by": "label and heading", "candidates": [c["coord"] for c in found[key]["cells"]]})
+                d.reference = str(cents(expected))
+                compare_target(d, found[key], expected, label)
+                results[item] = d.result(f"{label} shown as {cents(expected)} (HALF_UP to cents)")
+            # item 11: the summary YTD amortization against the sum of the schedule's monthly amortization totals
             ytd_detail = {}
+            d = Decision(11, {**ev, "candidates": {k: [c["coord"] for c in found[k]["cells"]] for k in ("ytd_1250", "ytd_1251")}})
             for acct in ("1250", "1251"):
                 sch = schedules.get(acct)
-                if sch and sch.get("status") == "ok" and sch["bottom"].get("totals"):
-                    vals = []
-                    for m in (1, 2, 3, 4):
-                        c = sch["bottom"]["totals"]["months"].get(m, {}).get("amort")
-                        vals.append(_d(numeric_cell(c)[1]) if c and numeric_cell(c)[0] == "ok" else None)
-                    ytd_detail[acct] = sum(vals) if all(v is not None for v in vals) else None
-                else:
+                if not (sch and sch.get("status") == "ok" and sch["bottom"].get("totals")):
                     ytd_detail[acct] = None
-            ref_ytd = {"1250": Decimal(reference["ytd_amortization_1250_cents"]), "1251": Decimal(reference["ytd_amortization_1251_cents"])}
-            ref_bal = {"1250": gl["1250"][4], "1251": gl["1251"][4]}
-            total_ref = Decimal(reference["total_prepaid_2025_04_30"]["path_ii_quantize_exact_sum_once"])
-            found: dict = {}
-            used: set = set()
-            for key, expected in (("balance_1250", ref_bal["1250"]), ("balance_1251", ref_bal["1251"]), ("total", total_ref), ("ytd_1250", ytd_detail["1250"] if ytd_detail["1250"] is not None else ref_ytd["1250"]), ("ytd_1251", ytd_detail["1251"] if ytd_detail["1251"] is not None else ref_ytd["1251"])):
-                c, how = find_summary_value(cells_, expected, SUMMARY_TARGETS[key], used)
-                found[key] = {"cell": c, "how": how, "expected": expected}
-                if c:
-                    used.add(c["coord"])
-            summary_info["found"] = {k: {"coord": v["cell"]["coord"] if v["cell"] else None, "how": v["how"], "value": str(v["cell"]["value"]) if v["cell"] else None, "expected": str(v["expected"]), "formula": v["cell"]["formula"] if v["cell"] else None} for k, v in found.items()}
-            for item, key, label in ((8, "balance_1250", "April 2025 GL balance for 1250"), (9, "balance_1251", "April 2025 GL balance for 1251"), (10, "total", "total prepaid balance as of 4/30/2025")):
-                f_ = found[key]
-                d = Decision(item, {**ev, "cell": f_["cell"]["coord"] if f_["cell"] else None, "located_by": f_["how"], "label": f_["cell"]["label"] if f_["cell"] else None})
-                d.reference = str(cents(f_["expected"]))
-                if f_["cell"] is None:
-                    d.violation("absent", f"no cell on the summary shows the {label} ({cents(f_['expected'])}) and no labelled candidate was found")
-                else:
-                    d.deliverable = str(cents(f_["cell"]["value"]))
-                    if cents(f_["cell"]["value"]) != cents(f_["expected"]):
-                        d.violation("wrong_value", f"{label}: {cents(f_['cell']['value'])} at {f_['cell']['coord']} != {cents(f_['expected'])}", cell=f_["cell"]["coord"])
-                results[item] = d.result(f"{label} shown as {cents(f_['expected'])} (HALF_UP to cents)")
-            d = Decision(11, {**ev, "cells": {k: found[k]["cell"]["coord"] if found[k]["cell"] else None for k in ("ytd_1250", "ytd_1251")}, "detail_totals": {k: str(v) if v is not None else None for k, v in ytd_detail.items()}})
-            for acct, key in (("1250", "ytd_1250"), ("1251", "ytd_1251")):
-                f_ = found[key]
-                if f_["cell"] is None:
-                    d.violation("absent", f"no YTD amortization figure for {acct} on the summary")
-                    continue
-                if ytd_detail[acct] is None:
                     d.unreliable("unknown", "detail_totals", f"no monthly amortization totals on the {acct} schedule to compare with")
-                elif cents(f_["cell"]["value"]) != cents(ytd_detail[acct]):
-                    d.violation("ytd_mismatch", f"{acct} YTD amortization {cents(f_['cell']['value'])} at {f_['cell']['coord']} != sum of the schedule's monthly totals {cents(ytd_detail[acct])}", cell=f_["cell"]["coord"])
-            d.deliverable = {k: str(cents(found[k]["cell"]["value"])) if found[k]["cell"] else None for k in ("ytd_1250", "ytd_1251")}
-            d.reference = {k: str(cents(v)) for k, v in ref_ytd.items()}
+                    continue
+                tot, ok = Decimal(0), True
+                for m in (1, 2, 3, 4):
+                    st, v, c = bottom_cell(sch["bottom"]["totals"], m, ("amort",))
+                    if st == "ok":
+                        tot += v
+                    else:
+                        ok = False
+                        if st == "unreliable":
+                            register(d, "detail_totals", c, None, recalc_status)
+                        else:
+                            d.unreliable("unknown", "detail_totals", f"{acct} {MONTHS[m]} amortization total {st}")
+                ytd_detail[acct] = tot if ok else None
+                if ytd_detail[acct] is not None:
+                    compare_target(d, found[f"ytd_{acct}"], ytd_detail[acct], f"{acct} YTD amortization (sum of the schedule's monthly totals)")
+                elif found[f"ytd_{acct}"]["status"] == "none":
+                    d.violation("absent", f"no summary cell is labelled as the {acct} YTD amortization")
+            d.evidence = {**d.evidence, "detail_totals": {k: str(v) if v is not None else None for k, v in ytd_detail.items()}}
+            d.reference = {"1250": str(reference["ytd_amortization_1250_cents"]), "1251": str(reference["ytd_amortization_1251_cents"])}
             results[11] = d.result("YTD amortization per account equals the sum of the schedule's Jan-Apr totals")
-            d = Decision(7, {**ev, "cells": {k: (found[k]["cell"]["coord"], found[k]["cell"]["formula"]) if found[k]["cell"] else None for k in ("ytd_1250", "ytd_1251", "balance_1250", "balance_1251")}})
+            # item 7: the located figures are formulas referencing the detail sheets (formula text is evidence even without a cached value)
+            d = Decision(7, {**ev, "cells": {k: [(c["coord"], c["formula"]) for c in found[k]["cells"]] for k in ("ytd_1250", "ytd_1251", "balance_1250", "balance_1251")}})
             for key, acct in (("ytd_1250", "1250"), ("balance_1250", "1250"), ("ytd_1251", "1251"), ("balance_1251", "1251")):
-                f_ = found[key]
-                target = located[acct]
-                if f_["cell"] is None:
-                    d.violation("absent", f"{key}: no figure on the summary to link")
-                elif not f_["cell"]["formula"]:
-                    d.violation("hard_coded", f"{key} at {f_['cell']['coord']} is a literal value, not a formula", cell=f_["cell"]["coord"])
-                elif target and not references_sheet(f_["cell"]["formula"], target):
-                    d.violation("not_linked_to_detail", f"{key} at {f_['cell']['coord']} is a formula that does not reference the {acct} sheet {target!r}: {f_['cell']['formula'][:80]}", cell=f_["cell"]["coord"])
+                f, target = found[key], located[acct]
+                if f["status"] == "none":
+                    d.violation("absent", f"{key}: no summary figure labelled for it to link")
+                    continue
+                if f["status"] == "none_with_unknowns":
+                    d.unreliable("unmapped", "summary_cells", f"{key}: no labelled figure; unrecognised labels at {f['unknown'][:5]}")
+                    continue
+                verdicts = []
+                for c in f["cells"]:
+                    if not c["formula"]:
+                        verdicts.append(("hard_coded", c))
+                    elif target and not references_sheet(c["formula"], target):
+                        verdicts.append(("not_linked_to_detail", c))
+                    else:
+                        verdicts.append(("linked", c))
+                if f["status"] == "ambiguous" and len({v for v, _ in verdicts}) > 1:
+                    d.unreliable("ambiguous", "summary_cells", f"{key}: labelled candidates differ in linkage {[(c['coord'], v) for v, c in verdicts]}")
+                    continue
+                v, c = verdicts[0]
+                if v == "hard_coded":
+                    d.violation("hard_coded", f"{key} at {c['coord']} is a literal value, not a formula", cell=c["coord"])
+                elif v == "not_linked_to_detail":
+                    d.violation("not_linked_to_detail", f"{key} at {c['coord']} is a formula that does not reference the {acct} sheet {target!r}: {c['formula'][:80]}", cell=c["coord"])
             results[7] = d.result("YTD amortization and ending balances are formulas referencing the 1250 and 1251 sheets")
-        # ---- formats (53): amount cells on the schedules carry a currency / two-decimal format; date cells a date format
-        fmts, bad_fmt, date_bad = 0, [], []
+        # ---- formats (53, B4): every nonzero monetary cell carries a currency or two-decimal thousands format; date cells a date format
+        monetary, bad_fmt, unknown_fmt, date_bad = 0, [], [], []
+
+        def check_money(sheet, c):
+            nonlocal monetary
+            if c is None:
+                return
+            st, v = cell_state(c)
+            nf = (sheet["cells"].get(c["coord"]) or {}).get("number_format") or "General"
+            if st == "ok" and v != 0:
+                monetary += 1
+                if not money_format_ok(nf):
+                    bad_fmt.append((f"{sheet_label}!{c['coord']}", nf, str(v)))
+            elif st == "unreliable" and not money_format_ok(nf):
+                unknown_fmt.append((f"{sheet_label}!{c['coord']}", nf))
         for acct, sch in schedules.items():
             if sch.get("status") != "ok":
                 continue
             sheet = x["sheets"][sch["sheet"]]
+            sheet_label = sch["sheet"]
             for ln in sch["lines"]:
                 for mc in ln["months"].values():
                     for c in mc.values():
-                        if numeric_cell(c)[0] == "ok":
-                            nf = (sheet["cells"].get(c["coord"]) or {}).get("number_format") or "General"
-                            fmts += 1
-                            if not ("$" in nf or "#,##0.00" in nf or re.search(r"0\.00", nf)):
-                                bad_fmt.append((c["coord"], nf))
+                        check_money(sheet, c)
+                for f in ("beginning", "amount", "monthly"):
+                    check_money(sheet, ln["other"].get(f))
+            for rowrec in sch["bottom"].values():
+                for mc in rowrec["months"].values():
+                    for c in mc.values():
+                        check_money(sheet, c)
             for coord, c in sheet["cells"].items():
                 v = c.get("cached") if c.get("formula") else c.get("literal")
                 if isinstance(v, str) and re.match(r"^\d{4}-\d{2}-\d{2}T", v):
                     nf = c.get("number_format") or "General"
                     if not re.search(r"[dmy]", nf, re.I) or nf == "General":
-                        date_bad.append((coord, nf))
-        d = Decision(53, {"amount_cells": fmts, "unformatted_examples": bad_fmt[:10], "date_cells_without_date_format": date_bad[:10]})
-        if fmts and len(bad_fmt) > fmts * 0.1:
-            d.violation("amounts_not_currency_formatted", f"{len(bad_fmt)} of {fmts} schedule amount cells lack a currency / two-decimal number format, e.g. {bad_fmt[:3]}")
+                        date_bad.append((f"{sheet_label}!{coord}", nf))
+        if sname is not None:
+            sheet = x["sheets"][sname]
+            sheet_label = sname
+            for c in cells_:
+                if c["class"][0] is not None:
+                    check_money(sheet, c["cell"])
+        d = Decision(53, {"monetary_cells": monetary, "noncompliant": bad_fmt[:10], "noncompliant_count": len(bad_fmt), "unreadable_with_noncompliant_format": unknown_fmt[:10], "date_cells_without_date_format": date_bad[:10]})
+        if bad_fmt:
+            d.violation("amounts_not_currency_formatted", f"{len(bad_fmt)} nonzero monetary cell(s) lack a currency or two-decimal thousands format, e.g. {bad_fmt[:3]}")
         if date_bad:
             d.violation("dates_without_date_format", f"{len(date_bad)} date cell(s) without a date format, e.g. {date_bad[:3]}")
-        if not fmts and schedules:
-            d.unreliable("unknown", "formats", "no schedule amount cells located")
-        results[53] = d.result("amounts carry a currency / two-decimal format and dates a date format")
+        if unknown_fmt:
+            d.unreliable("grader_error", "formats", f"{len(unknown_fmt)} unreadable figure(s) with a non-currency format: whether they are nonzero amounts is unknown, e.g. {unknown_fmt[:3]}")
+        if not monetary and not unknown_fmt and schedules:
+            d.unreliable("unknown", "formats", "no monetary cells located")
+        results[53] = d.result("every nonzero monetary cell carries a currency or two-decimal thousands format and dates a date format")
     for i in D_ITEMS:
         results.setdefault(i, Result(i, "cannot_assess", {"note": "no result produced"}, None, None, "extraction_failed: item not reached", "grader_extraction"))
     items = {i: results[i].as_dict() for i in D_ITEMS}
+    for i, r in items.items():  # the production item contract (B1): grade_run reads weight and criterion for every row
+        r["weight"] = rubric[i - 1]["score"]
+        r["criterion"] = rubric[i - 1]["criterion"]
+        r["dependencies"] = list(ITEM_INPUTS.get(i, []))
+        r["fail_on_own"] = {"missing": list(ITEM_INPUTS.get(i, [])), "invalid": list(ITEM_INPUTS.get(i, [])), "row_set": False, "row_scoped": False, "invalid_kinds": ["error_value", "non_numeric", "non_finite"]}
+    sched_out = {}
+    for acct, sch in schedules.items():
+        o = {k: v for k, v in sch.items() if k in ("sheet", "status", "groups", "bottom", "match", "vendor_col", "vendor_basis", "notes", "unidentified", "bottom_duplicates", "unclassified_columns")}
+        o["ambiguous_columns"] = {f"{MONTHS.get(m, m)}:{k}": cs for (m, k), cs in (sch.get("header") or {}).get("ambiguous", {}).items()}
+        o["lines"] = len(sch.get("lines", []))
+        sched_out[acct] = o
     return {"task": TASK, "version": VERSION, "items": items, "critical": critical_status(items), "extraction_status": status,
-            "schedules": {acct: {k: v for k, v in sch.items() if k in ("sheet", "status", "groups", "bottom", "match", "vendor_col")} | {"lines": len(sch.get("lines", []))} for acct, sch in schedules.items()},
-            "summary": summary_info, "schedule_lines": {acct: sch.get("lines", []) for acct, sch in schedules.items()}}
+            "schedules": sched_out, "summary": summary_info, "schedule_lines": {acct: sch.get("lines", []) for acct, sch in schedules.items()}, "judge_items": J_ITEMS}
 
 
 def critical_status(items: dict) -> dict:

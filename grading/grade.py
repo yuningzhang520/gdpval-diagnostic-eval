@@ -47,10 +47,12 @@ def code_provenance() -> dict:
     """Full git commit of the grading code and whether the tree was dirty when the pass ran (recorded in every pass)."""
     try:
         head = subprocess.run(["git", "rev-parse", "HEAD"], cwd=ROOT, capture_output=True, text=True, timeout=20)
-        dirty = subprocess.run(["git", "status", "--porcelain", "--untracked-files=no"], cwd=ROOT, capture_output=True, text=True, timeout=20)
+        dirty = subprocess.run(["git", "status", "--porcelain", "--untracked-files=all"], cwd=ROOT, capture_output=True, text=True, timeout=20)
         if head.returncode != 0:
             return {"commit": None, "dirty": None, "error": "git rev-parse failed"}
-        return {"commit": head.stdout.strip(), "dirty": bool(dirty.stdout.strip()) if dirty.returncode == 0 else None}
+        changed = [l for l in dirty.stdout.splitlines() if l.strip()] if dirty.returncode == 0 else None
+        return {"commit": head.stdout.strip(), "dirty": bool(changed) if changed is not None else None,  # untracked (non-ignored) files count: they may be executable source
+                "changed_paths": len(changed) if changed is not None else None, "untracked_paths": sum(1 for l in changed if l.startswith("??")) if changed is not None else None}
     except Exception as ex:  # pragma: no cover
         return {"commit": None, "dirty": None, "error": type(ex).__name__}
 

@@ -90,8 +90,9 @@ class GoldVariantTests(unittest.TestCase):
         out = os.environ.get("GRADING_REGRESSION_LOG_DIR")
         if out:
             os.makedirs(out, exist_ok=True)
+            from grading.grade import ENGINE_VERSION, code_provenance
             with open(os.path.join(out, "gold_transitions_1137e2bb.json"), "w", encoding="utf-8") as f:
-                json.dump(TABLE, f, indent=1, default=str)
+                json.dump({"_provenance": {**code_provenance(), "task_grader_version": CK.VERSION, "engine_version": ENGINE_VERSION}, **TABLE}, f, indent=1, default=str)
         cls.tmp.cleanup()
 
     def check_variant(self, name):
@@ -137,8 +138,9 @@ class GoldRecalcDockerTests(unittest.TestCase):
         out = os.environ.get("GRADING_REGRESSION_LOG_DIR")
         if out:
             os.makedirs(out, exist_ok=True)
+            from grading.grade import ENGINE_VERSION, code_provenance
             with open(os.path.join(out, "gold_transitions_1137e2bb_recalc.json"), "w", encoding="utf-8") as f:
-                json.dump({k: v for k, v in TABLE.items() if k in ("gold_recalc_path", "formula_error_recalc")}, f, indent=1, default=str)
+                json.dump({"_provenance": {**code_provenance(), "task_grader_version": CK.VERSION, "engine_version": ENGINE_VERSION}, **{k: v for k, v in TABLE.items() if k in ("gold_recalc_path", "formula_error_recalc")}}, f, indent=1, default=str)
         cls.tmp.cleanup()
 
     def test_gold_original_through_recalculation_matches_the_baseline(self):

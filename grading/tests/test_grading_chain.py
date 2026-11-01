@@ -475,6 +475,20 @@ class JudgeAdapterTests(unittest.TestCase):
         self.assertEqual((v[0]["call_status"], v[0]["usage_status"], v[0]["usage_uncertain"]), ("ok", "not_reported", False))
 
 
+class CodeProvenanceTests(unittest.TestCase):
+    """Codex P1: an untracked (non-ignored) source file makes the grading pass dirty; the full commit is recorded."""
+    def test_untracked_files_are_part_of_the_dirty_state(self):
+        from grading import grade as G
+        calls = []
+        def fake_run(cmd, **kw):
+            calls.append(cmd)
+            return SimpleNamespace(returncode=0, stdout=("a" * 40 + "\n") if cmd[:2] == ["git", "rev-parse"] else "?? grading/new_checks.py\n", stderr="")
+        with patch.object(G.subprocess, "run", fake_run):
+            prov = G.code_provenance()
+        self.assertEqual((prov["commit"], prov["dirty"], prov["untracked_paths"]), ("a" * 40, True, 1))
+        self.assertIn("--untracked-files=all", calls[1])
+
+
 class GradingCliVersionTests(unittest.TestCase):
     def test_config_grader_version_must_equal_the_code_version(self):
         from grading import run_grading as RG
