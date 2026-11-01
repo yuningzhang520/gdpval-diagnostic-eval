@@ -3415,7 +3415,8 @@ a judge-only criterion is not_confirmed, as the grader reports).
 | `unittest grading.tests.test_gold_c357f0e2` | 2.0 s | 0 | 18/18 |
 | `unittest grading.tests.test_gold_7b08cd4d` / `c3525d4d` / `1137e2bb` / `7d7fc9a7` / `2ea2e5b5` / `a45bc83b` / `b5d2e6f1` / `f841ddcf` / `47ef842d` | 1.4 / 6.2 / 14.0 / 6.1 / 2.2 / 2.9 / 52.6 / 4.2 / 5.5 s | 0 | 15 / 27 / 53 + 2 skipped / 56 + 3 skipped / 30 / 20 / 22 / 18 / 14 |
 | `unittest grading.tests.test_grading_chain` / `harness.tests.test_docs_consistency` | 3.4 / 1.0 s | 0 | 29 / 3 |
-| `unittest grading.tests.test_label_batch` (before the tag existed) | 13.1 s | 1 | 2/3: readiness listed `grader-v0-c357f0e2` before the tag was created; rerun after tagging below |
+| `unittest grading.tests.test_label_batch` (before the tag existed) | 13.1 s | 1 | 2/3: readiness listed `grader-v0-c357f0e2` before the tag was created |
+| `unittest grading.tests.test_label_batch` (after tagging) | 13.0 s | 0 | 3/3 |
 
 ## Gemini two-project credentials, retry limit and recovered-attempt settlement (2026-11-01; approved by the human; offline verified; no paid call by this work)
 
@@ -3524,7 +3525,7 @@ classified as recovered 429 (events 124, 125); under the new rule that unit woul
 ## In flight
 
 Gemini dev and validation resume under the new snapshot and scheduler plan (two projects, cap 2, dev first when the
-cap is 1). `c3525d4d…` grader v0 tagged (`grader-v0-c3525d4d` at `5435534`; code-bound records `grading/validation/c3525d4d…/code_5435534/`). `7b08cd4d…` grader v0 tagged (`grader-v0-7b08cd4d` at `393a7bc`; code-bound records `grading/validation/7b08cd4d…/code_393a7bc/`). `c357f0e2…` grader v0 committed (tag and code-bound records next). All ten task graders exist; next: labeling batch 1 (ready canonical dev runs `f841ddcf…`, `47ef842d…`, `1137e2bb…`). `b5d2e6f1…` waits for rule A-1.
+cap is 1). `c3525d4d…` grader v0 tagged (`grader-v0-c3525d4d` at `5435534`; code-bound records `grading/validation/c3525d4d…/code_5435534/`). `7b08cd4d…` grader v0 tagged (`grader-v0-7b08cd4d` at `393a7bc`; code-bound records `grading/validation/7b08cd4d…/code_393a7bc/`). `c357f0e2…` grader v0 tagged (`grader-v0-c357f0e2` at `24d2eea`; code-bound records `grading/validation/c357f0e2…/code_24d2eea/`). All ten task graders exist; next: labeling batch 1 (ready canonical dev runs `f841ddcf…`, `47ef842d…`, `1137e2bb…`). `b5d2e6f1…` waits for rule A-1.
 
 ## Decisions taken (date · what · commit)
 
@@ -3839,7 +3840,7 @@ cap is 1). `c3525d4d…` grader v0 tagged (`grader-v0-c3525d4d` at `5435534`; co
   preregistration 2.6 classification (41-48 J, 52 D; pending human confirmation) · 393a7bc (tag `grader-v0-7b08cd4d`)
 
 - 2026-11-01 · `c357f0e2…` grader v0 (task version c357f0e2-2026-11-01.1), the shared extractor's sheet visibility,
-  column layout and blank-cell styles, and the narrow reading of item 69 (pending human review) · (this commit)
+  column layout and blank-cell styles, and the narrow reading of item 69 (pending human review) · 24d2eea (tag `grader-v0-c357f0e2`)
 
 ## Next stage (not started)
 

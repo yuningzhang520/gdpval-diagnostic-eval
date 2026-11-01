@@ -1,0 +1,448 @@
+{
+ "_provenance": {
+  "commit": "24d2eeac3834159ac19514c92b09d1b3ea464f17",
+  "dirty": false,
+  "changed_paths": 0,
+  "untracked_paths": 0,
+  "task_grader_version": "c357f0e2-2026-11-01.1",
+  "engine_version": "engine-2026-11-01.1"
+ },
+ "gold_anchor": {
+  "gold_map": {
+   "1": "pass",
+   "2": "pass",
+   "3": "pass",
+   "4": "fail",
+   "5": "pass",
+   "6": "pass",
+   "7": "pass",
+   "8": "pass",
+   "9": "pass",
+   "10": "fail",
+   "11": "pass",
+   "14": "pass",
+   "67": "fail",
+   "68": "pass",
+   "69": "fail"
+  },
+  "gold_critical": {
+   "C1": "fail",
+   "C2": "not_confirmed",
+   "C3": "not_confirmed"
+  },
+  "gold_sha256": {
+   "UAT Plan.xlsx": "910f9b1f327643eaaa52a842c0fbe679166824e3bfdcda7659641d977e6cb74f"
+  }
+ },
+ "N01_whitespace_actual": {
+  "kind": "neutral",
+  "expected_overrides": {},
+  "observed": {
+   "1": "pass",
+   "2": "pass",
+   "3": "pass",
+   "4": "fail",
+   "5": "pass",
+   "6": "pass",
+   "7": "pass",
+   "8": "pass",
+   "9": "pass",
+   "10": "fail",
+   "11": "pass",
+   "14": "pass",
+   "67": "fail",
+   "68": "pass",
+   "69": "fail"
+  },
+  "critical": {
+   "C1": "fail",
+   "C2": "not_confirmed",
+   "C3": "not_confirmed"
+  },
+  "diff": {}
+ },
+ "N02_resaved": {
+  "kind": "neutral",
+  "expected_overrides": {},
+  "observed": {
+   "1": "pass",
+   "2": "pass",
+   "3": "pass",
+   "4": "fail",
+   "5": "pass",
+   "6": "pass",
+   "7": "pass",
+   "8": "pass",
+   "9": "pass",
+   "10": "fail",
+   "11": "pass",
+   "14": "pass",
+   "67": "fail",
+   "68": "pass",
+   "69": "fail"
+  },
+  "critical": {
+   "C1": "fail",
+   "C2": "not_confirmed",
+   "C3": "not_confirmed"
+  },
+  "diff": {}
+ },
+ "R01_ten_more_cases": {
+  "kind": "rubric_relevant",
+  "expected_overrides": {
+   "4": "pass"
+  },
+  "observed": {
+   "1": "pass",
+   "2": "pass",
+   "3": "pass",
+   "4": "pass",
+   "5": "pass",
+   "6": "pass",
+   "7": "pass",
+   "8": "pass",
+   "9": "pass",
+   "10": "fail",
+   "11": "pass",
+   "14": "pass",
+   "67": "fail",
+   "68": "pass",
+   "69": "fail"
+  },
+  "critical": {
+   "C1": "fail",
+   "C2": "not_confirmed",
+   "C3": "not_confirmed"
+  },
+  "diff": {}
+ },
+ "R02_expected_filled": {
+  "kind": "rubric_relevant",
+  "expected_overrides": {
+   "10": "pass"
+  },
+  "observed": {
+   "1": "pass",
+   "2": "pass",
+   "3": "pass",
+   "4": "fail",
+   "5": "pass",
+   "6": "pass",
+   "7": "pass",
+   "8": "pass",
+   "9": "pass",
+   "10": "pass",
+   "11": "pass",
+   "14": "pass",
+   "67": "fail",
+   "68": "pass",
+   "69": "fail"
+  },
+  "critical": {
+   "C1": "fail",
+   "C2": "not_confirmed",
+   "C3": "not_confirmed"
+  },
+  "diff": {}
+ },
+ "R03_date_format": {
+  "kind": "rubric_relevant",
+  "expected_overrides": {
+   "67": "pass"
+  },
+  "observed": {
+   "1": "pass",
+   "2": "pass",
+   "3": "pass",
+   "4": "fail",
+   "5": "pass",
+   "6": "pass",
+   "7": "pass",
+   "8": "pass",
+   "9": "pass",
+   "10": "fail",
+   "11": "pass",
+   "14": "pass",
+   "67": "pass",
+   "68": "pass",
+   "69": "fail"
+  },
+  "critical": {
+   "C1": "fail",
+   "C2": "not_confirmed",
+   "C3": "not_confirmed"
+  },
+  "diff": {}
+ },
+ "R04_cross_functional_label": {
+  "kind": "rubric_relevant",
+  "expected_overrides": {
+   "69": "pass"
+  },
+  "observed": {
+   "1": "pass",
+   "2": "pass",
+   "3": "pass",
+   "4": "fail",
+   "5": "pass",
+   "6": "pass",
+   "7": "pass",
+   "8": "pass",
+   "9": "pass",
+   "10": "fail",
+   "11": "pass",
+   "14": "pass",
+   "67": "fail",
+   "68": "pass",
+   "69": "pass"
+  },
+  "critical": {
+   "C1": "fail",
+   "C2": "not_confirmed",
+   "C3": "not_confirmed"
+  },
+  "diff": {}
+ },
+ "R05_actual_result_filled": {
+  "kind": "rubric_relevant",
+  "expected_overrides": {
+   "5": "fail"
+  },
+  "observed": {
+   "1": "pass",
+   "2": "pass",
+   "3": "pass",
+   "4": "fail",
+   "5": "fail",
+   "6": "pass",
+   "7": "pass",
+   "8": "pass",
+   "9": "pass",
+   "10": "fail",
+   "11": "pass",
+   "14": "pass",
+   "67": "fail",
+   "68": "pass",
+   "69": "fail"
+  },
+  "critical": {
+   "C1": "fail",
+   "C2": "not_confirmed",
+   "C3": "not_confirmed"
+  },
+  "diff": {}
+ },
+ "R06_tested_date_filled": {
+  "kind": "rubric_relevant",
+  "expected_overrides": {
+   "6": "fail"
+  },
+  "observed": {
+   "1": "pass",
+   "2": "pass",
+   "3": "pass",
+   "4": "fail",
+   "5": "pass",
+   "6": "fail",
+   "7": "pass",
+   "8": "pass",
+   "9": "pass",
+   "10": "fail",
+   "11": "pass",
+   "14": "pass",
+   "67": "fail",
+   "68": "pass",
+   "69": "fail"
+  },
+  "critical": {
+   "C1": "fail",
+   "C2": "not_confirmed",
+   "C3": "not_confirmed"
+  },
+  "diff": {}
+ },
+ "R07_role_blank": {
+  "kind": "rubric_relevant",
+  "expected_overrides": {
+   "7": "fail"
+  },
+  "observed": {
+   "1": "pass",
+   "2": "pass",
+   "3": "pass",
+   "4": "fail",
+   "5": "pass",
+   "6": "pass",
+   "7": "fail",
+   "8": "pass",
+   "9": "pass",
+   "10": "fail",
+   "11": "pass",
+   "14": "pass",
+   "67": "fail",
+   "68": "pass",
+   "69": "fail"
+  },
+  "critical": {
+   "C1": "fail",
+   "C2": "not_confirmed",
+   "C3": "not_confirmed"
+  },
+  "diff": {}
+ },
+ "R08_headers_in_row_1": {
+  "kind": "rubric_relevant",
+  "expected_overrides": {},
+  "observed": {
+   "1": "pass",
+   "2": "pass",
+   "3": "pass",
+   "4": "fail",
+   "5": "pass",
+   "6": "pass",
+   "7": "pass",
+   "8": "pass",
+   "9": "pass",
+   "10": "fail",
+   "11": "pass",
+   "14": "pass",
+   "67": "fail",
+   "68": "pass",
+   "69": "fail"
+  },
+  "critical": {
+   "C1": "fail",
+   "C2": "not_confirmed",
+   "C3": "not_confirmed"
+  },
+  "diff": {}
+ },
+ "R09_date_header_renamed": {
+  "kind": "rubric_relevant",
+  "expected_overrides": {
+   "2": "fail",
+   "3": "fail",
+   "4": "fail",
+   "5": "fail",
+   "6": "fail",
+   "7": "fail",
+   "8": "fail",
+   "9": "fail",
+   "10": "fail",
+   "11": "fail",
+   "14": "fail",
+   "67": "fail",
+   "68": "fail",
+   "69": "fail"
+  },
+  "observed": {
+   "1": "pass",
+   "2": "fail",
+   "3": "fail",
+   "4": "fail",
+   "5": "fail",
+   "6": "fail",
+   "7": "fail",
+   "8": "fail",
+   "9": "fail",
+   "10": "fail",
+   "11": "fail",
+   "14": "fail",
+   "67": "fail",
+   "68": "fail",
+   "69": "fail"
+  },
+  "critical": {
+   "C1": "fail",
+   "C2": "not_confirmed",
+   "C3": "not_confirmed"
+  },
+  "diff": {}
+ },
+ "R10_hidden_sheet_first": {
+  "kind": "rubric_relevant",
+  "expected_overrides": {},
+  "observed": {
+   "1": "pass",
+   "2": "pass",
+   "3": "pass",
+   "4": "fail",
+   "5": "pass",
+   "6": "pass",
+   "7": "pass",
+   "8": "pass",
+   "9": "pass",
+   "10": "fail",
+   "11": "pass",
+   "14": "pass",
+   "67": "fail",
+   "68": "pass",
+   "69": "fail"
+  },
+  "critical": {
+   "C1": "fail",
+   "C2": "not_confirmed",
+   "C3": "not_confirmed"
+  },
+  "diff": {}
+ },
+ "R11_scenario_unwrapped": {
+  "kind": "rubric_relevant",
+  "expected_overrides": {
+   "68": "fail"
+  },
+  "observed": {
+   "1": "pass",
+   "2": "pass",
+   "3": "pass",
+   "4": "fail",
+   "5": "pass",
+   "6": "pass",
+   "7": "pass",
+   "8": "pass",
+   "9": "pass",
+   "10": "fail",
+   "11": "pass",
+   "14": "pass",
+   "67": "fail",
+   "68": "fail",
+   "69": "fail"
+  },
+  "critical": {
+   "C1": "fail",
+   "C2": "not_confirmed",
+   "C3": "not_confirmed"
+  },
+  "diff": {}
+ },
+ "R12_no_chrome": {
+  "kind": "rubric_relevant",
+  "expected_overrides": {
+   "14": "fail"
+  },
+  "observed": {
+   "1": "pass",
+   "2": "pass",
+   "3": "pass",
+   "4": "fail",
+   "5": "pass",
+   "6": "pass",
+   "7": "pass",
+   "8": "pass",
+   "9": "pass",
+   "10": "fail",
+   "11": "pass",
+   "14": "fail",
+   "67": "fail",
+   "68": "pass",
+   "69": "fail"
+  },
+  "critical": {
+   "C1": "fail",
+   "C2": "not_confirmed",
+   "C3": "not_confirmed"
+  },
+  "diff": {}
+ }
+}
