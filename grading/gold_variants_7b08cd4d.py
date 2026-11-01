@@ -140,6 +140,29 @@ def o_wide_table(wb):
                 c.number_format = "0.000%" if c.column == 6 and c.value < 1 and 6 <= c.row <= 12 else money
 
 
+def o_dev_like_layout(wb):
+    """Calibration regression (dev layout, 2026-11-01): R09 plus a by-country summary naming the stop cities with show
+    counts, a revenue total row labelled 'TOTAL TOUR REVENUE / INCOME', a summary row 'Total Net Tour Revenue', and the
+    band subtotal as formulas without cached values next to a 'TM + PC' text cell."""
+    o_wide_table(wb)
+    ws = wb["P&L"]
+    for r in range(1, ws.max_row + 1):
+        a = ws.cell(r, 1).value
+        if a == "Total":
+            ws.cell(r, 1).value = "TOTAL TOUR REVENUE / INCOME"
+        elif a == "Net Revenue":
+            ws.cell(r, 1).value = "Total Net Tour Revenue"
+        elif a == "Total Band and Crew":
+            ws.cell(r, 2).value, ws.cell(r, 3).value, ws.cell(r, 4).value = f"=SUM(B{r - 3}:B{r - 1})", f"=SUM(C{r - 3}:C{r - 1})", f"=SUM(D{r - 3}:D{r - 1})"
+            ws.cell(r, 5).value = "TM + PC"
+        elif a == "Withholding by Country":
+            ws.cell(r, 1).value = "Revenue & Foreign Tax Withholding Summary by Country"
+    for r in range(1, ws.max_row + 1):
+        if ws.cell(r, 1).value in ("United Kingdom", "France", "Spain", "Germany") and ws.cell(r, 2).value is not None:
+            city = {"United Kingdom": "London (1 Show)", "France": "Paris (2 Shows)", "Spain": "Barcelona & Madrid (2 Shows)", "Germany": "Munich & Berlin (2 Shows)"}[ws.cell(r, 1).value]
+            ws.cell(r, 1).value = f"{ws.cell(r, 1).value} - {city}"
+
+
 def o_values_only(wb):
     pass
 
@@ -166,6 +189,8 @@ CATALOG = {
                                 "basis": "combined net income as a formula without a cached value: 53 and 56 cannot_assess, never fail; 52 (presence) holds"},
     "R09_wide_revenue_table": {"kind": "rubric_relevant", "openpyxl": o_wide_table, "expected": P(16, 17),
                                "basis": "the sheet rebuilt: a revenue table with per-stop gross, rate, withholding and net and a Total row, withholding by country, expenses with labelled totals, a summary"},
+    "R10_dev_like_layout": {"kind": "rubric_relevant", "openpyxl": o_dev_like_layout, "expected": P(16, 17) | {29: "cannot_assess", 30: "cannot_assess", 31: "cannot_assess"},
+                            "basis": "calibration regression (grader .2): country rows naming stop cities and show counts are no stops (6 holds); the 'TOTAL TOUR REVENUE / INCOME' row gives 18-20; 'Total Net Tour Revenue' is the net revenue row; the band subtotal's uncached formulas are cannot_assess (29-31), not a header row"},
     "N01_values_only_copy": {"kind": "neutral", "openpyxl": o_values_only, "basis": "the workbook saved from a values-only openpyxl copy (formulas become values)"},
     "N02_relabel_stops": {"kind": "neutral", "openpyxl": o_relabel_stops, "basis": "stop labels rewritten as 'City, Country (Show n)'"},
 }

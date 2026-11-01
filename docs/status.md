@@ -3691,6 +3691,34 @@ the agreement sample.
 | `unittest grading.tests.test_gold_c3525d4d` / `c357f0e2` / `7b08cd4d` / `a45bc83b` / `f841ddcf` / `47ef842d` / `b5d2e6f1` | 6.1 / 1.8 / 1.3 / 2.8 / 3.7 / 5.4 / 62.6 s | 0 | 29 / 19 / 15 / 20 / 18 / 14 / 25 |
 | `unittest grading.tests.test_grading_chain` / `test_label_batch` / `harness.tests.test_docs_consistency` | 3.5 / 12.8 / 1.1 s | 0 | 29 / 3 / 3 |
 
+## Calibration fixes after the dev reveal (2026-11-01; `7b08cd4d…` .2, `c3525d4d…` .3; logs `logs/calibration-20261101-170049Z/`)
+
+Structure-only calibration (no recalculation, no verdict reported) on the opened dev outputs found three reading
+defects. These are post-reveal calibration changes; the Grader v0 tags stay at their pre-reveal targets, and the
+validation outputs stay sealed.
+- `7b08cd4d…` (run `6iqdXFGCQhhi3LMfoL3JkC`):
+  - Header rows were detected from the plain value list, where an uncached formula is empty, so labelled subtotal
+    rows were taken for headers. Header detection is now cell-aware. With recalculation the defect would not occur;
+    it is fixed at its source anyway.
+  - By-country summary rows naming stop cities were read as second stop rows. Rows naming two or more stop cities, or
+    a show count, are now aggregates.
+  - The revenue total row "TOTAL TOUR REVENUE / INCOME" and the label "Total Net Tour Revenue" were not recognised.
+    The total row is now any row starting with "Total" read by its measure columns, "net tour revenue" counts as net
+    revenue, and the withholding section is the first non-empty matching block.
+- `c3525d4d…` (run `UzC6bRkvzRHNGkCztWJhb9`): a page title naming the store matrix was taken for the store-number
+  header, and a line-number column won. A header is now a store-field column label.
+- Regression variants: `7b08cd4d…` R10 and `c3525d4d…` R22 reproduce the layouts from the expert files. Under the
+  previous graders they give false fails (7b08cd4d: 6, 18-20, 29-33, 35 and more; c3525d4d: 7, 32, 33); now they
+  match.
+- The frozen review queue still reproduces exactly (`review_queue verify`: reproduced). Its recorded input hashes
+  differ for the two edited task modules, while the item lists and critical mappings are unchanged.
+
+| Command (`run_isolated.sh`, `/usr/bin/time -p`) | Wall clock | Exit | Result |
+|---|---|---|---|
+| `unittest grading.tests.test_gold_7b08cd4d` / `c3525d4d` | 2.6 / 7.2 s | 0 | 16 / 30 |
+| `unittest grading.tests.test_gold_1137e2bb` / `7d7fc9a7` | 15.2 / 6.5 s | 0 | 53 + 2 skipped / 56 + 3 skipped |
+| `unittest grading.tests.test_grading_chain` / `test_item_partition` / `test_review_queue` / `harness.tests.test_docs_consistency` | 3.5 / 1.0 / 1.0 / 0.9 s | 0 | 29 / 2 / 6 / 3 |
+
 ## Known issues and findings (material check)
 
 - `rubric_json.form_content`: 8,036 items hold `null`, 2,417 items lack the key, zero

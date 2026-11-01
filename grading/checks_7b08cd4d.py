@@ -27,7 +27,7 @@ from .engine.money import parse_money
 from .engine.workbook import workbook_gate
 
 TASK = "7b08cd4d-df60-41ae-9102-8aaa49306ba2"
-VERSION = "7b08cd4d-2026-11-01.1"
+VERSION = "7b08cd4d-2026-11-01.2"  # .2 (calibration on the dev output, 2026-11-01): cell-aware header rows; aggregate rows are no stops; revenue total row by measure
 D_ITEMS = [1, 3] + list(range(6, 25)) + list(range(29, 41)) + list(range(49, 59))
 J_ITEMS = [2, 4, 25, 26, 27, 28] + list(range(41, 49))
 V_ITEMS = [5, 59]
@@ -123,7 +123,7 @@ def read_sheet(sh: dict) -> dict:
     header_rows = {}
     for r, row in enumerate(rows, 1):
         hs = {c: v for c, v in enumerate(row, 1) if is_text(v) and (party_of(v) or measure_of(v) or re.search(r"\bcity\b|\bcountry\b|\bdate\b", norm(v)))}
-        nums = [v for v in row if as_number(v) is not None]
+        nums = [c for c in range(1, len(row) + 1) if as_number(value(sh, r, c)) is not None]  # cell-aware: a formula without a cached value is content, not a header
         if len(hs) >= 2 and not nums:
             header_rows[r] = hs
     out_rows, section = [], None
@@ -171,6 +171,9 @@ def stop_rows(model: dict) -> dict:
         if row["label_only"] or re.search(r"hotel|restaurant|expens|cost", norm(row["section"] or "")):
             continue
         t = norm(" ".join(row["texts"].values()))
+        cities = {c.lower() for _, c, _, _ in STOPS if re.search(rf"\b{c.lower()}\b", t)}
+        if len(cities) >= 2 or re.search(r"\b\d+\s*shows?\b", t):
+            continue  # an aggregate row (a country or multi-stop summary), not a tour stop
         for n, city, country, date in STOPS:
             if re.search(rf"\b{city.lower()}\b", t):
                 if city == "Paris":
@@ -207,13 +210,14 @@ def find_label_row(model: dict, rx: str, *, exclude: str | None = None, section_
 
 
 def section_block(model: dict, rx: str) -> list[dict]:
-    """The rows from the label-only row matching ``rx`` down to the next label-only row."""
+    """The rows from the first label-only row matching ``rx`` that heads a non-empty block, down to the next label-only row."""
     out, inside = [], False
     for row in model["rows"]:
         if row["label_only"]:
-            if inside:
+            if inside and out:
                 break
             inside = bool(re.search(rx, norm(row["label"])))
+            out = [] if inside else out
             continue
         if inside:
             out.append(row)
@@ -404,7 +408,8 @@ def check_pl(results, model, ev0, reference, status):
         results[item] = d.result(f"per-stop {what} identity")
     # 18-20: totals (a labelled total row; otherwise the revenue table's own 'Total' row, read by its measure columns)
     last_stop = max((r["r"] for rs in stops.values() for r in rs), default=0)
-    tot_row = next((r for r in model["rows"] if r["r"] > last_stop and not r["label_only"] and re.fullmatch(r"(grand\s*)?totals?:?|total\s*revenue", norm(r["label"]))), None)
+    tot_row = next((r for r in model["rows"] if r["r"] > last_stop and not r["label_only"] and re.match(r"(grand\s*)?totals?\b", norm(r["label"]))
+                    and any(v["measure"] in ("gross", "withholding", "net") for v in r["nums"].values())), None)
 
     def from_total_row(meas):
         if tot_row is None:
@@ -415,7 +420,7 @@ def check_pl(results, model, ev0, reference, status):
     if wt is None and wsec:
         unl = [r for r in wsec if not norm(r["label"]) and party_cells(r)]
         wt = unl[-1] if unl else None
-    nt = find_label_row(model, r"net\s*revenue|net\s*income\s*from\s*shows|revenue.*net", exclude=r"withh")
+    nt = find_label_row(model, r"net\s*(tour\s*)?revenue|net\s*income\s*from\s*shows|revenue.*net", exclude=r"withh")
     status["totals_rows"] = {"gross": gt and gt["r"], "withholding": wt and wt["r"], "net_revenue": nt and nt["r"]}
     for item, row, refv, what, meas in ((18, gt, reference["gross"], "total gross revenue", "gross"), (19, wt, reference["withholding"], "total withholding", "withholding"),
                                         (20, nt, reference["net_revenue"], "total net revenue", "net")):

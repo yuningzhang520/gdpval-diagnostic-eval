@@ -216,6 +216,21 @@ def o_values_only(wb):
     pass
 
 
+def o_title_and_line_column(wb):
+    """Calibration regression (dev layout, 2026-11-01): R01 with a title naming the store matrix and a 'Line #' column
+    of row numbers left of the store numbers."""
+    o_real_list(wb)
+    ws = wb["STORE LIST FINAL"]
+    ws.insert_cols(1)
+    ws["A1"] = "2025 HOLIDAY FLOORSTAND - FINAL APPROVED STORE MATRIX"
+    ws["A5"] = "Line #"
+    k = 0
+    for r in range(6, ws.max_row + 1):
+        if ws.cell(r, 2).value is not None:
+            k += 1
+            ws.cell(r, 1).value = k
+
+
 def o_text_fill_disagree(wb):
     o_real_list(wb)
     ws = wb["STORE LIST FINAL"]
@@ -306,6 +321,8 @@ CATALOG = {
                                    "basis": "R01 with the yellow fill removed from one ADDED row: the status text (31 rows) and the highlight (30 rows) overlap without matching, conflicting indicators"},
     "R21_every_row_flagged": {"kind": "rubric_relevant", "openpyxl": o_every_row_flagged, "expected": P(6, 32) | F(7, 33),
                               "basis": "every listed row flagged ADDED: all added stores are flagged but the flag does not single them out (7), the set is not exact (33)"},
+    "R22_title_and_line_column": {"kind": "rubric_relevant", "openpyxl": o_title_and_line_column, "expected": P(6, 7, 32, 33),
+                                  "basis": "calibration regression (grader .3): a title naming the store matrix and a 'Line #' column; the store-number column is still the list"},
     "N01_values_only_copy": {"kind": "neutral", "openpyxl": o_values_only, "basis": "the workbook saved from a values-only openpyxl copy (formulas become values)"},
     "N02_email_resaved": {"kind": "neutral", "docx": e_resave, "basis": "the email re-saved by python-docx without change"},
 }
@@ -314,7 +331,7 @@ CATALOG = {
 def expected_map(name: str) -> dict:
     spec = CATALOG[name]
     base = BASE_R01 if spec.get("openpyxl") in (o_real_list, o_raw_string_flags, o_list_typo, o_fill_two_styles, o_fill_legend, o_fill_single,
-                                                o_removed_flagged, o_removed_unflagged, o_original_list, o_text_fill_disagree, o_every_row_flagged) else GOLD_BASELINE
+                                                o_removed_flagged, o_removed_unflagged, o_original_list, o_text_fill_disagree, o_every_row_flagged, o_title_and_line_column) else GOLD_BASELINE
     return {**base, **spec.get("expected", {})}
 
 

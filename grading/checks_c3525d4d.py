@@ -39,7 +39,7 @@ from .engine.money import parse_money
 from .engine.workbook import workbook_gate
 
 TASK = "c3525d4d-2012-45df-853e-2d2a0e902991"
-VERSION = "c3525d4d-2026-11-01.2"  # .2: item 7 per the rubric text (every added store flagged; no majority); conflicting flag indicators cannot_assess (approved 2026-11-01)
+VERSION = "c3525d4d-2026-11-01.3"  # .3 (calibration on the dev output, 2026-11-01): the store-list header is a store-field column label, not any text naming a store  # .2: item 7 per the rubric text (every added store flagged; no majority); conflicting flag indicators cannot_assess (approved 2026-11-01)
 D_ITEMS = [1] + list(range(3, 40)) + list(range(41, 48)) + [49]
 J_ITEMS = [2, 40, 48, 50, 51]
 V_ITEMS = [52]
@@ -309,8 +309,8 @@ def store_lists(wb: dict) -> list[dict]:
         best = None
         for r in range(1, min(len(rows), 30) + 1):
             for c, v in enumerate(rows[r - 1], 1):
-                if not (isinstance(v, str) and re.search(r"\bstore", norm(v)) and not re.search(DELTA_RX + r"|count|cost|total", norm(v))):
-                    continue
+                if not (isinstance(v, str) and re.fullmatch(r"store\s*(#|no\.?|num(ber)?|id|code)?(\s*\(.*\))?", norm(v))):
+                    continue  # a column label naming the store field ("Store", "Store #", "Store Number", "Store ID"); never a title
                 ids = [(rr, norm_id(value(sh, rr, c))) for rr in range(r + 1, len(rows) + 1)]
                 ids = [(rr, i) for rr, i in ids if i]
                 if len(ids) >= 50 and (best is None or len(ids) > len(best["ids"])):
