@@ -2867,6 +2867,46 @@ Deferred while the sandbox is in paid use: the docker-gated gold cases of both t
 (`regress_recalc_docker`, `regress_grading_cli`); to be run before the Codex review closes. Codex Review 1 package:
 `docs/codex_review_1_shared_grading_core.md`. Tag `grader-v0-7d7fc9a7` on this commit.
 
+## Replacement unit result and second paid blocker (2026-11-01; provider quota; chain not resumed)
+
+The single authorized replacement of `b5d2e6f1…` (unit `…:20261101T093448Z`, run uuid `mBmBUNxgXDDwCWUmjSEPt7`,
+dev class, config snapshot `config_f3d87934ed1b.json`) ran 09:34:49Z–10:12:13Z (37 min 22 s): 29 model calls, 18 tool
+calls (bash, python), no limit fired, Inspect status success, sample error `RetryError(ClientError)`, execution status
+`error`, collection `no_files_confirmed`, outcome class `execution_error`, not grading-eligible; artifact manifest
+written with 0 files. Provider usage was returned for 18 calls (69,785 input, 101,861 cache-read, 9,260 output incl.
+6,699 reasoning tokens; Inspect total cost 0.0947 USD, ledger priced known part 0.094709 USD - the two agree); 11 calls
+carried no usage: 4 transient "model is currently experiencing high demand" answers (09:38, 09:46; retried
+successfully) and 7 "You exceeded your current quota, please check your plan and billing details" answers (HTTP 429,
+from 10:10:48Z; Inspect's three retries with short backoff spanned about 30 s, then the generation failed). The model
+had been making progress (18 tool steps) and had not written final files when it was cut off. Accounting as designed:
+settled at the reservation (5.000000 USD, estimated) with the known part recorded, hold on the dev ledger (`unknown
+actual cost pending manual review`), engineering failure `RetryError` recorded; the errored attempt stays in the
+inventory next to the first one; nothing retried. The authorized chain (remaining dev units, compat, validation) is
+NOT resumed: the replacement did not complete successfully.
+
+Cause (exact provider text): "Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests,
+limit: 20, model: gemini-3.8-flash, description: Generate content requests per day limit exceeded on Free Tier …
+Please retry in 21h49m". The key is on the Gemini API FREE TIER (20 generate-content requests per day for this model);
+the replacement unit's 18 successful calls plus the retried "high demand" answers consumed the day's allowance. A
+development sample needs roughly 30-100 requests, so no Gemini unit can complete on this key until the project is on
+the paid tier. Free-tier requests are not billed: the provider's actual charge for the two attempts is 0.00 USD (the
+ledger's list-rate figure 0.094709 USD is what the usage would have cost on the paid tier). The harness and the
+corrected adapter behaved correctly; nothing in the configuration changed; snapshots preserved.
+
+Decisions needed (paid-run blocker; the human owns the provider account):
+1. Move the key's Google project to the paid tier (enable billing in Google AI Studio / Cloud) and confirm the paid
+   quota for gemini-3.8-flash (requests and tokens per minute and per day) covers 20 units at 30-100 requests each;
+   no Gemini unit before that.
+2. Reconcile the held unit at the verified provider charge: 0.00 USD on the free tier (basis: the quota message names
+   the free tier; 429 answers are not billed), or 0.094709 USD if the console shows the usage was charged;
+   `ledger_admin resolve … --resolution settled_amount --amount-usd <verified> --basis '<console evidence>'`.
+3. Decide whether a further replacement of `b5d2e6f1…` is authorized (it would be the third attempt; the second
+   reached the provider and consumed tokens) and whether the retry policy for 429 quota answers should change (today
+   `max_retries` 3 with short exponential backoff; a longer backoff or a wait-and-resume would be a policy change
+   needing approval and a config amendment) before the dev batch continues.
+4. Resume the chain only after 1-3: `scripts/run_authorized_batches_2026-11-01.sh "dev compat validation"` with
+   `CFG_OVERRIDE` set to the same snapshot (the batch runner skips `b5d2e6f1…` unless `--allow-repeat`).
+
 ## Known issues and findings (material check)
 
 - `rubric_json.form_content`: 8,036 items hold `null`, 2,417 items lack the key, zero
@@ -2919,10 +2959,11 @@ Deferred while the sandbox is in paid use: the docker-gated gold cases of both t
 
 ## In flight
 
-Recovery actions executed (reconciliation at 0.00 recorded; the single authorized replacement unit of `b5d2e6f1…`
-running detached in the dev class since 09:34:47Z); the chain (remaining dev units, compat, validation) resumes after
-the replacement unit is verified. Offline: Task 2 grader and the shared engine done and tagged; Codex Review 1
-package prepared (stop point); docker-gated tests deferred until the sandbox is free.
+Paid chain stopped on a provider quota blocker (section "Replacement unit result and second paid blocker"); waiting for
+the human's decisions on the Google quota, the held unit and a further replacement. Codex Review 1 pending (package
+sent by the human). The `7d7fc9a7…` development output stays sealed until the C2 composition is adjudicated (the
+approved composition stands meanwhile). Offline: verdict-free review packets and label checkpoints done; PPTX
+extraction and the Task 3 (`2ea2e5b5…`) grader in progress; capability mapping next; docker-gated suites deferred.
 
 ## Decisions taken (date · what · commit)
 

@@ -19,6 +19,7 @@ from harness.image import sandbox_image_ref
 IMAGE = sandbox_image_ref()  # full local image ID from config.json (sandbox.image_id); the tag is informational only
 XLSX_EXT = (".xlsx", ".xlsm")
 DOCX_EXT = (".docx",)
+PPTX_EXT = (".pptx",)
 ERROR_PREFIXES = ("#VALUE!", "#DIV/0!", "#REF!", "#NAME?", "#N/A", "#NUM!", "#NULL!")
 
 
@@ -38,7 +39,7 @@ def inventory(final_dir: str) -> list[dict]:
             if os.path.islink(p) or not os.path.isfile(p):
                 continue
             out.append({"path": os.path.relpath(p, final_dir), "bytes": os.path.getsize(p), "sha256": sha256(p),
-                        "kind": "xlsx" if name.lower().endswith(XLSX_EXT) else "docx" if name.lower().endswith(DOCX_EXT) else "other"})
+                        "kind": "xlsx" if name.lower().endswith(XLSX_EXT) else "docx" if name.lower().endswith(DOCX_EXT) else "pptx" if name.lower().endswith(PPTX_EXT) else "other"})
     return out
 
 
@@ -338,12 +339,77 @@ def extract_docx(path: str) -> dict:
     return {"path": path, "paragraphs": paragraphs, "tables": tables, "text": text, "headings": [p for p in paragraphs if p["style"] and p["style"].lower().startswith("heading")]}
 
 
+_CHART_KINDS = ("pie3DChart", "pieChart", "doughnutChart", "barChart", "bar3DChart", "lineChart", "line3DChart", "areaChart", "scatterChart", "radarChart", "ofPieChart")
+
+
+def _chart_from_xml(blob: bytes) -> dict:
+    """Chart kinds, title and series (names, categories, values) read from the chart part XML: python-pptx cannot
+    parse 3D pies (the work-study expert deck uses pie3DChart), so the package XML is the one source for every kind."""
+    x = blob.decode("utf-8", "replace")
+    kinds = re.findall(r"<c:(" + "|".join(_CHART_KINDS) + r")\b", x)
+    title_m = re.search(r"<c:title>(.*?)</c:title>", x, re.S)
+    title = " ".join(re.findall(r"<a:t>([^<]*)</a:t>", title_m.group(1))) if title_m else None
+    series = []
+    for ser in re.findall(r"<c:ser>(.*?)</c:ser>", x, re.S):
+        name_m = re.search(r"<c:tx>(.*?)</c:tx>", ser, re.S)
+        name = " ".join(re.findall(r"<c:v>([^<]*)</c:v>", name_m.group(1))) if name_m else None
+        cat_m = re.search(r"<c:cat>(.*?)</c:cat>", ser, re.S)
+        val_m = re.search(r"<c:val>(.*?)</c:val>", ser, re.S)
+        cats = re.findall(r"<c:pt[^>]*>\s*<c:v>([^<]*)</c:v>", cat_m.group(1)) if cat_m else []
+        vals = re.findall(r"<c:pt[^>]*>\s*<c:v>([^<]*)</c:v>", val_m.group(1)) if val_m else []
+        series.append({"name": name, "categories": cats, "values": vals})
+    return {"kinds": kinds, "title": title, "series": series, "data_labels": bool(re.search(r"<c:dLbls>", x))}
+
+
+def extract_pptx(path: str) -> dict:
+    """Slides with their layout, title, shapes (text, tables as cell-text grids, charts from the package XML, pictures)
+    and notes; slide size; chart parts by name."""
+    from pptx import Presentation
+    from pptx.util import Emu  # noqa: F401
+    prs = Presentation(path)
+    slides = []
+    for idx, sl in enumerate(prs.slides, start=1):
+        title = None
+        try:
+            if sl.shapes.title is not None and sl.shapes.title.has_text_frame:
+                title = sl.shapes.title.text_frame.text
+        except Exception:
+            title = None
+        shapes = []
+        for sh in sl.shapes:
+            rec = {"id": sh.shape_id, "name": sh.name, "type": str(sh.shape_type), "left": sh.left, "top": sh.top, "width": sh.width, "height": sh.height,
+                   "placeholder": (str(sh.placeholder_format.type) if sh.is_placeholder else None)}
+            if sh.has_text_frame:
+                rec["text"] = sh.text_frame.text
+                rec["paragraphs"] = [p.text for p in sh.text_frame.paragraphs]
+            if getattr(sh, "has_table", False) and sh.has_table:
+                rec["table"] = [[c.text for c in row.cells] for row in sh.table.rows]
+            if getattr(sh, "has_chart", False) and sh.has_chart:
+                try:
+                    part = sh.part.related_part(sh._element.chart_rId)
+                    rec["chart"] = {**_chart_from_xml(part.blob), "part": str(part.partname)}
+                except Exception as ex:  # a chart whose part cannot be read: recorded, never crashes the grader
+                    rec["chart"] = {"error": type(ex).__name__}
+            if str(sh.shape_type).startswith("PICTURE"):
+                rec["picture"] = True
+            shapes.append(rec)
+        notes = None
+        try:
+            if sl.has_notes_slide:
+                notes = sl.notes_slide.notes_text_frame.text if sl.notes_slide.notes_text_frame is not None else ""
+        except Exception:
+            notes = None
+        slides.append({"index": idx, "layout": sl.slide_layout.name if sl.slide_layout is not None else None, "title": title, "shapes": shapes, "notes": notes,
+                       "tables": sum(1 for s_ in shapes if "table" in s_), "charts": sum(1 for s_ in shapes if "chart" in s_), "pictures": sum(1 for s_ in shapes if s_.get("picture"))})
+    return {"path": path, "slide_count": len(slides), "slide_width": prs.slide_width, "slide_height": prs.slide_height, "slides": slides}
+
+
 def extract_all(final_dir: str, work_dir: str, *, recalc: bool = True, runner=subprocess.run) -> dict:
     """Inventory, copies, xlsx/docx extraction and (optionally) recalculation for every deliverable."""
     os.makedirs(work_dir, exist_ok=True)
     inv = inventory(final_dir)
     copies = copy_originals(final_dir, work_dir)
-    result = {"final_dir": final_dir, "inventory": inv, "xlsx": {}, "docx": {}, "other": [i["path"] for i in inv if i["kind"] == "other"]}
+    result = {"final_dir": final_dir, "inventory": inv, "xlsx": {}, "docx": {}, "pptx": {}, "other": [i["path"] for i in inv if i["kind"] == "other"]}
     result["copies"] = copies
     for item in inv:
         rec = copies[item["path"]]
@@ -393,6 +459,14 @@ def extract_all(final_dir: str, work_dir: str, *, recalc: bool = True, runner=su
             ex["recalc_comparison"] = compare_recalc(ex, rc)
             apply_recalc_values(ex)
             result["xlsx"][item["path"]] = ex
+        elif item["kind"] == "pptx":
+            provenance["copy_verified_before_parse"] = rec["copy_verified"] and sha256(cp) == item["sha256"]
+            try:
+                d = extract_pptx(cp) if provenance["copy_verified_before_parse"] else None
+                result["pptx"][item["path"]] = ({**d, **provenance} if d else {"error": "working copy differs from the original", "error_class": "copy_fault", **provenance})
+            except Exception as e:
+                kind = classify_exception(e)
+                result["pptx"][item["path"]] = {"error": f"parser raised {type(e).__name__}", "error_class": {"structural": "original_corrupt", "resource": "grader_error"}.get(kind, "parser_undetermined"), "exception_type": type(e).__name__, **provenance}
         elif item["kind"] == "docx":
             provenance["copy_verified_before_parse"] = rec["copy_verified"] and sha256(cp) == item["sha256"]
             try:

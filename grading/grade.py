@@ -278,7 +278,7 @@ def grade_run(host_dir: str, log, sample_uuid: str, *, task_id: str, rubric: lis
         for g in grades:
             f.write(json.dumps(g, default=str) + "\n")
     score = _score(grades, mod["critical"])
-    review = write_review_materials(os.path.join(out_dir, "review"), binding["uuid"], rubric, checks, units, verdicts, extraction)
+    review = write_review_materials(os.path.join(out_dir, "review"), binding["uuid"], rubric, checks, units, verdicts, extraction, reference=reference, task_id=task_id, grading_pass=rec["grading_pass"])
     rec.update({"graded": True, "deliverables": [i["path"] for i in extraction["inventory"]], "rejected_files_not_delivered": rejected_files,
                 "transfer_integrity": integrity, "originals_unchanged": extraction.get("originals_unchanged"), "working_copies": provenance, "extraction_status": checks.get("extraction_status"),
                 "recalc": {k: v.get("recalc", {}).get("status") for k, v in extraction["xlsx"].items()},
