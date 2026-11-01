@@ -5,8 +5,12 @@ Focused closure check for the Codex Review 1 findings on the shared grading core
 Scope: B1–B4, N11, provenance, and any directly related correctness blocker. Not in scope: another architecture
 review, other tasks, the harness. The fixes are in the task specification `grading/checks_7d7fc9a7.py` (task version
 `7d7fc9a7-2026-11-01.2`), `grading/grade.py::code_provenance`, the two gold catalogs and suites; the shared engine
-(`grading/engine/`) and the 1137 grader are unchanged. The closure commit and the code-bound verification records
-are named in `docs/status.md` (section "Codex Review 1 fixes").
+(`grading/engine/`) and the 1137 grader are unchanged. Closure commit: `9b1df11851f65349a8e5e0bc63a418f311202dac`.
+Code-bound verification records (written from that commit with a clean tree): `grading/validation/<task>/code_9b1df11/`
+(`corruption_catalog.json`, `gold_transitions.json`, `gold_transitions_recalc.json`), each with `_provenance`
+(full commit, `dirty: false`, changed and untracked path counts, task grader and engine versions). Test log
+directories: `logs/codex-r1-fixes-20261101T110924Z/` (non-Docker suites, pre-fix reproduction) and
+`logs/codex-r1-docker-20261101T112649Z/` (Docker-gated suites and record dumps).
 
 ## Closure table
 
@@ -27,16 +31,31 @@ are named in `docs/status.md` (section "Codex Review 1 fixes").
 Pre-fix reproduction: `logs/codex-r1-fixes-*/red_prefix_7d7fc9a7.log` (the nine new cases against the committed
 pre-fix module, blob `057a4180c047ad37ba8dffcd331eaa4c9857410a`, identical to `bd5713b`): 8 failures, 1 error.
 
+## Test results at the closure commit
+
+| Suite | Result |
+|---|---|
+| `test_gold_7d7fc9a7` (incl. R21-R28, production `grade_run`) | 46 + 3 Docker-gated skipped, all pass |
+| nine new cases against the pre-fix module | 8 failures, 1 error (expected red) |
+| `test_gold_1137e2bb` / `test_layout_regressions` / `test_grading_chain` / `test_review_packets` | 53 + 2 skipped / 57 / 29 / 2, all pass |
+| `GoldRecalcDockerTests` (1137 / 7d7fc9a7, LibreOffice in the pinned image) | 2/2 / 3/3 |
+| `regress_recalc_docker` / `regress_grading_cli` / `regress_pilot_cli` | 16 / 61 / 13 PASS, 0 FAIL |
+| harness unit suites (launcher, batch, budget, staging, generation config, docs consistency) | all pass |
+
+Durations and exit codes: `docs/status.md`, section "Codex Review 1 fixes".
+
 ## What to verify
 
 1. The four blockers on the fixed module: run the commands below; compare with the closure table.
 2. That no expert verdict changed: gold baselines of both tasks (7d7fc9a7: 10 and 30 fail; 1137: 21 fails).
 3. That no shared-engine or 1137 behaviour changed: `git diff <reviewed target>..<closure commit> -- grading/engine grading/checks_1137e2bb.py`
    is empty; the 1137 suites are green.
-4. Provenance binding of the new records (commit, dirty flag, untracked count).
+4. Provenance binding of the new records (commit, dirty flag, untracked count) in `grading/validation/*/code_9b1df11/`.
 
 ```
 harness/tests/run_isolated.sh /abs/repo unittest grading.tests.test_gold_7d7fc9a7
 harness/tests/run_isolated.sh /abs/repo unittest grading.tests.test_gold_1137e2bb grading.tests.test_layout_regressions grading.tests.test_grading_chain
 GOLD_RECALC_DOCKER=1 harness/tests/run_isolated.sh /abs/repo unittest grading.tests.test_gold_7d7fc9a7.GoldRecalcDockerTests grading.tests.test_gold_1137e2bb.GoldRecalcDockerTests
+harness/tests/run_isolated.sh /abs/repo grading.tests.regress_grading_cli --output-root /abs/fresh/dir
+git diff bd5713b..9b1df11 -- grading/engine grading/checks_1137e2bb.py   # expected empty
 ```

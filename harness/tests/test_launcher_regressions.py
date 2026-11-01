@@ -1010,4 +1010,3 @@ class CodeLoadedTests(_Base):
         fp = L.harness_source_fingerprint()
         self.assertEqual(first["harness_source"], fp)  # the tree has not changed during this test
         self.assertGreater(fp["files"], 5)
-

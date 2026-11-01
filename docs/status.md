@@ -2764,7 +2764,7 @@ Baseline verified: HEAD = origin/main = `f37f1e829af2efd5daf81e3a680ea691b16fcfb
 | `unittest harness.tests.test_generation_config` (+ Google mapping) | 2.6 s | 0 | 7/7 |
 | `unittest harness.tests.test_docs_consistency` | 0.9 s | 0 | 3/3 |
 | `harness.tests.regress_pilot_cli` (real Inspect + docker + mockllm, formal class, inventory + artifact manifest) | 8.1 s | 0 | 13/13 |
-| `grading.tests.regress_grading_cli` (docker) | 6.2 → 6.4 s | 1 / 0 | 74/74 (task name and refusal message pins updated) |
+| `grading.tests.regress_grading_cli` (docker) | 6.2 → 6.4 s | 1 / 0 | 61/61 (first run 58 PASS, 3 FAIL; task name and refusal message pins updated). Corrected 2026-11-01: this cell first read 74/74, a recording error; the results files hold 61 checks |
 | `harness.batch --dry-run` dev / validation / compat x2 | 1.8 s / similar | 0 | 10 / 10 / 1 / 1 units, all gates passed, reservations voided |
 
 Not run (unchanged code): limits / closeout / tools / compose / collect / image unit suites.
@@ -2867,7 +2867,7 @@ Docker-gated suites run once the sandbox was idle (2026-11-01, after the paid un
 2/2 (12.7 s; expert workbook 164/164 formulas equal through LibreOffice after the engine move; formula-error case on
 its declared map), `test_gold_7d7fc9a7.GoldRecalcDockerTests` 3/3 (3.3 s; expert workbook through LibreOffice on the
 gold baseline; summary hard-coded fails 7 alone; a total prepaid balance added as a formula passes 10),
-`regress_recalc_docker` 16/16 (3.6 s), `regress_grading_cli` 74/74 (7.2 s). Nothing deferred remains for the Codex
+`regress_recalc_docker` 16/16 (3.6 s), `regress_grading_cli` 61/61 (7.2 s; corrected 2026-11-01 from a recorded 74/74, a recording error: the results file holds 61 checks). Nothing deferred remains for the Codex
 checkpoint. Codex Review 1 package: `docs/codex_review_1_shared_grading_core.md`. Tag `grader-v0-7d7fc9a7`.
 
 Verdict-free review packets (`grading/review.py`, 2026-11-01): the items file carries criteria, locations, source
@@ -2984,7 +2984,28 @@ Closure table and package: `docs/codex_review_1_closure.md`.
 | `unittest harness.tests.test_launcher_regressions` (+ CodeLoadedTests) | 6.2 s | 0 | 49/49 |
 | `unittest harness.tests.test_batch_unit` / `test_budget_unit` / `test_staging_unit` / `test_generation_config` / `test_docs_consistency` | 1.1 / 1.0 / 0.8 / 2.6 / 0.9 s | 0 | 3 / 34 / 12 / 8 / 3 |
 
-Docker-gated suites: run after this commit on the idle sandbox (records bound to the commit; next status entry).
+Closure commit `9b1df11851f65349a8e5e0bc63a418f311202dac`. Docker-gated suites on the idle sandbox at that commit with a
+clean tree (no paid process running; logs `logs/codex-r1-docker-20261101T112649Z/`):
+
+| Command (`run_isolated.sh`, `/usr/bin/time -p`) | Wall clock | Exit | Result |
+|---|---|---|---|
+| `GOLD_RECALC_DOCKER=1 unittest grading.tests.test_gold_1137e2bb.GoldRecalcDockerTests` | 13.2 s | 0 | 2/2 |
+| `GOLD_RECALC_DOCKER=1 unittest grading.tests.test_gold_7d7fc9a7.GoldRecalcDockerTests` | 3.9 s | 0 | 3/3 |
+| `grading.tests.regress_recalc_docker --output-root …` | 3.7 s | 0 | 16 PASS, 0 FAIL |
+| `grading.tests.regress_grading_cli --output-root …` | 7.1 s | 0 | 61 PASS, 0 FAIL |
+| `harness.tests.regress_pilot_cli --output-root …` (real Inspect + docker + mockllm; launcher with `code_loaded`) | 5.4 s | 0 | 13 PASS, 0 FAIL |
+| `unittest grading.tests.test_gold_1137e2bb` / `test_gold_7d7fc9a7` (record dumps) | 14.0 / 4.6 s | 0 | 55 (2 skipped) / 49 (3 skipped) |
+| `unittest harness.tests.test_launcher_regressions` / `test_docs_consistency` (after the end-of-file fix) | 6.1 / 0.9 s | 0 | 49 / 3 |
+
+The first invocation of the three regression scripts omitted the required `--output-root` and exited 2 at argument
+parsing (no test ran); rerun with output roots as above. Code-bound validation records (new files; earlier records
+unchanged): `grading/validation/<task>/code_9b1df11/` holds `corruption_catalog.json` (1137: 51 variants; 7d7fc9a7: 43,
+incl. R21-R28 and N11 `d_neutral`), `gold_transitions.json` (fast path) and `gold_transitions_recalc.json` (LibreOffice
+path), each with `_provenance` = full commit `9b1df11…`, `dirty: false`, 0 changed and 0 untracked paths, task grader
+and engine versions. The two non-Docker dumps and the catalog export ran with the one-file status edit stashed, so the
+tree was clean; the edit was restored afterwards. Correction: two earlier entries of this file recorded
+`regress_grading_cli` as 74/74; every results file of that suite holds 61 checks (the 74 belongs to `regress_limits`);
+both entries now carry the corrected count and a correction note.
 Also drafted (not committed with the fixes): the rubric-to-capability map (`scripts/capability_map.py`,
 `grading/capability_map.json`, preregistration 1.17 DRAFT).
 
@@ -3041,11 +3062,16 @@ Also drafted (not committed with the fixes): the rubric-to-capability map (`scri
 ## In flight
 
 Paid chain stopped after the third `b5d2e6f1…` attempt ended `limited` (message limit); waiting for the human's decision on
-the development resource setting before the remaining dev units, compat and validation run. Codex Review 1 fixes committed;
-closure package `docs/codex_review_1_closure.md`. Task 3 (`2ea2e5b5…`) grader drafted offline (not yet committed).
+the development resource setting before the remaining dev units, compat and validation run. Codex Review 1 fixes committed
+(`9b1df11`), Docker-gated suites green, code-bound records written; focused closure package
+`docs/codex_review_1_closure.md` ready for the Codex closure check. Task 3 (`2ea2e5b5…`) grader drafted offline.
 
 ## Decisions taken (date · what · commit)
 
+- 2026-11-01 · Codex Review 1 fixes committed (`9b1df11851f65349a8e5e0bc63a418f311202dac`); Docker-gated suites green;
+  code-bound gold records under `grading/validation/<task>/code_9b1df11/`. Paid chain held after the third `b5d2e6f1…`
+  attempt ended `limited` (message limit): the authorization requires a successful replacement; decision requested from
+  the human · this commit
 - 2026-11-01 · Gemini recovery and Codex Review 1 fixes AUTHORIZED by the human (chat, after the key investigation):
   (1) the human replaced `GOOGLE_API_KEY` in the project `.env` with the key of the Paid Tier 1 project (auto-reload
   of the prepaid balance enabled); no billing settings are changed by the assistant; any billing, quota or payment
