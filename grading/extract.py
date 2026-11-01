@@ -327,6 +327,19 @@ def format_check(path: str) -> dict:
     return out
 
 
+def map_recalc_sheet_names(original: list[str], recalculated: list[str]) -> dict:
+    """recalculated sheet title -> original sheet name. LibreOffice writes at most 31 characters (the xlsx limit), so a
+    longer original name comes back truncated. A non-identical title is mapped only when it sits at the same position
+    and the original name starts with it; anything else stays unmapped (its values are not joined)."""
+    out = {}
+    for i, name in enumerate(recalculated):
+        if name in original:
+            out[name] = name
+        elif i < len(original) and len(original) == len(recalculated) and len(name) == 31 and len(original[i]) > 31 and original[i].startswith(name) and original[i] not in recalculated:
+            out[name] = original[i]
+    return out
+
+
 def recalculate_xlsx(copy_path: str, work_dir: str, runner=subprocess.run, timeout_s: int = 300) -> dict:
     """LibreOffice headless recalculation of the copy inside the trusted image (no network, scratch
     mount only). Every call uses a fresh, uniquely named scratch directory; soffice's own exit
@@ -379,8 +392,12 @@ def recalculate_xlsx(copy_path: str, work_dir: str, runner=subprocess.run, timeo
     try:
         wb = openpyxl.load_workbook(out_path, data_only=True)
         wb_f = openpyxl.load_workbook(out_path, data_only=False)
+        original_names = openpyxl.load_workbook(copy_path, read_only=True).sheetnames
+        name_map = map_recalc_sheet_names(original_names, wb.sheetnames)
         values = {}
         for ws in wb.worksheets:
+            if ws.title not in name_map:
+                continue
             wf = wb_f[ws.title]
             vals = {}
             for row in ws.iter_rows():
@@ -389,10 +406,12 @@ def recalculate_xlsx(copy_path: str, work_dir: str, runner=subprocess.run, timeo
                         vals[c.coordinate] = _cell_value(c.value)
                     elif c.data_type == "str" and isinstance(wf[c.coordinate].value, str) and wf[c.coordinate].value.startswith("="):
                         vals[c.coordinate] = ""  # recalculated formula whose result is the empty string (t="str", empty <v>)
-            values[ws.title] = vals
+            values[name_map[ws.title]] = vals
     except Exception as ex:
         return {**record, "status": "failed", "reason": f"recalculated workbook unreadable: {type(ex).__name__}", "produced": produced}
-    return {**record, "status": "ok", "values": values, "recalculated_copy": out_path, "output_sha256": sha256(out_path), "sheets": list(values)}
+    renamed = {k: v for k, v in name_map.items() if k != v}
+    return {**record, "status": "ok", "values": values, "recalculated_copy": out_path, "output_sha256": sha256(out_path), "sheets": list(values),
+            **({"sheet_names_restored": renamed} if renamed else {}), **({"sheets_unmapped": [s for s in wb.sheetnames if s not in name_map]} if len(name_map) < len(wb.sheetnames) else {})}
 
 
 def compare_recalc(extracted: dict, recalc: dict) -> dict:

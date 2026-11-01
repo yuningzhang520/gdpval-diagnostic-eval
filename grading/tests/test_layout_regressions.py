@@ -1092,5 +1092,33 @@ class RecalculationPathTests(unittest.TestCase):
         self.assertEqual(rc2["status"], "failed"); self.assertIn("unreadable", rc2["reason"]); self.assertNotIn("values", rc2)
 
 
+    def test_truncated_sheet_names_are_joined_to_their_originals(self):
+        """LibreOffice writes sheet names of at most 31 characters: recalculated values of a longer-named sheet are
+        joined back by position and prefix; a renamed sheet that is not a truncation stays unmapped."""
+        import warnings
+        import openpyxl
+        long_name = "Prepaid Expenses (Account #1250)"  # 32 characters
+        self.assertEqual(len(long_name), 32)
+        orig = os.path.join(self.base, "long.xlsx")
+        wb = openpyxl.Workbook(); ws = wb.active; ws.title = "Summary"; ws["A1"] = "=B1"
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            w2 = wb.create_sheet(long_name)
+        w2["A1"] = 5; w2["A2"] = "=A1*2"
+        wb.save(orig)
+
+        def converter(cmd, **kw):
+            out = openpyxl.Workbook(); o1 = out.active; o1.title = "Summary"; o1["A1"] = 0
+            o2 = out.create_sheet(long_name[:31]); o2["A1"] = 5; o2["A2"] = 10
+            out.save(os.path.join(self.scratch_of(cmd), "out", "in.xlsx"))
+            return SimpleNamespace(returncode=0, stdout="SOFFICE_RC=0\n", stderr="")
+        rc = X.recalculate_xlsx(orig, os.path.join(self.base, "work3"), runner=converter)
+        self.assertEqual(rc["status"], "ok")
+        self.assertEqual(rc["values"][long_name]["A2"], 10)
+        self.assertEqual(rc["sheet_names_restored"], {long_name[:31]: long_name})
+        self.assertEqual(X.map_recalc_sheet_names(["Summary", long_name], ["Summary", "Other sheet"]), {"Summary": "Summary"})
+        self.assertEqual(X.map_recalc_sheet_names(["Summary", "Short name"], ["Summary", "Short"]), {"Summary": "Summary"})  # not a 31-character truncation
+
+
 if __name__ == "__main__":
     unittest.main()

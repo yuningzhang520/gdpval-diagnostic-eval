@@ -31,7 +31,7 @@ from .engine.sheets import first_text, month_of, row_cells, sheet_names, text_in
 from .engine.workbook import workbook_gate
 
 TASK = "7d7fc9a7-21a7-4b83-906f-416dea5ad04f"
-VERSION = "7d7fc9a7-2026-11-01.5"  # .1 first gold-first version; .2 Codex Review 1 B1-B4 (item contract, evidence states, label-first summary identity, item 53 without allowance)
+VERSION = "7d7fc9a7-2026-11-01.6"  # .1 first gold-first version; .2 Codex Review 1 B1-B4 (item contract, evidence states, label-first summary identity, item 53 without allowance); .6 Dev calibration (2026-11-01): one-row header labels, 'term (mos)', a separate monthly table below the lines, half-up cent totals, column-aware summary (captions, month columns, beginning rows, account numbers, percentages, 'Less:' magnitude, 'amortization expense')
 MONTHS = {1: "Jan", 2: "Feb", 3: "Mar", 4: "Apr"}
 D_ITEMS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 14, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 33, 34, 36, 37, 38, 39, 40, 41, 42, 43, 44, 47, 48, 49, 50, 53]
 J_ITEMS = [12, 15, 16, 17, 18, 31, 32, 35, 45, 46, 51, 52, 54, 55]
@@ -58,7 +58,7 @@ SCHEMA = {
     "vendor": {"required": True, "synonyms": ["vendor", "vendor name", "payee", "supplier", "name", "vendor / description", "vendor/description", "description"]},
     "beginning": {"required": False, "synonyms": ["beginning balance", "beg balance", "beg. balance", "opening balance", "beginning", "beg bal", "opening", "balance 1/1/2025"]},
     "amount": {"required": False, "synonyms": ["original amount", "invoice amount", "amount", "total amount", "prepaid amount", "original", "invoice total", "cost", "original invoice amount", "amount paid"]},
-    "term": {"required": False, "synonyms": ["months", "amortization months", "term", "term (months)", "# months", "no. of months", "number of months", "period (months)", "amortization period", "months to amortize",
+    "term": {"required": False, "synonyms": ["months", "amortization months", "term", "term (months)", "term (mos)", "term (mos.)", "term (mo)", "term (mths)", "# months", "no. of months", "number of months", "period (months)", "amortization period", "months to amortize",
                                             "amortization", "amortization months", "term months", "months of service", "# of months"]},
     "start": {"required": False, "synonyms": ["start", "start date", "period start", "from", "begin date", "amortization start", "service start", "start month", "amortization period start"]},
     "end_date": {"required": False, "synonyms": ["end date", "period end", "to", "amortization end", "service end", "through", "end month", "amortization period end"]},
@@ -182,6 +182,7 @@ def month_header(sheet: dict, max_rows: int = 15) -> dict | None:
         if len(set(months.values())) < 3:
             continue
         sub_cells = row_cells(sheet, r + 1) if r < len(rows) else []
+        two_row = any(sub_cells[i]["status"] == "ok" and sub_kind(sub_cells[i]["value"]) for i in range(len(sub_cells)) if not hasattr(sub_cells[i]["value"], "year"))
         groups: dict = {}
         ambiguous: dict = {}
         unclassified = []
@@ -206,13 +207,29 @@ def month_header(sheet: dict, max_rows: int = 15) -> dict | None:
                 else:
                     g[kind] = col
                 continue
-            label = " ".join(x for x in (norm_text(text) if text is not None and not hasattr(text, "year") else "", norm_text(sub) if sub is not None and not hasattr(sub, "year") else "") if x).strip()
+            # the row below belongs to the header only in a two-row header; otherwise it is the first data row (.6)
+            sub_label = norm_text(sub) if two_row and sub is not None and not hasattr(sub, "year") else ""
+            label = " ".join(x for x in (norm_text(text) if text is not None and not hasattr(text, "year") else "", sub_label) if x).strip()
             if label:
                 other.append((col, label))
-        two_row = any(sub_cells[i]["status"] == "ok" and sub_kind(sub_cells[i]["value"]) for i in range(len(sub_cells)) if not hasattr(sub_cells[i]["value"], "year"))
         return {"month_row": r, "sub_row": r + 1 if two_row else r, "header_end": r + 1 if two_row else r, "groups": {m: g for m, g in sorted(groups.items())},
                 "ambiguous": ambiguous, "unclassified": unclassified, "other": other}
     return None
+
+
+def block_month_cols(sheet: dict, r: int) -> dict | None:
+    """{month: column} of a text-only row naming at least three distinct months in distinct columns: the header of a
+    separate monthly table below the lines (e.g. a roll-forward with 'January 2025' ... columns) (.6)."""
+    cols = {}
+    for idx, c in enumerate(row_cells(sheet, r)):
+        if c["status"] == "empty":
+            continue
+        if c["status"] != "ok" or not isinstance(c["value"], str):
+            return None
+        m = month_of(c["value"])
+        if m is not None and m not in cols:
+            cols[m] = idx
+    return cols if len(cols) >= 3 else None
 
 
 def parse_schedule(sheet: dict, name: str) -> dict:
@@ -238,11 +255,24 @@ def parse_schedule(sheet: dict, name: str) -> dict:
         return {"sheet": name, "status": "vendor_unmapped", "lines": [], "bottom": {}, "groups": hdr["groups"], "header": hdr, "unmapped_headers": mapping["unmapped_headers"]}
     amb = set(hdr["ambiguous"])
     lines, bottom, bottom_dups, bottom_dup_rows, notes, unidentified = [], {}, {}, {}, [], []
+    block = None
     stop = len(sheet["rows"])
     for r in range(hdr["header_end"] + 1, stop + 1):
         label = first_text(sheet, r, max_cols=max(3, vendor_col + 1))
         cells = row_cells(sheet, r)
         if not any(c["status"] != "empty" for c in cells):
+            continue
+        if block is None and (lines or bottom) and block_month_cols(sheet, r) is not None:
+            block = {"header_row": r, "cols": block_month_cols(sheet, r)}
+            notes.append({"row": r, "label": label or "", "block_header": True})
+            continue
+        if block is not None:  # rows of the separate monthly table are bottom rows read under its own month columns, never lines (.6)
+            key = next((k for k, rx in BOTTOM.items() if label and re.search(rx, norm_text(label), re.I)), None)
+            rec = {"row": r, "label": label, "months": {m: {"end": read_cell(sheet, r, c)} for m, c in block["cols"].items()}, "other": {}, "block_header_row": block["header_row"]}
+            if key and key not in bottom:
+                bottom[key] = rec
+            else:
+                notes.append({"row": r, "label": label, "block_row": True, **({"key_already_located": key} if key else {})})
             continue
         month_cells = {m: {k: read_cell(sheet, r, c) for k, c in g.items()} for m, g in hdr["groups"].items()}
         if label and re.search(NOT_A_LINE, norm_text(label), re.I):
@@ -439,13 +469,16 @@ def locate_sheets(x: dict) -> dict:
 # ----------------------------------------------------------------------------- summary sheet (identity before value, B3)
 def account_of(text) -> str | None:
     t = norm_text(text)
-    a = "1250" in t or re.search(r"\bexpenses?\b|\bexp\b", t) is not None
+    t2 = re.sub(r"(amorti[sz]ation|insurance|operating)\s+expenses?", " ", t)  # 'amortization expense' names a measure, not the 1250 account (.6)
+    a = "1250" in t or re.search(r"\bexpenses?\b|\bexp\b", t2) is not None
     b = "1251" in t or "insur" in t
     return "both" if a and b else "1250" if a else "1251" if b else None
 
 
 def kind_of(label) -> str | None:
     t = norm_text(label)
+    if re.search(r"\b(beginning|opening)\b|^\s*beg\.?\b", t):  # an opening balance is never the 4/30 balance (.6)
+        return "beginning"
     if re.search(r"amorti[sz]", t):
         return "ytd"
     if re.search(r"\bbalance\b|\bending\b|\bg\.?\s?l\b|end of period", t):
@@ -458,7 +491,7 @@ def kind_of(label) -> str | None:
 def summary_cells(sheet: dict, max_rows: int = 60) -> list[dict]:
     """Every figure cell of the summary sheet - numbers, formulas without a cached value, error values - with its state,
     the row label, the sub-heading above the block, its formula and its number format."""
-    out, heading = [], ""
+    out, heading, captions = [], "", {}
     for r in range(1, min(max_rows, len(sheet["rows"])) + 1):
         cells = row_cells(sheet, r)
         texts = [c["value"] for c in cells if c["status"] == "ok" and isinstance(c["value"], str) and c["value"].strip() and numeric_cell(c)[0] != "ok"]
@@ -471,18 +504,33 @@ def summary_cells(sheet: dict, max_rows: int = 60) -> list[dict]:
             elif st == "unreliable" or (st == "invalid" and c["status"] == "error_value"):
                 figures.append((c, st, v))
         if texts and not figures:
-            heading = texts[0]
+            row_caps = {i: c["value"] for i, c in enumerate(cells) if c["status"] == "ok" and isinstance(c["value"], str) and c["value"].strip()}
+            if len(row_caps) >= 2:  # a caption row: each column's caption names the measure or the month of the figures below; the section heading stays (.6)
+                captions = row_caps
+            else:
+                heading = texts[0]
         for c, st, v in figures:
             raw = sheet["cells"].get(c["coord"], {})
             label = " ".join(texts)
+            cap = captions.get(next((i for i, cc in enumerate(cells) if cc["coord"] == c["coord"]), -1))
             kind, acct = kind_of(label), account_of(label)
-            if kind == "balance" and (acct == "both" or (acct is None and re.search(r"\btotal\b|combined|overall|grand|all accounts", norm_text(label)))):
+            cap_kind, cap_month = (kind_of(cap), month_of(cap)) if cap else (None, None)
+            if cap_kind is not None and kind in (None, "additions"):  # the row names the account, the column the measure
+                kind = cap_kind
+            presented = None
+            if "%" in (raw.get("number_format") or "") or (st == "ok" and v in (1250, 1251) and cap and re.search(r"acc(oun)?t|acct|#", norm_text(cap))):
+                cls = (None, None)  # a ratio or a GL account number, not an amount
+            elif cap_month is not None and (kind == "ytd" or cap_month != 4):
+                cls = ("month_figure", None)  # one month's figure: neither the 4/30 balance nor the YTD total
+            elif kind == "balance" and (acct == "both" or (acct is None and re.search(r"\btotal\b|combined|overall|grand|all accounts", norm_text(label)))):
                 cls = ("total", None)
             else:
                 a = acct if acct not in (None, "both") else (account_of(heading) if acct is None else None)
                 cls = (kind, a if a != "both" else None)
+            if cls[0] == "ytd" and st == "ok" and v < 0 and re.match(r"^\s*less\b", norm_text(label)):
+                presented, v = v, -v  # a deduction shown with a minus sign on a 'Less:' row: compared by its magnitude
             out.append({"coord": c["coord"], "row": r, "state": st, "value": v, "label": label, "heading": heading, "formula": raw.get("formula"),
-                        "number_format": raw.get("number_format"), "class": cls, "cell": c})
+                        "number_format": raw.get("number_format"), "class": cls, "cell": c, **({"caption": cap} if cap else {}), **({"presented_value": presented} if presented is not None else {})})
     return out
 
 
@@ -688,7 +736,7 @@ def run_checks(extraction: dict, reference: dict, rubric: list[dict], integrity:
                             d.violation("invalid_value", f"{MONTHS[m]} {k}: line cell(s) {cs_['invalid'][:5]} are not numbers; the per-line sum is undefined", cells=cs_["invalid"][:10])
                         elif cs_["unknown"]:
                             d.unreliable("grader_error", "schedule", {"month": MONTHS[m], "kind": k, "cells": cs_["unknown"][:10]})
-                        elif not close(v, cs_["sum"]):
+                        elif not (close(v, cs_["sum"]) or cents_equal(v, cs_["sum"])):  # a total shown as the half-up cent rounding of the line sum agrees (prereg 1.7) (.6)
                             if U:
                                 d.unreliable("unidentified", "schedule", f"{MONTHS[m]} {k} total {v} != sum of vendor lines {cs_['sum']}; {U} row(s) with figures but no vendor")
                             else:
@@ -1010,6 +1058,8 @@ def run_checks(extraction: dict, reference: dict, rubric: list[dict], integrity:
                 return
             st, v = cell_state(c)
             nf = (sheet["cells"].get(c["coord"]) or {}).get("number_format") or "General"
+            if "%" in nf or (st == "ok" and v in (1250, 1251)):  # percentages and the GL account numbers are not amounts (.6)
+                return
             if st == "ok" and v != 0:
                 monetary += 1
                 if not money_format_ok(nf):

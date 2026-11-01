@@ -1229,6 +1229,25 @@ also 929,354.31 (A-10).
 - K3 (class c): the BCBS treatment is pinned down by the GL balances and the prompt's
   coverage/payment dates, not stated explicitly; recorded as an inference the model must
   make from the reconciliation requirement.
+- Dev calibration .6 (2026-11-01). Before freeze; V0 kept; this run carries no v3 human label. The leads came from
+  sealed AI QA and were checked against the deliverable.
+  - The development output's workbook layout exposed defects that made most schedule items `cannot_assess`:
+    - a one-row header absorbed the first line, so the vendor column was ambiguous;
+    - sheet names longer than 31 characters were not joined to their recalculated values (engine .4).
+  - Operational rules adopted (grader detail, not criteria):
+    - the row below a header is header text only in a two-row header;
+    - "Term (Mos)" names the term;
+    - a separate monthly table below the lines (its own month captions) holds the bottom rows;
+    - a totals cell equal to the half-up cent rounding of the line sum agrees (1.7).
+  - Summary identity, column-aware:
+    - caption rows name the measure, and a single-month column is neither the 4/30 balance nor the YTD total;
+    - beginning or opening rows are not balances;
+    - percentages and GL account numbers are not amounts;
+    - a negative figure on a "Less:" row is compared by magnitude;
+    - "amortization expense" does not name account 1250.
+  - Item 53: percentage cells and account numbers are not monetary cells.
+  - Synthetic regressions: `V1LayoutTests`. The gold-first suite is unchanged and passes.
+  - Two interpretation questions for the human (section 4); the grader keeps its current rule meanwhile.
 - Gold-first verification (2026-11-01; grader 7d7fc9a7-2026-11-01.1; records in
   `grading/validation/7d7fc9a7-…/`). First pass of the new grader on the expert workbook:
   39 pass, 2 fail, 0 `cannot_assess`; C1 pass, C3 pass, C2 fail, C4 fail. Findings:
@@ -1550,6 +1569,16 @@ Requirement layers (APPROVED 2026-10-30):
   - `7d7fc9a7…` C4 keeps item 10.
   - `c357f0e2…` item 4 is literal (80-100).
   - The fixed review queue (1.19) and the sensitivity reporting (1.18) are adopted.
+
+- 2026-11-01, OPEN (from the `7d7fc9a7…` Dev calibration, grader .6), two questions:
+  - Item 11 rounding. The summary YTD for 1251 shows 198,721.52, the cent value of the exact YTD and the reference.
+    The schedule's monthly totals round each line's monthly charge and add up to 198,721.53. Rubric 11 asks for "the
+    sum of Jan–Apr amortization totals from the respective detailed tabs". Should the 0.01 difference fail (current
+    rule) or pass under 1.7 (individually rounded figures need not add up)?
+  - Items 21, 27, 39, 47, 50: implicit additions. These require per-month additions. A schedule that records each
+    invoice once, by amount and start month, with no per-month addition or beginning-balance column, cannot be
+    checked without inferring additions (amount in the start month, 0 otherwise). They are `cannot_assess` meanwhile.
+    Should the grader infer them?
 
 - 2026-11-01, `a45bc83b…` item 70: DECIDED the same day by the human - human visual review is authoritative, the
   criterion is counted once; the judge verdict on it is used for judge-human agreement only (section 2.10).

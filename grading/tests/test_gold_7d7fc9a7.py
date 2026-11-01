@@ -233,5 +233,62 @@ class GoldRecalcDockerTests(unittest.TestCase):
         self.assertEqual(g["map"], expected, {i: v for i, v in g["map"].items() if v != expected[i]})
 
 
+class V1LayoutTests(unittest.TestCase):
+    """Grader .6 (Dev calibration 2026-11-01): layouts seen on a development output, built synthetically."""
+
+    def sheet(self, rows, formats=None, title="S"):
+        d = tempfile.mkdtemp(prefix="v1layout_")
+        self.addCleanup(shutil.rmtree, d, True)
+        wb = openpyxl.Workbook(); ws = wb.active; ws.title = title
+        for r, row in enumerate(rows, 1):
+            for c, v in enumerate(row, 1):
+                if v is not None:
+                    ws.cell(r, c, v)
+        for coord, nf in (formats or {}).items():
+            ws[coord].number_format = nf
+        p = os.path.join(d, "w.xlsx"); wb.save(p)
+        return X.extract_xlsx(p)["sheets"][title]
+
+    HDR = ["Vendor Name", "Invoice #", "Invoice Description", "Original Amount", "Term (Mos)", "Jan 2025 Expense", "Jan 31, 2025 Balance", "Feb 2025 Expense",
+           "Feb 28, 2025 Balance", "Mar 2025 Expense", "Mar 31, 2025 Balance", "Apr 2025 Expense", "Apr 30, 2025 Balance", "Total Amortization YTD"]
+    LINE = ["ADOBE", "450522", "IT Services", 600, 6, 100, 500, 100, 400, 100, 300, 100, 200, 400]
+
+    def test_one_row_header_does_not_absorb_the_first_line(self):
+        sch = CK.parse_schedule(self.sheet([self.HDR, self.LINE]), "S")
+        self.assertEqual(sch["status"], "ok")
+        self.assertEqual(sch["mapping"]["cols"]["vendor"], 0)
+        self.assertEqual(sch["mapping"]["cols"]["term"], 4)  # 'Term (Mos)', not the 'Total Amortization YTD' column
+        self.assertEqual(len(sch["lines"]), 1)
+
+    def test_separate_monthly_table_below_the_lines(self):
+        rows = [self.HDR, self.LINE, ["Total Prepaid", None, None, 600, None, 100, 500, 100, 400, 100, 300, 100, 200, 400], [],
+                [None, "Activity", "January 2025", "February 2025", "March 2025", "April 2025"],
+                [None, "Ending Prepaid Balance", 500, 400, 300, 200], [None, "General Ledger Balance", 500, 400, 300, 200], [None, "Variance", 0, 0, 0, 0]]
+        sch = CK.parse_schedule(self.sheet(rows), "S")
+        self.assertEqual(sch["status"], "ok")
+        self.assertEqual(len(sch["lines"]), 1)
+        self.assertEqual(sch["unidentified"], [])
+        self.assertEqual(CK.bottom_cell(sch["bottom"]["gl"], 4)[:2], ("ok", 200))
+        self.assertEqual(CK.bottom_cell(sch["bottom"]["variance"], 1)[:2], ("ok", 0))
+        self.assertEqual(sch["bottom"]["gl"]["block_header_row"], 5)
+
+    def test_summary_snapshot_and_monthly_sections(self):
+        rows = [["Summary"], [None, "GL Account #", "Account Description", "Total Amortization YTD", "Ending Balance (4/30/2025)", "% Amortized YTD"],
+                [None, 1250, "Prepaid Expenses", 400, 200, 0.5], [None, 1251, "Prepaid Insurance", 90, 30, 0.75], [],
+                [None, "Metric", "January 2025", "February 2025", "March 2025", "April 2025", "YTD Total"],
+                [None, "Prepaid Insurance (Account #1251)"], [None, "Beginning Balance", 0, 100, 80, 60, 0],
+                [None, "Less: Amortization Expense", -20, -20, -20, -30, -90], [None, "Ending Balance", 100, 80, 60, 30, 30]]
+        cells = CK.summary_cells(self.sheet(rows, {"F3": "0.0%", "F4": "0.0%"}))
+        cls = {c["coord"]: c["class"] for c in cells}
+        self.assertEqual((cls["D3"], cls["E3"], cls["D4"], cls["E4"]), (("ytd", "1250"), ("balance", "1250"), ("ytd", "1251"), ("balance", "1251")))
+        self.assertEqual((cls["B3"], cls["F3"]), ((None, None), (None, None)))  # account number, percentage
+        self.assertEqual(cls["C9"], ("month_figure", None))  # January amortization is not the YTD figure
+        self.assertEqual(cls["F9"], ("month_figure", None))  # nor is April's
+        self.assertEqual(cls["G9"], ("ytd", "1251"))  # the YTD column, account from the section heading, not from 'expense'
+        self.assertEqual(next(c["value"] for c in cells if c["coord"] == "G9"), 90)  # 'Less:' deduction compared by magnitude
+        self.assertEqual(cls["F8"][0], "beginning")
+        self.assertEqual(cls["F10"], ("balance", "1251"))
+
+
 if __name__ == "__main__":
     unittest.main()

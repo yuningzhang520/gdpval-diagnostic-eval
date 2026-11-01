@@ -3915,6 +3915,23 @@ Generation (18:29Z):
 - Validation: 7 of 10 canonical (sealed). `2ea2e5b5…` is running; `a45bc83b…` and `c357f0e2…` are pending.
 - Scheduler cap lowered to 1 at 18:24Z (memory contention).
 
+## Grader V1 calibration: shared engine .4 and `7d7fc9a7…` .6 (2026-11-01; Dev; sealed QA leads checked against the deliverable)
+
+Inputs: sealed AI QA leads of Dev runs without a v3 human label. Engineering input only; the V0 passes are unchanged.
+Re-grades went to the scratchpad; the official V1 Dev re-grade follows the per-task freeze.
+- Engine `engine-2026-11-01.4` (for Codex Review 2): `extract.map_recalc_sheet_names` joins the recalculated values
+  of a sheet whose name LibreOffice truncated to 31 characters. The join requires the same position and a prefix, and
+  records `sheet_names_restored`; anything else stays unmapped. Test:
+  `RecalculationPathTests.test_truncated_sheet_names_are_joined_to_their_originals`.
+- `7d7fc9a7…` grader .6: the operational rules are in preregistration 2.7 ("Dev calibration .6"). Tests:
+  `V1LayoutTests`.
+- Effect on Dev run `HqashRMi…` (deterministic items with a QA lead, 35):
+  - 29 pass (26 were `cannot_assess`, 1 was fail), 1 fail (item 11), 5 `cannot_assess` (21, 27, 39, 47, 50).
+  - No item without a lead changed.
+  - Item 11 and the five items are open interpretation questions (preregistration section 4).
+- Tests: all 17 offline grading suites and docs consistency pass. No Docker suite was run; each scratch re-grade ran
+  one LibreOffice recalculation.
+
 ## Known issues and findings (material check)
 
 - `rubric_json.form_content`: 8,036 items hold `null`, 2,417 items lack the key, zero
@@ -4299,7 +4316,8 @@ Generation (18:29Z):
 - 2026-11-01 · no-recalculation references for `c357f0e2…` and `a45bc83b…` (entry-point material; no verdict change) · 6d92e47
 - 2026-11-01 · Judge Dev guard priced at long-context rates (bounds the ledger settlement) · 02a35b5
 - 2026-11-01 · Pass 1 addendum 2 (`a45bc83b…`) and the `b5d2e6f1…` packet reference · b062e33
-- 2026-11-01 · review policy v3 (time-bounded human review; critical-FAIL verification before reporting), queue_v3 frozen (seed 20261101) · (this commit)
+- 2026-11-01 · review policy v3 (time-bounded human review; critical-FAIL verification before reporting), queue_v3 frozen (seed 20261101) · 306e49d
+- 2026-11-01 · engine .4 (truncated sheet names in the recalculation join) and `7d7fc9a7…` grader .6 (Dev calibration) · (this commit)
 
 ## Next stage (not started)
 
