@@ -3486,7 +3486,7 @@ classified as recovered 429 (events 124, 125); under the new rule that unit woul
 ## In flight
 
 Gemini dev and validation resume under the new snapshot and scheduler plan (two projects, cap 2, dev first when the
-cap is 1). `c3525d4d…` grader v0 committed (tag and code-bound records next). Remaining graders: `7b08cd4d…`, `c357f0e2…`. `b5d2e6f1…` waits for rule A-1.
+cap is 1). `c3525d4d…` grader v0 tagged (`grader-v0-c3525d4d` at `5435534`; code-bound records `grading/validation/c3525d4d…/code_5435534/`). Remaining graders: `7b08cd4d…`, `c357f0e2…`. `b5d2e6f1…` waits for rule A-1.
 
 ## Decisions taken (date · what · commit)
 
@@ -3795,7 +3795,7 @@ cap is 1). `c3525d4d…` grader v0 committed (tag and code-bound records next). 
 
 - 2026-11-01 · `c3525d4d…` grader v0 (task version c3525d4d-2026-11-01.1), the shared extractor's cell styles and
   conditional formats, and the editorial correction of the preregistration 2.5 classification (37, 38, 39, 41 are D
-  under C3; pending human confirmation) · (this commit)
+  under C3; pending human confirmation) · 5435534 (tag `grader-v0-c3525d4d`)
 
 ## Next stage (not started)
 
