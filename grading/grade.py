@@ -24,6 +24,7 @@ from . import checks_1137e2bb as CK
 from . import checks_7d7fc9a7 as CK2
 from . import checks_2ea2e5b5 as CK3
 from . import checks_a45bc83b as CK4
+from . import checks_b5d2e6f1 as CK5
 from . import judge as J
 from .extract import extract_all
 from .review import write_review_materials
@@ -38,7 +39,8 @@ TASK_MODULES = {CK.TASK: {"checks": CK.run_checks, "units": J.build_units_1137e2
                 CK2.TASK: {"checks": CK2.run_checks, "units": J.build_units_7d7fc9a7, "critical": CK2.CRITICAL, "judge_items": CK2.J_ITEMS, "visual_items": CK2.V_ITEMS, "version": CK2.VERSION},
                 CK3.TASK: {"checks": CK3.run_checks, "units": J.build_units_2ea2e5b5, "critical": CK3.CRITICAL, "judge_items": CK3.J_ITEMS, "visual_items": CK3.V_ITEMS, "version": CK3.VERSION},
                 CK4.TASK: {"checks": CK4.run_checks, "units": J.build_units_a45bc83b, "critical": CK4.CRITICAL, "judge_items": CK4.J_ITEMS, "visual_items": CK4.V_ITEMS,
-                           "judge_agreement_only": CK4.JUDGE_AGREEMENT_ONLY, "version": CK4.VERSION}}
+                           "judge_agreement_only": CK4.JUDGE_AGREEMENT_ONLY, "version": CK4.VERSION},
+                CK5.TASK: {"checks": CK5.run_checks, "units": J.no_judge_units, "critical": CK5.CRITICAL, "judge_items": CK5.J_ITEMS, "visual_items": CK5.V_ITEMS, "version": CK5.VERSION}}
 
 
 def grader_version_of(task_id: str) -> str:
@@ -189,7 +191,10 @@ def selected_grades(out_dir: str, run_uuid: str, prefer: str = "latest_with_judg
     return {**sel, "grades": rows}
 
 
-def _score(grades: list[dict], critical_spec: dict) -> dict:
+def _score(grades: list[dict], critical_spec: dict, extra: dict | None = None) -> dict:
+    """W / E / P over the rubric rows; critical status from each criterion's items (deterministic, judge, visual) and,
+    where a task declares them, its non-rubric checks (``extra``: {key: {"verdict": ...}}, e.g. a comparison with the
+    source recomputation); a criterion with nothing to decide on is not_confirmed."""
     W = sum(g["weight"] for g in grades)
     graded = [g for g in grades if g["verdict"] in ("pass", "fail")]
     E = sum(g["weight"] for g in graded)
@@ -198,9 +203,9 @@ def _score(grades: list[dict], critical_spec: dict) -> dict:
     critical = {}
     for cid, spec in critical_spec.items():
         items = spec["items"] + spec.get("judge_items", []) + spec.get("visual_items", [])  # visual rows stay pending_human until reviewed
-        vs = [by_item.get(i, "pending") for i in items]
+        vs = [by_item.get(i, "pending") for i in items] + [((extra or {}).get(k) or {}).get("verdict", "pending") for k in spec.get("extra", [])]
         critical[cid] = {"name": spec["name"], "status": "fail" if "fail" in vs else "pass" if vs and all(v == "pass" for v in vs) else "not_confirmed", "items": items,
-                         "verdicts": {i: by_item.get(i, "pending") for i in items}}
+                         "verdicts": {i: by_item.get(i, "pending") for i in items}, **({"extra_checks": {k: ((extra or {}).get(k) or {}).get("verdict", "pending") for k in spec["extra"]}} if spec.get("extra") else {})}
     return {"W": W, "E": E, "P": P, "P_over_E": (P / E) if E else None, "E_over_W": (E / W) if W else None,
             "ungraded": [{"item": g["item"], "verdict": g["verdict"], "reason": g.get("note") or g.get("rationale") or g.get("parse_error")} for g in grades if g["verdict"] not in ("pass", "fail")],
             "critical": critical, "critical_overall": "fail" if any(c["status"] == "fail" for c in critical.values()) else "pass" if all(c["status"] == "pass" for c in critical.values()) else "not_confirmed"}
@@ -284,7 +289,7 @@ def grade_run(host_dir: str, log, sample_uuid: str, *, task_id: str, rubric: lis
     with open(os.path.join(out_dir, "grades.jsonl"), "a", encoding="utf-8") as f:
         for g in grades:
             f.write(json.dumps(g, default=str) + "\n")
-    score = _score(grades, mod["critical"])
+    score = _score(grades, mod["critical"], extra=checks.get("critical_extra"))
     review = write_review_materials(os.path.join(out_dir, "review"), binding["uuid"], rubric, checks, units, verdicts, extraction, reference=reference, task_id=task_id, grading_pass=rec["grading_pass"])
     rec.update({"graded": True, "deliverables": [i["path"] for i in extraction["inventory"]], "rejected_files_not_delivered": rejected_files,
                 "transfer_integrity": integrity, "originals_unchanged": extraction.get("originals_unchanged"), "working_copies": provenance, "extraction_status": checks.get("extraction_status"),

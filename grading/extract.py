@@ -105,13 +105,22 @@ def extract_xlsx(path: str) -> dict:
                 fields = [cf.name for cf in pt.cache.cacheFields]
                 row_fields = [fields[rf.x] for rf in (pt.rowFields or []) if 0 <= rf.x < len(fields)]
                 data_fields = [(d.name, d.subtotal) for d in (pt.dataFields or [])]
-                pivots.append({"name": pt.name, "source_sheet": src.sheet, "source_ref": src.ref, "cache_fields": fields, "row_fields": row_fields, "data_fields": data_fields})
+                data_sources = [fields[d.fld] if d.fld is not None and 0 <= d.fld < len(fields) else None for d in (pt.dataFields or [])]  # the cache field each data field aggregates
+                formulas = {cf.name: cf.formula for cf in pt.cache.cacheFields if getattr(cf, "formula", None)}  # calculated cache fields
+                pivots.append({"name": pt.name, "source_sheet": src.sheet, "source_ref": src.ref, "cache_fields": fields, "row_fields": row_fields, "data_fields": data_fields,
+                               "data_field_sources": data_sources, "calculated_fields": formulas, "location": getattr(getattr(pt, "location", None), "ref", None)})
             except Exception as ex:  # structure present but unreadable: record, never crash the grader
                 pivots.append({"name": getattr(pt, "name", None), "error": f"{type(ex).__name__}"})
         sheets[ws.title] = {"dimensions": ws.dimensions, "max_row": ws.max_row, "max_col": ws.max_column, "cells": cells, "rows": rows,
-                            "pivots": pivots, "tables": sorted(ws.tables.keys()) if hasattr(ws, "tables") else [],
+                            "pivots": pivots, "tables": sorted(ws.tables.keys()) if hasattr(ws, "tables") else [], "merged": [str(m) for m in ws.merged_cells.ranges],
                             "auto_filter": ws.auto_filter.ref if ws.auto_filter and ws.auto_filter.ref else None}
-    return {"path": path, "sheets": sheets, "sheet_order": wb_f.sheetnames}
+    import zipfile
+    with zipfile.ZipFile(path) as z:
+        names = z.namelist()
+    package = {"pivot_tables": sorted(n for n in names if n.startswith("xl/pivotTables/pivotTable") and n.endswith(".xml")),
+               "pivot_cache_definitions": sorted(n for n in names if n.startswith("xl/pivotCache/pivotCacheDefinition") and n.endswith(".xml")),
+               "pivot_cache_records": sorted(n for n in names if n.startswith("xl/pivotCache/pivotCacheRecords") and n.endswith(".xml"))}
+    return {"path": path, "sheets": sheets, "sheet_order": wb_f.sheetnames, "package": package}
 
 
 RESOURCE_EXCEPTIONS = (MemoryError, OSError, RecursionError, TimeoutError)

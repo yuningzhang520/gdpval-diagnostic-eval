@@ -369,6 +369,25 @@ item states otherwise.
   that mean (for example Clinique WTD 0.24668 versus ratio of sums 0.23087). The rubric
   (items 7–9, 18–21) requires the ratio of sums and SUM aggregation; the gold would fail
   those items. Recorded as a gold defect; the rubric governs.
+- Deterministic rules of grader v0 (2026-11-01; operational detail, for human review at the labeling checkpoint):
+  sheets by name (case-insensitive, whitespace-normalised) with a keyword fallback for the content items (the name
+  items 2, 3, 11 need the exact name); columns identified by content (horizon WTD / Week to Date, MTD, YTD; measure
+  sales quantity, sales $, stock on hand, ST%) and the literal-label items 4, 13 and 22 graded as written; summary rows
+  classified from the Data tab's brands and stores (compact pivot layout or tabular store and brand columns; store
+  subtotal rows carry the store label or "<store> Total"); a bare "Total" row is the grand total for the value items
+  while item 31 tests the literal "Grand Total"; item 17 passes when the Grand Total equals either the sum of the store
+  rows or the sum of the store subtotals (the rubric's "or"); ST% within 0.0005 of the row's quantity / stock, or within
+  0.05 as a percent number when the cell is not percent-formatted, ST% excluded from the summed columns; item 21 from
+  the pivot data fields' aggregation, else from the formulas (AVERAGE, COUNT, MAX, MIN, MEDIAN fail), values only
+  `cannot_assess`; item 29 needs a currency symbol and two decimals in the number format; item 30 looks for merged
+  ranges starting in the header rows. C1 adds a content-identified column-set check and C2 the comparison of every
+  brand and the grand total with the source recomputation (non-rubric checks in the critical status only).
+  Expert workbook: 4, 7-9, 13, 18-22 and 29 fail; the C2 source comparison fails (K2); C1 and C3 pass, C2 and C4 fail.
+- A-1 (OPEN, provisional rule in grader v0; section 4): the expert "Sales by Store" pivot shows two figure-less rows
+  labelled "(blank)" (empty groups from the whole-column source range B1:V1048576). Read literally ("no extra ...
+  pairs") they are extra rows and item 14 fails, which also fails C3 for the expert. Grader v0 records a figure-less
+  "(blank)" row as an empty pivot group, not a (store, brand) pair; a "(blank)" row with figures still counts as an
+  extra row. The first pass under the literal reading is kept (item 14 fail).
 
 ### 2.2 `f841ddcf-2a28-4f6d-bac3-61b607219d3e` — June shipment recap (Order Clerks)
 Inputs: `PO Log.xlsx` (66 POs, all status "Shipped", no blank actual ship dates,
@@ -1280,6 +1299,10 @@ Requirement layers (APPROVED 2026-10-30):
 ---
 
 ## 4. Decisions still needed from the human before freeze
+
+- 2026-11-01, `b5d2e6f1…` A-1 (OPEN): whether a figure-less "(blank)" pivot row counts as an extra (store, brand) row
+  under rubric 14 (literal reading: fail, and C3 fails for the expert) or is an empty pivot group (grader v0's
+  provisional rule). Section 2.1.
 
 - 2026-11-01, `a45bc83b…` item 70: DECIDED the same day by the human - human visual review is authoritative, the
   criterion is counted once; the judge verdict on it is used for judge-human agreement only (section 2.10).

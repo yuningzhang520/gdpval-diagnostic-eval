@@ -18,5 +18,7 @@
    "basis": "Codex Review 1 closure accepted 2026-11-01; tag moved to 1b92af83c6e5 (task version 7d7fc9a7-2026-11-01.5)"
   }
  },
- "not_ready": {}
+ "not_ready": {
+  "b5d2e6f1-62a2-433a-bcdd-95b260cdd860": "grader v0 tagged; rubric decision A-1 ('(blank)' pivot rows) pending"
+ }
 }

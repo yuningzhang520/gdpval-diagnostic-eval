@@ -227,6 +227,11 @@ def build_units_a45bc83b(task_prompt: str, rubric: list[dict], extraction: dict,
     return units
 
 
+def no_judge_units(task_prompt: str, rubric: list[dict], extraction: dict, reference: dict, checks: dict, run_uuid: str) -> list[dict]:
+    """Tasks whose rubric items are all deterministic or visual (no judge unit)."""
+    return []
+
+
 def render_unit(unit: dict) -> str:
     return (f"TASK REQUIREMENT (as given to the worker):\n{unit['task_requirement']}\n\n"
             f"CRITERION (item {unit['item']}, weight {unit['weight']}):\n{unit['criterion']}\n\n"

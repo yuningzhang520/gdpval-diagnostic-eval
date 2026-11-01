@@ -3294,6 +3294,27 @@ Paid sandboxes idle, so the deferred Docker-gated suites ran at `3f256b7` (clean
 | `grading.tests.regress_recalc_docker --output-root …` | 3.6 s | 0 | 16 PASS, 0 FAIL |
 | `grading.tests.regress_grading_cli --output-root …` (extractor, scorer and item-70 changes) | 6.5 s | 0 | 61 PASS, 0 FAIL |
 
+## Task 1 `b5d2e6f1…` gold-first grader v0 (2026-11-01; task version b5d2e6f1-2026-11-01.1; no model, judge or paid call; logs `logs/gold-first-b5d2e6f1-20261101T143251Z/`)
+
+Deterministic items 1-31 (`grading/checks_b5d2e6f1.py`; rules in preregistration 2.1), visual item 32; 17 declared
+variants (`grading/gold_variants_b5d2e6f1.py`). Shared changes, recorded for Codex Review 2: `grading/extract.py` adds
+merged ranges per sheet, the source field and calculated fields of every pivot data field, the pivot location and the
+workbook's pivot package parts (tables, cache definitions, cache records); `grading/grade.py::_score` counts a task's
+non-rubric critical checks (`critical_extra`; never in W, E or P) - used here for C1 (columns identified by content)
+and C2 (brand and grand totals against the source); `grading/judge.py::no_judge_units` for tasks without judge items.
+The engine package (`grading/engine/`) is unchanged; the 1137e2bb, 7d7fc9a7, 2ea2e5b5 and a45bc83b suites stay green.
+Declared before the first run: fails 4, 7-9, 13, 18-22 and the C2 source check; 29 added after seeing the expert's
+General format; observed: as declared, plus 14 on two figure-less "(blank)" pivot rows (first pass kept). Provisional
+rule A-1 (open, preregistration section 4) treats such rows as empty pivot groups. Expert after A-1: C1 and C3 pass,
+C2 (K2) and C4 (K3) fail. One grader defect found by variant R06 and fixed before the commit: item 17 accepted only
+the sum of the store rows, although the rubric allows the store subtotals too. All 17 variants match.
+
+| Command (`run_isolated.sh`, `/usr/bin/time -p`) | Wall clock | Exit | Result |
+|---|---|---|---|
+| `unittest grading.tests.test_gold_b5d2e6f1` | 49.8 → 49.7 s | 1 / 0 | 22/22 (first run: the status record kept tuple keys that JSON cannot write) |
+| `unittest grading.tests.test_gold_1137e2bb` / `test_gold_7d7fc9a7` / `test_gold_2ea2e5b5` / `test_gold_a45bc83b` | 13.8 / 5.9 / 2.0 / 3.0 s | 0 | 53 + 2 / 56 + 3 / 30 / 20 |
+| `unittest grading.tests.test_grading_chain` / `harness.tests.test_docs_consistency` | 3.6 / 1.0 s | 0 | 29 / 3 |
+
 ## Known issues and findings (material check)
 
 - `rubric_json.form_content`: 8,036 items hold `null`, 2,417 items lack the key, zero
