@@ -2863,9 +2863,20 @@ rubric 30 stays inside C2.
 | `unittest grading.tests.test_grading_chain` | 2.1–2.9 s | 0 | 28/28 |
 | `unittest harness.tests.test_docs_consistency` | 0.9 s | 0 | 3/3 |
 
-Deferred while the sandbox is in paid use: the docker-gated gold cases of both tasks and the docker regressions
-(`regress_recalc_docker`, `regress_grading_cli`); to be run before the Codex review closes. Codex Review 1 package:
-`docs/codex_review_1_shared_grading_core.md`. Tag `grader-v0-7d7fc9a7` on this commit.
+Docker-gated suites run once the sandbox was idle (2026-11-01, after the paid unit ended): `test_gold_1137e2bb.GoldRecalcDockerTests`
+2/2 (12.7 s; expert workbook 164/164 formulas equal through LibreOffice after the engine move; formula-error case on
+its declared map), `test_gold_7d7fc9a7.GoldRecalcDockerTests` 3/3 (3.3 s; expert workbook through LibreOffice on the
+gold baseline; summary hard-coded fails 7 alone; a total prepaid balance added as a formula passes 10),
+`regress_recalc_docker` 16/16 (3.6 s), `regress_grading_cli` 74/74 (7.2 s). Nothing deferred remains for the Codex
+checkpoint. Codex Review 1 package: `docs/codex_review_1_shared_grading_core.md`. Tag `grader-v0-7d7fc9a7`.
+
+Verdict-free review packets (`grading/review.py`, 2026-11-01): the items file carries criteria, locations, source
+material and excerpts only; deterministic and judge verdicts go to the sealed file; `save-labels` checkpoints a filled
+CSV with SHA-256, timestamp, labeller and counts (append-only log); `compare` refuses without a checkpoint and reports
+false PASS / false FAIL / coverage loss and agreement with numerators and denominators per source (D / J / V).
+`grading/tests/test_review_packets.py` 2/2; grading chain 28/28. PPTX extraction (`grading/extract.py::extract_pptx`:
+slides, shapes, tables, charts read from the package XML incl. `pie3DChart`, notes) verified on the Task 3 expert deck
+(5 slides, 4 tables, 4 pie charts with categories and values); the Task 3 grader is the next offline step.
 
 ## Replacement unit result and second paid blocker (2026-11-01; provider quota; chain not resumed)
 
