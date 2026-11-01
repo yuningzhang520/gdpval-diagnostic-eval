@@ -300,6 +300,8 @@ Validation and Judge Validation records (2026-11-01, code `0c8efcb`; details in 
     re-judged;
   - the resumed pass halted on the first call of `c357f0e2…` (item 12: `RetryError` wrapping a google
     `ClientError`); 53 calls were not attempted; the unit settled at its 6.11 USD reservation and is on hold.
+- Formal preflight at `eb781fd`: launcher `--dry-run` for all 20 Formal units, all rc 0, no provider call. Records are
+  in `docs/status.md` ("Formal preflight").
 - Verdicts of the Validation runs must not be disclosed to the human before the Validation labels are checkpointed.
   Do not print or quote Validation verdicts or judge responses in the review report.
 

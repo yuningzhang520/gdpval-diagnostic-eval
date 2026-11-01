@@ -4371,6 +4371,46 @@ Private GitHub backup security gate (read-only checks; **no push made**):
 - The references are in history, so removing them would need a history rewrite (not authorized). The push is stopped
   before it starts; the human decides.
 
+## Formal preflight (offline dry-run, no provider call) and backup inventory (2026-11-01; code `eb781fd`)
+
+Launcher `--dry-run` for all 20 Formal units (10 tasks x 2 candidates), 19 s, all rc 0. It used a scratch run root and
+ledger, `/Users/yuning/turing-eval-runs/formal/preflight-20261101T222421Z`, and a config copy whose only change is a preflight-only Formal ceiling of 40 USD; the real ceiling is
+fixed at `freeze-v1`, and the launcher refuses the placeholder by design.
+- Code clean at `eb781fd`.
+- Shared prompt `harness/system_prompt_draft.txt`, SHA-256 `6b539cf9…`, identical for both candidates.
+- Staged files verified by SHA-256 per task (1 to 27 files).
+- Image by full ID `sha256:18cde712…`.
+- Credentials: ANTHROPIC_API_KEY and OPENAI_API_KEY present by name, none missing; values never printed (suffix only).
+- Scratch ledger: 21 reservation / void pairs, nothing spent.
+
+Isolation boundary, checked statically (`harness/compose.yaml`, `docker/sandbox/Dockerfile`):
+- the sandbox has `network_mode: none` and no volumes;
+- capabilities are dropped and privilege escalation is blocked;
+- memory, CPU and PID limits are set;
+- the only environment variable is `HOME`, so credentials stay with the host launcher;
+- the image is pinned by ID and never pulled;
+- the image copies only `requirements.txt`;
+- inputs enter only through the staged-file allowlist.
+
+Open for `freeze-v1`: the Formal budget ceiling, the shared prompt file and `config.json` status (DRAFT), the
+human's freeze approval and the batch authorization.
+
+Inventory for a later encrypted backup (gitignored or outside the repository; not created, not uploaded):
+
+| Location | Size | Contents |
+|---|---|---|
+| `private/` | 6.2 MB | gold deliverables, rubrics, recalculation references |
+| `data/gdpval.parquet` | 1.8 MB | dataset copy |
+| `data/inputs/` | 1.4 MB | task inputs |
+| `data/resources/` | 28 MB | staged resources |
+| `data/prompts/` | 44 KB | prompt texts |
+| `logs/` | 37 MB | test and review evidence |
+| `plan/` | 40 KB | local Chinese plan |
+| `harness/fixtures/` | 112 KB | generated fixtures |
+| `~/turing-eval-runs/` | 168 MB | dev 83, validation 51, labeling 25, compat 7.0 MB, plus judge ledgers, registries, QA, scheduler |
+
+`.env` holds credentials and is not part of a backup.
+
 ## Known issues and findings (material check)
 
 - `rubric_json.form_content`: 8,036 items hold `null`, 2,417 items lack the key, zero
@@ -4769,7 +4809,8 @@ Private GitHub backup security gate (read-only checks; **no push made**):
 - 2026-11-01 · Judge Dev Pass 2 (`2ea2e5b5…`, 4 calls, 0.031 USD; 57 and 59 now agree); per-call judge pricing; V1 calibration freeze (shared judge + all task V1, `grading/freeze/v1_manifest.json`, tag `v1-calibration-freeze`); Judge Validation runner and plan · 0c8efcb
 - 2026-11-01 · Validation revealed under the frozen versions; Judge Validation halted on a provider error (hold, 7.06 USD settled conservatively); 10 Validation packets; Dev frozen re-grades; Docker-gated suites; Codex Review 2 package · 2c4b8d7
 - 2026-11-01 · V1.1 (approved): per-item judge recovery, inferred ledger resolutions, engine .7 provider_error / not_run, picture-chart visual-review flags (`2ea2e5b5…` .4, `47ef842d…` .3), evidence corrections; tag `v1.1-judge-item-recovery` · 57e2a25
-- 2026-11-01 · Validation ledger recovery (inferred 0.856327 USD), `a45bc83b…` items 69 and 71 recovered, item-59 evidence correction, second provider halt (`c357f0e2…`), Codex package re-pinned to `57e2a25`, backup gate failed on path references (no push) · (this commit)
+- 2026-11-01 · Validation ledger recovery (inferred 0.856327 USD), `a45bc83b…` items 69 and 71 recovered, item-59 evidence correction, second provider halt (`c357f0e2…`), Codex package re-pinned to `57e2a25`, backup gate failed on path references (no push) · eb781fd
+- 2026-11-01 · Formal preflight dry-run (20 units, no provider call) and backup inventory · (this commit)
 
 ## Next stage (not started)
 
