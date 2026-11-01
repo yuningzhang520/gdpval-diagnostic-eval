@@ -1,0 +1,2459 @@
+{
+ "policy_version": "review-queue-2026-11-01.2",
+ "amends": "review-queue-2026-11-01.1 (queue_v1.json, never labelled)",
+ "adopted": "2026-11-01, on the human's instruction, before any human label; not preregistered",
+ "frozen_at": "2026-11-01T17:26:21+00:00",
+ "seed": 20261101,
+ "algorithm": "per task and phase: rng = random.Random(int(sha256(f'{seed}:{phase}:{task_id}').hexdigest()[:16], 16)). critical = union of the preregistered and current definitions; non-critical pools exclude critical and visual items. dev/full: every critical criterion at criterion level, every visual item, the v1 random picks (5 D + 5 J, seed 20261101, review-queue-2026-11-01.1), individual labels for items that differ between a criterion's preregistered and revised definition. dev/smoke: rng.choice of one critical criterion (sorted ids) and of one judge-only item (non-critical J pool, else any J item). validation and formal: every critical criterion, every visual item, rng.sample of 3 non-critical D and then 3 non-critical J (all when fewer), plus the differing items; formal uses the same item ids for both candidates.",
+ "full_calibration_tasks": [
+  "f841ddcf-2a28-4f6d-bac3-61b607219d3e",
+  "47ef842d-8eac-4b90-bda8-dd934c228c96",
+  "1137e2bb-bdf9-4876-b572-f29b7de5e595",
+  "2ea2e5b5-257f-42e6-a7dc-93763f28b19d",
+  "a45bc83b-22f9-4def-8d89-9c5661b2b86f"
+ ],
+ "full_calibration_rationale": "chosen for deliverable-type coverage, not for grader performance: three xlsx tasks with dev outputs available (f841ddcf, 47ef842d, 1137e2bb), one pptx (2ea2e5b5), one docx/pdf (a45bc83b)",
+ "inputs_sha256": {
+  "grading/review_queue.py": "b4b85a08c52b90bfdf84b88cceacaa46404639f28357fc9ea5c1b97788d16c5d",
+  "grading/checks_1137e2bb.py": "9bf8ea5f100be19fc0ec4f242cbe61a5fc5208b505a463cb02acdff67e01b959",
+  "private/rubric/1137e2bb-bdf9-4876-b572-f29b7de5e595.json": "c4e7a7a4444c0d1b91c9e62892412e3f805f2062026acbf1847e94f41cca37c6",
+  "grading/checks_2ea2e5b5.py": "cd195ebb7da54ebdae8f99b6ddd3510b66d9a0a1b4a2f7c70e0c0205963ad0b3",
+  "private/rubric/2ea2e5b5-257f-42e6-a7dc-93763f28b19d.json": "5d3ef8b41a66f089afdc7d65c3e515c8790f040434c280538079815bd838b200",
+  "grading/checks_47ef842d.py": "de99cfe1a282e8bed641cc1a5674927ebb9f39b442194ba82d02883a67c4092a",
+  "private/rubric/47ef842d-8eac-4b90-bda8-dd934c228c96.json": "4e25c04ccf34679c3043505b752aaae0d72ddce2e0639e909890718817179522",
+  "grading/checks_7b08cd4d.py": "78e29c3d2091481b3ab6e27b8e327f61360a1dbf046715aee12f75b125be25f2",
+  "private/rubric/7b08cd4d-df60-41ae-9102-8aaa49306ba2.json": "3f6d435aa7d9719aea2fca85d8789827b8a574777ec3d958849598643bbfc24d",
+  "grading/checks_7d7fc9a7.py": "eede85a6be23ea068cf1c2091b44d63654ccea45e68e8cd9ccfc067bc3bc90fe",
+  "private/rubric/7d7fc9a7-21a7-4b83-906f-416dea5ad04f.json": "863a9b18d5f49fce558db32aa1e8bd6ed32791df3b6cc38f31984c62c415ed64",
+  "grading/checks_a45bc83b.py": "c517178ccfcffe53b951e1aa596ddc95e668ffcb21e99ec1b171494e30b9230d",
+  "private/rubric/a45bc83b-22f9-4def-8d89-9c5661b2b86f.json": "9a495e09c56c6e7de986c95747c1d665ec1889c79be2a283915f047557b97513",
+  "grading/checks_b5d2e6f1.py": "995b2dd0cd51d09922e170ef68414a326f673cb9199f9b1f75982511edc2b1cb",
+  "private/rubric/b5d2e6f1-62a2-433a-bcdd-95b260cdd860.json": "f51fe2fc2670f4fcaffdae28d7681440c7a8d672e6649b78ab1b7b8a429af6a3",
+  "grading/checks_c3525d4d.py": "358044bfb7b9a2559ea1c033e69f739eb9681c049c106b26ad4bf894958decf3",
+  "private/rubric/c3525d4d-2012-45df-853e-2d2a0e902991.json": "2f0e42e46d928f4635253882719a51edd3f87d4a776765a1f585b44dcaa34864",
+  "grading/checks_c357f0e2.py": "76d9ff998dfc90a3e1b4654ef3881f5b2d8d81dbe49ca8fc34cc6d602291455c",
+  "private/rubric/c357f0e2-963d-4eb7-a6fa-3078fe55b3ba.json": "da981da012500dc011b43331f8f45a3d0d63eb9263163ac9dcb7768400e08a8f",
+  "grading/checks_f841ddcf.py": "b876e9f47e84b0504f67e880d0148ad8bb10a76dccd82c08fe4bb27b3f079256",
+  "private/rubric/f841ddcf-2a28-4f6d-bac3-61b607219d3e.json": "126b9fbc3b14b6b13c5b9e6b3da8055215353e0913792c97aa9be2a12922b8ac"
+ },
+ "verdict_independent": "membership is computed from item lists, critical mappings, visual categories and the seed only",
+ "plans": {
+  "1137e2bb-bdf9-4876-b572-f29b7de5e595": {
+   "task_id": "1137e2bb-bdf9-4876-b572-f29b7de5e595",
+   "rubric_items": 62,
+   "criteria": [
+    {
+     "id": "C1",
+     "members": [
+      5,
+      6,
+      7,
+      8,
+      18,
+      19,
+      20,
+      31,
+      32,
+      33,
+      34,
+      35,
+      36,
+      37,
+      38,
+      39,
+      40,
+      41,
+      42,
+      43,
+      44,
+      45,
+      46,
+      47,
+      48,
+      49,
+      50,
+      51,
+      52,
+      53,
+      54,
+      55
+     ]
+    },
+    {
+     "id": "C2",
+     "members": [
+      12,
+      13,
+      15,
+      16,
+      17,
+      56,
+      57,
+      58,
+      59,
+      60,
+      61,
+      62
+     ]
+    },
+    {
+     "id": "C3",
+     "members": [
+      2,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30
+     ]
+    }
+   ],
+   "visual_items": [],
+   "differing_items": [],
+   "pools": {
+    "noncritical_deterministic": 8,
+    "noncritical_judge": 1
+   },
+   "phases": {
+    "dev": {
+     "mode": "full",
+     "evidence_class": "dev calibration (labels inform the judge prompt; not held-out agreement)",
+     "criteria": [
+      "C1",
+      "C2",
+      "C3"
+     ],
+     "items": [
+      {
+       "item": 1,
+       "categories": [
+        "random_deterministic (v1 pick)"
+       ]
+      },
+      {
+       "item": 9,
+       "categories": [
+        "random_deterministic (v1 pick)"
+       ]
+      },
+      {
+       "item": 10,
+       "categories": [
+        "random_deterministic (v1 pick)"
+       ]
+      },
+      {
+       "item": 11,
+       "categories": [
+        "random_judge (v1 pick)"
+       ]
+      },
+      {
+       "item": 14,
+       "categories": [
+        "random_deterministic (v1 pick)"
+       ]
+      },
+      {
+       "item": 22,
+       "categories": [
+        "random_deterministic (v1 pick)"
+       ]
+      }
+     ]
+    },
+    "validation": {
+     "mode": "criteria+visual+3+3",
+     "criteria": [
+      "C1",
+      "C2",
+      "C3"
+     ],
+     "items": [
+      {
+       "item": 3,
+       "categories": [
+        "random_noncritical_deterministic"
+       ]
+      },
+      {
+       "item": 9,
+       "categories": [
+        "random_noncritical_deterministic"
+       ]
+      },
+      {
+       "item": 10,
+       "categories": [
+        "random_noncritical_deterministic"
+       ]
+      },
+      {
+       "item": 11,
+       "categories": [
+        "random_noncritical_judge"
+       ]
+      }
+     ],
+     "shortfall": {
+      "random_noncritical_judge": 2
+     },
+     "outputs": 1
+    },
+    "formal": {
+     "mode": "criteria+visual+3+3",
+     "criteria": [
+      "C1",
+      "C2",
+      "C3"
+     ],
+     "items": [
+      {
+       "item": 1,
+       "categories": [
+        "random_noncritical_deterministic"
+       ]
+      },
+      {
+       "item": 3,
+       "categories": [
+        "random_noncritical_deterministic"
+       ]
+      },
+      {
+       "item": 9,
+       "categories": [
+        "random_noncritical_deterministic"
+       ]
+      },
+      {
+       "item": 11,
+       "categories": [
+        "random_noncritical_judge"
+       ]
+      }
+     ],
+     "shortfall": {
+      "random_noncritical_judge": 2
+     },
+     "applies_to": "both candidates, identical item ids",
+     "outputs": 2
+    }
+   }
+  },
+  "2ea2e5b5-257f-42e6-a7dc-93763f28b19d": {
+   "task_id": "2ea2e5b5-257f-42e6-a7dc-93763f28b19d",
+   "rubric_items": 60,
+   "criteria": [
+    {
+     "id": "C1",
+     "members": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      57,
+      58,
+      59,
+      60
+     ]
+    },
+    {
+     "id": "C2",
+     "members": [
+      8,
+      9,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26
+     ],
+     "preregistered_members": [
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26
+     ]
+    },
+    {
+     "id": "C3",
+     "members": [
+      27,
+      28,
+      29,
+      30,
+      31,
+      32,
+      33,
+      34,
+      35,
+      36,
+      37,
+      38,
+      39,
+      40,
+      41,
+      42,
+      43,
+      44,
+      45,
+      46,
+      47,
+      48,
+      49,
+      50,
+      51,
+      52,
+      53,
+      54,
+      55,
+      56
+     ]
+    }
+   ],
+   "visual_items": [],
+   "differing_items": [
+    10
+   ],
+   "pools": {
+    "noncritical_deterministic": 0,
+    "noncritical_judge": 0
+   },
+   "phases": {
+    "dev": {
+     "mode": "full",
+     "evidence_class": "dev calibration (labels inform the judge prompt; not held-out agreement)",
+     "criteria": [
+      "C1",
+      "C2",
+      "C3"
+     ],
+     "items": [
+      {
+       "item": 10,
+       "categories": [
+        "sensitivity: differs between the preregistered and revised criterion"
+       ]
+      }
+     ]
+    },
+    "validation": {
+     "mode": "criteria+visual+3+3",
+     "criteria": [
+      "C1",
+      "C2",
+      "C3"
+     ],
+     "items": [
+      {
+       "item": 10,
+       "categories": [
+        "sensitivity: differs between the preregistered and revised criterion"
+       ]
+      }
+     ],
+     "shortfall": {
+      "random_noncritical_deterministic": 3,
+      "random_noncritical_judge": 3
+     },
+     "outputs": 1
+    },
+    "formal": {
+     "mode": "criteria+visual+3+3",
+     "criteria": [
+      "C1",
+      "C2",
+      "C3"
+     ],
+     "items": [
+      {
+       "item": 10,
+       "categories": [
+        "sensitivity: differs between the preregistered and revised criterion"
+       ]
+      }
+     ],
+     "shortfall": {
+      "random_noncritical_deterministic": 3,
+      "random_noncritical_judge": 3
+     },
+     "applies_to": "both candidates, identical item ids",
+     "outputs": 2
+    }
+   }
+  },
+  "47ef842d-8eac-4b90-bda8-dd934c228c96": {
+   "task_id": "47ef842d-8eac-4b90-bda8-dd934c228c96",
+   "rubric_items": 58,
+   "criteria": [
+    {
+     "id": "C1",
+     "members": [
+      2,
+      3,
+      21
+     ]
+    },
+    {
+     "id": "C2",
+     "members": [
+      7,
+      8,
+      22,
+      23,
+      29,
+      30,
+      36,
+      37,
+      43,
+      44,
+      50,
+      51
+     ]
+    },
+    {
+     "id": "C3",
+     "members": [
+      5,
+      6,
+      25,
+      26,
+      32,
+      33,
+      39,
+      40,
+      46,
+      47,
+      53,
+      54
+     ]
+    },
+    {
+     "id": "C4",
+     "members": [
+      13,
+      14
+     ]
+    }
+   ],
+   "visual_items": [
+    15,
+    16,
+    58
+   ],
+   "differing_items": [],
+   "pools": {
+    "noncritical_deterministic": 25,
+    "noncritical_judge": 1
+   },
+   "phases": {
+    "dev": {
+     "mode": "full",
+     "evidence_class": "dev calibration (labels inform the judge prompt; not held-out agreement)",
+     "criteria": [
+      "C1",
+      "C2",
+      "C3",
+      "C4"
+     ],
+     "items": [
+      {
+       "item": 15,
+       "categories": [
+        "visual"
+       ]
+      },
+      {
+       "item": 16,
+       "categories": [
+        "visual"
+       ]
+      },
+      {
+       "item": 18,
+       "categories": [
+        "random_deterministic (v1 pick)"
+       ]
+      },
+      {
+       "item": 20,
+       "categories": [
+        "random_deterministic (v1 pick)"
+       ]
+      },
+      {
+       "item": 34,
+       "categories": [
+        "random_deterministic (v1 pick)"
+       ]
+      },
+      {
+       "item": 42,
+       "categories": [
+        "random_deterministic (v1 pick)"
+       ]
+      },
+      {
+       "item": 52,
+       "categories": [
+        "random_deterministic (v1 pick)"
+       ]
+      },
+      {
+       "item": 57,
+       "categories": [
+        "random_judge (v1 pick)"
+       ]
+      },
+      {
+       "item": 58,
+       "categories": [
+        "visual"
+       ]
+      }
+     ]
+    },
+    "validation": {
+     "mode": "criteria+visual+3+3",
+     "criteria": [
+      "C1",
+      "C2",
+      "C3",
+      "C4"
+     ],
+     "items": [
+      {
+       "item": 15,
+       "categories": [
+        "visual"
+       ]
+      },
+      {
+       "item": 16,
+       "categories": [
+        "visual"
+       ]
+      },
+      {
+       "item": 20,
+       "categories": [
+        "random_noncritical_deterministic"
+       ]
+      },
+      {
+       "item": 52,
+       "categories": [
+        "random_noncritical_deterministic"
+       ]
+      },
+      {
+       "item": 55,
+       "categories": [
+        "random_noncritical_deterministic"
+       ]
+      },
+      {
+       "item": 57,
+       "categories": [
+        "random_noncritical_judge"
+       ]
+      },
+      {
+       "item": 58,
+       "categories": [
+        "visual"
+       ]
+      }
+     ],
+     "shortfall": {
+      "random_noncritical_judge": 2
+     },
+     "outputs": 1
+    },
+    "formal": {
+     "mode": "criteria+visual+3+3",
+     "criteria": [
+      "C1",
+      "C2",
+      "C3",
+      "C4"
+     ],
+     "items": [
+      {
+       "item": 15,
+       "categories": [
+        "visual"
+       ]
+      },
+      {
+       "item": 16,
+       "categories": [
+        "visual"
+       ]
+      },
+      {
+       "item": 24,
+       "categories": [
+        "random_noncritical_deterministic"
+       ]
+      },
+      {
+       "item": 31,
+       "categories": [
+        "random_noncritical_deterministic"
+       ]
+      },
+      {
+       "item": 55,
+       "categories": [
+        "random_noncritical_deterministic"
+       ]
+      },
+      {
+       "item": 57,
+       "categories": [
+        "random_noncritical_judge"
+       ]
+      },
+      {
+       "item": 58,
+       "categories": [
+        "visual"
+       ]
+      }
+     ],
+     "shortfall": {
+      "random_noncritical_judge": 2
+     },
+     "applies_to": "both candidates, identical item ids",
+     "outputs": 2
+    }
+   }
+  },
+  "7b08cd4d-df60-41ae-9102-8aaa49306ba2": {
+   "task_id": "7b08cd4d-df60-41ae-9102-8aaa49306ba2",
+   "rubric_items": 59,
+   "criteria": [
+    {
+     "id": "C1",
+     "members": [
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24
+     ]
+    },
+    {
+     "id": "C2",
+     "members": [
+      49,
+      50,
+      51
+     ]
+    },
+    {
+     "id": "C3",
+     "members": [
+      52,
+      53,
+      54,
+      55,
+      56,
+      57,
+      58
+     ]
+    }
+   ],
+   "visual_items": [
+    5,
+    59
+   ],
+   "differing_items": [],
+   "pools": {
+    "noncritical_deterministic": 23,
+    "noncritical_judge": 14
+   },
+   "phases": {
+    "dev": {
+     "mode": "smoke",
+     "evidence_class": "exploratory calibration (not held-out agreement evidence)",
+     "criteria": [
+      "C3"
+     ],
+     "items": [
+      {
+       "item": 47,
+       "categories": [
+        "smoke: judge-only item"
+       ]
+      }
+     ],
+     "shortfall": {}
+    },
+    "validation": {
+     "mode": "criteria+visual+3+3",
+     "criteria": [
+      "C1",
+      "C2",
+      "C3"
+     ],
+     "items": [
+      {
+       "item": 1,
+       "categories": [
+        "random_noncritical_deterministic"
+       ]
+      },
+      {
+       "item": 2,
+       "categories": [
+        "random_noncritical_judge"
+       ]
+      },
+      {
+       "item": 5,
+       "categories": [
+        "visual"
+       ]
+      },
+      {
+       "item": 13,
+       "categories": [
+        "random_noncritical_deterministic"
+       ]
+      },
+      {
+       "item": 25,
+       "categories": [
+        "random_noncritical_judge"
+       ]
+      },
+      {
+       "item": 27,
+       "categories": [
+        "random_noncritical_judge"
+       ]
+      },
+      {
+       "item": 31,
+       "categories": [
+        "random_noncritical_deterministic"
+       ]
+      },
+      {
+       "item": 59,
+       "categories": [
+        "visual"
+       ]
+      }
+     ],
+     "shortfall": {},
+     "outputs": 1
+    },
+    "formal": {
+     "mode": "criteria+visual+3+3",
+     "criteria": [
+      "C1",
+      "C2",
+      "C3"
+     ],
+     "items": [
+      {
+       "item": 4,
+       "categories": [
+        "random_noncritical_judge"
+       ]
+      },
+      {
+       "item": 5,
+       "categories": [
+        "visual"
+       ]
+      },
+      {
+       "item": 6,
+       "categories": [
+        "random_noncritical_deterministic"
+       ]
+      },
+      {
+       "item": 37,
+       "categories": [
+        "random_noncritical_deterministic"
+       ]
+      },
+      {
+       "item": 39,
+       "categories": [
+        "random_noncritical_deterministic"
+       ]
+      },
+      {
+       "item": 41,
+       "categories": [
+        "random_noncritical_judge"
+       ]
+      },
+      {
+       "item": 45,
+       "categories": [
+        "random_noncritical_judge"
+       ]
+      },
+      {
+       "item": 59,
+       "categories": [
+        "visual"
+       ]
+      }
+     ],
+     "shortfall": {},
+     "applies_to": "both candidates, identical item ids",
+     "outputs": 2
+    }
+   }
+  },
+  "7d7fc9a7-21a7-4b83-906f-416dea5ad04f": {
+   "task_id": "7d7fc9a7-21a7-4b83-906f-416dea5ad04f",
+   "rubric_items": 56,
+   "criteria": [
+    {
+     "id": "C1",
+     "members": [
+      13,
+      14,
+      33,
+      34
+     ]
+    },
+    {
+     "id": "C2",
+     "members": [
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      30
+     ]
+    },
+    {
+     "id": "C3",
+     "members": [
+      36,
+      37,
+      39,
+      40,
+      41,
+      42,
+      43,
+      44,
+      48
+     ]
+    },
+    {
+     "id": "C4",
+     "members": [
+      7,
+      8,
+      9,
+      10,
+      11
+     ]
+    }
+   ],
+   "visual_items": [
+    56
+   ],
+   "differing_items": [],
+   "pools": {
+    "noncritical_deterministic": 16,
+    "noncritical_judge": 14
+   },
+   "phases": {
+    "dev": {
+     "mode": "smoke",
+     "evidence_class": "exploratory calibration (not held-out agreement evidence)",
+     "criteria": [
+      "C4"
+     ],
+     "items": [
+      {
+       "item": 45,
+       "categories": [
+        "smoke: judge-only item"
+       ]
+      }
+     ],
+     "shortfall": {}
+    },
+    "validation": {
+     "mode": "criteria+visual+3+3",
+     "criteria": [
+      "C1",
+      "C2",
+      "C3",
+      "C4"
+     ],
+     "items": [
+      {
+       "item": 2,
+       "categories": [
+        "random_noncritical_deterministic"
+       ]
+      },
+      {
+       "item": 12,
+       "categories": [
+        "random_noncritical_judge"
+       ]
+      },
+      {
+       "item": 18,
+       "categories": [
+        "random_noncritical_judge"
+       ]
+      },
+      {
+       "item": 19,
+       "categories": [
+        "random_noncritical_deterministic"
+       ]
+      },
+      {
+       "item": 28,
+       "categories": [
+        "random_noncritical_deterministic"
+       ]
+      },
+      {
+       "item": 32,
+       "categories": [
+        "random_noncritical_judge"
+       ]
+      },
+      {
+       "item": 56,
+       "categories": [
+        "visual"
+       ]
+      }
+     ],
+     "shortfall": {},
+     "outputs": 1
+    },
+    "formal": {
+     "mode": "criteria+visual+3+3",
+     "criteria": [
+      "C1",
+      "C2",
+      "C3",
+      "C4"
+     ],
+     "items": [
+      {
+       "item": 16,
+       "categories": [
+        "random_noncritical_judge"
+       ]
+      },
+      {
+       "item": 20,
+       "categories": [
+        "random_noncritical_deterministic"
+       ]
+      },
+      {
+       "item": 27,
+       "categories": [
+        "random_noncritical_deterministic"
+       ]
+      },
+      {
+       "item": 29,
+       "categories": [
+        "random_noncritical_deterministic"
+       ]
+      },
+      {
+       "item": 32,
+       "categories": [
+        "random_noncritical_judge"
+       ]
+      },
+      {
+       "item": 55,
+       "categories": [
+        "random_noncritical_judge"
+       ]
+      },
+      {
+       "item": 56,
+       "categories": [
+        "visual"
+       ]
+      }
+     ],
+     "shortfall": {},
+     "applies_to": "both candidates, identical item ids",
+     "outputs": 2
+    }
+   }
+  },
+  "a45bc83b-22f9-4def-8d89-9c5661b2b86f": {
+   "task_id": "a45bc83b-22f9-4def-8d89-9c5661b2b86f",
+   "rubric_items": 72,
+   "criteria": [
+    {
+     "id": "C1",
+     "members": [
+      1,
+      2,
+      3,
+      5
+     ]
+    },
+    {
+     "id": "C2",
+     "members": [
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      49
+     ]
+    },
+    {
+     "id": "C3",
+     "members": [
+      4,
+      26,
+      27,
+      28,
+      29,
+      30
+     ]
+    }
+   ],
+   "visual_items": [
+    4,
+    26,
+    27,
+    28,
+    29,
+    30,
+    70,
+    72
+   ],
+   "differing_items": [],
+   "pools": {
+    "noncritical_deterministic": 0,
+    "noncritical_judge": 51
+   },
+   "phases": {
+    "dev": {
+     "mode": "full",
+     "evidence_class": "dev calibration (labels inform the judge prompt; not held-out agreement)",
+     "criteria": [
+      "C1",
+      "C2",
+      "C3"
+     ],
+     "items": [
+      {
+       "item": 4,
+       "categories": [
+        "visual"
+       ]
+      },
+      {
+       "item": 15,
+       "categories": [
+        "random_judge (v1 pick)"
+       ]
+      },
+      {
+       "item": 26,
+       "categories": [
+        "visual"
+       ]
+      },
+      {
+       "item": 27,
+       "categories": [
+        "visual"
+       ]
+      },
+      {
+       "item": 28,
+       "categories": [
+        "visual"
+       ]
+      },
+      {
+       "item": 29,
+       "categories": [
+        "visual"
+       ]
+      },
+      {
+       "item": 30,
+       "categories": [
+        "visual"
+       ]
+      },
+      {
+       "item": 44,
+       "categories": [
+        "random_judge (v1 pick)"
+       ]
+      },
+      {
+       "item": 62,
+       "categories": [
+        "random_judge (v1 pick)"
+       ]
+      },
+      {
+       "item": 67,
+       "categories": [
+        "random_judge (v1 pick)"
+       ]
+      },
+      {
+       "item": 68,
+       "categories": [
+        "random_judge (v1 pick)"
+       ]
+      },
+      {
+       "item": 70,
+       "categories": [
+        "visual"
+       ]
+      },
+      {
+       "item": 72,
+       "categories": [
+        "visual"
+       ]
+      }
+     ]
+    },
+    "validation": {
+     "mode": "criteria+visual+3+3",
+     "criteria": [
+      "C1",
+      "C2",
+      "C3"
+     ],
+     "items": [
+      {
+       "item": 4,
+       "categories": [
+        "visual"
+       ]
+      },
+      {
+       "item": 17,
+       "categories": [
+        "random_noncritical_judge"
+       ]
+      },
+      {
+       "item": 26,
+       "categories": [
+        "visual"
+       ]
+      },
+      {
+       "item": 27,
+       "categories": [
+        "visual"
+       ]
+      },
+      {
+       "item": 28,
+       "categories": [
+        "visual"
+       ]
+      },
+      {
+       "item": 29,
+       "categories": [
+        "visual"
+       ]
+      },
+      {
+       "item": 30,
+       "categories": [
+        "visual"
+       ]
+      },
+      {
+       "item": 59,
+       "categories": [
+        "random_noncritical_judge"
+       ]
+      },
+      {
+       "item": 64,
+       "categories": [
+        "random_noncritical_judge"
+       ]
+      },
+      {
+       "item": 70,
+       "categories": [
+        "visual"
+       ]
+      },
+      {
+       "item": 72,
+       "categories": [
+        "visual"
+       ]
+      }
+     ],
+     "shortfall": {
+      "random_noncritical_deterministic": 3
+     },
+     "outputs": 1
+    },
+    "formal": {
+     "mode": "criteria+visual+3+3",
+     "criteria": [
+      "C1",
+      "C2",
+      "C3"
+     ],
+     "items": [
+      {
+       "item": 4,
+       "categories": [
+        "visual"
+       ]
+      },
+      {
+       "item": 26,
+       "categories": [
+        "visual"
+       ]
+      },
+      {
+       "item": 27,
+       "categories": [
+        "visual"
+       ]
+      },
+      {
+       "item": 28,
+       "categories": [
+        "visual"
+       ]
+      },
+      {
+       "item": 29,
+       "categories": [
+        "visual"
+       ]
+      },
+      {
+       "item": 30,
+       "categories": [
+        "visual"
+       ]
+      },
+      {
+       "item": 46,
+       "categories": [
+        "random_noncritical_judge"
+       ]
+      },
+      {
+       "item": 58,
+       "categories": [
+        "random_noncritical_judge"
+       ]
+      },
+      {
+       "item": 70,
+       "categories": [
+        "visual"
+       ]
+      },
+      {
+       "item": 71,
+       "categories": [
+        "random_noncritical_judge"
+       ]
+      },
+      {
+       "item": 72,
+       "categories": [
+        "visual"
+       ]
+      }
+     ],
+     "shortfall": {
+      "random_noncritical_deterministic": 3
+     },
+     "applies_to": "both candidates, identical item ids",
+     "outputs": 2
+    }
+   }
+  },
+  "b5d2e6f1-62a2-433a-bcdd-95b260cdd860": {
+   "task_id": "b5d2e6f1-62a2-433a-bcdd-95b260cdd860",
+   "rubric_items": 32,
+   "criteria": [
+    {
+     "id": "C1",
+     "members": [
+      2,
+      3,
+      11
+     ]
+    },
+    {
+     "id": "C2",
+     "members": [
+      5,
+      6,
+      10,
+      24
+     ]
+    },
+    {
+     "id": "C3",
+     "members": [
+      12,
+      14,
+      15,
+      16,
+      17,
+      25,
+      26
+     ]
+    },
+    {
+     "id": "C4",
+     "members": [
+      7,
+      8,
+      9,
+      18,
+      19,
+      20,
+      21
+     ]
+    }
+   ],
+   "visual_items": [
+    32
+   ],
+   "differing_items": [],
+   "pools": {
+    "noncritical_deterministic": 10,
+    "noncritical_judge": 0
+   },
+   "phases": {
+    "dev": {
+     "mode": "smoke",
+     "evidence_class": "exploratory calibration (not held-out agreement evidence)",
+     "criteria": [
+      "C4"
+     ],
+     "items": [],
+     "shortfall": {
+      "judge_item": "none available"
+     }
+    },
+    "validation": {
+     "mode": "criteria+visual+3+3",
+     "criteria": [
+      "C1",
+      "C2",
+      "C3",
+      "C4"
+     ],
+     "items": [
+      {
+       "item": 22,
+       "categories": [
+        "random_noncritical_deterministic"
+       ]
+      },
+      {
+       "item": 23,
+       "categories": [
+        "random_noncritical_deterministic"
+       ]
+      },
+      {
+       "item": 30,
+       "categories": [
+        "random_noncritical_deterministic"
+       ]
+      },
+      {
+       "item": 32,
+       "categories": [
+        "visual"
+       ]
+      }
+     ],
+     "shortfall": {
+      "random_noncritical_judge": 3
+     },
+     "outputs": 1
+    },
+    "formal": {
+     "mode": "criteria+visual+3+3",
+     "criteria": [
+      "C1",
+      "C2",
+      "C3",
+      "C4"
+     ],
+     "items": [
+      {
+       "item": 22,
+       "categories": [
+        "random_noncritical_deterministic"
+       ]
+      },
+      {
+       "item": 23,
+       "categories": [
+        "random_noncritical_deterministic"
+       ]
+      },
+      {
+       "item": 30,
+       "categories": [
+        "random_noncritical_deterministic"
+       ]
+      },
+      {
+       "item": 32,
+       "categories": [
+        "visual"
+       ]
+      }
+     ],
+     "shortfall": {
+      "random_noncritical_judge": 3
+     },
+     "applies_to": "both candidates, identical item ids",
+     "outputs": 2
+    }
+   }
+  },
+  "c3525d4d-2012-45df-853e-2d2a0e902991": {
+   "task_id": "c3525d4d-2012-45df-853e-2d2a0e902991",
+   "rubric_items": 52,
+   "criteria": [
+    {
+     "id": "C1",
+     "members": [
+      22,
+      23,
+      32,
+      33,
+      34,
+      35,
+      36
+     ]
+    },
+    {
+     "id": "C2",
+     "members": [
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30,
+      31,
+      49
+     ]
+    },
+    {
+     "id": "C3",
+     "members": [
+      37,
+      38,
+      39,
+      40,
+      41,
+      42
+     ]
+    }
+   ],
+   "visual_items": [
+    52
+   ],
+   "differing_items": [],
+   "pools": {
+    "noncritical_deterministic": 19,
+    "noncritical_judge": 4
+   },
+   "phases": {
+    "dev": {
+     "mode": "smoke",
+     "evidence_class": "exploratory calibration (not held-out agreement evidence)",
+     "criteria": [
+      "C1"
+     ],
+     "items": [
+      {
+       "item": 2,
+       "categories": [
+        "smoke: judge-only item"
+       ]
+      }
+     ],
+     "shortfall": {}
+    },
+    "validation": {
+     "mode": "criteria+visual+3+3",
+     "criteria": [
+      "C1",
+      "C2",
+      "C3"
+     ],
+     "items": [
+      {
+       "item": 2,
+       "categories": [
+        "random_noncritical_judge"
+       ]
+      },
+      {
+       "item": 8,
+       "categories": [
+        "random_noncritical_deterministic"
+       ]
+      },
+      {
+       "item": 44,
+       "categories": [
+        "random_noncritical_deterministic"
+       ]
+      },
+      {
+       "item": 47,
+       "categories": [
+        "random_noncritical_deterministic"
+       ]
+      },
+      {
+       "item": 48,
+       "categories": [
+        "random_noncritical_judge"
+       ]
+      },
+      {
+       "item": 51,
+       "categories": [
+        "random_noncritical_judge"
+       ]
+      },
+      {
+       "item": 52,
+       "categories": [
+        "visual"
+       ]
+      }
+     ],
+     "shortfall": {},
+     "outputs": 1
+    },
+    "formal": {
+     "mode": "criteria+visual+3+3",
+     "criteria": [
+      "C1",
+      "C2",
+      "C3"
+     ],
+     "items": [
+      {
+       "item": 2,
+       "categories": [
+        "random_noncritical_judge"
+       ]
+      },
+      {
+       "item": 5,
+       "categories": [
+        "random_noncritical_deterministic"
+       ]
+      },
+      {
+       "item": 44,
+       "categories": [
+        "random_noncritical_deterministic"
+       ]
+      },
+      {
+       "item": 45,
+       "categories": [
+        "random_noncritical_deterministic"
+       ]
+      },
+      {
+       "item": 48,
+       "categories": [
+        "random_noncritical_judge"
+       ]
+      },
+      {
+       "item": 51,
+       "categories": [
+        "random_noncritical_judge"
+       ]
+      },
+      {
+       "item": 52,
+       "categories": [
+        "visual"
+       ]
+      }
+     ],
+     "shortfall": {},
+     "applies_to": "both candidates, identical item ids",
+     "outputs": 2
+    }
+   }
+  },
+  "c357f0e2-963d-4eb7-a6fa-3078fe55b3ba": {
+   "task_id": "c357f0e2-963d-4eb7-a6fa-3078fe55b3ba",
+   "rubric_items": 70,
+   "criteria": [
+    {
+     "id": "C1",
+     "members": [
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11
+     ]
+    },
+    {
+     "id": "C2",
+     "members": [
+      12,
+      49,
+      50,
+      51,
+      52,
+      53,
+      54,
+      55,
+      56,
+      57,
+      58
+     ]
+    },
+    {
+     "id": "C3",
+     "members": [
+      13,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      31,
+      35,
+      36,
+      37,
+      45,
+      46,
+      47,
+      48,
+      59,
+      60,
+      61,
+      62,
+      63
+     ]
+    }
+   ],
+   "visual_items": [
+    70
+   ],
+   "differing_items": [],
+   "pools": {
+    "noncritical_deterministic": 5,
+    "noncritical_judge": 22
+   },
+   "phases": {
+    "dev": {
+     "mode": "smoke",
+     "evidence_class": "exploratory calibration (not held-out agreement evidence)",
+     "criteria": [
+      "C1"
+     ],
+     "items": [
+      {
+       "item": 40,
+       "categories": [
+        "smoke: judge-only item"
+       ]
+      }
+     ],
+     "shortfall": {}
+    },
+    "validation": {
+     "mode": "criteria+visual+3+3",
+     "criteria": [
+      "C1",
+      "C2",
+      "C3"
+     ],
+     "items": [
+      {
+       "item": 14,
+       "categories": [
+        "random_noncritical_deterministic"
+       ]
+      },
+      {
+       "item": 28,
+       "categories": [
+        "random_noncritical_judge"
+       ]
+      },
+      {
+       "item": 38,
+       "categories": [
+        "random_noncritical_judge"
+       ]
+      },
+      {
+       "item": 40,
+       "categories": [
+        "random_noncritical_judge"
+       ]
+      },
+      {
+       "item": 68,
+       "categories": [
+        "random_noncritical_deterministic"
+       ]
+      },
+      {
+       "item": 69,
+       "categories": [
+        "random_noncritical_deterministic"
+       ]
+      },
+      {
+       "item": 70,
+       "categories": [
+        "visual"
+       ]
+      }
+     ],
+     "shortfall": {},
+     "outputs": 1
+    },
+    "formal": {
+     "mode": "criteria+visual+3+3",
+     "criteria": [
+      "C1",
+      "C2",
+      "C3"
+     ],
+     "items": [
+      {
+       "item": 1,
+       "categories": [
+        "random_noncritical_deterministic"
+       ]
+      },
+      {
+       "item": 14,
+       "categories": [
+        "random_noncritical_deterministic"
+       ]
+      },
+      {
+       "item": 26,
+       "categories": [
+        "random_noncritical_judge"
+       ]
+      },
+      {
+       "item": 38,
+       "categories": [
+        "random_noncritical_judge"
+       ]
+      },
+      {
+       "item": 40,
+       "categories": [
+        "random_noncritical_judge"
+       ]
+      },
+      {
+       "item": 67,
+       "categories": [
+        "random_noncritical_deterministic"
+       ]
+      },
+      {
+       "item": 70,
+       "categories": [
+        "visual"
+       ]
+      }
+     ],
+     "shortfall": {},
+     "applies_to": "both candidates, identical item ids",
+     "outputs": 2
+    }
+   }
+  },
+  "f841ddcf-2a28-4f6d-bac3-61b607219d3e": {
+   "task_id": "f841ddcf-2a28-4f6d-bac3-61b607219d3e",
+   "rubric_items": 59,
+   "criteria": [
+    {
+     "id": "C1",
+     "members": [
+      35
+     ]
+    },
+    {
+     "id": "C2",
+     "members": [
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      22
+     ]
+    },
+    {
+     "id": "C3",
+     "members": [
+      24,
+      36
+     ]
+    },
+    {
+     "id": "C4",
+     "members": [
+      27,
+      28,
+      47,
+      48,
+      49,
+      50,
+      51,
+      52,
+      53,
+      54
+     ]
+    },
+    {
+     "id": "C5",
+     "members": [
+      37
+     ]
+    }
+   ],
+   "visual_items": [
+    59
+   ],
+   "differing_items": [],
+   "pools": {
+    "noncritical_deterministic": 27,
+    "noncritical_judge": 7
+   },
+   "phases": {
+    "dev": {
+     "mode": "full",
+     "evidence_class": "dev calibration (labels inform the judge prompt; not held-out agreement)",
+     "criteria": [
+      "C1",
+      "C2",
+      "C3",
+      "C4",
+      "C5"
+     ],
+     "items": [
+      {
+       "item": 4,
+       "categories": [
+        "random_deterministic (v1 pick)"
+       ]
+      },
+      {
+       "item": 19,
+       "categories": [
+        "random_deterministic (v1 pick)"
+       ]
+      },
+      {
+       "item": 30,
+       "categories": [
+        "random_deterministic (v1 pick)"
+       ]
+      },
+      {
+       "item": 38,
+       "categories": [
+        "random_judge (v1 pick)"
+       ]
+      },
+      {
+       "item": 40,
+       "categories": [
+        "random_deterministic (v1 pick)"
+       ]
+      },
+      {
+       "item": 41,
+       "categories": [
+        "random_deterministic (v1 pick)"
+       ]
+      },
+      {
+       "item": 42,
+       "categories": [
+        "random_judge (v1 pick)"
+       ]
+      },
+      {
+       "item": 43,
+       "categories": [
+        "random_judge (v1 pick)"
+       ]
+      },
+      {
+       "item": 45,
+       "categories": [
+        "random_judge (v1 pick)"
+       ]
+      },
+      {
+       "item": 46,
+       "categories": [
+        "random_judge (v1 pick)"
+       ]
+      },
+      {
+       "item": 59,
+       "categories": [
+        "visual"
+       ]
+      }
+     ]
+    },
+    "validation": {
+     "mode": "criteria+visual+3+3",
+     "criteria": [
+      "C1",
+      "C2",
+      "C3",
+      "C4",
+      "C5"
+     ],
+     "items": [
+      {
+       "item": 2,
+       "categories": [
+        "random_noncritical_deterministic"
+       ]
+      },
+      {
+       "item": 4,
+       "categories": [
+        "random_noncritical_deterministic"
+       ]
+      },
+      {
+       "item": 16,
+       "categories": [
+        "random_noncritical_deterministic"
+       ]
+      },
+      {
+       "item": 43,
+       "categories": [
+        "random_noncritical_judge"
+       ]
+      },
+      {
+       "item": 44,
+       "categories": [
+        "random_noncritical_judge"
+       ]
+      },
+      {
+       "item": 46,
+       "categories": [
+        "random_noncritical_judge"
+       ]
+      },
+      {
+       "item": 59,
+       "categories": [
+        "visual"
+       ]
+      }
+     ],
+     "shortfall": {},
+     "outputs": 1
+    },
+    "formal": {
+     "mode": "criteria+visual+3+3",
+     "criteria": [
+      "C1",
+      "C2",
+      "C3",
+      "C4",
+      "C5"
+     ],
+     "items": [
+      {
+       "item": 21,
+       "categories": [
+        "random_noncritical_deterministic"
+       ]
+      },
+      {
+       "item": 26,
+       "categories": [
+        "random_noncritical_deterministic"
+       ]
+      },
+      {
+       "item": 38,
+       "categories": [
+        "random_noncritical_judge"
+       ]
+      },
+      {
+       "item": 42,
+       "categories": [
+        "random_noncritical_judge"
+       ]
+      },
+      {
+       "item": 57,
+       "categories": [
+        "random_noncritical_deterministic"
+       ]
+      },
+      {
+       "item": 58,
+       "categories": [
+        "random_noncritical_judge"
+       ]
+      },
+      {
+       "item": 59,
+       "categories": [
+        "visual"
+       ]
+      }
+     ],
+     "shortfall": {},
+     "applies_to": "both candidates, identical item ids",
+     "outputs": 2
+    }
+   }
+  }
+ },
+ "workload": {
+  "1137e2bb-bdf9-4876-b572-f29b7de5e595": {
+   "dev": {
+    "mode": "full",
+    "outputs": 1,
+    "csv_labels_per_output": 9,
+    "criterion_labels_per_output": 3,
+    "item_labels_per_output": 6,
+    "evidence_items_per_output": 59,
+    "csv_labels_total": 9,
+    "evidence_items_total": 59
+   },
+   "validation": {
+    "mode": "criteria+visual+3+3",
+    "outputs": 1,
+    "csv_labels_per_output": 7,
+    "criterion_labels_per_output": 3,
+    "item_labels_per_output": 4,
+    "evidence_items_per_output": 57,
+    "csv_labels_total": 7,
+    "evidence_items_total": 57
+   },
+   "formal": {
+    "mode": "criteria+visual+3+3",
+    "outputs": 2,
+    "csv_labels_per_output": 7,
+    "criterion_labels_per_output": 3,
+    "item_labels_per_output": 4,
+    "evidence_items_per_output": 57,
+    "csv_labels_total": 14,
+    "evidence_items_total": 114
+   }
+  },
+  "2ea2e5b5-257f-42e6-a7dc-93763f28b19d": {
+   "dev": {
+    "mode": "full",
+    "outputs": 1,
+    "csv_labels_per_output": 4,
+    "criterion_labels_per_output": 3,
+    "item_labels_per_output": 1,
+    "evidence_items_per_output": 60,
+    "csv_labels_total": 4,
+    "evidence_items_total": 60
+   },
+   "validation": {
+    "mode": "criteria+visual+3+3",
+    "outputs": 1,
+    "csv_labels_per_output": 4,
+    "criterion_labels_per_output": 3,
+    "item_labels_per_output": 1,
+    "evidence_items_per_output": 60,
+    "csv_labels_total": 4,
+    "evidence_items_total": 60
+   },
+   "formal": {
+    "mode": "criteria+visual+3+3",
+    "outputs": 2,
+    "csv_labels_per_output": 4,
+    "criterion_labels_per_output": 3,
+    "item_labels_per_output": 1,
+    "evidence_items_per_output": 60,
+    "csv_labels_total": 8,
+    "evidence_items_total": 120
+   }
+  },
+  "47ef842d-8eac-4b90-bda8-dd934c228c96": {
+   "dev": {
+    "mode": "full",
+    "outputs": 1,
+    "csv_labels_per_output": 13,
+    "criterion_labels_per_output": 4,
+    "item_labels_per_output": 9,
+    "evidence_items_per_output": 38,
+    "csv_labels_total": 13,
+    "evidence_items_total": 38
+   },
+   "validation": {
+    "mode": "criteria+visual+3+3",
+    "outputs": 1,
+    "csv_labels_per_output": 11,
+    "criterion_labels_per_output": 4,
+    "item_labels_per_output": 7,
+    "evidence_items_per_output": 36,
+    "csv_labels_total": 11,
+    "evidence_items_total": 36
+   },
+   "formal": {
+    "mode": "criteria+visual+3+3",
+    "outputs": 2,
+    "csv_labels_per_output": 11,
+    "criterion_labels_per_output": 4,
+    "item_labels_per_output": 7,
+    "evidence_items_per_output": 36,
+    "csv_labels_total": 22,
+    "evidence_items_total": 72
+   }
+  },
+  "7b08cd4d-df60-41ae-9102-8aaa49306ba2": {
+   "dev": {
+    "mode": "smoke",
+    "outputs": 1,
+    "csv_labels_per_output": 2,
+    "criterion_labels_per_output": 1,
+    "item_labels_per_output": 1,
+    "evidence_items_per_output": 8,
+    "csv_labels_total": 2,
+    "evidence_items_total": 8
+   },
+   "validation": {
+    "mode": "criteria+visual+3+3",
+    "outputs": 1,
+    "csv_labels_per_output": 11,
+    "criterion_labels_per_output": 3,
+    "item_labels_per_output": 8,
+    "evidence_items_per_output": 28,
+    "csv_labels_total": 11,
+    "evidence_items_total": 28
+   },
+   "formal": {
+    "mode": "criteria+visual+3+3",
+    "outputs": 2,
+    "csv_labels_per_output": 11,
+    "criterion_labels_per_output": 3,
+    "item_labels_per_output": 8,
+    "evidence_items_per_output": 28,
+    "csv_labels_total": 22,
+    "evidence_items_total": 56
+   }
+  },
+  "7d7fc9a7-21a7-4b83-906f-416dea5ad04f": {
+   "dev": {
+    "mode": "smoke",
+    "outputs": 1,
+    "csv_labels_per_output": 2,
+    "criterion_labels_per_output": 1,
+    "item_labels_per_output": 1,
+    "evidence_items_per_output": 6,
+    "csv_labels_total": 2,
+    "evidence_items_total": 6
+   },
+   "validation": {
+    "mode": "criteria+visual+3+3",
+    "outputs": 1,
+    "csv_labels_per_output": 11,
+    "criterion_labels_per_output": 4,
+    "item_labels_per_output": 7,
+    "evidence_items_per_output": 32,
+    "csv_labels_total": 11,
+    "evidence_items_total": 32
+   },
+   "formal": {
+    "mode": "criteria+visual+3+3",
+    "outputs": 2,
+    "csv_labels_per_output": 11,
+    "criterion_labels_per_output": 4,
+    "item_labels_per_output": 7,
+    "evidence_items_per_output": 32,
+    "csv_labels_total": 22,
+    "evidence_items_total": 64
+   }
+  },
+  "a45bc83b-22f9-4def-8d89-9c5661b2b86f": {
+   "dev": {
+    "mode": "full",
+    "outputs": 1,
+    "csv_labels_per_output": 16,
+    "criterion_labels_per_output": 3,
+    "item_labels_per_output": 13,
+    "evidence_items_per_output": 26,
+    "csv_labels_total": 16,
+    "evidence_items_total": 26
+   },
+   "validation": {
+    "mode": "criteria+visual+3+3",
+    "outputs": 1,
+    "csv_labels_per_output": 14,
+    "criterion_labels_per_output": 3,
+    "item_labels_per_output": 11,
+    "evidence_items_per_output": 24,
+    "csv_labels_total": 14,
+    "evidence_items_total": 24
+   },
+   "formal": {
+    "mode": "criteria+visual+3+3",
+    "outputs": 2,
+    "csv_labels_per_output": 14,
+    "criterion_labels_per_output": 3,
+    "item_labels_per_output": 11,
+    "evidence_items_per_output": 24,
+    "csv_labels_total": 28,
+    "evidence_items_total": 48
+   }
+  },
+  "b5d2e6f1-62a2-433a-bcdd-95b260cdd860": {
+   "dev": {
+    "mode": "smoke",
+    "outputs": 1,
+    "csv_labels_per_output": 1,
+    "criterion_labels_per_output": 1,
+    "item_labels_per_output": 0,
+    "evidence_items_per_output": 7,
+    "csv_labels_total": 1,
+    "evidence_items_total": 7
+   },
+   "validation": {
+    "mode": "criteria+visual+3+3",
+    "outputs": 1,
+    "csv_labels_per_output": 8,
+    "criterion_labels_per_output": 4,
+    "item_labels_per_output": 4,
+    "evidence_items_per_output": 25,
+    "csv_labels_total": 8,
+    "evidence_items_total": 25
+   },
+   "formal": {
+    "mode": "criteria+visual+3+3",
+    "outputs": 2,
+    "csv_labels_per_output": 8,
+    "criterion_labels_per_output": 4,
+    "item_labels_per_output": 4,
+    "evidence_items_per_output": 25,
+    "csv_labels_total": 16,
+    "evidence_items_total": 50
+   }
+  },
+  "c3525d4d-2012-45df-853e-2d2a0e902991": {
+   "dev": {
+    "mode": "smoke",
+    "outputs": 1,
+    "csv_labels_per_output": 2,
+    "criterion_labels_per_output": 1,
+    "item_labels_per_output": 1,
+    "evidence_items_per_output": 8,
+    "csv_labels_total": 2,
+    "evidence_items_total": 8
+   },
+   "validation": {
+    "mode": "criteria+visual+3+3",
+    "outputs": 1,
+    "csv_labels_per_output": 10,
+    "criterion_labels_per_output": 3,
+    "item_labels_per_output": 7,
+    "evidence_items_per_output": 35,
+    "csv_labels_total": 10,
+    "evidence_items_total": 35
+   },
+   "formal": {
+    "mode": "criteria+visual+3+3",
+    "outputs": 2,
+    "csv_labels_per_output": 10,
+    "criterion_labels_per_output": 3,
+    "item_labels_per_output": 7,
+    "evidence_items_per_output": 35,
+    "csv_labels_total": 20,
+    "evidence_items_total": 70
+   }
+  },
+  "c357f0e2-963d-4eb7-a6fa-3078fe55b3ba": {
+   "dev": {
+    "mode": "smoke",
+    "outputs": 1,
+    "csv_labels_per_output": 2,
+    "criterion_labels_per_output": 1,
+    "item_labels_per_output": 1,
+    "evidence_items_per_output": 11,
+    "csv_labels_total": 2,
+    "evidence_items_total": 11
+   },
+   "validation": {
+    "mode": "criteria+visual+3+3",
+    "outputs": 1,
+    "csv_labels_per_output": 10,
+    "criterion_labels_per_output": 3,
+    "item_labels_per_output": 7,
+    "evidence_items_per_output": 49,
+    "csv_labels_total": 10,
+    "evidence_items_total": 49
+   },
+   "formal": {
+    "mode": "criteria+visual+3+3",
+    "outputs": 2,
+    "csv_labels_per_output": 10,
+    "criterion_labels_per_output": 3,
+    "item_labels_per_output": 7,
+    "evidence_items_per_output": 49,
+    "csv_labels_total": 20,
+    "evidence_items_total": 98
+   }
+  },
+  "f841ddcf-2a28-4f6d-bac3-61b607219d3e": {
+   "dev": {
+    "mode": "full",
+    "outputs": 1,
+    "csv_labels_per_output": 16,
+    "criterion_labels_per_output": 5,
+    "item_labels_per_output": 11,
+    "evidence_items_per_output": 35,
+    "csv_labels_total": 16,
+    "evidence_items_total": 35
+   },
+   "validation": {
+    "mode": "criteria+visual+3+3",
+    "outputs": 1,
+    "csv_labels_per_output": 12,
+    "criterion_labels_per_output": 5,
+    "item_labels_per_output": 7,
+    "evidence_items_per_output": 31,
+    "csv_labels_total": 12,
+    "evidence_items_total": 31
+   },
+   "formal": {
+    "mode": "criteria+visual+3+3",
+    "outputs": 2,
+    "csv_labels_per_output": 12,
+    "criterion_labels_per_output": 5,
+    "item_labels_per_output": 7,
+    "evidence_items_per_output": 31,
+    "csv_labels_total": 24,
+    "evidence_items_total": 62
+   }
+  }
+ }
+}
