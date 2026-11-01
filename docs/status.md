@@ -3796,6 +3796,10 @@ Pass 1 plan (`grading/judge_dev/pass1_plan.json`, committed `612249c` before any
 - Pending until their Dev outputs complete: `c357f0e2…` and `a45bc83b…`.
 - Self-consistency: 20 units drawn with `random.Random(20261101)` from the sorted (run, item) pairs, independent of
   any verdict, each run once more with an identical request.
+- Addenda: runs that become eligible after the plan get primary units only, through an append-only file in
+  `grading/judge_dev/pass1_addenda/`, committed before any call on them. The repeat subset is never changed.
+- Addendum 1: `c357f0e2…` run `fx58g4L2kWxhpZnsiRx5un` (Dev output accepted 17:56Z), 54 judge items, plus item 69
+  if it is routed at grading. Still pending: `a45bc83b…` (Dev generation started 17:56Z).
 
 Batch 1 labeling packets rebuilt as `~/turing-eval-runs/labeling/batch-1v2r/` (`bf22ead`). They add input-derived
 reference summaries for `f841ddcf…`, `47ef842d…`, `c3525d4d…` and `7b08cd4d…` (no gold values). `batch-1v2/` is
@@ -4192,7 +4196,8 @@ First launch, 17:51Z:
 - 2026-11-01 · Judge Dev APPROVED by the human (chat): `google/gemini-3.1-pro-preview`, thinking high, temperature 1.0,
   max_tokens 16,384, Inspect max_retries 3, Pass 1 ceiling 20 USD including repeats, aggregate 30 USD over at most three
   passes, separate Judge Dev ledger, Dev key at concurrency 1, a frozen 20-unit self-consistency subset · f9d8858, 612249c
-- 2026-11-01 · judge history gate checks the separate judge ledger's open reservations · (this commit)
+- 2026-11-01 · judge history gate checks the separate judge ledger's open reservations · 0aa4047
+- 2026-11-01 · Pass 1 addendum 1 (`c357f0e2…` primary units; repeat subset unchanged) · (this commit)
 
 ## Next stage (not started)
 

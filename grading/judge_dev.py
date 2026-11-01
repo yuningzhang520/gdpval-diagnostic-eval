@@ -12,6 +12,7 @@ plan before any call; each runs once more with the identical stored unit (same r
 Output: cost and coverage only (no verdict). Verdicts stay in the sealed grading outputs until the human labels of the
 runs concerned are saved. Usage:
   python -m grading.judge_dev plan    # write the pass plan (eligible runs, pending tasks, frozen repeat subset)
+  python -m grading.judge_dev add-eligible  # append an addendum for Dev runs that became eligible after the plan
   python -m grading.judge_dev run     # execute the plan (paid; the plan must be committed first)
   python -m grading.judge_dev status  # cost and coverage so far"""
 import argparse
@@ -31,6 +32,7 @@ JDIR = os.path.join(BASE, "judge_dev")
 LEDGER = os.path.join(JDIR, "ledger.json")
 REGISTRY = os.path.join(JDIR, "registry.jsonl")
 PLAN = os.path.join(ROOT, "grading", "judge_dev", "pass1_plan.json")
+ADDENDA = os.path.join(ROOT, "grading", "judge_dev", "pass1_addenda")  # runs that became eligible after the plan; never the repeat subset
 PASS_ID = "judge-dev-pass-1"
 DEV_KEY_SUFFIX = "KW5A"  # GOOGLE_API_KEY, the Dev project (docs/status.md, 2026-11-01)
 SEED = 20261101
@@ -148,6 +150,34 @@ def write_plan() -> dict:
     with open(PLAN, "x", encoding="utf-8") as f:
         json.dump(plan, f, indent=1)
     return plan
+
+
+def addenda() -> list[dict]:
+    return [json.load(open(f, encoding="utf-8")) for f in sorted(glob.glob(os.path.join(ADDENDA, "addendum_*.json")))]
+
+
+def planned_runs(plan: dict) -> set[str]:
+    return {r["run_uuid"] for r in plan["eligible_runs"]} | {r["run_uuid"] for a in addenda() for r in a["eligible_runs"]}
+
+
+def add_eligible() -> dict | None:
+    """Primary units of Dev runs that became eligible after the plan (their outputs completed later). Written once per
+    run, before any call on it; the self-consistency subset stays the one frozen in the plan."""
+    plan = json.load(open(PLAN, encoding="utf-8"))
+    known = planned_runs(plan)
+    runs, pending = eligible_runs()
+    new = [r for r in runs if r["run_uuid"] not in known]
+    if not new:
+        return None
+    os.makedirs(ADDENDA, exist_ok=True)
+    n = len(addenda()) + 1
+    add = {"pass": PASS_ID, "addendum": n, "created_at": _now(), "plan_sha256": hashlib.sha256(open(PLAN, "rb").read()).hexdigest(),
+           "eligible_runs": [{k: r[k] for k in ("task_id", "run_uuid")} | {"judge_items": len(r["judge_items"])} for r in new], "pending_tasks": pending,
+           "added_judge_units": sum(len(r["judge_items"]) for r in new),
+           "self_consistency": "unchanged: the subset frozen in pass1_plan.json; added runs get primary units only"}
+    with open(os.path.join(ADDENDA, f"addendum_{n:02d}.json"), "x", encoding="utf-8") as f:
+        json.dump(add, f, indent=1)
+    return add
 
 
 def spent() -> dict:
@@ -286,13 +316,13 @@ def run_repeats(plan: dict, log) -> dict:
 
 def run() -> int:
     plan = json.load(open(PLAN, encoding="utf-8"))
-    if subprocess.run(["git", "status", "--porcelain", "--", PLAN], cwd=ROOT, capture_output=True, text=True).stdout.strip():
-        raise SystemExit("the pass plan must be committed before any paid call")
+    if subprocess.run(["git", "status", "--porcelain", "--untracked-files=all", "--", PLAN, ADDENDA], cwd=ROOT, capture_output=True, text=True).stdout.strip():
+        raise SystemExit("the pass plan and its addenda must be committed before any paid call")
     os.environ.pop("GOOGLE_API_KEY_VALIDATION", None)
     log = open(os.path.join(JDIR, f"pass1_{dt.datetime.now(dt.timezone.utc).strftime('%Y%m%dT%H%M%SZ')}.log"), "a", encoding="utf-8")
     registry({"kind": "pass_start", "plan_sha256": hashlib.sha256(open(PLAN, "rb").read()).hexdigest(), "spent": {k: str(v) for k, v in spent().items() if k != "snapshot"}})
     runs, _ = eligible_runs()
-    planned = {r["run_uuid"] for r in plan["eligible_runs"]}
+    planned = planned_runs(plan)
     done = {e["run_uuid"] for e in registry_events() if e.get("kind") == "run_done"}
     for r in runs:
         if r["run_uuid"] not in planned or r["run_uuid"] in done:
@@ -329,11 +359,14 @@ def status() -> dict:
 
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description="Judge Dev Pass 1")
-    ap.add_argument("command", choices=("plan", "run", "status"))
+    ap.add_argument("command", choices=("plan", "add-eligible", "run", "status"))
     a = ap.parse_args(argv)
     if a.command == "plan":
         p = write_plan()
         print(json.dumps({k: p[k] for k in ("eligible_runs", "pending_tasks", "eligible_judge_units")} | {"self_consistency_n": p["self_consistency"]["n"]}, indent=1))
+    elif a.command == "add-eligible":
+        add = add_eligible()
+        print(json.dumps({k: add[k] for k in ("addendum", "eligible_runs", "pending_tasks", "added_judge_units")} if add else {"added": 0}, indent=1))
     elif a.command == "run":
         return run()
     else:

@@ -112,5 +112,27 @@ class SeparateJudgeLedgerGateTests(unittest.TestCase):
                 RG.judge_history_gate(gen, binding, out, "RUN", False, host_dir=host, prices=prices, reservation_ledger=jl)  # the run's open judge unit blocks
 
 
+class AddendumTests(unittest.TestCase):
+    """Runs that become eligible after the plan get one append-only addendum; the frozen repeat subset is untouched."""
+
+    def test_add_eligible(self):
+        import tempfile
+        from unittest import mock
+        from grading import judge_dev as JD
+        with tempfile.TemporaryDirectory() as d:
+            plan = os.path.join(d, "pass1_plan.json")
+            with open(plan, "w") as f:
+                json.dump({"eligible_runs": [{"task_id": "t1", "run_uuid": "A", "judge_items": 2}], "self_consistency": {"units": [["A", 1]]}}, f)
+            runs = [{"task_id": "t1", "run_uuid": "A", "judge_items": [1, 2]}, {"task_id": "t2", "run_uuid": "B", "judge_items": [3, 4, 5]}]
+            with mock.patch.object(JD, "PLAN", plan), mock.patch.object(JD, "ADDENDA", os.path.join(d, "addenda")), \
+                    mock.patch.object(JD, "eligible_runs", return_value=(runs, ["t3"])):
+                add = JD.add_eligible()
+                self.assertEqual([r["run_uuid"] for r in add["eligible_runs"]], ["B"])
+                self.assertEqual(add["added_judge_units"], 3)
+                self.assertEqual(JD.planned_runs(json.load(open(plan))), {"A", "B"})
+                self.assertIsNone(JD.add_eligible())  # nothing new: no second file
+                self.assertEqual(len(os.listdir(os.path.join(d, "addenda"))), 1)
+
+
 if __name__ == "__main__":
     unittest.main()

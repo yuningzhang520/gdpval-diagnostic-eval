@@ -1,0 +1,18 @@
+{
+ "pass": "judge-dev-pass-1",
+ "addendum": 1,
+ "created_at": "2026-11-01T17:57:42+00:00",
+ "plan_sha256": "6f278cc61d565baf749c0de89a4b512fbcf60b94cb3400effe2b004d2cf3c80d",
+ "eligible_runs": [
+  {
+   "task_id": "c357f0e2-963d-4eb7-a6fa-3078fe55b3ba",
+   "run_uuid": "fx58g4L2kWxhpZnsiRx5un",
+   "judge_items": 54
+  }
+ ],
+ "pending_tasks": [
+  "a45bc83b-22f9-4def-8d89-9c5661b2b86f"
+ ],
+ "added_judge_units": 54,
+ "self_consistency": "unchanged: the subset frozen in pass1_plan.json; added runs get primary units only"
+}
