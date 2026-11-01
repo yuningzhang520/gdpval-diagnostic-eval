@@ -1,0 +1,287 @@
+{
+ "_provenance": {
+  "commit": "558bbb3c0bc980f9ef23fa87ab446be2ccd551a3",
+  "dirty": false,
+  "changed_paths": 0,
+  "untracked_paths": 0,
+  "task_grader_version": "2ea2e5b5-2026-11-01.1",
+  "engine_version": "engine-2026-11-01.1",
+  "exported_by": "write_catalog of the variant module at this commit"
+ },
+ "task_id": "2ea2e5b5-257f-42e6-a7dc-93763f28b19d",
+ "gold_files_sha256": {
+  "WorkStudy.pptx": "60689a0d78724d002a4a7bdd50675b301a7e328fe5eace92107a692b42b49188"
+ },
+ "baseline": {
+  "1": "pass",
+  "2": "pass",
+  "3": "pass",
+  "4": "pass",
+  "5": "pass",
+  "6": "pass",
+  "7": "pass",
+  "8": "pass",
+  "9": "pass",
+  "10": "fail",
+  "11": "pass",
+  "12": "pass",
+  "13": "pass",
+  "14": "pass",
+  "15": "pass",
+  "16": "pass",
+  "17": "pass",
+  "18": "pass",
+  "19": "pass",
+  "20": "pass",
+  "21": "pass",
+  "22": "pass",
+  "23": "pass",
+  "24": "pass",
+  "25": "pass",
+  "26": "pass",
+  "27": "pass",
+  "28": "pass",
+  "29": "pass",
+  "30": "pass",
+  "31": "pass",
+  "32": "pass",
+  "33": "pass",
+  "34": "pass",
+  "35": "pass",
+  "36": "pass",
+  "37": "pass",
+  "38": "pass",
+  "39": "pass",
+  "40": "pass",
+  "41": "pass",
+  "42": "pass",
+  "43": "pass",
+  "44": "pass",
+  "45": "pass",
+  "46": "pass",
+  "47": "pass",
+  "48": "pass",
+  "49": "pass",
+  "50": "pass",
+  "51": "pass",
+  "52": "pass",
+  "53": "pass",
+  "54": "pass",
+  "55": "pass",
+  "56": "pass"
+ },
+ "scope": "expectations cover the deterministic items only; 'neutral' and 'd_neutral' mean deterministic-neutral; judge items 57-60 effects recorded as judge_expected where known",
+ "variants": {
+  "R01_slide_deleted": {
+   "kind": "rubric_relevant",
+   "basis": "the Strategic Level slide removed: four slides (2), no strategic slide (7, 45-54 and 56 fail as not delivered)",
+   "expected_overrides": {
+    "2": "fail",
+    "7": "fail",
+    "45": "fail",
+    "46": "fail",
+    "47": "fail",
+    "48": "fail",
+    "49": "fail",
+    "50": "fail",
+    "51": "fail",
+    "52": "fail",
+    "53": "fail",
+    "54": "fail",
+    "56": "fail"
+   },
+   "judge_expected": {}
+  },
+  "R02_extra_slide": {
+   "kind": "rubric_relevant",
+   "basis": "a sixth (appendix) slide: exactly five slides required (2)",
+   "expected_overrides": {
+    "2": "fail"
+   },
+   "judge_expected": {}
+  },
+  "R03_activity_share_wrong": {
+   "kind": "rubric_relevant",
+   "basis": "Automation shown as 12.00 % instead of 8.40 %: out of \u00b11.0 (14); the twelve values sum to 103.6 (12); the chart is unchanged; the activity table's represented hours are no longer verifiable from its shares (A-9: 34, 55, 56 cannot_assess)",
+   "expected_overrides": {
+    "12": "fail",
+    "14": "fail",
+    "34": "cannot_assess",
+    "55": "cannot_assess",
+    "56": "cannot_assess"
+   },
+   "judge_expected": {}
+  },
+  "R04_shift_handover_labeled_investment": {
+   "kind": "rubric_relevant",
+   "basis": "Shift Handover Meeting labeled Investment in the Margin Impact table: the Cost and Investment memberships are both wrong (28, 29)",
+   "expected_overrides": {
+    "28": "fail",
+    "29": "fail"
+   },
+   "judge_expected": {}
+  },
+  "R05_margin_pie_cost_wrong": {
+   "kind": "rubric_relevant",
+   "basis": "the Margin pie stores Cost 59.5 % beside Investment 42.02 % (a percentage series: sum within \u00b12 of 100, read as stated): Cost out of \u00b11.0 (31); Investment within tolerance",
+   "expected_overrides": {
+    "31": "fail"
+   },
+   "judge_expected": {}
+  },
+  "R11_margin_pie_not_a_percentage_series": {
+   "kind": "rubric_relevant",
+   "basis": "Cost 60.5 beside Investment 42.02 sum to 102.52: not a percentage series, so each slice shows its share of the total (59.01 % / 40.99 %): both outside \u00b11.0 (31, 32)",
+   "expected_overrides": {
+    "31": "fail",
+    "32": "fail"
+   },
+   "judge_expected": {}
+  },
+  "R06_activity_pie_as_bar": {
+   "kind": "rubric_relevant",
+   "basis": "the activity chart is a bar chart: the slide lacks a pie chart (4); the pie-chart items 25 and 26 fail; shares are read from the table (13-24 hold)",
+   "expected_overrides": {
+    "4": "fail",
+    "25": "fail",
+    "26": "fail"
+   },
+   "judge_expected": {}
+  },
+  "R07_time_table_removed": {
+   "kind": "rubric_relevant",
+   "basis": "no table on the Time Sensitivity slide: 6 and the table items 35-39 and 55 fail; the pie items 40-44 hold",
+   "expected_overrides": {
+    "6": "fail",
+    "35": "fail",
+    "36": "fail",
+    "37": "fail",
+    "38": "fail",
+    "39": "fail",
+    "55": "fail"
+   },
+   "judge_expected": {}
+  },
+  "R08_strategic_slice_renamed": {
+   "kind": "rubric_relevant",
+   "basis": "the Strategic pie's 'Medium' slice renamed 'Moderate': not exactly Low, Medium and High (50); no Medium slice (52); 51, 53 and the sum (54) hold",
+   "expected_overrides": {
+    "50": "fail",
+    "52": "fail"
+   },
+   "judge_expected": {}
+  },
+  "R09_outside_category": {
+   "kind": "rubric_relevant",
+   "basis": "a 'Meetings (other)' row in the activity table: a category outside the twelve (9); a row that maps to no source category makes the represented hours unverifiable (A-9: 34, 55, 56 cannot_assess)",
+   "expected_overrides": {
+    "9": "fail",
+    "34": "cannot_assess",
+    "55": "cannot_assess",
+    "56": "cannot_assess"
+   },
+   "judge_expected": {}
+  },
+  "R12_activity_hours_instead_of_percent": {
+   "kind": "rubric_relevant",
+   "basis": "the activity table shows Total Hours per category and a printed Grand Total 44258.685 instead of shares: 10 passes; shares come from the chart (11-26 hold); A-9 uses the printed total, equal to the segment totals (34, 55, 56 pass)",
+   "expected_overrides": {
+    "10": "pass"
+   },
+   "judge_expected": {}
+  },
+  "R13_activity_printed_total_inconsistent": {
+   "kind": "rubric_relevant",
+   "basis": "as R12 but the printed Grand Total reads 44000.000: A-9 uses the printed total, which differs from every segment table's 44258.685 (34, 55, 56 fail); consistency, not source correctness",
+   "expected_overrides": {
+    "10": "pass",
+    "34": "fail",
+    "55": "fail",
+    "56": "fail"
+   },
+   "judge_expected": {}
+  },
+  "R14_margin_total_wrong": {
+   "kind": "rubric_relevant",
+   "basis": "the Margin Impact table's grand total reads 44000.000: unequal to the hours the activity table represents (34); the Time and Strategic tables hold (55, 56)",
+   "expected_overrides": {
+    "34": "fail"
+   },
+   "judge_expected": {}
+  },
+  "R15_activity_share_off_denominator": {
+   "kind": "rubric_relevant",
+   "basis": "Automation 8.90 % (within \u00b11.0 of 8.40, 14 holds): the twelve shares sum to 100.5 (12); a share 0.5 points from the source share leaves the denominator unverifiable (A-9: 34, 55, 56 cannot_assess, the expert value is never assumed)",
+   "expected_overrides": {
+    "12": "fail",
+    "34": "cannot_assess",
+    "55": "cannot_assess",
+    "56": "cannot_assess"
+   },
+   "judge_expected": {}
+  },
+  "R10_time_percent_sum_off": {
+   "kind": "rubric_relevant",
+   "basis": "Training shown as 4.84 % in the Time table: the column sums to 101.00, not 100 within rounding (39); the pie is unchanged",
+   "expected_overrides": {
+    "39": "fail"
+   },
+   "judge_expected": {}
+  },
+  "N01_labels_without_spaces": {
+   "kind": "neutral",
+   "basis": "A-8: 'Audit/Compliance' and 'Break/Fix' without the source's spaces are the same categories",
+   "expected_overrides": {},
+   "judge_expected": {}
+  },
+  "N02_percent_as_fractions": {
+   "kind": "neutral",
+   "basis": "the activity % column written as fractions (0.0191) under a '%' header: read as percentages",
+   "expected_overrides": {},
+   "judge_expected": {}
+  },
+  "N03_segment_on_every_row": {
+   "kind": "neutral",
+   "basis": "the Margin label repeated on every row instead of once per group",
+   "expected_overrides": {},
+   "judge_expected": {}
+  },
+  "N04_pie_values_as_hours": {
+   "kind": "neutral",
+   "basis": "the Margin pie built from hours: slice percentages are shares of the values (57.98 / 42.02)",
+   "expected_overrides": {},
+   "judge_expected": {}
+  },
+  "N05_pie_2d": {
+   "kind": "neutral",
+   "basis": "K2: 2D pie charts instead of 3D",
+   "expected_overrides": {},
+   "judge_expected": {}
+  },
+  "N06_margin_title_removed": {
+   "kind": "d_neutral",
+   "basis": "the Margin slide without a title is located by its table's Margin Impact column; judge item 58 changes",
+   "expected_overrides": {},
+   "judge_expected": {
+    "58": "expected to change: the third slide has no title"
+   }
+  },
+  "N07_notes_text_box": {
+   "kind": "neutral",
+   "basis": "a source note text box on the activity slide",
+   "expected_overrides": {},
+   "judge_expected": {}
+  },
+  "N08_slides_reordered": {
+   "kind": "d_neutral",
+   "basis": "sections are located by title, not position (D-neutral); judge items 57-60 name slide positions and change",
+   "expected_overrides": {},
+   "judge_expected": {
+    "57": "changes",
+    "58": "changes",
+    "59": "changes",
+    "60": "changes"
+   }
+  }
+ }
+}

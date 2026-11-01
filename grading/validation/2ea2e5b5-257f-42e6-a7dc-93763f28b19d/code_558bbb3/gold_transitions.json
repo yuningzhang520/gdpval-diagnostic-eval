@@ -1,0 +1,515 @@
+{
+ "_provenance": {
+  "commit": "558bbb3c0bc980f9ef23fa87ab446be2ccd551a3",
+  "dirty": false,
+  "changed_paths": 0,
+  "untracked_paths": 0,
+  "task_grader_version": "2ea2e5b5-2026-11-01.1",
+  "engine_version": "engine-2026-11-01.1"
+ },
+ "gold_anchor": {
+  "gold_map": {
+   "1": "pass",
+   "2": "pass",
+   "3": "pass",
+   "4": "pass",
+   "5": "pass",
+   "6": "pass",
+   "7": "pass",
+   "8": "pass",
+   "9": "pass",
+   "10": "fail",
+   "11": "pass",
+   "12": "pass",
+   "13": "pass",
+   "14": "pass",
+   "15": "pass",
+   "16": "pass",
+   "17": "pass",
+   "18": "pass",
+   "19": "pass",
+   "20": "pass",
+   "21": "pass",
+   "22": "pass",
+   "23": "pass",
+   "24": "pass",
+   "25": "pass",
+   "26": "pass",
+   "27": "pass",
+   "28": "pass",
+   "29": "pass",
+   "30": "pass",
+   "31": "pass",
+   "32": "pass",
+   "33": "pass",
+   "34": "pass",
+   "35": "pass",
+   "36": "pass",
+   "37": "pass",
+   "38": "pass",
+   "39": "pass",
+   "40": "pass",
+   "41": "pass",
+   "42": "pass",
+   "43": "pass",
+   "44": "pass",
+   "45": "pass",
+   "46": "pass",
+   "47": "pass",
+   "48": "pass",
+   "49": "pass",
+   "50": "pass",
+   "51": "pass",
+   "52": "pass",
+   "53": "pass",
+   "54": "pass",
+   "55": "pass",
+   "56": "pass"
+  },
+  "gold_critical": {
+   "C1": "not_confirmed",
+   "C2": "fail",
+   "C3": "pass"
+  },
+  "gold_sha256": {
+   "WorkStudy.pptx": "60689a0d78724d002a4a7bdd50675b301a7e328fe5eace92107a692b42b49188"
+  }
+ },
+ "N01_labels_without_spaces": {
+  "kind": "neutral",
+  "expected_overrides": {},
+  "observed_fail": [
+   10
+  ],
+  "observed_cannot_assess": [],
+  "critical": {
+   "C1": "not_confirmed",
+   "C2": "fail",
+   "C3": "pass"
+  },
+  "diff": {}
+ },
+ "N02_percent_as_fractions": {
+  "kind": "neutral",
+  "expected_overrides": {},
+  "observed_fail": [
+   10
+  ],
+  "observed_cannot_assess": [],
+  "critical": {
+   "C1": "not_confirmed",
+   "C2": "fail",
+   "C3": "pass"
+  },
+  "diff": {}
+ },
+ "N03_segment_on_every_row": {
+  "kind": "neutral",
+  "expected_overrides": {},
+  "observed_fail": [
+   10
+  ],
+  "observed_cannot_assess": [],
+  "critical": {
+   "C1": "not_confirmed",
+   "C2": "fail",
+   "C3": "pass"
+  },
+  "diff": {}
+ },
+ "N04_pie_values_as_hours": {
+  "kind": "neutral",
+  "expected_overrides": {},
+  "observed_fail": [
+   10
+  ],
+  "observed_cannot_assess": [],
+  "critical": {
+   "C1": "not_confirmed",
+   "C2": "fail",
+   "C3": "pass"
+  },
+  "diff": {}
+ },
+ "N05_pie_2d": {
+  "kind": "neutral",
+  "expected_overrides": {},
+  "observed_fail": [
+   10
+  ],
+  "observed_cannot_assess": [],
+  "critical": {
+   "C1": "not_confirmed",
+   "C2": "fail",
+   "C3": "pass"
+  },
+  "diff": {}
+ },
+ "N06_margin_title_removed": {
+  "kind": "d_neutral",
+  "expected_overrides": {},
+  "observed_fail": [
+   10
+  ],
+  "observed_cannot_assess": [],
+  "critical": {
+   "C1": "not_confirmed",
+   "C2": "fail",
+   "C3": "pass"
+  },
+  "diff": {}
+ },
+ "N07_notes_text_box": {
+  "kind": "neutral",
+  "expected_overrides": {},
+  "observed_fail": [
+   10
+  ],
+  "observed_cannot_assess": [],
+  "critical": {
+   "C1": "not_confirmed",
+   "C2": "fail",
+   "C3": "pass"
+  },
+  "diff": {}
+ },
+ "N08_slides_reordered": {
+  "kind": "d_neutral",
+  "expected_overrides": {},
+  "observed_fail": [
+   10
+  ],
+  "observed_cannot_assess": [],
+  "critical": {
+   "C1": "not_confirmed",
+   "C2": "fail",
+   "C3": "pass"
+  },
+  "diff": {}
+ },
+ "R01_slide_deleted": {
+  "kind": "rubric_relevant",
+  "expected_overrides": {
+   "2": "fail",
+   "7": "fail",
+   "45": "fail",
+   "46": "fail",
+   "47": "fail",
+   "48": "fail",
+   "49": "fail",
+   "50": "fail",
+   "51": "fail",
+   "52": "fail",
+   "53": "fail",
+   "54": "fail",
+   "56": "fail"
+  },
+  "observed_fail": [
+   2,
+   7,
+   10,
+   45,
+   46,
+   47,
+   48,
+   49,
+   50,
+   51,
+   52,
+   53,
+   54,
+   56
+  ],
+  "observed_cannot_assess": [],
+  "critical": {
+   "C1": "fail",
+   "C2": "fail",
+   "C3": "fail"
+  },
+  "diff": {}
+ },
+ "R02_extra_slide": {
+  "kind": "rubric_relevant",
+  "expected_overrides": {
+   "2": "fail"
+  },
+  "observed_fail": [
+   2,
+   10
+  ],
+  "observed_cannot_assess": [],
+  "critical": {
+   "C1": "fail",
+   "C2": "fail",
+   "C3": "pass"
+  },
+  "diff": {}
+ },
+ "R03_activity_share_wrong": {
+  "kind": "rubric_relevant",
+  "expected_overrides": {
+   "12": "fail",
+   "14": "fail",
+   "34": "cannot_assess",
+   "55": "cannot_assess",
+   "56": "cannot_assess"
+  },
+  "observed_fail": [
+   10,
+   12,
+   14
+  ],
+  "observed_cannot_assess": [
+   34,
+   55,
+   56
+  ],
+  "critical": {
+   "C1": "not_confirmed",
+   "C2": "fail",
+   "C3": "not_confirmed"
+  },
+  "diff": {}
+ },
+ "R04_shift_handover_labeled_investment": {
+  "kind": "rubric_relevant",
+  "expected_overrides": {
+   "28": "fail",
+   "29": "fail"
+  },
+  "observed_fail": [
+   10,
+   28,
+   29
+  ],
+  "observed_cannot_assess": [],
+  "critical": {
+   "C1": "not_confirmed",
+   "C2": "fail",
+   "C3": "fail"
+  },
+  "diff": {}
+ },
+ "R05_margin_pie_cost_wrong": {
+  "kind": "rubric_relevant",
+  "expected_overrides": {
+   "31": "fail"
+  },
+  "observed_fail": [
+   10,
+   31
+  ],
+  "observed_cannot_assess": [],
+  "critical": {
+   "C1": "not_confirmed",
+   "C2": "fail",
+   "C3": "fail"
+  },
+  "diff": {}
+ },
+ "R06_activity_pie_as_bar": {
+  "kind": "rubric_relevant",
+  "expected_overrides": {
+   "4": "fail",
+   "25": "fail",
+   "26": "fail"
+  },
+  "observed_fail": [
+   4,
+   10,
+   25,
+   26
+  ],
+  "observed_cannot_assess": [],
+  "critical": {
+   "C1": "fail",
+   "C2": "fail",
+   "C3": "pass"
+  },
+  "diff": {}
+ },
+ "R07_time_table_removed": {
+  "kind": "rubric_relevant",
+  "expected_overrides": {
+   "6": "fail",
+   "35": "fail",
+   "36": "fail",
+   "37": "fail",
+   "38": "fail",
+   "39": "fail",
+   "55": "fail"
+  },
+  "observed_fail": [
+   6,
+   10,
+   35,
+   36,
+   37,
+   38,
+   39,
+   55
+  ],
+  "observed_cannot_assess": [],
+  "critical": {
+   "C1": "fail",
+   "C2": "fail",
+   "C3": "fail"
+  },
+  "diff": {}
+ },
+ "R08_strategic_slice_renamed": {
+  "kind": "rubric_relevant",
+  "expected_overrides": {
+   "50": "fail",
+   "52": "fail"
+  },
+  "observed_fail": [
+   10,
+   50,
+   52
+  ],
+  "observed_cannot_assess": [],
+  "critical": {
+   "C1": "not_confirmed",
+   "C2": "fail",
+   "C3": "fail"
+  },
+  "diff": {}
+ },
+ "R09_outside_category": {
+  "kind": "rubric_relevant",
+  "expected_overrides": {
+   "9": "fail",
+   "34": "cannot_assess",
+   "55": "cannot_assess",
+   "56": "cannot_assess"
+  },
+  "observed_fail": [
+   9,
+   10
+  ],
+  "observed_cannot_assess": [
+   34,
+   55,
+   56
+  ],
+  "critical": {
+   "C1": "not_confirmed",
+   "C2": "fail",
+   "C3": "not_confirmed"
+  },
+  "diff": {}
+ },
+ "R10_time_percent_sum_off": {
+  "kind": "rubric_relevant",
+  "expected_overrides": {
+   "39": "fail"
+  },
+  "observed_fail": [
+   10,
+   39
+  ],
+  "observed_cannot_assess": [],
+  "critical": {
+   "C1": "not_confirmed",
+   "C2": "fail",
+   "C3": "fail"
+  },
+  "diff": {}
+ },
+ "R11_margin_pie_not_a_percentage_series": {
+  "kind": "rubric_relevant",
+  "expected_overrides": {
+   "31": "fail",
+   "32": "fail"
+  },
+  "observed_fail": [
+   10,
+   31,
+   32
+  ],
+  "observed_cannot_assess": [],
+  "critical": {
+   "C1": "not_confirmed",
+   "C2": "fail",
+   "C3": "fail"
+  },
+  "diff": {}
+ },
+ "R12_activity_hours_instead_of_percent": {
+  "kind": "rubric_relevant",
+  "expected_overrides": {
+   "10": "pass"
+  },
+  "observed_fail": [],
+  "observed_cannot_assess": [],
+  "critical": {
+   "C1": "not_confirmed",
+   "C2": "pass",
+   "C3": "pass"
+  },
+  "diff": {}
+ },
+ "R13_activity_printed_total_inconsistent": {
+  "kind": "rubric_relevant",
+  "expected_overrides": {
+   "10": "pass",
+   "34": "fail",
+   "55": "fail",
+   "56": "fail"
+  },
+  "observed_fail": [
+   34,
+   55,
+   56
+  ],
+  "observed_cannot_assess": [],
+  "critical": {
+   "C1": "not_confirmed",
+   "C2": "pass",
+   "C3": "fail"
+  },
+  "diff": {}
+ },
+ "R14_margin_total_wrong": {
+  "kind": "rubric_relevant",
+  "expected_overrides": {
+   "34": "fail"
+  },
+  "observed_fail": [
+   10,
+   34
+  ],
+  "observed_cannot_assess": [],
+  "critical": {
+   "C1": "not_confirmed",
+   "C2": "fail",
+   "C3": "fail"
+  },
+  "diff": {}
+ },
+ "R15_activity_share_off_denominator": {
+  "kind": "rubric_relevant",
+  "expected_overrides": {
+   "12": "fail",
+   "34": "cannot_assess",
+   "55": "cannot_assess",
+   "56": "cannot_assess"
+  },
+  "observed_fail": [
+   10,
+   12
+  ],
+  "observed_cannot_assess": [
+   34,
+   55,
+   56
+  ],
+  "critical": {
+   "C1": "not_confirmed",
+   "C2": "fail",
+   "C3": "not_confirmed"
+  },
+  "diff": {}
+ }
+}
