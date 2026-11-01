@@ -3816,6 +3816,30 @@ First launch, 17:51Z:
 - Disclosure: `grading/tests/regress_grading_cli.py` started one short Docker mockllm sandbox (about 7 s, no network,
   no paid call) while paid Gemini sandboxes were running.
 
+Relaunch, 17:58Z (pid 1862, commit `2284d65`):
+- The 8 planned runs finished: 52 of 52 primary units ok, no provider error, no halt. The self-consistency repeats
+  run with requests identical to their primaries.
+- `c357f0e2…` was refused before any call: "required host material missing: private/checks/recalc/c357f0e2….json".
+  The official entry point had never run for `c357f0e2…` or `a45bc83b…`; their gold-first suites call `run_checks`
+  directly. Neither grader nor judge builder reads the reference.
+- Fix (no engine change): `scripts/recalc/task_c357f0e2_uat_plan.py` and `task_a45bc83b_gcp_design.py` write an
+  explicit no-recalculation reference with the input hashes. The entry point now runs for both tasks.
+- The offline deterministic pass of `c357f0e2…` run `fx58g4L2…` recorded 70 of 70 items (15 D, 54 J pending, 1 V);
+  recalculation ok on all three workbooks.
+
+Ledger over-counting (conservative; recorded for Codex Review 2; no change during the pass):
+- `PilotLauncher.run_judge_batch` settles a judge unit on its summed usage, so the price tier is chosen by the batch
+  total, not per call. `7d7fc9a7…` (14 calls, each under 200 k input tokens, 276 k in total) settled at the
+  long-context rate: 1.368310 USD against 0.728216 USD at the per-call standard tier.
+- A judge unit with no call (`b5d2e6f1…`, no judge item) settles at its reservation (0.55 USD), because
+  `fallback_to_reservation=not usage`.
+- Effect: the ledger and the Pass 1 guard count more than the provider bills, so the ceilings bind earlier, never
+  later. Reports give both figures.
+
+Usage detail: Inspect 0.3.286 folds Gemini thinking tokens into `output_tokens` (billed at the output rate), so cost is
+complete. The shared usage mapping drops the separate `reasoning_tokens` subset, so the thinking share of each judge
+call is not recorded.
+
 ## Known issues and findings (material check)
 
 - `rubric_json.form_content`: 8,036 items hold `null`, 2,417 items lack the key, zero
@@ -4197,7 +4221,8 @@ First launch, 17:51Z:
   max_tokens 16,384, Inspect max_retries 3, Pass 1 ceiling 20 USD including repeats, aggregate 30 USD over at most three
   passes, separate Judge Dev ledger, Dev key at concurrency 1, a frozen 20-unit self-consistency subset · f9d8858, 612249c
 - 2026-11-01 · judge history gate checks the separate judge ledger's open reservations · 0aa4047
-- 2026-11-01 · Pass 1 addendum 1 (`c357f0e2…` primary units; repeat subset unchanged) · (this commit)
+- 2026-11-01 · Pass 1 addendum 1 (`c357f0e2…` primary units; repeat subset unchanged) · 2284d65
+- 2026-11-01 · no-recalculation references for `c357f0e2…` and `a45bc83b…` (entry-point material; no verdict change) · (this commit)
 
 ## Next stage (not started)
 

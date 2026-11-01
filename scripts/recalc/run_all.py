@@ -15,6 +15,8 @@ MODULES = [
     "task_7b08cd4d_tour_pl",
     "task_7d7fc9a7_prepaid",
     "task_2ea2e5b5_work_study",
+    "task_c357f0e2_uat_plan",
+    "task_a45bc83b_gcp_design",
 ]
 only = sys.argv[1:]
 for m in MODULES:
