@@ -3942,6 +3942,16 @@ Re-grades went to the scratchpad; the official V1 Dev re-grade follows the per-t
 - `47ef842d…` grader .2: rules in preregistration 2.3 ("Dev calibration .2"). Tests: `V1LayoutTests`.
   - Effect on Dev run `dGuK7hzr…`: the 6 OOS false fails pass; items 13, 14, 17 move from fail to `cannot_assess`
     (picture chart, visual review). No item without a lead changed.
+- `1137e2bb…` grader .3: rules in preregistration 2.4 ("Dev calibration .3"). Tests: `V1LayoutTests`.
+  - Effect on Dev run `cjJkBnbB…`: items 14 and 16 pass; item 21 goes from `cannot_assess` to fail (A-21, absent
+    indicator).
+  - Items 25 and 26 stay `cannot_assess` (coverage loss). No item without a lead changed.
+- Calibrated so far: the Dev tasks without a human label (`7d7fc9a7…`, `c3525d4d…`, `7b08cd4d…`, `47ef842d…`,
+  `1137e2bb…`; `b5d2e6f1…` had no lead).
+- Still open:
+  - `c357f0e2…` and `a45bc83b…`: no QA yet.
+  - The v4 Dev-labelled runs (`2ea2e5b5…`, `f841ddcf…`, `a45bc83b…`): their leads stay unopened until the labels
+    are checkpointed.
 
 ## Final review workload, policy v4 (2026-11-01; approved by the human before any label; supersedes v1-v3)
 
@@ -4013,7 +4023,7 @@ Packets:
 - Gemini validation generation: `a45bc83b…` running (the last of ten). Validation outputs stay sealed.
 - v4 Dev packets (`labeling/dev-v4/`, 6 labels) await the human.
 - Grader V1 calibration from sealed QA leads on the Dev tasks without a human label: `7d7fc9a7…`, `c3525d4d…` and
-  `7b08cd4d…` and `47ef842d…` are committed; `1137e2bb…` is next.
+  `7b08cd4d…`, `47ef842d…` and `1137e2bb…` are committed.
 
 ## Decisions taken (date · what · commit)
 
@@ -4348,7 +4358,8 @@ Packets:
 - 2026-11-01 · `c3525d4d…` grader .4 (Dev calibration: row labels and column captions) · b87972b
 - 2026-11-01 · `7b08cd4d…` grader .3 (Dev calibration: gross column, total-expenses row) · 4f71d3d
 - 2026-11-01 · final review workload v4 (36 item-level blind labels; supersedes v1-v3), queue_v4 frozen (seed 20261101) · e995ea0
-- 2026-11-01 · engine .5 (xlsx media parts) and `47ef842d…` grader .2 (OOS header, picture chart) · (this commit)
+- 2026-11-01 · engine .5 (xlsx media parts) and `47ef842d…` grader .2 (OOS header, picture chart) · 29fdaaa
+- 2026-11-01 · `1137e2bb…` grader .3 (summary measures, workbook pivots, variance headers) · (this commit)
 
 ## Next stage (not started)
 

@@ -993,6 +993,20 @@ equality, so float noise is not a mismatch; counts exact.
   measures, PO rows beneath, grand total, sorted, filterable): graded like the expert
   pivot (gold variant R30, neutral).
 
+- Dev calibration .3 (2026-11-01). Before freeze; V0 kept; this run carries no human label. The leads came from sealed
+  AI QA and were checked against the deliverable.
+  - Defects:
+    - the summary's case-pack measure was read from the pack-size column (item 16);
+    - a PO-level PivotTable on its own sheet was not seen (item 14);
+    - price and dollar variance headers left item 21 unmapped, although A-21 grades an absent indicator as a fail.
+  - Operational rules adopted:
+    - summary price and case measures prefer an error-count header;
+    - a PO-level PivotTable on any sheet of the workbook offers the drill-down;
+    - price and dollar variance columns are recognised (not scored), with flag, error and mismatch wording excluded.
+  - Items 25 and 26 stay `cannot_assess`: the document's dataset totals are not separated from per-SKU counts, and a
+    new extraction heuristic would risk false passes. They are reported as coverage loss.
+  - Synthetic regressions: `V1LayoutTests`. The gold-first suite is unchanged and passes.
+
 ### 2.5 `c3525d4d-2012-45df-853e-2d2a0e902991` — Holiday floor-stand budget (Order Clerks)
 Inputs: `Email Trail Floorstands.docx` (base 5.65; side panels 2.24 × 2; shelf strips
 1.89 × 4; unit 17.69; 1,228 stores; 5 % overage; total 22,802.41),

@@ -164,5 +164,31 @@ class GoldRecalcDockerTests(unittest.TestCase):
         self.assertEqual(g["res"]["items"][10]["attribution"], "model_caused")
 
 
+class V1LayoutTests(unittest.TestCase):
+    """Grader .3 (Dev calibration 2026-11-01)."""
+
+    DETAIL = ["PO Number", "SKU", "Ordered Units", "Entered Unit Price", "Expected Unit Price", "UOM", "Case Pack", "Ship-to Location", "Price Mismatch Error",
+              "Case Pack Error", "Total Errors", "Error Type", "Unit Price Variance ($)", "Total Dollar Variance ($)"]
+
+    def test_variance_headers_are_recognised(self):
+        m = CK.map_columns(self.DETAIL)
+        self.assertEqual(m["field_status"]["case_missing"], "confirmed_missing")  # A-21 can be applied
+        self.assertEqual(m["field_status"]["price_flag"], "ok")
+        self.assertNotIn("variance_info", CK.map_columns(self.DETAIL[:12] + ["Price Variance Flag"])["cols"])  # a flag column is never claimed as a variance column
+
+    def test_summary_measures_and_workbook_pivot(self):
+        d = tempfile.mkdtemp(prefix="v1_1137_"); self.addCleanup(shutil.rmtree, d, True)
+        wb = openpyxl.Workbook(); ws = wb.active; ws.title = "Summary"
+        ws.append(["SKU", "UOM", "Case Pack", "Order Lines", "Price Mismatch Errors", "Case Pack Errors", "Total Errors", "Entered Price"])
+        ws.append(["SKU-0107", "CASE", 6, 4, 4, 2, 6, 8.59]); ws.append(["SKU-0108", "CASE", 12, 3, 3, 1, 4, 9.1]); ws.append(["Total", None, None, 7, 7, 3, 10, None])
+        wb.create_sheet("Pivot")
+        p = os.path.join(d, "w.xlsx"); wb.save(p)
+        x = X.extract_xlsx(p)
+        x["sheets"]["Pivot"]["pivots"] = [{"name": "PT1", "cache_fields": ["SKU", "PO Number", "Price Mismatch Error"], "row_fields": ["SKU", "PO Number"]}]
+        summ = CK.locate_summary_sheet(x, set())
+        self.assertEqual((summ["cols"]["case"], summ["cols"]["price"]), (5, 4))  # 'Case Pack Errors', not the pack size; 'Price Mismatch Errors', not the price
+        self.assertEqual([p_["sheet"] for p_ in summ["workbook_pivots"]], ["Pivot"])
+
+
 if __name__ == "__main__":
     unittest.main()

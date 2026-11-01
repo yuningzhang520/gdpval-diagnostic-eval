@@ -50,7 +50,7 @@ from .engine.workbook import workbook_gate
 from .extract import ERROR_PREFIXES
 
 TASK = "1137e2bb-bdf9-4876-b572-f29b7de5e595"
-VERSION = "1137e2bb-2026-11-01.2"  # .1: gold-first fixes (total-column synonyms, annotation rows, summary fallback); .2: rubric 9 numeric-format rule, annotation rows with quantity sums (human decisions 2026-11-01)
+VERSION = "1137e2bb-2026-11-01.3"  # .3 (Dev calibration 2026-11-01): summary measures prefer error-count headers; a PO-level PivotTable on any sheet; price/dollar variance headers recognised (A-21)  # .1: gold-first fixes (total-column synonyms, annotation rows, summary fallback); .2: rubric 9 numeric-format rule, annotation rows with quantity sums (human decisions 2026-11-01)
 D_ITEMS = [1, 2] + [i for i in range(3, 23) if i != 11] + [25, 26] + list(range(31, 63))
 J_ITEMS = [11, 23, 24, 27, 28, 29, 30]
 CRITICAL = {"C1": {"items": [5, 6, 7, 8, 18, 19, 20] + list(range(31, 56)), "name": "Line flags"},
@@ -84,6 +84,10 @@ FLAG_SCHEMA = {
                      "keywords": (("summary", "error type", "description", "issue", "detail"), ())},
     "case_missing": {"synonyms": ["case pack missing", "missing case pack", "case pack missing flag", "invalid case pack", "case pack missing/invalid"],
                      "keywords": (("missing", "invalid"), ("case",))},
+    # .3: price or dollar variance columns are recognised (not scored), so an absent indicator can be confirmed (A-21)
+    "variance_info": {"synonyms": ["unit price variance", "unit price variance ($)", "price variance", "price variance ($)", "total dollar variance", "total dollar variance ($)",
+                                   "dollar variance", "dollar variance ($)", "variance", "variance ($)", "unit variance ($)", "extended variance", "extended variance ($)"],
+                      "keywords": (("variance",), ()), "keyword_exclude": ("flag", "error", "mismatch", "1/0", "y/n", "missing", "invalid")},
 }
 SOURCE_FIELDS = ("po", "sku", "ordered_units", "entered", "expected", "uom", "case_pack")
 IDENTITY_FIELDS = ("po", "sku", "ordered_units")
@@ -606,8 +610,13 @@ def locate_summary_sheet(xlsx: dict, exclude_sheets: set) -> dict | None:
             sku_col = next((j for j, h in enumerate(hdr) if h in SCHEMA["sku"]["synonyms"] or h == "row labels" or h.startswith("sku")), None)
             if sku_col is None:
                 continue
-            price_col = next((j for j, h in enumerate(hdr) if "price" in h and j != sku_col), None)
-            case_col = next((j for j, h in enumerate(hdr) if ("case" in h or "pack" in h) and j not in (sku_col, price_col)), None)
+            err = lambda h: re.search(r"error|mismatch|violation|flag|issue", h)  # .3: an error-count header wins over a same-word attribute (pack size, entered price)
+            price_col = next((j for j, h in enumerate(hdr) if "price" in h and err(h) and j != sku_col), None)
+            if price_col is None:
+                price_col = next((j for j, h in enumerate(hdr) if "price" in h and j != sku_col), None)
+            case_col = next((j for j, h in enumerate(hdr) if ("case" in h or "pack" in h) and err(h) and j not in (sku_col, price_col)), None)
+            if case_col is None:
+                case_col = next((j for j, h in enumerate(hdr) if ("case" in h or "pack" in h) and j not in (sku_col, price_col)), None)
             total_col = next((j for j, h in enumerate(hdr) if ("total" in h or h in ("errors", "error count", "errors total", "grand total", "all errors")) and j not in (sku_col, price_col, case_col)), None)
             if total_col is None:
                 continue
@@ -636,7 +645,8 @@ def locate_summary_sheet(xlsx: dict, exclude_sheets: set) -> dict | None:
                 has_po = any(isinstance(c, str) and _norm(c) in SCHEMA["po"]["synonyms"] for row in s["rows"] for c in row)
                 recognised = {sku_col, price_col, case_col, total_col} - {None}
                 best = {"sheet": name, "header_row": hi + 1, "cols": cols, "unrecognised_headers": [hdr[j] for j in range(len(hdr)) if hdr[j] and j not in recognised],
-                        "rows": rows, "grand_total": grand, "unresolved_labels": unresolved, "pivots": s["pivots"], "tables": s["tables"], "auto_filter": s["auto_filter"], "has_po_field": has_po}
+                        "rows": rows, "grand_total": grand, "unresolved_labels": unresolved, "pivots": s["pivots"], "tables": s["tables"], "auto_filter": s["auto_filter"], "has_po_field": has_po,
+                        "workbook_pivots": [dict(p_, sheet=n_) for n_, s_ in xlsx["sheets"].items() for p_ in s_["pivots"]]}
     return best
 
 
@@ -987,8 +997,9 @@ def run_checks(extraction: dict, reference: dict, rubric: list[dict], integrity:
                     d.unreliable("unmapped", "summary_measures", {"missing": measures_missing, "unrecognised_headers": summary["unrecognised_headers"]})
                 d.deliverable = {k: summary["cols"][k] is not None for k in ("price", "case", "total")}
                 results[13] = d.result("three measures per SKU")
-                drill = (bool(summary["pivots"]) and any("po" in str(f).lower() for p in summary["pivots"] for f in p.get("cache_fields", []))) or summary["has_po_field"]
-                results[14] = Result(14, "pass" if drill else "fail", {**ev, "pivots": summary["pivots"], "po_field": summary["has_po_field"]}, drill, "PO Number field or pivot with PO level", "graded as written; not critical (C2 revision 2026-10-30)", None if drill else "model_caused")
+                pivs = summary.get("workbook_pivots") or summary["pivots"]  # .3: a PO-level PivotTable on any sheet of the workbook offers the drill-down
+                drill = (bool(pivs) and any("po" in str(f).lower() for p in pivs for f in p.get("cache_fields", []))) or summary["has_po_field"]
+                results[14] = Result(14, "pass" if drill else "fail", {**ev, "pivots": pivs, "po_field": summary["has_po_field"]}, drill, "PO Number field or pivot with PO level", "graded as written; not critical (C2 revision 2026-10-30)", None if drill else "model_caused")
                 g = summary["grand_total"]
                 src = "grand total row" if g else "sum of the SKU rows (no grand-total row)"
                 for item, measure, f, label in ((15, "price", "price_flag", "price mismatch"), (16, "case", "case_flag", "case pack"), (17, "total", "total", "total errors")):
