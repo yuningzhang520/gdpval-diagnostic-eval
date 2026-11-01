@@ -839,7 +839,7 @@
   },
   "grading": {
     "preregistration": "preregistration.md (draft; frozen at freeze-v1)",
-    "engine_version": "engine-2026-11-01.7",
+    "engine_version": "engine-2026-11-01.8",
     "task_grader_versions": {
       "1137e2bb-bdf9-4876-b572-f29b7de5e595": "1137e2bb-2026-11-01.3",
       "7d7fc9a7-21a7-4b83-906f-416dea5ad04f": "7d7fc9a7-2026-11-01.7",
@@ -1257,8 +1257,11 @@
     "model": "google/gemini-3.1-pro-preview",
     "temperature": 1.0,
     "max_tokens": 16384,
-    "max_retries": 3,
+    "max_retries": 10,
     "reasoning_effort": "high",
+    "pacing_pause_s": 2.0,
+    "provider_error_stop_items": 3,
+    "infrastructure_change_2026_11_01": "APPROVED by the human 2026-11-01 (V1.2, engine-2026-11-01.8; infrastructure only, not model-visible): Inspect max_retries 3 -> 10 (Inspect's own retry; no other retry or backoff layer), a 2.0 s pause between judge requests, a recoverable provider failure no longer stops the batch (new requests stop after 3 distinct failed items; authentication, billing and invalid-configuration errors stop at once), one schema retry of a schema-invalid response with the identical request (invalid_judge_output when both are invalid), provider error detail recorded; prompt, model, temperature, max_tokens and reasoning_effort unchanged",
     "prompt_sha256": "1de955e607e16bd8d236469603bde099b3d309a885be170c21d7e759c57487b5",
     "status": "FROZEN 2026-11-01 (shared judge freeze, tag v1-calibration-freeze; before the first Validation output was revealed): model google/gemini-3.1-pro-preview, thinking HIGH (Inspect reasoning_effort 'high' -> ThinkingConfig(thinking_level=HIGH)), temperature 1.0, max_tokens 16,384 including thinking, Inspect max_retries 3, no other retry or backoff layer; nothing forwarded to google.genai; the prompt is grading.judge.JUDGE_SYSTEM_PROMPT (prompt_sha256 below), unchanged since Judge Dev Pass 1. Earlier status: APPROVED 2026-11-01 for Judge Dev calibration only (Dev outputs, Dev project key). Validation: see 'validation'. Formal: not authorized",
     "validation": {

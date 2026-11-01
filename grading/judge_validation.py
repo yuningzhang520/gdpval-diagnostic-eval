@@ -44,7 +44,8 @@ FREEZE_TAG = "v1-calibration-freeze"
 # exists; v1-calibration-freeze is never moved. V1.1 (2026-11-01, approved): per-item judge recovery, inferred ledger
 # resolutions, provider_error / not_run judge verdicts, picture-chart visual-review flags; judge prompt, model, settings
 # and evidence builders byte-identical to V1 (checked by grading.freeze_manifest judge-surface).
-VERSION_TAGS = ((FREEZE_TAG, MANIFEST), ("v1.1-judge-item-recovery", os.path.join(ROOT, "grading", "freeze", "v1.1_manifest.json")))
+VERSION_TAGS = ((FREEZE_TAG, MANIFEST), ("v1.1-judge-item-recovery", os.path.join(ROOT, "grading", "freeze", "v1.1_manifest.json")),
+                ("v1.2-judge-infrastructure", os.path.join(ROOT, "grading", "freeze", "v1.2_manifest.json")))  # V1.2: engine .8 judge infrastructure (approved 2026-11-01)
 PASS_ID = "judge-validation-pass-1"
 FROZEN_PATHS = ("grading", "harness", "config.json")
 AUTH_REF = "docs/status.md decision 2026-11-01: Judge Validation authorized (one pass, frozen judge, separate ledger, 15 USD, concurrency 1, Dev project key)"
@@ -164,6 +165,7 @@ def grade_run(spec: dict, r: dict, log, extra_argv: list | None = None) -> dict:
 
         def factory(model, cfgd):
             j = ProviderJudge(model, temperature=c["temperature"], max_tokens=c["max_tokens"], max_retries=c["max_retries"], reasoning_effort=c["reasoning_effort"],
+                              pacing_pause_s=c.get("pacing_pause_s", 0.0), provider_error_stop_items=c.get("provider_error_stop_items"),
                               cost_guard=make_guard(holder, c["max_tokens"], base, ceiling))
             holder["judge"] = j
             return j
@@ -218,8 +220,24 @@ def run() -> int:
         registry({"kind": "run_done", "run_uuid": u, "task_id": r["task_id"], "unit_id": out["judge_unit"], **{k: v for k, v in out.items() if k != "judge_unit"}})
         if out.get("halted"):
             registry({"kind": "halted", "run_uuid": u, "reason": out["halted"]}); break
+        if r["judge_items"] and (out.get("provider_error") or out.get("not_attempted")):  # engine .8: one bounded per-item recovery pass afterwards
+            items = auto_recovery_items(r)
+            if items and recover(u, items) != 0:
+                break
     registry({"kind": "pass_end", "spent": {k: str(v) for k, v in spent().items() if k != "snapshot"}})
     return 0
+
+
+def auto_recovery_items(r: dict) -> list[int]:
+    """Items of the run's latest judged pass that are eligible for the one bounded recovery (provider_error retried
+    once, not_attempted run once); schema-invalid responses were already retried once inside the pass."""
+    from grading import judge_recovery as JR
+    from grading import run_grading as RG
+    judged = [p for p in RG.grading_passes(r["grading_out"], r["run_uuid"]) if p.get("judge_mode") == "real"]
+    if not judged:
+        return []
+    plan = JR.recovery_plan(r["grading_out"], r["run_uuid"], judged[-1]["grading_pass"], list(r["judge_items"]))
+    return sorted(i for i, d in plan["decision"].items() if d["eligible"] and d["base_call_status"] in ("provider_error", "not_attempted"))
 
 
 def recover(run_uuid: str, items: list[int]) -> int:
@@ -248,6 +266,9 @@ def recover(run_uuid: str, items: list[int]) -> int:
         raise SystemExit(f"not recoverable: {refused}")
     c = cfg()["judge"]
     est = sum((worst_case_usd(len(JR.J.JUDGE_SYSTEM_PROMPT) + len(JR.J.render_unit(plan["units"][i])), c["max_tokens"], "long") for i in items), Decimal(0)).quantize(Decimal("0.01"), rounding=ROUND_CEILING)
+    planned = next((Decimal(x["reservation_usd"]) for x in json.load(open(PLAN, encoding="utf-8"))["order"] if x["run_uuid"] == run_uuid), None)
+    if planned is not None and planned > 0:
+        est = min(est, planned)  # never more than the run's planned reservation; the per-call guard bounds the spend against the ceiling
     log = open(os.path.join(VDIR, f"{PASS_ID}_recovery_{dt.datetime.now(dt.timezone.utc).strftime('%Y%m%dT%H%M%SZ')}.log"), "a", encoding="utf-8")
     registry({"kind": "recovery_start", "run_uuid": run_uuid, "task_id": r["task_id"], "base_pass": base, "items": items, "reservation_usd": str(est),
               "decision": plan["decision"], "code_tag": ck["freeze"].get("tag"), "code_tag_commit": ck["freeze"]["tag_commit"]})

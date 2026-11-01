@@ -39,7 +39,7 @@ class Offline(unittest.TestCase):
 class EffectiveSettingsTests(Offline):
     def test_config_block_and_the_request_inspect_builds(self):
         c = cfg_judge()
-        self.assertEqual((c["model"], c["temperature"], c["max_tokens"], c["max_retries"], c["reasoning_effort"]), ("google/gemini-3.1-pro-preview", 1.0, 16384, 3, "high"))
+        self.assertEqual((c["model"], c["temperature"], c["max_tokens"], c["max_retries"], c["reasoning_effort"]), ("google/gemini-3.1-pro-preview", 1.0, 16384, 10, "high"))  # max_retries 3 -> 10 (V1.2, approved 2026-11-01)
         self.assertEqual(c["prompt_sha256"], J.ProviderJudge("google/x").prompt_sha256)
         from inspect_ai.model import GenerateConfig
         from inspect_ai.model._providers.google import GoogleGenAIAPI
@@ -49,7 +49,7 @@ class EffectiveSettingsTests(Offline):
             api = GoogleGenAIAPI(model_name="gemini-3.1-pro-preview", base_url=None, api_key=None, config=GenerateConfig())
             tc = api.chat_thinking_config(gc)
         self.assertEqual((str(tc.thinking_level), tc.include_thoughts, tc.thinking_budget), ("ThinkingLevel.HIGH", True, None))
-        self.assertEqual((gc.temperature, gc.max_tokens, gc.max_retries), (1.0, 16384, 3))
+        self.assertEqual((gc.temperature, gc.max_tokens, gc.max_retries), (1.0, 16384, 10))  # Inspect's own retry count (V1.2)
         self.assertEqual(pj._model_args, {})  # nothing forwarded to google.genai
 
 
@@ -74,7 +74,8 @@ class GuardAndFailureTests(Offline):
             pj = J.ProviderJudge("google/gemini-3.1-pro-preview", generate=lambda m, t=text, s=stop: output(t, s))
             v = J.judge_units([unit()], pj)[0]
             with self.subTest(text=text):
-                self.assertEqual((v["verdict"], v["error_class"]), ("cannot_assess", "judge_parse_error"))
+                self.assertEqual((v["verdict"], v["error_class"]), ("cannot_assess", "invalid_judge_output"))  # engine .8: one schema retry, both invalid
+                self.assertEqual((len(pj.calls), len(v["schema_attempts"])), (2, 2))
                 self.assertEqual(pj.calls[0]["stop_reason"], stop)
 
     def test_call_record_fields(self):

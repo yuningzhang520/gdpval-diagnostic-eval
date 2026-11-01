@@ -829,10 +829,11 @@ class PilotLauncher:
             settlement = self.ledger.settle(unit_id, known, note=note, estimated=True, fallback_to_reservation=not known, incomplete=True)
             self._after_unit(unit_id=unit_id, settlement=settlement, estimate_usd=estimate_usd)
             raise
-        calls_by_model = None
-        if isinstance(result, dict):  # ProviderJudge.batch_result(): usage, retries, usage_incomplete, note, per-call usage
+        calls_by_model, recovered = None, None
+        if isinstance(result, dict):  # ProviderJudge.batch_result(): usage, retries, usage_incomplete, note, per-call usage, recovered failures
             usage, retries, incomplete, note = result.get("usage") or {}, result.get("retries") or {}, bool(result.get("usage_incomplete")), str(result.get("note") or "")
             calls_by_model = result.get("calls_by_model") or None
+            recovered = result.get("recovered") or None  # engine .8: recoverable provider failures -> inferred buffer, no hold
         else:
             usage, retries = result
             incomplete, note = False, ""
@@ -842,7 +843,7 @@ class PilotLauncher:
         # applies only to a call whose own prompt exceeds the threshold; a conflict between the two sources settles at the
         # larger figure with a hold (BudgetLedger.settle).
         settlement = self.ledger.settle(unit_id, usage, retries_by_model=retries, note=f"judge batch {note}".strip() + ("; usage incomplete" if incomplete else ""),
-                                        fallback_to_reservation=not usage, incomplete=incomplete, calls_by_model=calls_by_model,
+                                        fallback_to_reservation=not usage, incomplete=incomplete, calls_by_model=calls_by_model, recovered=recovered,
                                         scope={"same_sample": True, "source": "per-call usage of this judge batch"} if calls_by_model else None)
         post = self._after_unit(unit_id=unit_id, settlement=settlement, estimate_usd=estimate_usd)
         return {"unit_id": unit_id, "settlement": settlement, "post_run": post, "ledger_after": self.ledger.snapshot(), "usage_incomplete": incomplete, "batch_note": note}

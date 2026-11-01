@@ -509,13 +509,20 @@ class BudgetLedger:
                 # Approved 2026-11-01 (Gemini dev / validation): usage-less attempts that are recovered HTTP 429 / 5xx
                 # retries are settled at the reported usage plus ONE average metered call per unit, marked inferred
                 # (not provider-confirmed), without a hold; the dashboard reconciliation stays a requirement.
+                # Engine .8 judge batches (approved 2026-11-01): ``buffer_calls`` average metered calls instead of one
+                # (1 + max_retries per failed request); without any metered call nothing can be inferred and the unit is held.
                 metered = sum(len((calls_by_model or {}).get(m_) or []) for m_ in per_model)
                 priced = sum(breakdown.values(), Decimal(0))
-                buffer = _d(priced / metered) if metered else Decimal(0)
-                total += buffer
-                inferred = {"buffer_usd": str(buffer), "basis": f"one average metered call: {_d(priced)} USD / {metered} metered call(s)", "reported_usd": str(_d(priced)),
-                            "recovered_attempts": recovered, "reconciliation_required": "provider dashboard"}
-                flags.append(f"inferred: {recovered.get('recovered')} recovered 429/5xx attempt(s) without usage; settled at reported usage {_d(priced)} + buffer {buffer} USD (one average metered call); not provider-confirmed")
+                n_buf = max(1, int(recovered.get("buffer_calls") or 1))
+                if not metered:
+                    incomplete = True
+                    flags.append("inferred buffer impossible: no metered call to average; conservative settlement applies")
+                else:
+                    buffer = _d(priced / metered * n_buf)
+                    total += buffer
+                    inferred = {"buffer_usd": str(buffer), "buffer_calls": n_buf, "basis": f"{n_buf} average metered call(s): {_d(priced)} USD / {metered} metered call(s) x {n_buf}",
+                                "reported_usd": str(_d(priced)), "recovered_attempts": recovered, "reconciliation_required": "provider dashboard"}
+                    flags.append(f"inferred: {recovered.get('recovered')} recovered 429/5xx attempt(s) without usage; settled at reported usage {_d(priced)} + buffer {buffer} USD ({n_buf} average metered call(s)); not provider-confirmed")
             if unpriced:
                 total = max(total, Decimal(res["estimated_usd"]))
                 estimated = True

@@ -4411,6 +4411,74 @@ Inventory for a later encrypted backup (gitignored or outside the repository; no
 
 `.env` holds credentials and is not part of a backup.
 
+## V1.2: judge infrastructure, engine .8 (2026-11-01; approved by the human; tag `v1.2-judge-infrastructure`)
+
+Approved by the human in chat: the second Validation recovery and judge infrastructure changes that leave the frozen
+judge prompt, model-visible settings, rubric semantics and evidence unchanged.
+
+Changes (preregistration 1.20 "V1.2"; for Codex Review 2):
+- `grading/judge.py`:
+  - `provider_error_detail` unwraps tenacity `RetryError`, google.genai `APIError` and SDK status errors. It records
+    HTTP status, provider status, inner class, quota (`QuotaFailure`), retry guidance (`RetryInfo`, Retry-After), help
+    links and a redacted, truncated message, and classifies the error recoverable or unrecoverable (HTTP 400 / 401 /
+    403 / 404, PERMISSION_DENIED, UNAUTHENTICATED, INVALID_ARGUMENT, billing or API-key text).
+  - `ProviderJudge`:
+    - `pacing_pause_s` pause between requests;
+    - with `provider_error_stop_items`, a recoverable failure no longer halts the batch, and new requests stop after
+      3 distinct failed items;
+    - an unrecoverable error halts at once and keeps the conservative hold;
+    - adapters without the threshold keep the earlier halting policy.
+  - `batch_result` reports recoverable failures as `recovered` (buffer of 1 + max_retries average metered calls per
+    failed request). With nothing metered, the batch is incomplete and held.
+  - `judge_units`: one schema retry of a schema-invalid response with the identical request; the first schema-valid
+    response is accepted; both attempts are kept (`schema_attempts`); two invalid responses give
+    `invalid_judge_output`.
+- `harness/budget.py` `settle`: `recovered.buffer_calls` scales the inferred buffer. Without any metered call the
+  unit is held.
+- `harness/launcher.py` `run_judge_batch` passes `recovered`.
+- `grading/grade.py` (engine .8):
+  - `invalid_judge_output` is a verdict;
+  - J rows carry the provider error summary and the schema attempts;
+  - the call summary counts `invalid_judge_output` and `schema_retried`;
+  - `judge_infrastructure` lists `invalid_judge_output`.
+- `grading/judge_recovery.py`:
+  - recovery chains: units and request hashes come from the original judged pass, and later recovery records
+    supersede;
+  - `judge_parse_error` on a completed call is recoverable once, as its schema retry;
+  - each attempt records `response_schema_valid`.
+- `grading/judge_validation.py`:
+  - the `v1.2-judge-infrastructure` gate;
+  - pacing and the stop threshold passed to the judge;
+  - one automatic bounded recovery pass after a judged pass with `provider_error` or `not_run` items;
+  - recovery reservations capped at the run's planned reservation.
+- `grading/freeze_manifest.py`: `judge-surface TAG --request-only`. `CALL_HANDLING` separates call handling from
+  the request surface.
+- `config.json` judge: `max_retries` 10 (was 3), `pacing_pause_s` 2.0, `provider_error_stop_items` 3, and the
+  approval note. Prompt hash, model, temperature, max_tokens and reasoning_effort are unchanged.
+- Freeze record `grading/freeze/v1.2_manifest.json`.
+  - `judge-surface v1-calibration-freeze --request-only` reports identical.
+  - The full surface differs only in call handling: `ProviderJudge.__call__`, `judge_units`, `_verdict_of`,
+    `UNRECOVERABLE_*`.
+- Tests:
+  - new: `grading/tests/test_judge_infrastructure.py` (11);
+  - updated for the approved behaviour:
+    - `test_grading_chain`: call-summary keys; the halting-policy test now runs with `schema_retry=False`;
+    - `test_judge_dev`: `max_retries` 10; malformed responses give `invalid_judge_output` after one retry;
+    - `test_judge_recovery`, `test_judge_validation`: summary key, gate tags;
+    - `regress_grading_cli`: summary keys.
+
+Tests (logs `logs/v1.2-20261101/`, `logs/docker-gated-v1.2-231621Z/`):
+
+| Suite | Result | Wall time |
+|---|---|---|
+| Grading discover, first run | 444 tests: 7 failures, config engine version not yet .8 plus the expected changes above | 125.84 s |
+| Grading discover, after the updates | 444 tests, 5 skipped, OK | 119.86 s |
+| Harness, 14 modules via `run_isolated.sh` | 201 tests, OK (first run: docs consistency on the engine version) | 53 s |
+| Docker: `7d7fc9a7…` `GoldRecalcDockerTests` | 3/3 | 7.46 s |
+| Docker: `1137e2bb…` `GoldRecalcDockerTests` | 2/2 | 10.26 s |
+| Docker: `regress_recalc_docker` | 16 PASS | 3.89 s |
+| Docker: `regress_grading_cli` | first run 60 PASS, 1 FAIL (summary keys); then 61 PASS | 6.66 s |
+
 ## Known issues and findings (material check)
 
 - `rubric_json.form_content`: 8,036 items hold `null`, 2,417 items lack the key, zero
@@ -4810,7 +4878,8 @@ Inventory for a later encrypted backup (gitignored or outside the repository; no
 - 2026-11-01 · Validation revealed under the frozen versions; Judge Validation halted on a provider error (hold, 7.06 USD settled conservatively); 10 Validation packets; Dev frozen re-grades; Docker-gated suites; Codex Review 2 package · 2c4b8d7
 - 2026-11-01 · V1.1 (approved): per-item judge recovery, inferred ledger resolutions, engine .7 provider_error / not_run, picture-chart visual-review flags (`2ea2e5b5…` .4, `47ef842d…` .3), evidence corrections; tag `v1.1-judge-item-recovery` · 57e2a25
 - 2026-11-01 · Validation ledger recovery (inferred 0.856327 USD), `a45bc83b…` items 69 and 71 recovered, item-59 evidence correction, second provider halt (`c357f0e2…`), Codex package re-pinned to `57e2a25`, backup gate failed on path references (no push) · eb781fd
-- 2026-11-01 · Formal preflight dry-run (20 units, no provider call) and backup inventory · (this commit)
+- 2026-11-01 · Formal preflight dry-run (20 units, no provider call) and backup inventory · 6b6eaeb
+- 2026-11-01 · V1.2 judge infrastructure (engine .8): provider error detail, max_retries 10, pacing, continuation with a 3-item stop, schema retry, invalid_judge_output, inferred buffer; tag `v1.2-judge-infrastructure` · (this commit)
 
 ## Next stage (not started)
 

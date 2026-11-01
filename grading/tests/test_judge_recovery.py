@@ -92,7 +92,7 @@ class RecoveryTests(unittest.TestCase):
         rec = JR.recovery_pass(self.out, RUN, TASK, BASE, [69, 71], FakeJudge(fail_items={71}))
         new = {r["item"]: r for r in map(json.loads, open(os.path.join(self.out, "grades.jsonl"))) if r["grading_pass"] == rec["grading_pass"]}
         self.assertEqual((new[71]["verdict"], new[69]["verdict"], rec["judge_completeness"]), ("provider_error", "pass", "partial"))
-        self.assertEqual(rec["score"]["judge_infrastructure"], {"provider_error": [71], "not_run": []})
+        self.assertEqual(rec["score"]["judge_infrastructure"], {"provider_error": [71], "not_run": [], "invalid_judge_output": []})
 
     def test_changed_evidence_is_refused_before_any_call(self):
         units = json.load(open(os.path.join(self.out, f"judge_units_{RUN}_{BASE}.json")))

@@ -3,7 +3,7 @@ grader and evidence-builder version, with the SHA-256 of every grading and harne
 freeze commit (tag v1-calibration-freeze); `verify` checks that the running code still matches it. The commit itself is
 recorded by each grading pass (code provenance), never inside this file.
 
-Usage: python -m grading.freeze_manifest write [--manifest PATH --freeze NAME --scope TEXT] | verify [--manifest PATH] | judge-surface TAG
+Usage: python -m grading.freeze_manifest write [--manifest PATH --freeze NAME --scope TEXT] | verify [--manifest PATH] | judge-surface TAG [--request-only]
 (judge-surface: the judge prompt, request construction, evidence builders and their constants at TAG against the
 working tree; any difference is listed)."""
 import ast
@@ -23,7 +23,10 @@ def _sources() -> list[str]:
     return [os.path.relpath(f, ROOT) for f in files if f"{os.sep}tests{os.sep}" not in f]
 
 
-JUDGE_SURFACE_FUNCTIONS = ("render_unit", "unit_id", "parse_judge_response", "judge_units")
+JUDGE_SURFACE_FUNCTIONS = ("render_unit", "unit_id", "parse_judge_response", "judge_units", "_verdict_of")
+# How a request is sent and its answer read (changed on purpose in V1.2, engine .8: error detail, pacing, continuation,
+# schema retry); everything else in the surface defines WHAT the judge receives and must not change after the freeze.
+CALL_HANDLING = ("ProviderJudge.__call__", "ProviderJudge._call", "judge_units", "parse_judge_response", "_verdict_of", "UNRECOVERABLE_HTTP", "UNRECOVERABLE_STATUS")
 
 
 def judge_surface(source: str) -> dict:
@@ -45,10 +48,11 @@ def judge_surface(source: str) -> dict:
     return out
 
 
-def judge_surface_diff(tag: str) -> list[str]:
+def judge_surface_diff(tag: str, request_only: bool = False) -> list[str]:
     old = subprocess.run(["git", "show", f"{tag}:grading/judge.py"], cwd=ROOT, capture_output=True, text=True, check=True).stdout
     a, b = judge_surface(old), judge_surface(open(os.path.join(ROOT, "grading", "judge.py"), encoding="utf-8").read())
-    return sorted(k for k in set(a) | set(b) if a.get(k) != b.get(k))
+    diff = sorted(k for k in set(a) | set(b) if a.get(k) != b.get(k))
+    return [k for k in diff if k not in CALL_HANDLING] if request_only else diff
 
 
 def build() -> dict:
@@ -86,8 +90,10 @@ def main(argv=None) -> int:
     path = args[args.index("--manifest") + 1] if "--manifest" in args else MANIFEST
     path = path if os.path.isabs(path) else os.path.join(ROOT, path)
     if cmd == "judge-surface":
-        diff = judge_surface_diff(args[1])
-        print(json.dumps({"tag": args[1], "identical": not diff, "differs": diff}, indent=1))
+        req = "--request-only" in args
+        diff = judge_surface_diff(args[1], request_only=req)
+        print(json.dumps({"tag": args[1], "scope": "request surface (what the judge receives)" if req else "full surface", "identical": not diff, "differs": diff,
+                          **({} if req else {"call_handling_differs": [k for k in diff if k in CALL_HANDLING]})}, indent=1))
         return 0 if not diff else 1
     if cmd == "write":
         if os.path.exists(path):

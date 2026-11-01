@@ -39,7 +39,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # review infrastructure) carries ENGINE_VERSION; every task specification carries its own VERSION; a grading pass records
 # the combined grader version "<engine>+<task>" and the full git commit of the code that graded. config.grading must state
 # the engine version and the per-task versions (checked by run_grading before any grading).
-ENGINE_VERSION = "engine-2026-11-01.7"  # .7: per-item judge recovery passes (grading.judge_recovery); a judge provider failure or an unattempted judge call is recorded as verdict provider_error / not_run (never cannot_assess); critical status lists the members needing human visual review (picture charts); .6: docx tables record the body paragraph they follow (table_after_paragraph); .2: a deterministic item may route itself to the judge (route_to_judge); scored once, as a J row; .3: critical status also under the preregistered definition when a task revised it; .4: recalculated values joined to sheets whose names LibreOffice truncated at 31 characters; .5: the xlsx package lists embedded media parts
+ENGINE_VERSION = "engine-2026-11-01.8"  # .8: judge infrastructure (approved 2026-11-01): provider error detail (HTTP status, quota, retry guidance), pacing, a recoverable failure no longer stops the batch (stop at 3 distinct failed items; unrecoverable stops at once), one schema retry of a schema-invalid response -> invalid_judge_output when both are invalid, inferred buffer accounting; .7: per-item judge recovery passes (grading.judge_recovery); a judge provider failure or an unattempted judge call is recorded as verdict provider_error / not_run (never cannot_assess); critical status lists the members needing human visual review (picture charts); .6: docx tables record the body paragraph they follow (table_after_paragraph); .2: a deterministic item may route itself to the judge (route_to_judge); scored once, as a J row; .3: critical status also under the preregistered definition when a task revised it; .4: recalculated values joined to sheets whose names LibreOffice truncated at 31 characters; .5: the xlsx package lists embedded media parts
 TASK_MODULES = {CK.TASK: {"checks": CK.run_checks, "units": J.build_units_1137e2bb, "critical": CK.CRITICAL, "judge_items": CK.J_ITEMS, "visual_items": [], "version": CK.VERSION},
                 CK2.TASK: {"checks": CK2.run_checks, "units": J.build_units_7d7fc9a7, "critical": CK2.CRITICAL, "judge_items": CK2.J_ITEMS, "visual_items": CK2.V_ITEMS, "version": CK2.VERSION},
                 CK3.TASK: {"checks": CK3.run_checks, "units": J.build_units_2ea2e5b5, "critical": CK3.CRITICAL, "critical_preregistered": CK3.CRITICAL_PREREGISTERED, "judge_items": CK3.J_ITEMS,
@@ -202,7 +202,7 @@ def selected_grades(out_dir: str, run_uuid: str, prefer: str = "latest_with_judg
     return {**sel, "grades": rows}
 
 
-JUDGE_INFRASTRUCTURE_VERDICTS = {"provider_error": "provider_error", "not_attempted": "not_run"}
+JUDGE_INFRASTRUCTURE_VERDICTS = {"provider_error": "provider_error", "not_attempted": "not_run", "invalid_judge_output": "invalid_judge_output"}
 
 
 def judge_row_verdict(v: dict | None) -> str:
@@ -243,7 +243,7 @@ def _score(grades: list[dict], critical_spec: dict, extra: dict | None = None) -
                          "verdicts": {i: by_item.get(i, "pending") for i in items}, **({"extra_checks": {k: ((extra or {}).get(k) or {}).get("verdict", "pending") for k in spec["extra"]}} if spec.get("extra") else {}),
                          "visual_review_required": sorted(i for i in items if i in visual)}
     return {"W": W, "E": E, "P": P, "P_over_E": (P / E) if E else None, "E_over_W": (E / W) if W else None,
-            "judge_infrastructure": {k: sorted(g["item"] for g in grades if g["verdict"] == k) for k in ("provider_error", "not_run")},
+            "judge_infrastructure": {k: sorted(g["item"] for g in grades if g["verdict"] == k) for k in ("provider_error", "not_run", "invalid_judge_output")},
             "visual_review_required": sorted(visual),
             "ungraded": [{"item": g["item"], "verdict": g["verdict"], "reason": g.get("note") or g.get("rationale") or g.get("parse_error")} for g in grades if g["verdict"] not in ("pass", "fail")],
             "critical": critical, "critical_overall": "fail" if any(c["status"] == "fail" for c in critical.values()) else "pass" if all(c["status"] == "pass" for c in critical.values()) else "not_confirmed"}
@@ -342,7 +342,10 @@ def grade_run(host_dir: str, log, sample_uuid: str, *, task_id: str, rubric: lis
                        **({"routed_from_deterministic": {"note": routed[i]["note"], "evidence": routed[i]["evidence"]}} if i in routed else {}),
                        "verdict": judge_row_verdict(v), "evidence": v["evidence"] if v else [], "rationale": v["rationale"] if v else "", "judge_id": v["judge_id"] if v else None,
                        "parse_error": v["parse_error"] if v else None, "error_class": v.get("error_class") if v else None, "call_status": v.get("call_status") if v else None,
-                       "usage_status": v.get("usage_status") if v else None, "grader_version": grader_version, "grading_pass": rec["grading_pass"]})
+                       "usage_status": v.get("usage_status") if v else None, "grader_version": grader_version, "grading_pass": rec["grading_pass"],
+                       **({"provider_error": {k: (v.get("error") or {}).get(k) for k in ("http_status", "provider_status", "inner_class", "recoverability", "retry_delay")}}
+                          if v and v.get("error_class") == "provider_error" and isinstance(v.get("error"), dict) else {}),
+                       **({"schema_attempts": [{k: a.get(k) for k in ("attempt", "parse_error", "request_sha256")} for a in v["schema_attempts"]]} if v and v.get("schema_attempts") else {})})
     for i in mod.get("visual_items", []):  # visual criteria: never judged from text; stay in W as ungraded until the human review records a verdict
         grades.append({"run_uuid": binding["uuid"], "task_id": task_id, "item": i, "weight": rubric[i - 1]["score"], "criterion": rubric[i - 1]["criterion"], "source": "V",
                        "verdict": "pending_human", "evidence": [], "note": "visual criterion: human review from the rendered deliverable", "grader_version": grader_version, "grading_pass": rec["grading_pass"]})
@@ -362,6 +365,8 @@ def grade_run(host_dir: str, log, sample_uuid: str, *, task_id: str, rubric: lis
                                          for i in mod.get("judge_agreement_only", [])],
                 "judge_call_summary": {"ok": sum(1 for v in verdicts if v.get("call_status") == "ok"), "provider_error": sum(1 for v in verdicts if v.get("error_class") == "provider_error"),
                                        "judge_parse_error": sum(1 for v in verdicts if v.get("error_class") == "judge_parse_error"), "not_attempted": sum(1 for v in verdicts if v.get("error_class") == "not_attempted"),
+                                       "invalid_judge_output": sum(1 for v in verdicts if v.get("error_class") == "invalid_judge_output"),
+                                       "schema_retried": sum(1 for v in verdicts if v.get("schema_attempts")),
                                        "usage_uncertain": sum(1 for v in verdicts if v.get("usage_uncertain"))} if verdicts else None,
                 "judge_completeness": judge_completeness(verdicts) if judge is not None else "none",
                 "review_materials": review})

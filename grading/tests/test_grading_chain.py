@@ -115,7 +115,7 @@ class GradingChainTests(unittest.TestCase):
         self.assertEqual(d1, d2)  # the deterministic verdicts are unchanged by the judge pass
         j2 = [r for r in rows if r["grading_pass"] == rec2["grading_pass"] and r["source"] == "J"]
         self.assertEqual({r["verdict"] for r in j2}, {"pass"}); self.assertTrue(all(r["error_class"] is None and r["call_status"] == "ok" and r["usage_status"] == "ok" for r in j2))
-        self.assertEqual(rec2["judge_call_summary"], {"ok": 7, "provider_error": 0, "judge_parse_error": 0, "not_attempted": 0, "usage_uncertain": 0}); self.assertEqual(rec2["score"]["E"], rec2["score"]["W"])
+        self.assertEqual(rec2["judge_call_summary"], {"ok": 7, "provider_error": 0, "judge_parse_error": 0, "not_attempted": 0, "invalid_judge_output": 0, "schema_retried": 0, "usage_uncertain": 0}); self.assertEqual(rec2["score"]["E"], rec2["score"]["W"])
         self.assertEqual(len({p["run"]["uuid"] for p in passes}), 1)
         self.assertNotEqual(rec1["review_materials"]["judge_verdicts"], rec2["review_materials"]["judge_verdicts"]); self.assertEqual(rec1["review_materials"]["independent_template"], rec2["review_materials"]["independent_template"])
 
@@ -409,7 +409,9 @@ class JudgeAdapterTests(unittest.TestCase):
             return nxt
         log = os.path.join(tempfile.mkdtemp(prefix="judge_log_"), "calls.jsonl")
         judge = J.ProviderJudge("google/judge-test", generate=generate, judge_id="test-judge", log_path=log, run_uuid="RUN", judge_unit="RUN:judge:t")
-        verdicts = J.judge_units([self.unit(i) for i in (23, 24, 27, 28, 29)], judge)
+        # schema_retry off: this test keeps the error classes and the halting policy of an adapter without a stop
+        # threshold apart; the engine .8 schema retry is tested in test_judge_infrastructure.SchemaRetryTests
+        verdicts = J.judge_units([self.unit(i) for i in (23, 24, 27, 28, 29)], judge, schema_retry=False)
         by = {v["item"]: v for v in verdicts}
         self.assertEqual((by[23]["verdict"], by[23]["call_status"], by[23]["error_class"], by[23]["usage_status"], by[23]["usage_uncertain"]), ("fail", "ok", None, "ok", False))
         self.assertEqual((by[24]["verdict"], by[24]["error_class"], by[24]["usage_status"]), ("cannot_assess", "judge_parse_error", "ok")); self.assertIn("JSON", by[24]["parse_error"] or "parse")

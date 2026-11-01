@@ -625,6 +625,64 @@ def usage_dict(usage) -> dict | None:
     return model_usage_to_dict(usage)
 
 
+UNRECOVERABLE_HTTP = (400, 401, 403, 404)
+UNRECOVERABLE_STATUS = ("UNAUTHENTICATED", "PERMISSION_DENIED", "INVALID_ARGUMENT", "NOT_FOUND", "FAILED_PRECONDITION")
+
+
+def provider_error_detail(ex: BaseException) -> dict:
+    """Engine .8: what a provider failure was, from the exception chain (tenacity RetryError unwrapped to its last
+    attempt; google.genai APIError / ClientError / ServerError; SDK status errors): HTTP status, provider status, inner
+    error class, quota metadata (google.rpc.QuotaFailure), retry guidance (google.rpc.RetryInfo, Retry-After) and help
+    links, with the message redacted and truncated. Never credentials, headers or request contents. ``recoverable``:
+    rate limiting, quota, server and transport failures; ``unrecoverable``: authentication, permission, billing and
+    invalid request or configuration (HTTP 400 / 401 / 403 / 404)."""
+    chain, e, seen = [], ex, set()
+    while e is not None and id(e) not in seen and len(chain) < 8:
+        seen.add(id(e)); chain.append(e)
+        nxt = None
+        la = getattr(e, "last_attempt", None)
+        if la is not None and hasattr(la, "exception"):
+            try:
+                nxt = la.exception()
+            except Exception:
+                nxt = None
+        e = nxt or e.__cause__ or e.__context__
+    inner = chain[-1]
+    code = getattr(inner, "code", None)
+    code = code if isinstance(code, int) else getattr(inner, "status_code", None)
+    status = getattr(inner, "status", None)
+    status = status if isinstance(status, str) else None
+    out = {"class": type(ex).__name__, "inner_class": type(inner).__name__, "chain": [type(x).__name__ for x in chain], "http_status": code if isinstance(code, int) else None,
+           "provider_status": status, "message": redact(str(getattr(inner, "message", None) or inner))[:500]}
+    body = getattr(inner, "details", None)
+    err = (body.get("error") if isinstance(body, dict) else None) or (body if isinstance(body, dict) else {})
+    for d in (err.get("details") or []) if isinstance(err, dict) else []:
+        t = str(d.get("@type", "")) if isinstance(d, dict) else ""
+        if t.endswith("QuotaFailure"):
+            out["quota"] = [{k: v.get(k) for k in ("quotaMetric", "quotaId", "quotaDimensions", "quotaValue") if k in v} for v in (d.get("violations") or []) if isinstance(v, dict)]
+        elif t.endswith("RetryInfo"):
+            out["retry_delay"] = d.get("retryDelay")
+        elif t.endswith("Help"):
+            out["help_links"] = [l.get("url") for l in (d.get("links") or []) if isinstance(l, dict)][:3]
+        elif t.endswith("ErrorInfo"):
+            out["reason"] = d.get("reason")
+    resp = getattr(inner, "response", None)
+    headers = getattr(resp, "headers", None)
+    if headers is not None:
+        try:
+            ra = headers.get("retry-after")
+            if ra:
+                out["retry_after"] = str(ra)[:40]
+        except Exception:
+            pass
+    text = f"{out['message']} {out.get('reason') or ''}".lower()
+    if (out["http_status"] in UNRECOVERABLE_HTTP or status in UNRECOVERABLE_STATUS or "billing" in text or "api key" in text) and out["http_status"] != 429:
+        out["recoverability"] = "unrecoverable"
+    else:
+        out["recoverability"] = "recoverable"
+    return out
+
+
 class ProviderJudge:
     """Real judge adapter over Inspect's model layer (host side; the credential is loaded into the host
     process by the launcher, names only logged). One provider call per unit. Returns a structured call
@@ -640,7 +698,8 @@ class ProviderJudge:
 
     def __init__(self, model_name: str, *, temperature: float = 0.0, max_tokens: int = 1024, max_retries: int | None = None, timeout: int | None = None,
                  reasoning_effort: str | None = None, generate=None, judge_id: str | None = None, log_path: str | None = None, run_uuid: str | None = None,
-                 judge_unit: str | None = None, stop_on_uncertain_usage: bool = True, cost_guard=None, **model_args):
+                 judge_unit: str | None = None, stop_on_uncertain_usage: bool = True, cost_guard=None, pacing_pause_s: float = 0.0,
+                 provider_error_stop_items: int | None = None, **model_args):
         self.model_name = model_name
         self.judge_id = judge_id or f"{model_name}@{dt.datetime.now(dt.timezone.utc).strftime('%Y-%m-%d')}"
         # reasoning_effort is an Inspect GenerateConfig field (Gemini 3: mapped by Inspect's Google adapter to ThinkingConfig(thinking_level));
@@ -662,6 +721,15 @@ class ProviderJudge:
         self.log_path, self.run_uuid, self.judge_unit = log_path, run_uuid, judge_unit
         self.stop_on_uncertain_usage = stop_on_uncertain_usage
         self.halted: str | None = None  # set after a call whose usage is missing/uncertain: later units are not sent (approved policy)
+        # Engine .8 (approved 2026-11-01): a modest pause between requests; a RECOVERABLE provider failure of one item
+        # (rate limit, quota, server, transport) no longer stops the batch: the item is provider_error, later items are
+        # judged, and the failed request's unknown usage is settled as an inferred buffer of (1 + max_retries) average
+        # metered calls per failed item; new requests stop once ``provider_error_stop_items`` distinct items failed.
+        # An UNRECOVERABLE failure (authentication, permission, billing, invalid request or configuration) stops at once.
+        self.pacing_pause_s = float(pacing_pause_s or 0.0)
+        self.provider_error_stop_items = provider_error_stop_items
+        self.recoverable_failures: list[dict] = []
+        self._last_end: float | None = None
 
     def _persist(self, event: dict) -> None:
         """Append one JSON line and fsync. A failure here must stop the request from being sent."""
@@ -701,16 +769,27 @@ class ProviderJudge:
             self._persist({"phase": "not_attempted", **{k: rec[k] for k in ("unit_id", "item", "request_sha256", "error")}})
             self.calls.append(rec)
             return rec
+        if self.pacing_pause_s and self._last_end is not None:
+            wait = self.pacing_pause_s - (time.monotonic() - self._last_end)
+            if wait > 0:
+                time.sleep(wait)
         self._persist({"phase": "started", **{k: rec[k] for k in ("unit_id", "item", "request_sha256", "request_chars", "started_at")}})  # raises -> request never sent
         t0 = time.monotonic()
         try:
             out = self._call(messages)
         except Exception as ex:
-            rec.update({"status": "provider_error", "error": {"class": type(ex).__name__, "message": redact(str(ex))}, "raw_response": None, "usage": None, "usage_status": "uncertain",
-                        "seconds": round(time.monotonic() - t0, 3)})
-            self.usage_incomplete = True
-            if self.stop_on_uncertain_usage:
-                self.halted = f"call for {unit['unit_id']} failed with {type(ex).__name__}; its cost is unknown"
+            detail = provider_error_detail(ex)
+            rec.update({"status": "provider_error", "error": detail, "raw_response": None, "usage": None, "usage_status": "uncertain", "seconds": round(time.monotonic() - t0, 3)})
+            self._last_end = time.monotonic()
+            if detail["recoverability"] == "recoverable" and self.provider_error_stop_items:
+                self.recoverable_failures.append({"item": unit["item"], "unit_id": unit["unit_id"], "http_status": detail.get("http_status"), "provider_status": detail.get("provider_status")})
+                failed = {f["item"] for f in self.recoverable_failures}
+                if len(failed) >= self.provider_error_stop_items:
+                    self.halted = f"{len(failed)} distinct items failed with recoverable provider errors in this pass; no further request is sent"
+            else:
+                self.usage_incomplete = True
+                if self.stop_on_uncertain_usage or detail["recoverability"] == "unrecoverable":
+                    self.halted = f"call for {unit['unit_id']} failed with {type(ex).__name__} ({detail['recoverability']}: HTTP {detail.get('http_status')} {detail.get('provider_status')}); its cost is unknown"
             self._persist({"phase": "finished", **{k: rec[k] for k in ("unit_id", "item", "status", "error", "raw_response", "usage", "usage_status", "seconds")}})
             self.calls.append(rec)
             return rec
@@ -732,6 +811,7 @@ class ProviderJudge:
             if self.stop_on_uncertain_usage:
                 self.halted = f"call for {unit['unit_id']} returned no usage; its cost cannot be accounted"
         rec["seconds"] = round(time.monotonic() - t0, 3)
+        self._last_end = time.monotonic()
         self._persist({"phase": "finished", **{k: rec[k] for k in ("unit_id", "item", "status", "error", "raw_response", "usage", "usage_status", "seconds", "served_model", "stop_reason")}})
         self.calls.append(rec)
         return rec
@@ -743,7 +823,15 @@ class ProviderJudge:
         # per-call usage of this batch (the aggregate is exactly their sum): the ledger tiers each call by its own prompt
         # size, as the provider bills, instead of pricing the summed prompt at the long-context tier
         per_call = [dict(c["usage"]) for c in self.calls if c.get("usage")]
-        return {"usage": self.usage_by_model, "retries": self.retries_by_model, "usage_incomplete": self.usage_incomplete, "calls": len(self.calls),
+        recovered, incomplete = None, self.usage_incomplete
+        if self.recoverable_failures:
+            if per_call:  # engine .8: unknown usage of recoverable failures -> inferred buffer of (1 + max_retries) average metered calls per failed request
+                attempts = 1 + int(self.generate_params.get("max_retries") or 0)
+                recovered = {"recovered": len(self.recoverable_failures), "buffer_calls": attempts * len(self.recoverable_failures), "attempts_per_failed_request": attempts,
+                             "failures": self.recoverable_failures, "source": "judge batch: recoverable provider failures without usage"}
+            else:  # nothing metered to infer from: the conservative settlement with a hold applies
+                incomplete = True
+        return {"usage": self.usage_by_model, "retries": self.retries_by_model, "usage_incomplete": incomplete, "calls": len(self.calls), "recovered": recovered,
                 "calls_by_model": {self.model_name: per_call} if per_call else {},
                 "calls_ok": statuses.count("ok"), "calls_provider_error": statuses.count("provider_error"), "calls_not_attempted": statuses.count("not_attempted"),
                 "calls_usage_missing_or_uncertain": sum(1 for c in self.calls if c.get("usage_status") in ("missing", "uncertain")), "halted": self.halted,
@@ -794,32 +882,55 @@ def usage_from_judge_log(log_path: str) -> dict:
             "source": f"write-ahead log {os.path.basename(log_path)}" if os.path.exists(log_path) else "no write-ahead log on disk"}
 
 
-def judge_units(units: list[dict], judge, *, judge_id: str | None = None) -> list[dict]:
+def judge_units(units: list[dict], judge, *, judge_id: str | None = None, schema_retry: bool | set = True) -> list[dict]:
     """One verdict record per unit. ``judge(unit)`` returns either a str (stub judges: the raw response)
     or a structured call record (ProviderJudge). Error classes are kept apart: ``provider_error`` (the
     request failed or the provider returned an error: cannot_assess, no parse attempted),
     ``judge_parse_error`` (the provider answered but not in the protocol: cannot_assess with the
     parse message); ``usage_status`` missing / uncertain is a cost flag and never changes a verdict.
-    A unit is never scored pass/fail without a protocol-conformant response."""
+    A unit is never scored pass/fail without a protocol-conformant response.
+
+    Engine .8 (approved 2026-11-01): a completed call whose response is not schema-valid (no JSON object, an invalid
+    verdict, a pass/fail without evidence) is sent ONCE more with the identical request; the first schema-valid response
+    is accepted whatever its verdict, and both attempts are kept (``schema_attempts``). Two invalid responses give
+    error_class ``invalid_judge_output`` (never a rubric fail nor the judge's own cannot_assess). ``schema_retry``: True
+    for every unit, False for none, or the set of items that may be retried (a recovery that is itself the retry
+    passes the others)."""
     out = []
     for u in units:
         raw = judge(u)
         call = raw if isinstance(raw, dict) else {"status": "ok", "raw_response": raw, "usage": None, "usage_status": "not_reported", "error": None}
+        attempts = []
+        rec = _verdict_of(call)
+        may_retry = schema_retry if isinstance(schema_retry, bool) else (u["item"] in schema_retry)
+        if rec["error_class"] == "judge_parse_error" and may_retry and not getattr(judge, "halted", None):
+            attempts.append({"attempt": 1, "raw_response": call.get("raw_response"), "parse_error": rec["parse_error"], "usage": call.get("usage"), "request_sha256": call.get("request_sha256")})
+            raw2 = judge(u)
+            call2 = raw2 if isinstance(raw2, dict) else {"status": "ok", "raw_response": raw2, "usage": None, "usage_status": "not_reported", "error": None}
+            rec2 = _verdict_of(call2)
+            attempts.append({"attempt": 2, "raw_response": call2.get("raw_response"), "parse_error": rec2.get("parse_error"), "usage": call2.get("usage"), "request_sha256": call2.get("request_sha256"),
+                             "call_status": call2.get("status")})
+            call, rec = call2, rec2
+            if rec2["error_class"] == "judge_parse_error":
+                rec = {**rec2, "error_class": "invalid_judge_output"}
         base = {"unit_id": u["unit_id"], "item": u["item"], "weight": u["weight"], "judge_id": judge_id or getattr(judge, "judge_id", "unknown"),
                 "raw_response": call.get("raw_response"), "call_status": call.get("status"), "usage": call.get("usage"), "usage_status": call.get("usage_status"),
-                "request_sha256": call.get("request_sha256"), "judged_at": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"), "source": "J"}
-        if call.get("status") == "not_attempted":
-            rec = {"verdict": "cannot_assess", "evidence": [], "rationale": "", "parse_error": None, "error_class": "not_attempted", "error": call.get("error")}
-        elif call.get("status") != "ok":
-            rec = {"verdict": "cannot_assess", "evidence": [], "rationale": "", "parse_error": None, "error_class": "provider_error", "error": call.get("error")}
-        else:
-            try:
-                rec = {**parse_judge_response(call.get("raw_response") or ""), "parse_error": None, "error_class": None, "error": None}
-            except JudgeParseError as ex:
-                rec = {"verdict": "cannot_assess", "evidence": [], "rationale": "", "parse_error": str(ex), "error_class": "judge_parse_error", "error": None}
+                "request_sha256": call.get("request_sha256"), "judged_at": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"), "source": "J",
+                **({"schema_attempts": attempts} if attempts else {})}
         rec["usage_uncertain"] = call.get("usage_status") in ("missing", "uncertain")
         out.append({**base, **rec})
     return out
+
+
+def _verdict_of(call: dict) -> dict:
+    if call.get("status") == "not_attempted":
+        return {"verdict": "cannot_assess", "evidence": [], "rationale": "", "parse_error": None, "error_class": "not_attempted", "error": call.get("error")}
+    if call.get("status") != "ok":
+        return {"verdict": "cannot_assess", "evidence": [], "rationale": "", "parse_error": None, "error_class": "provider_error", "error": call.get("error")}
+    try:
+        return {**parse_judge_response(call.get("raw_response") or ""), "parse_error": None, "error_class": None, "error": None}
+    except JudgeParseError as ex:
+        return {"verdict": "cannot_assess", "evidence": [], "rationale": "", "parse_error": str(ex), "error_class": "judge_parse_error", "error": None}
 
 
 def register_debug_use(task_id: str, items: list[int], purpose: str, path: str = DEBUG_SET) -> dict:

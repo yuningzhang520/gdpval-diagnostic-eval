@@ -399,11 +399,30 @@ Judge infrastructure recovery (engine-2026-11-01.7, `grading.judge_recovery`):
   - a `not_attempted` call gets its first evaluation.
 - Recovery reuses the base pass's stored judge unit unchanged: the same frozen prompt, settings and evidence, with the
   request hash checked before any call.
-- An item with a completed call is never re-judged, whatever its verdict, so recovery cannot select a preferred
-  verdict.
+- An item with a completed, schema-valid call is never re-judged, whatever its verdict, so recovery cannot select a
+  preferred verdict. V1.2 adds one schema retry for a schema-invalid response (below).
 - The recovery is a new grading pass that copies every other row of the base pass unchanged. A separate record keeps
   each attempt with its usage and outcome, and the base pass stays as recorded.
 - Candidate-model attempts are not affected (`attempts=1`).
+
+V1.2 judge infrastructure (engine-2026-11-01.8; approved by the human 2026-11-01; infrastructure only):
+- The judge prompt, the evidence, temperature, max_tokens and reasoning effort are unchanged.
+  `grading.freeze_manifest judge-surface v1-calibration-freeze --request-only` reports the request surface identical.
+- Provider failures are recorded with HTTP status, provider status, quota metadata and retry guidance where the
+  provider gives them; never credentials or request contents.
+- Inspect `max_retries` is 10 (Inspect's own retry; no other retry layer). A 2 s pause separates judge requests.
+- A recoverable provider failure (rate limit, quota, server, transport) no longer stops the batch: the item is
+  `provider_error`, later items are judged, and one bounded per-item recovery pass follows.
+  - Its unknown usage is settled as an inferred buffer of (1 + max_retries) average metered calls per failed request,
+    not provider-confirmed.
+  - New requests stop once three distinct items failed in a pass.
+  - Authentication, permission, billing and invalid-request or configuration errors stop at once and hold the ledger.
+- A completed call whose response is schema-invalid (no JSON object, an invalid verdict, a pass or fail without
+  evidence) is sent once more with the identical request. The first schema-valid response is accepted whatever its
+  verdict, and both attempts are kept. Two invalid responses give `invalid_judge_output`, never a rubric fail or an
+  evidence-based `cannot_assess`.
+- Earlier schema-invalid items (`judge_parse_error`) get the same single retry through a recovery pass.
+- A schema-valid completed call is never re-judged.
 
 Image-only evidence: a required chart delivered only as a picture is not machine-readable. The items that depend on it
 are `cannot_assess`, never an automatic fail, and the evidence is tagged `visual_review`. In Formal, every critical

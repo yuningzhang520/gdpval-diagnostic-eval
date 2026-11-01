@@ -26,7 +26,8 @@ import os
 from . import judge as J
 from .grade import ENGINE_VERSION, TASK_MODULES, _append, code_provenance, grading_passes, judge_row_verdict, score_rows
 
-RECOVERABLE = {"provider_error": "retry once (provider failure)", "not_attempted": "first evaluation (never attempted)"}
+RECOVERABLE = {"provider_error": "retry once (provider failure)", "not_attempted": "first evaluation (never attempted)",
+               "judge_parse_error": "schema retry once (completed call, schema-invalid response; engine .8)"}
 MAX_ATTEMPTS_PER_ITEM = 1
 
 
@@ -62,35 +63,64 @@ def expected_request_sha256(unit: dict) -> str:
     return hashlib.sha256((J.JUDGE_SYSTEM_PROMPT + "\n" + J.render_unit(unit)).encode("utf-8")).hexdigest()
 
 
-def recovery_plan(out_dir: str, run_uuid: str, base_pass: str, items: list[int]) -> dict:
-    """The base pass, its stored units and calls, and for each requested item whether it may be recovered (and why
-    not). Raises when the base pass is not a judged pass of this run."""
+def _chain(out_dir: str, run_uuid: str, pass_id: str) -> list[dict]:
+    """The pass and, for a recovery pass, its bases back to the original judged pass (latest first)."""
     passes = {p.get("grading_pass"): p for p in grading_passes(out_dir, run_uuid)}
-    base = passes.get(base_pass)
+    out, cur = [], passes.get(pass_id)
+    while cur is not None and len(out) < 20:
+        out.append(cur)
+        cur = passes.get(cur.get("base_pass")) if cur.get("pass_kind") == "judge_item_recovery" else None
+    return out
+
+
+def _item_status(row: dict) -> str | None:
+    """The recoverable state of a judge row: provider_error / not_attempted, or judge_parse_error for a completed call
+    whose response was schema-invalid; None for a schema-valid verdict or a final invalid_judge_output."""
+    ec = row.get("error_class")
+    if ec in ("provider_error", "not_attempted"):
+        return ec
+    if ec == "judge_parse_error" and row.get("call_status") == "ok":
+        return ec
+    return None
+
+
+def recovery_plan(out_dir: str, run_uuid: str, base_pass: str, items: list[int]) -> dict:
+    """The base pass (its latest rows), the stored units of the original judged pass at the root of its recovery chain,
+    the latest call record of every item, and for each requested item whether it may be recovered (and why not).
+    Raises when the base pass is not a judged pass of this run."""
+    chain = _chain(out_dir, run_uuid, base_pass)
+    base = chain[0] if chain else None
     if base is None or base.get("judge_mode") != "real" or not base.get("judge_unit"):
         raise RecoveryError(f"{base_pass} is not a judged pass of run {run_uuid} in {out_dir}")
-    calls = _base_calls(out_dir, run_uuid, base["judge_unit"])
-    units_path = os.path.join(out_dir, f"judge_units_{run_uuid}_{base_pass}.json")
+    root = chain[-1]
+    calls = _base_calls(out_dir, run_uuid, root["judge_unit"])
+    for p in reversed(chain[:-1]):  # later recovery attempts supersede the root call of their items
+        rec_path = (p.get("recovery") or {}).get("record")
+        if rec_path and os.path.isfile(rec_path):
+            for a in json.load(open(rec_path, encoding="utf-8")).get("attempts", []):
+                calls[a["item"]] = {"status": a.get("status"), "request_sha256": a.get("request_sha256")}
+    units_path = os.path.join(out_dir, f"judge_units_{run_uuid}_{root['grading_pass']}.json")
     if not os.path.isfile(units_path):
-        raise RecoveryError(f"stored judge units of {base_pass} missing: {units_path}")
+        raise RecoveryError(f"stored judge units of {root['grading_pass']} missing: {units_path}")
     units = {u["item"]: u for u in json.load(open(units_path, encoding="utf-8"))["units"]}
     earlier = prior_attempts(out_dir, run_uuid)
     rows = {r["item"]: r for r in _rows(out_dir, run_uuid, base_pass)}
     decision = {}
     for i in items:
-        call, row = calls.get(i), rows.get(i)
-        status = (call or {}).get("status")
+        call, row = calls.get(i) or {}, rows.get(i)
+        status = _item_status(row) if row else None
         if row is None or row.get("source") != "J" or i not in units:
             decision[i] = {"eligible": False, "reason": "not a judge item of the base pass"}
         elif status not in RECOVERABLE:
-            decision[i] = {"eligible": False, "reason": f"base call status {status!r}: only {sorted(RECOVERABLE)} are recoverable (a completed call is never re-judged)"}
+            decision[i] = {"eligible": False, "reason": f"state {row.get('error_class')!r} / call {row.get('call_status')!r}: only {sorted(RECOVERABLE)} are recoverable "
+                                                         "(a schema-valid completed call is never re-judged)"}
         elif len(earlier.get(i, [])) >= MAX_ATTEMPTS_PER_ITEM:
             decision[i] = {"eligible": False, "reason": f"already recovered once ({earlier[i]})"}
         elif call.get("request_sha256") and call["request_sha256"] != expected_request_sha256(units[i]):
             decision[i] = {"eligible": False, "reason": "the stored unit no longer renders the base request (evidence or prompt differs)"}
         else:
             decision[i] = {"eligible": True, "rule": RECOVERABLE[status], "base_call_status": status, "base_request_sha256": call.get("request_sha256")}
-    return {"base": base, "units": units, "calls": calls, "decision": decision, "units_path": units_path}
+    return {"base": base, "root": root, "units": units, "calls": calls, "decision": decision, "units_path": units_path}
 
 
 def recovery_pass(out_dir: str, run_uuid: str, task_id: str, base_pass: str, items: list[int], judge) -> dict:
@@ -104,7 +134,9 @@ def recovery_pass(out_dir: str, run_uuid: str, task_id: str, base_pass: str, ite
     # never-attempted items first: a retried provider failure that fails again halts the judge and must not take an
     # item's first evaluation with it
     order = sorted(items, key=lambda i: (plan["decision"][i]["base_call_status"] != "not_attempted", i))
-    verdicts = {v["item"]: v for v in J.judge_units([plan["units"][i] for i in order], judge)}
+    # a schema recovery IS the item's one schema retry: no further inline retry for those items
+    inline = {i for i in items if plan["decision"][i]["base_call_status"] != "judge_parse_error"}
+    verdicts = {v["item"]: v for v in J.judge_units([plan["units"][i] for i in order], judge, schema_retry=inline)}
     calls = {c["item"]: c for c in getattr(judge, "calls", [])}
     now = dt.datetime.now(dt.timezone.utc)
     gp = f"pass-{now.strftime('%Y%m%dT%H%M%S%fZ')}-{os.urandom(2).hex()}"
@@ -112,18 +144,23 @@ def recovery_pass(out_dir: str, run_uuid: str, task_id: str, base_pass: str, ite
     for r in sorted(_rows(out_dir, run_uuid, base_pass), key=lambda x: x["item"]):
         row = {**r, "grading_pass": gp}
         if r["source"] == "J" and r.get("error_class") and r["item"] not in items:
-            row["verdict"] = judge_row_verdict(r)  # engine .7 labels for an unrecovered infrastructure failure
+            row["verdict"] = judge_row_verdict(r)  # engine .7 / .8 labels for an unrecovered infrastructure or schema failure
         if r["item"] in items:
             v, c, d = verdicts.get(r["item"]), calls.get(r["item"], {}), plan["decision"][r["item"]]
-            row.update({"verdict": judge_row_verdict(v), "evidence": (v or {}).get("evidence", []), "rationale": (v or {}).get("rationale", ""), "judge_id": (v or {}).get("judge_id"),
-                        "parse_error": (v or {}).get("parse_error"), "error_class": (v or {}).get("error_class"), "call_status": (v or {}).get("call_status"),
-                        "usage_status": (v or {}).get("usage_status"),
+            ec = (v or {}).get("error_class")
+            if d["base_call_status"] == "judge_parse_error" and ec == "judge_parse_error":
+                ec = "invalid_judge_output"  # the schema retry was the item's one retry: two schema-invalid responses
+            v = {**(v or {}), "error_class": ec}
+            row.update({"verdict": judge_row_verdict(v), "evidence": v.get("evidence", []), "rationale": v.get("rationale", ""), "judge_id": v.get("judge_id"),
+                        "parse_error": v.get("parse_error"), "error_class": ec, "call_status": v.get("call_status"),
+                        "usage_status": v.get("usage_status"), **({"schema_attempts": v["schema_attempts"]} if v.get("schema_attempts") else {}),
                         "recovery": {"base_pass": base_pass, "base_call_status": d["base_call_status"], "rule": d["rule"], "attempt": 1, "recovery_pass": gp,
                                      "engine_version": ENGINE_VERSION, "judge_unit": getattr(judge, "judge_unit", None)}})
             same = c.get("request_sha256") == d["base_request_sha256"] if d["base_request_sha256"] else None
             attempts[r["item"]] = ({"item": r["item"], "base_call_status": d["base_call_status"], "rule": d["rule"], "attempt": 1, "status": c.get("status"),
                              "request_sha256": c.get("request_sha256"), "same_request_as_base": same, "usage": c.get("usage"), "usage_status": c.get("usage_status"),
-                             "error": c.get("error"), "outcome": row["verdict"]})
+                             "error": c.get("error"), "response_schema_valid": c.get("status") == "ok" and ec not in ("judge_parse_error", "invalid_judge_output"),
+                             "schema_attempts": len(v.get("schema_attempts") or []), "outcome": row["verdict"]})
         rows.append(row)
     attempts = [attempts[i] for i in order if i in attempts]  # in the order the calls were sent
     with open(os.path.join(out_dir, "grades.jsonl"), "a", encoding="utf-8") as f:
@@ -155,6 +192,7 @@ def recovery_pass(out_dir: str, run_uuid: str, task_id: str, base_pass: str, ite
            "judge_verdicts": sum(1 for g in jrows if g.get("call_status") == "ok"),
            "judge_call_summary": {"ok": sum(1 for g in jrows if g.get("call_status") == "ok"), "provider_error": sum(1 for g in jrows if g.get("error_class") == "provider_error"),
                                   "judge_parse_error": sum(1 for g in jrows if g.get("error_class") == "judge_parse_error"),
+                                  "invalid_judge_output": sum(1 for g in jrows if g.get("error_class") == "invalid_judge_output"),
                                   "not_attempted": sum(1 for g in jrows if g.get("error_class") == "not_attempted"), "recovered_items": sorted(items)},
            "judge_completeness": "partial" if any(g.get("error_class") for g in jrows) else "complete",
            "recovery": {"items": sorted(items), "record": os.path.join(out_dir, f"judge_recovery_{run_uuid}_{gp}.json"), "outcomes": {a["item"]: a["outcome"] for a in attempts}},
