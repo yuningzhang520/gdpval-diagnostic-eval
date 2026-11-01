@@ -352,6 +352,43 @@ def build_units_c3525d4d(task_prompt: str, rubric: list[dict], extraction: dict,
     return units
 
 
+def build_units_7b08cd4d(task_prompt: str, rubric: list[dict], extraction: dict, reference: dict, checks: dict, run_uuid: str) -> list[dict]:
+    """Judge units for the tour profit and loss (preregistration 2.6: J items 2, 4, 25-28, 41-48). The excerpt is the
+    graded P&L sheet, every non-empty row located by sheet and cell, with the header rows; the source material gives the
+    recomputed line items by party (A-45: labels may differ, match by amount and party) and the USD basis."""
+    task_id = checks["task"]
+    sheet = (checks.get("extraction_status") or {}).get("sheet")
+    xs = {k: v for k, v in (extraction.get("xlsx") or {}).items() if "sheets" in v}
+    if sheet and xs:
+        from .engine.cells import cell_coord
+        name = sorted(xs)[0]; sh = xs[name]["sheets"][sheet]
+        lines = []
+        for r, row in enumerate(sh["rows"], 1):
+            vals = [f"{cell_coord(r, c)}={v}" for c, v in enumerate(row) if v is not None and str(v).strip()]
+            if vals:
+                lines.append(f"[{name} '{sheet}' row {r}] " + " | ".join(vals))
+        excerpt = "\n".join(lines[:220])
+    else:
+        excerpt = "No readable P&L sheet was located in the workbook."
+    tm = "; ".join(f"{i['category']}: {i['item']} {i['amount']:,.2f}" for i in reference["tour_manager_items"])
+    pc = "; ".join(f"{i['category']}: {i['item']} {i['amount']:,.2f}" for i in reference["production_items"])
+    items_src = (f"Source line items (all USD). Tour manager: {tm}. Production company: {pc}. The rubric's split of the source 'Other Costs': Other Tour Costs = agency "
+                 "commission + insurance; Other Travel Costs = private jet, transfer cars, other, petty cash, car service, fees (K1). A-45: the production-company items "
+                 "'Car Service' 2,976 and 'Fees' 1,679 appear in the rubric as 'Transfer cards' and 'Other'; match by amount and party, labels may differ.")
+    spec = {2: "The P&L must separate Tour Manager and Production Company figures and include a Total Combined column, for revenue and expenses.",
+            4: "All amounts in the reference file are in USD; no currency conversion is needed. The criterion passes when every figure is reported in USD and no conversion is misapplied.",
+            25: "Required expense categories: Band and Crew (Fees & Per Diem), Other Tour Costs, Hotel & Restaurants, Other Travel Costs; clear equivalents count.",
+            26: "Required expense categories: Band and Crew (Fees & Per Diem), Other Tour Costs, Hotel & Restaurants, Other Travel Costs; clear equivalents count.",
+            27: "Required expense categories: Band and Crew (Fees & Per Diem), Other Tour Costs, Hotel & Restaurants, Other Travel Costs; clear equivalents count.",
+            28: "Required expense categories: Band and Crew (Fees & Per Diem), Other Tour Costs, Hotel & Restaurants, Other Travel Costs; clear equivalents count."}
+    units = []
+    for item in [2, 4, 25, 26, 27, 28] + list(range(41, 49)):
+        units.append({"unit_id": unit_id(task_id, item), "run_uuid": run_uuid, "task_id": task_id, "item": item, "weight": rubric[item - 1]["score"], "criterion": rubric[item - 1]["criterion"],
+                      "task_requirement": task_prompt, "source_material": spec.get(item, items_src), "deliverable_excerpt": excerpt, "excerpt_kind": "sheet:pl_rows",
+                      "assembled_at": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds")})
+    return units
+
+
 def render_unit(unit: dict) -> str:
     return (f"TASK REQUIREMENT (as given to the worker):\n{unit['task_requirement']}\n\n"
             f"CRITERION (item {unit['item']}, weight {unit['weight']}):\n{unit['criterion']}\n\n"

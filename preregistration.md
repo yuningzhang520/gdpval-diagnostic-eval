@@ -976,6 +976,25 @@ displays (whole dollars or cents). Rounded figures need not add up (852,428 − 
   presentation rounding is not an arithmetic error (section 1.7). Scoring effect: items
   49, 50, 53, 54 graded on the quantized comparison; items 56–58 on unrounded values.
   Status: APPROVED.
+- Item classification, corrected 2026-11-01 (editorial; for human confirmation): the D list above (29–51) and the
+  J list (41–48) both contain 41–48, and item 52 is in neither list. Grader v0 follows the explicit J list, which gives
+  a rationale ("item attribution; match by amount and party, labels may differ"), and C3 (approved, rubric 52–58, D):
+  D 1, 3, 6–24, 29–40, 49–58 (43 items); J 2, 4, 25–28, 41–48 (14 items); V 5, 59.
+- Deterministic rules of grader v0 (2026-11-01; operational detail, for human review at the labeling checkpoint):
+  - Each number is read with its row label, its section (the nearest label-only row above) and the party and
+    measure of its column, taken from the nearest header row above.
+  - Tour-stop rows name a stop city. The two Paris shows are told apart by show number or date.
+  - Withholding by country is read from the country rows of the withholding section, or else from the stops'
+    withholding column summed by country.
+  - A category total is, in this order of preference: a row labelled as the category's total; the category row itself
+    when it carries amounts; the unlabelled amount row closing the category block.
+  - Items 16 and 17 need a per-stop withholding or net amount for every stop.
+  - Item 15 holds when the shown country or stop withholding equals the specified rate times gross, and any shown
+    rate equals the specified rate.
+  - Item 34 and the production-company revenue of 14: a blank cell counts as 0.
+  - A K1 failure of 32–34 or 38–40 is tagged as allocation ambiguity when the Other Tour + Other Travel sum is right.
+  - A formula without a cached value is unreadable (cannot_assess).
+  - Expert workbook: 16 and 17 fail (withholding is shown only by country), so C1 fails; C2 and C3 pass.
 
 ### 2.7 `7d7fc9a7-21a7-4b83-906f-416dea5ad04f` — Prepaid amortization (Accountants and Auditors)
 Inputs: `COA.xlsx` (46 expense accounts, including 6760 IT Services/Agreements, 6762

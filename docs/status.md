@@ -3379,6 +3379,25 @@ variant, not in the grader. All 21 match.
 
 The skipped tests are the Docker-gated LibreOffice paths (`GOLD_RECALC_DOCKER`), not run while paid sandboxes are active.
 
+## Tour profit and loss `7b08cd4d…` gold-first grader v0 (2026-11-01; task version 7b08cd4d-2026-11-01.1; no model, judge or paid call; logs `logs/gold-first-7b08cd4d-20261101T154423Z/`)
+
+Deterministic items 1, 3, 6-24, 29-40, 49-58 (`grading/checks_7b08cd4d.py`; rules in preregistration 2.6); judge units for
+2, 4, 25-28, 41-48 (`grading.judge.build_units_7b08cd4d`); visual items 5, 59. Preregistration contradiction found and
+corrected editorially (for human confirmation): 41-48 were in both the D range (29-51) and the J list, and 52 was in
+neither; grader v0 follows the explicit J list (with its stated rationale) and C3 (52-58 D). The P&L is read row by row
+(label, section, column party and measure from the nearest header row), so the expert's Tour Manager / Production
+Company / Total columns and a wide per-stop revenue table are both read. First pass equal to the declaration (fails 16,
+17: withholding by country only, no per-stop withholding or net amounts; C1 therefore fails for the expert workbook).
+Before the variants, two reader changes (rate headers read as rates before withholding; a revenue table's own Total
+row as the totals fallback; the expert workbook unaffected). All 11 declared variants matched on their first run,
+including the K1 allocation tag and the A-53 rounding path. No shared extractor or engine change.
+
+| Command (`run_isolated.sh`, `/usr/bin/time -p`) | Wall clock | Exit | Result |
+|---|---|---|---|
+| `unittest grading.tests.test_gold_7b08cd4d` | 1.9 s | 0 | 15/15 |
+| `unittest grading.tests.test_gold_c3525d4d` / `1137e2bb` / `7d7fc9a7` | 5.6 / 13.4 / 5.9 s | 0 | 27 / 53 + 2 skipped / 56 + 3 skipped |
+| `unittest grading.tests.test_grading_chain` / `harness.tests.test_docs_consistency` | 3.8 / 1.0 s | 0 | 29 / 3 |
+
 ## Gemini two-project credentials, retry limit and recovered-attempt settlement (2026-11-01; approved by the human; offline verified; no paid call by this work)
 
 Credentials. `.env` (mode 0600, gitignored) holds `GOOGLE_API_KEY` (dev, original Paid Tier 1 project, suffix `KW5A`)
@@ -3486,7 +3505,7 @@ classified as recovered 429 (events 124, 125); under the new rule that unit woul
 ## In flight
 
 Gemini dev and validation resume under the new snapshot and scheduler plan (two projects, cap 2, dev first when the
-cap is 1). `c3525d4d…` grader v0 tagged (`grader-v0-c3525d4d` at `5435534`; code-bound records `grading/validation/c3525d4d…/code_5435534/`). Remaining graders: `7b08cd4d…`, `c357f0e2…`. `b5d2e6f1…` waits for rule A-1.
+cap is 1). `c3525d4d…` grader v0 tagged (`grader-v0-c3525d4d` at `5435534`; code-bound records `grading/validation/c3525d4d…/code_5435534/`). `7b08cd4d…` grader v0 committed (tag and code-bound records next). Remaining grader: `c357f0e2…`. `b5d2e6f1…` waits for rule A-1.
 
 ## Decisions taken (date · what · commit)
 
@@ -3796,6 +3815,9 @@ cap is 1). `c3525d4d…` grader v0 tagged (`grader-v0-c3525d4d` at `5435534`; co
 - 2026-11-01 · `c3525d4d…` grader v0 (task version c3525d4d-2026-11-01.1), the shared extractor's cell styles and
   conditional formats, and the editorial correction of the preregistration 2.5 classification (37, 38, 39, 41 are D
   under C3; pending human confirmation) · 5435534 (tag `grader-v0-c3525d4d`)
+
+- 2026-11-01 · `7b08cd4d…` grader v0 (task version 7b08cd4d-2026-11-01.1) and the editorial correction of the
+  preregistration 2.6 classification (41-48 J, 52 D; pending human confirmation) · (this commit)
 
 ## Next stage (not started)
 

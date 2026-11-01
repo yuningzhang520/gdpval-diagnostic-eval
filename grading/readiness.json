@@ -28,6 +28,10 @@
   "c3525d4d-2012-45df-853e-2d2a0e902991": {
    "tag": "grader-v0-c3525d4d",
    "basis": "grader v0 2026-11-01 (task version c3525d4d-2026-11-01.1)"
+  },
+  "7b08cd4d-df60-41ae-9102-8aaa49306ba2": {
+   "tag": "grader-v0-7b08cd4d",
+   "basis": "grader v0 2026-11-01 (task version 7b08cd4d-2026-11-01.1)"
   }
  },
  "not_ready": {

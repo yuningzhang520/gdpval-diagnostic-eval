@@ -1,0 +1,83 @@
+{
+ "task_id": "7b08cd4d-df60-41ae-9102-8aaa49306ba2",
+ "record": "gold first pass of grader 7b08cd4d-2026-11-01.1 before any variant was built",
+ "recorded_at": "2026-11-01T15:44:06+00:00",
+ "declared_before_run": {
+  "fail": [
+   16,
+   17
+  ],
+  "cannot_assess": []
+ },
+ "runs": [
+  {
+   "run": 1,
+   "non_pass": {
+    "16": "fail",
+    "17": "fail"
+   },
+   "equals_declaration": true
+  },
+  {
+   "run": 2,
+   "change": "before the variants: a 'rate' header is read as a rate before 'withholding'; a revenue table's own 'Total' row supplies gross, withholding and net when no labelled total row exists (the expert workbook has labelled rows)",
+   "equals_declaration": true
+  }
+ ],
+ "checks_sha256": "104b5fe49f1c0d6bdef3ae35fcccf1f0cbb7aaf8d82a88920d8b2dc5957551d2",
+ "extract_sha256": "c6819ae5b3e6fe7e174dd7c2a910f77882a9a60decdb273bdc1905a0ca7394ab",
+ "repo_head_at_run": "35c694c010d1d7663fb32e195feba2c72731a595",
+ "tree": "uncommitted grader changes (identified by the hashes above)",
+ "verdicts": {
+  "1": "pass",
+  "3": "pass",
+  "6": "pass",
+  "7": "pass",
+  "8": "pass",
+  "9": "pass",
+  "10": "pass",
+  "11": "pass",
+  "12": "pass",
+  "13": "pass",
+  "14": "pass",
+  "15": "pass",
+  "16": "fail",
+  "17": "fail",
+  "18": "pass",
+  "19": "pass",
+  "20": "pass",
+  "21": "pass",
+  "22": "pass",
+  "23": "pass",
+  "24": "pass",
+  "29": "pass",
+  "30": "pass",
+  "31": "pass",
+  "32": "pass",
+  "33": "pass",
+  "34": "pass",
+  "35": "pass",
+  "36": "pass",
+  "37": "pass",
+  "38": "pass",
+  "39": "pass",
+  "40": "pass",
+  "49": "pass",
+  "50": "pass",
+  "51": "pass",
+  "52": "pass",
+  "53": "pass",
+  "54": "pass",
+  "55": "pass",
+  "56": "pass",
+  "57": "pass",
+  "58": "pass"
+ },
+ "notes": {
+  "16": "confirmed violation: show 1 (London): no per-stop withholding amount; show 2 (Paris): no per-stop withholding amount; show 3 (Paris): no per-stop withholding amount [missing]",
+  "17": "confirmed violation: show 1 (London): no per-stop net revenue amount; show 2 (Paris): no per-stop net revenue amount; show 3 (Paris): no per-stop net revenue amount [missing]"
+ },
+ "gold_sha256": {
+  "Fall Music Tour Output.xlsx": "177f8ac80963256ffee1849d3e959bcd7131a6ab8722d0119f52f56eb99a4eee"
+ }
+}
