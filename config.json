@@ -839,11 +839,11 @@
   },
   "grading": {
     "preregistration": "preregistration.md (draft; frozen at freeze-v1)",
-    "engine_version": "engine-2026-11-01.2",
+    "engine_version": "engine-2026-11-01.3",
     "task_grader_versions": {
       "1137e2bb-bdf9-4876-b572-f29b7de5e595": "1137e2bb-2026-11-01.2",
       "7d7fc9a7-21a7-4b83-906f-416dea5ad04f": "7d7fc9a7-2026-11-01.5",
-      "2ea2e5b5-257f-42e6-a7dc-93763f28b19d": "2ea2e5b5-2026-11-01.1",
+      "2ea2e5b5-257f-42e6-a7dc-93763f28b19d": "2ea2e5b5-2026-11-01.2",
       "a45bc83b-22f9-4def-8d89-9c5661b2b86f": "a45bc83b-2026-11-01.2",
       "b5d2e6f1-62a2-433a-bcdd-95b260cdd860": "b5d2e6f1-2026-11-01.2",
       "f841ddcf-2a28-4f6d-bac3-61b607219d3e": "f841ddcf-2026-11-01.1",

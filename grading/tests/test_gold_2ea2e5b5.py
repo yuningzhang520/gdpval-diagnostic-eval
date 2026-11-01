@@ -64,7 +64,9 @@ class GoldAnchorTests(unittest.TestCase):
     def test_gold_grades_to_the_declared_baseline(self):
         self.assertEqual(set(self.gold["map"]), set(CK.D_ITEMS))
         self.assertEqual(self.gold["map"], GV.GOLD_BASELINE, {i: v for i, v in self.gold["map"].items() if v != GV.GOLD_BASELINE[i]})
-        self.assertEqual(self.gold["critical"], {"C1": "not_confirmed", "C2": "fail", "C3": "pass"})  # C2 fails on 10 alone (K1)
+        self.assertEqual(self.gold["critical"], {"C1": "not_confirmed", "C2": "pass", "C3": "pass"})  # revised C2 (2026-11-01): item 10 removed; it still fails as a rubric item (K1)
+        self.assertEqual(self.gold["map"][10], "fail")
+        self.assertNotIn(10, CK.CRITICAL["C2"]["items"]); self.assertIn(10, CK.CRITICAL_PREREGISTERED["C2"]["items"])
         self.assertIn("no hours column", self.gold["res"]["items"][10]["note"])
 
     def test_a9_bases_on_the_expert_deck(self):
@@ -190,7 +192,9 @@ class ProductionGradeRunTests(unittest.TestCase):
             s_ = r["score"]
             d_weight = sum(g["weight"] for g in by_src["D"])
             self.assertEqual((s_["W"], s_["E"], s_["P"]), (sum(x["score"] for x in RUBRIC), d_weight, d_weight - RUBRIC[9]["score"]))  # 10 fails (K1)
-            self.assertEqual(s_["critical"]["C2"]["status"], "fail")
+            self.assertEqual(s_["critical"]["C2"]["status"], "pass")  # revised definition
+            self.assertEqual(s_["critical_preregistered"]["C2"]["status"], "fail")  # preregistered definition, same item verdicts
+            self.assertEqual((s_["critical_overall"], s_["critical_overall_preregistered"], s_["critical_conclusion_differs"]), ("not_confirmed", "fail", True))
             md = open(r["review_materials"]["items"], encoding="utf-8").read()
             for leak in ("confirmed violation", "no hours column", "hours_mismatch", "derived from the source"):
                 self.assertNotIn(leak, md)

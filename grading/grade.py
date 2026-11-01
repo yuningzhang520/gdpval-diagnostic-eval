@@ -39,10 +39,11 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # review infrastructure) carries ENGINE_VERSION; every task specification carries its own VERSION; a grading pass records
 # the combined grader version "<engine>+<task>" and the full git commit of the code that graded. config.grading must state
 # the engine version and the per-task versions (checked by run_grading before any grading).
-ENGINE_VERSION = "engine-2026-11-01.2"  # .2: a deterministic item may route itself to the judge (route_to_judge); scored once, as a J row
+ENGINE_VERSION = "engine-2026-11-01.3"  # .2: a deterministic item may route itself to the judge (route_to_judge); scored once, as a J row; .3: critical status also under the preregistered definition when a task revised it
 TASK_MODULES = {CK.TASK: {"checks": CK.run_checks, "units": J.build_units_1137e2bb, "critical": CK.CRITICAL, "judge_items": CK.J_ITEMS, "visual_items": [], "version": CK.VERSION},
                 CK2.TASK: {"checks": CK2.run_checks, "units": J.build_units_7d7fc9a7, "critical": CK2.CRITICAL, "judge_items": CK2.J_ITEMS, "visual_items": CK2.V_ITEMS, "version": CK2.VERSION},
-                CK3.TASK: {"checks": CK3.run_checks, "units": J.build_units_2ea2e5b5, "critical": CK3.CRITICAL, "judge_items": CK3.J_ITEMS, "visual_items": CK3.V_ITEMS, "version": CK3.VERSION},
+                CK3.TASK: {"checks": CK3.run_checks, "units": J.build_units_2ea2e5b5, "critical": CK3.CRITICAL, "critical_preregistered": CK3.CRITICAL_PREREGISTERED, "judge_items": CK3.J_ITEMS,
+                           "visual_items": CK3.V_ITEMS, "version": CK3.VERSION},
                 CK4.TASK: {"checks": CK4.run_checks, "units": J.build_units_a45bc83b, "critical": CK4.CRITICAL, "judge_items": CK4.J_ITEMS, "visual_items": CK4.V_ITEMS,
                            "judge_agreement_only": CK4.JUDGE_AGREEMENT_ONLY, "version": CK4.VERSION},
                 CK5.TASK: {"checks": CK5.run_checks, "units": J.no_judge_units, "critical": CK5.CRITICAL, "judge_items": CK5.J_ITEMS, "visual_items": CK5.V_ITEMS, "version": CK5.VERSION},
@@ -306,6 +307,11 @@ def grade_run(host_dir: str, log, sample_uuid: str, *, task_id: str, rubric: lis
         for g in grades:
             f.write(json.dumps(g, default=str) + "\n")
     score = _score(grades, mod["critical"], extra=checks.get("critical_extra"))
+    if mod.get("critical_preregistered"):  # approved 2026-11-01: a revised critical composition is reported under both definitions
+        pre = _score(grades, mod["critical_preregistered"], extra=checks.get("critical_extra"))
+        score.update({"critical_preregistered": pre["critical"], "critical_overall_preregistered": pre["critical_overall"],
+                      "critical_definitions": "revised (current) and preregistered (original) on the same item verdicts",
+                      "critical_conclusion_differs": pre["critical_overall"] != score["critical_overall"]})
     review = write_review_materials(os.path.join(out_dir, "review"), binding["uuid"], rubric, checks, units, verdicts, extraction, reference=reference, task_id=task_id, grading_pass=rec["grading_pass"])
     rec.update({"graded": True, "deliverables": [i["path"] for i in extraction["inventory"]], "rejected_files_not_delivered": rejected_files,
                 "transfer_integrity": integrity, "originals_unchanged": extraction.get("originals_unchanged"), "working_copies": provenance, "extraction_status": checks.get("extraction_status"),

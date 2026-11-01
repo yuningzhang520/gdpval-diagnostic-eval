@@ -223,6 +223,37 @@ All failures, incomplete runs, `cannot_assess` items, and critical disagreements
 review; passes are sampled for false passes. Investigation order: task material,
 grading rule, environment, model. If no critical failure is observed, that is reported
 as such; tasks are not swapped to manufacture failures.
+Amended 2026-11-01 (the human's instruction): the independent human-label agreement sample
+is the fixed, verdict-independent review queue of section 1.19, not an outcome-driven
+selection. The outcome-driven review above (failures, `cannot_assess`, critical
+disagreements) continues as triage after the labels are saved and never adds items to the
+agreement sample.
+
+### 1.18 Critical-definition revisions and sensitivity reporting (adopted 2026-11-01)
+A critical composition changed after its approval and before Formal Freeze keeps both
+definitions: the preregistered one (as approved) and the revised, dated one. Formal
+reporting computes critical status under both definitions from the same item-level
+verdicts (the scorer records `critical` and `critical_preregistered` and flags a changed
+conclusion), and any change in conclusion is reported. Rubric-item verdicts are kept apart
+from critical-group membership; a revision is never recast as part of the original
+preregistration. Revisions so far: `2ea2e5b5…` C2 (section 2.8, R-2.8-1).
+
+### 1.19 Fixed human review queue and blind labeling (adopted 2026-11-01; not preregistered before that date)
+Per task: every preregistered critical rubric item (union of the preregistered and the
+current definition), every human-scored visual item, five deterministic and five
+judge-only items drawn at random from the remaining items (a smaller pool is taken whole
+and the shortfall reported); deduplicated, each item listed with all its categories.
+Membership depends only on the rubric inventory, the item types, the critical mappings,
+the visual categories and a recorded seed (`grading/review_queue.py`, policy
+review-queue-2026-11-01.1). It is frozen, with its seed, algorithm, timestamp and input
+hashes, before any packet is presented (`grading/review_queue/queue_v1.json`). Some
+grader outputs had already been inspected during calibration when this policy was
+adopted. Packets give the rubric text, the independent reference, judge excerpts for
+judge items, the deliverables and the task inputs; they give no automated verdict and no
+grader location or explanation. The human labels first; the comparison then reveals the
+verdicts of the queued items only. A queued item the grader cannot assess stays in the
+sample with its coverage reported. Items outside the queue are scored by the approved
+deterministic / judge / human-authoritative workflow without an extra human label.
 
 ### 1.15 Budget, concurrency, timeouts
 Values are in `config.json` (high-reasoning configuration approved 2026-11-01 as the initial
@@ -992,6 +1023,12 @@ displays (whole dollars or cents). Rounded figures need not add up (852,428 − 
   presentation rounding is not an arithmetic error (section 1.7). Scoring effect: items
   49, 50, 53, 54 graded on the quantized comparison; items 56–58 on unrounded values.
   Status: APPROVED.
+- C1 composition reviewed 2026-11-01 (the human's conditional instruction): C1 reads "Requirement: rates applied per
+  country, net revenue 852,428.44 (rubric 15–24)". The explicit item range 15–24 includes 16 ("For each tour stop,
+  Withholding Amount (USD) equals the country's withholding rate multiplied by that row's Combined Gross (USD)") and 17
+  ("For each tour stop, Net Revenue (USD) equals that row's Combined Gross (USD) minus the Withholding Amount (USD)");
+  "rates applied per country" names the rate that applies, not an aggregation level. C1 therefore covers the
+  stop-level items; 16 and 17 stay critical (no change).
 - Correction P-2.6-1 (APPROVED by the human 2026-11-01; grader 7b08cd4d-2026-11-01.1 onward): the D list above
   (29–51) and the J list (41–48) both contain 41–48, and item 52 is in neither list. 41–48 are J (the explicit list and
   its rationale: "item attribution; match by amount and party, labels may differ"); 52 is D (C3, rubric 52–58):
@@ -1224,6 +1261,12 @@ with the rubric's own tolerance; hours compared at two decimals (half-up).
   Status: APPROVED.
 - K1 (class a): rubric 10 asks for total hours per category; the gold table shows
   percentages only (gold would fail 10). Rubric governs.
+- R-2.8-1 (revision of C2, decided by the human 2026-11-01; grader 2ea2e5b5-2026-11-01.2): the prompt asks for an
+  "Activity Analysis (a table and Pie chart)" and names no hours; rubric 10 ("The Activity Analysis table includes a
+  column or row showing Total Hours per category") asks for something the prompt does not. Applying the A-21 precedent
+  (`1137e2bb…` item 21): item 10 is scored literally as a rubric item, removed from C2, and the prompt-rubric
+  inconsistency is disclosed. Preregistered C2 (8–26) and revised C2 (8–26 without 10) are both reported (section
+  1.18). Item 10's verdicts are unchanged.
 - K2: the gold uses `pie3DChart`; 2D and 3D pie chart parts are both read and accepted
   (section 1.9).
 - A-9 (rubric 34, 55, 56; APPROVED by the human 2026-11-01, Option A; recorded before any
@@ -1312,6 +1355,8 @@ compliance and permission correctness.
     deterministic evidence), which assesses "or equivalent" from the module content. "Cross-browser Testing" alone is
     not a synonym; its rows' substantive content is evidence for the judge. No deterministic fail and no blanket
     cannot_assess for a differing label.
+  - Item 4 (decided by the human 2026-11-01): the rubric states "total between 80 and 100 inclusive" (no
+    "approximately"), so the range is applied literally; no borderline zone and no judge routing.
   - Expert workbook: 4 (75 cases), 10 (20 rows without an Expected Result) and 67 fail; 69 is routed to the judge
     (grader .1 failed it); C1 fails.
 
@@ -1412,6 +1457,15 @@ Requirement layers (APPROVED 2026-10-30):
   cannot_assess without the source evidence).
 - 2026-11-01: DECIDED by the human - corrections P-2.5-1 and P-2.6-1 (item classifications), `c357f0e2…` item 69 with
   judge routing, `c3525d4d…` item 7 and added-store identity rules (sections 2.5, 2.6, 2.9).
+- 2026-11-01: DECIDED by the human (expert-gold audit, `docs/expert_gold_fail_audit.md`):
+  - `7b08cd4d…` C1 keeps 16 and 17 (its explicit range covers them).
+  - `2ea2e5b5…` C2 revision R-2.8-1 (A-21 precedent; reported under both definitions).
+  - `c3525d4d…` C1: the store-id remapping is a dataset artifact (documented row correspondence); the six misplaced
+    added-store flags are conditional expert errors.
+  - `b5d2e6f1…` C2 source check: unresolved between expert edit and source-version mismatch.
+  - `7d7fc9a7…` C4 keeps item 10.
+  - `c357f0e2…` item 4 is literal (80-100).
+  - The fixed review queue (1.19) and the sensitivity reporting (1.18) are adopted.
 
 - 2026-11-01, `a45bc83b…` item 70: DECIDED the same day by the human - human visual review is authoritative, the
   criterion is counted once; the judge verdict on it is used for judge-human agreement only (section 2.10).

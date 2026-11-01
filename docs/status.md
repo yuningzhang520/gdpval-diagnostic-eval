@@ -3625,6 +3625,38 @@ Classification:
 
 Six decisions are requested in section 5 of the audit.
 
+## Expert-gold decisions, sensitivity reporting and the fixed review queue (2026-11-01; decided by the human; engine-2026-11-01.3; logs `logs/queue-20261101-165235Z/`)
+
+Decisions:
+- `7b08cd4d…` C1 is unchanged. Its text "rates applied per country, net revenue 852,428.44 (rubric 15–24)" covers 16
+  and 17 explicitly.
+- `2ea2e5b5…` C2 is revised (R-2.8-1, A-21 precedent): item 10 is removed from C2, keeps its verdict, and the
+  prompt-rubric gap is disclosed. Task version .2.
+- `c3525d4d…` C1 classifications are accepted.
+- `b5d2e6f1…` C2 source check stays unresolved.
+- `7d7fc9a7…` C4 keeps item 10.
+- `c357f0e2…` item 4 is literal ("between 80 and 100 inclusive").
+
+Shared change, recorded for Codex Review 2: `grade_run` also scores a task's preregistered critical definition when the
+task revised it (`critical_preregistered`, `critical_overall_preregistered`, `critical_conclusion_differs`). For the
+`2ea2e5b5…` expert deck the revised C2 passes and the preregistered C2 fails, so the overall conclusion differs
+(not_confirmed against fail).
+
+New `grading/review_queue.py` (fixed, verdict-independent queue). It reads only the task modules, the rubric files and
+a seed; a test guards file access, and determinism, deduplication and shortfalls are tested. Batch builder: queue mode
+(`label_batch --queue`). Queue packets drop the grader-derived "Where to look" lines, keep judge excerpts only for
+judge items, and add the task inputs. Comparison: `review compare --queue` uses the queued items only, reports queued
+items left unlabelled, and ignores labels outside the queue.
+
+Preregistration sections 1.14 (amended), 1.18 and 1.19 are new, dated 2026-11-01 and marked as not preregistered before.
+
+| Command (`run_isolated.sh`, `/usr/bin/time -p`) | Wall clock | Exit | Result |
+|---|---|---|---|
+| `unittest grading.tests.test_review_queue` / `test_item_partition` | 1.4 / 1.1 s | 0 | 6 / 2 |
+| `unittest grading.tests.test_gold_2ea2e5b5` / `1137e2bb` / `7d7fc9a7` | 2.1 / 13.6 / 6.4 s | 0 | 30 / 53 + 2 skipped / 56 + 3 skipped |
+| `unittest grading.tests.test_gold_c3525d4d` / `c357f0e2` / `7b08cd4d` / `a45bc83b` / `f841ddcf` / `47ef842d` / `b5d2e6f1` | 6.1 / 1.8 / 1.3 / 2.8 / 3.7 / 5.4 / 62.6 s | 0 | 29 / 19 / 15 / 20 / 18 / 14 / 25 |
+| `unittest grading.tests.test_grading_chain` / `test_label_batch` / `harness.tests.test_docs_consistency` | 3.5 / 12.8 / 1.1 s | 0 | 29 / 3 / 3 |
+
 ## Known issues and findings (material check)
 
 - `rubric_json.form_content`: 8,036 items hold `null`, 2,417 items lack the key, zero
