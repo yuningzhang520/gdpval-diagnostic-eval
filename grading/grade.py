@@ -22,6 +22,7 @@ except ImportError:  # pragma: no cover
 VALID_EVAL_STATUS = frozenset(get_args(EvalStatus))
 from . import checks_1137e2bb as CK
 from . import checks_7d7fc9a7 as CK2
+from . import checks_2ea2e5b5 as CK3
 from . import judge as J
 from .extract import extract_all
 from .review import write_review_materials
@@ -33,7 +34,8 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # the engine version and the per-task versions (checked by run_grading before any grading).
 ENGINE_VERSION = "engine-2026-11-01.1"
 TASK_MODULES = {CK.TASK: {"checks": CK.run_checks, "units": J.build_units_1137e2bb, "critical": CK.CRITICAL, "judge_items": CK.J_ITEMS, "visual_items": [], "version": CK.VERSION},
-                CK2.TASK: {"checks": CK2.run_checks, "units": J.build_units_7d7fc9a7, "critical": CK2.CRITICAL, "judge_items": CK2.J_ITEMS, "visual_items": CK2.V_ITEMS, "version": CK2.VERSION}}
+                CK2.TASK: {"checks": CK2.run_checks, "units": J.build_units_7d7fc9a7, "critical": CK2.CRITICAL, "judge_items": CK2.J_ITEMS, "visual_items": CK2.V_ITEMS, "version": CK2.VERSION},
+                CK3.TASK: {"checks": CK3.run_checks, "units": J.build_units_2ea2e5b5, "critical": CK3.CRITICAL, "judge_items": CK3.J_ITEMS, "visual_items": CK3.V_ITEMS, "version": CK3.VERSION}}
 
 
 def grader_version_of(task_id: str) -> str:

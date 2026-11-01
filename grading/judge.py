@@ -138,6 +138,32 @@ def build_units_7d7fc9a7(task_prompt: str, rubric: list[dict], extraction: dict,
     return units
 
 
+def build_units_2ea2e5b5(task_prompt: str, rubric: list[dict], extraction: dict, reference: dict, checks: dict, run_uuid: str) -> list[dict]:
+    """Judge units for the work-time study deck (preregistration 2.8: J items 57-60, slide titles by position, semantic
+    equivalents). Source material: the prompt's required slide list; the deliverable excerpt lists every slide of the
+    deck in order with its title, layout and first table header (no grader verdict)."""
+    task_id = checks["task"]
+    decks = {k: v for k, v in (extraction.get("pptx") or {}).items() if "slides" in v}
+    if decks:
+        name = sorted(decks)[0]
+        lines = [f"Presentation {name}: {decks[name]['slide_count']} slide(s)."]
+        for sl in decks[name]["slides"]:
+            tables = [sh["table"] for sh in sl["shapes"] if "table" in sh]
+            charts = [sh["chart"].get("kinds") for sh in sl["shapes"] if "chart" in sh]
+            lines.append(f"Slide {sl['index']}: title {sl.get('title')!r}; layout {sl.get('layout')!r}; first table header {tables[0][0] if tables else None}; charts {charts}")
+        excerpt = "\n".join(lines)
+    else:
+        excerpt = "No readable .pptx presentation was located in the deliverable."
+    source = ("Prompt requirement: a PowerPoint presentation with 5 slides - Title Slide; Activity Analysis (a table and Pie chart); Margin Impact by Activities (a table and Pie chart); "
+              "Time Sensitivity by Activities (a table and Pie chart); Strategic Level by Activities (a table and Pie chart). Each item names one slide position and accepts the phrase or a clear equivalent.")
+    units = []
+    for item in (57, 58, 59, 60):
+        units.append({"unit_id": unit_id(task_id, item), "run_uuid": run_uuid, "task_id": task_id, "item": item, "weight": rubric[item - 1]["score"],
+                      "criterion": rubric[item - 1]["criterion"], "task_requirement": task_prompt, "source_material": source,
+                      "deliverable_excerpt": excerpt, "excerpt_kind": "deck:slide_titles", "assembled_at": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds")})
+    return units
+
+
 def render_unit(unit: dict) -> str:
     return (f"TASK REQUIREMENT (as given to the worker):\n{unit['task_requirement']}\n\n"
             f"CRITERION (item {unit['item']}, weight {unit['weight']}):\n{unit['criterion']}\n\n"

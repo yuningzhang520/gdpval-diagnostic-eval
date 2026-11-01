@@ -3046,6 +3046,51 @@ Docker-wide check or cleanup; the render tool's temporary directory is inside th
 Interaction kept as approved: a cost-limited Gemini unit settles just above 10 USD, which is more than twice its 5.00
 reservation, so the existing ledger stop ends that class's launches before the two-limit rule counts it.
 
+## Paid execution under the scheduler (2026-11-01; plan `paid-2026-11-01b`, snapshot `config_2b267fc18fa2.json`, commit `9e20c15`; in progress)
+
+Snapshot `config_2b267fc18fa2.json` (sha256 `2b267fc1…`): against the approved snapshot `config_f3d87934ed1b.json` only
+`batches.dev/validation.message_limit`, `.message_limit_policy`, `.gemini_unit_policy`, `concurrency.cross_class` and
+the grader version labels differ; generation, retries, models, sandbox, tools and the compat class are identical. The
+200-message attempt `LJbb8ZyPWZgPE8VCFRbLGD` is designated diagnostic in `~/turing-eval-runs/dev/runs/canonical_designations.jsonl`.
+Key: a process started with a minimal environment loads `GOOGLE_API_KEY` from the project `.env` with the Paid Tier 1
+suffix; no override variable; `.env` mode 0600. Scheduler: detached, `caffeinate -i`, minimal environment, state under
+`~/turing-eval-runs/scheduler/paid-2026-11-01b/` (events, resources, operator notes).
+
+Cap: the host memory-pressure level was already 2 (warn) with 7.7 GB swap in use before any unit; the first scheduler
+(pid 57222) read that as contention and lowered the cap to 1 (only the replacement started). Operator note: cap fixed at
+the approved 2 through `cap_override` (compat Opus launched 12:40:52Z); the rule was then made baseline-relative
+(commit `07fcd5f`, tested incl. adoption of in-flight units after a restart) and the scheduler restarted (pid 66004, SIGKILL of
+the old one; both in-flight units kept running in their own sessions and were adopted; `--reset-cap` recorded). With
+a warn baseline the raise to 3 is not available (it needs normal pressure throughout the overlap).
+
+| Unit | Outcome | Messages / turns / tool calls | Tool calls per turn (mean, max) | Settlement |
+|---|---|---|---|---|
+| compat Opus 5.5 (`WAdNGvRiqFvDegQPcpcwAd`) | completed, no limit event | 70 / 27 / 41 (0 tool errors) | 1.52, 4 | 1.571204 USD, complete |
+| compat GPT-6.1 Sol (`U6UgKmucEdbsaNdiQXHcG5`) | completed, no limit event | 56 / 24 assistant messages, 25 model calls / 30 (1 bash argument-parsing error) | 1.25, 3 | 5.000000 USD estimated, HOLD |
+
+GPT compat accounting blocker: model call 7 of 25 ended with a provider HTTP 502 recorded on the model event (no
+output, no usage); the next call proceeded and the sample completed. The ledger priced the 24 reported calls at
+0.472138 USD (Inspect total 0.472131) and settled conservatively at the 5.00 reservation with a hold; the compat class
+stopped (batch `ledger blocks after the unit`). The hold needs human reconciliation; Gemini classes are unaffected.
+
+## Task 3 `2ea2e5b5…` gold-first grader v0 (2026-11-01; task version 2ea2e5b5-2026-11-01.1; no model, judge or paid call; logs `logs/gold-first-2ea2e5b5-20261101T125739Z/`)
+
+PPTX grader on the shared decision semantics (`grading/checks_2ea2e5b5.py`), variant catalog
+(`grading/gold_variants_2ea2e5b5.py`, 23 variants), judge units for 57-60 (`grading/judge.py::build_units_2ea2e5b5`),
+registered in `grading/grade.py`. A-9 (preregistration 2.8, approved Option A) implemented for 34, 55, 56. First pass of the
+draft before A-9 kept in `grading/validation/2ea2e5b5…/gold_first_pass.json` (52 pass, 10 fail, 34/55/56 cannot_assess).
+Expert deck now: every deterministic item passes except 10 (K1); C2 fails on 10 (data-quality finding); C3 passes; the
+activity table's hours are derived from the source over twelve verified categories (44,258.685) and equal the three
+printed segment totals. Declarations before observation: R03 and R09 gained 34/55/56 `cannot_assess` (shares or rows no
+longer verifiable); new R12-R15 cover printed activity hours, an inconsistent printed total, a wrong segment total and
+shares that leave the denominator unverifiable. All 23 variants matched their declared maps on the first observed run.
+
+| Command (`run_isolated.sh`, `/usr/bin/time -p`) | Wall clock | Exit | Result |
+|---|---|---|---|
+| `unittest grading.tests.test_gold_2ea2e5b5` (anchor, A-9 unit tests, 23 variants, production grade_run, judge units) | 2.5 s | 0 | 30/30 |
+| `unittest grading.tests.test_grading_chain` / `test_review_packets` / `harness.tests.test_docs_consistency` | 3.5 / 0.1 / 1.3 s | 0 | 29 / 2 / 3 |
+| `unittest grading.tests.test_gold_7d7fc9a7` / `test_gold_1137e2bb` (registry change) | 5.4 / 14.5 s | 0 | 46 + 3 skipped / 53 + 2 skipped |
+
 ## Known issues and findings (material check)
 
 - `rubric_json.form_content`: 8,036 items hold `null`, 2,417 items lack the key, zero
@@ -3098,9 +3143,9 @@ reservation, so the existing ledger stop ends that class's launches before the t
 
 ## In flight
 
-Gemini-only message-limit change and the scheduler committed; next: config snapshot, the diagnostic designation of
-`LJbb8ZyPWZgPE8VCFRbLGD`, then the scheduler plan (replacement and compat in parallel). Codex Review 1 closure pinned to
-`2c37d6a`. Task 3 (`2ea2e5b5…`) grader: A-9 recorded; implementation next (offline).
+Scheduler `paid-2026-11-01b` (pid 66004): Gemini `b5d2e6f1…` replacement running; remaining dev and validation wait for
+its acceptance; compat stopped on the GPT accounting hold (human reconciliation needed). Task 3 grader v0 committed;
+code-bound records and tag next. Codex Review 1 closure pinned to `2c37d6a`.
 
 ## Decisions taken (date · what · commit)
 
