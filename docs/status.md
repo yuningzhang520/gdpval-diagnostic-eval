@@ -2809,6 +2809,31 @@ Decisions needed (paid-run blocker; nothing restarted):
 3. Relaunch the chain for the remaining batches (`scripts/run_authorized_batches_2026-11-01.sh "dev compat validation"`;
    the completed/errored units are skipped by the inventory logic).
 
+## 1137e2bb grader finalized before any development output is opened (2026-11-01; task grader version 1137e2bb-2026-11-01.2; no model, judge or paid call by this work; logs `logs/gold-first-1137e2bb-20261101T*/\*.item9.log`)
+
+Human decisions applied: rubric 9 requires numeric 0/1 (TRUE/FALSE, Yes/No, textual "0"/"1" fail its format); items 5–8 and
+18–20 (and 15–17, 31–55) coerce unambiguous representations to 0/1 so a format failure never cascades; "x" marks and words
+are not flag values. Business-row population rule reviewed and recorded (preregistration 2.4): identified / unidentified /
+annotation rows, extra rows through 5 and 6, ambiguous rows `cannot_assess` with unknown attribution while still counting
+in the column sums; the annotation rule now also covers a footer that sums the quantity column (no parseable id, blank
+prices and UOM). Added gold variants: R25 Excel booleans, R26 Yes/No, R27 text digits (each: 9 fails alone), R28 "x" and
+blank (5, 6, 7, 8, 9, 15, 16, 18, 19 and every named line fail; 17, 20 hold), R29 ambiguous row with a blank SKU (5, 6
+cannot_assess unknown; 15, 17, 18, 20 fail), R30 grouped SKU roll-up with PO-level drill-down (neutral: equals the gold
+map incl. 14 and 22), N21 footer with a quantity sum (neutral). All 51 catalog variants and the gold anchor match their
+declared maps on the first run of the extended suite; existing regressions preserved.
+
+| Command (`run_isolated.sh`, `/usr/bin/time -p`) | Wall clock | Exit | Result |
+|---|---|---|---|
+| `unittest grading.tests.test_gold_1137e2bb` (55 incl. 2 docker-gated) | 12.8 s | 0 | 53/53 + 2 skipped |
+| `unittest grading.tests.test_layout_regressions` | 3.8 s | 0 | 57/57 |
+| `unittest grading.tests.test_grading_chain` | 2.2 s | 0 | 28/28 |
+| `unittest harness.tests.test_docs_consistency` | 0.9 s | 0 | 3/3 |
+
+Docker-gated recalculation tests not rerun (paid generation in progress; the recalculation reader is unchanged since
+their last green run). Tag `grader-v0-1137e2bb` moved from `a172980d09eb98f08adc42ba824606e284ffdf77` (kept as a commit)
+to the finalization commit: no immutable record referenced the tag (the validation records, inventories and ledgers
+reference commit SHAs and versions only); no development output has been opened.
+
 ## Known issues and findings (material check)
 
 - `rubric_json.form_content`: 8,036 items hold `null`, 2,417 items lack the key, zero
@@ -2869,6 +2894,17 @@ opened; then Task 2 (`7d7fc9a7…`) and the shared spreadsheet core.
 
 ## Decisions taken (date · what · commit)
 
+- 2026-11-01 · Recovery actions AUTHORIZED by the human (chat): (1) the failed dev unit
+  `b5d2e6f1-62a2-433a-bcdd-95b260cdd860:google/gemini-3.8-flash:20261101T091604Z` is reconciled at 0.00 USD
+  (verified client-construction TypeError before any HTTP request, no usage; the human checked the Google
+  console: no generateContent call near 09:16Z on 2026-11-01); the original failed run, its accounting
+  history and the reconciliation evidence are preserved; (2) exactly one replacement generation of
+  `b5d2e6f1…` in the dev class with the corrected Google adapter, the errored attempt kept, no
+  unrestricted repeats for other tasks; (3) the approved chain resumes dev -> compat -> validation,
+  sequentially, concurrency 1, existing configurations, limits, monitoring and stop conditions; the
+  replacement unit must reach the provider, return valid usage and settle correctly before the other
+  nine dev units run; any further genuine provider or accounting issue stops the chain without retry.
+  Authorization reference for the launcher: this entry.
 - 2026-11-01 · Paid batches AUTHORIZED by the human (chat, after the checkpoint report): (1) `google/gemini-3.8-flash`
   10 dev samples and 10 independently generated sealed validation samples, reservation 5.00 USD per sample,
   Inspect cost limit 10 USD per sample, class ledger ceiling 100 USD each; (2) candidate compatibility on

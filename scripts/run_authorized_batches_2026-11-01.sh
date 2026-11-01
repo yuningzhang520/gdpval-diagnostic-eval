@@ -10,7 +10,7 @@ ROOT=/Users/yuning/turing-th
 R=/Users/yuning/turing-eval-runs
 SHA="$(shasum -a 256 "$ROOT/config.json" | cut -c1-12)"
 mkdir -p "$R/config_snapshots"
-CFG="$R/config_snapshots/config_$SHA.json"
+CFG="${CFG_OVERRIDE:-$R/config_snapshots/config_$SHA.json}"   # CFG_OVERRIDE: reuse an earlier snapshot so one run class keeps one config sha (generation keys unchanged)
 [ -f "$CFG" ] || cp "$ROOT/config.json" "$CFG"   # snapshot taken at launch; recorded as config_path + sha256 in every unit's provenance
 LOGD="$R/batch_console"
 AUTH_BY='Yuning Zhang (human approval in chat, 2026-11-01)'

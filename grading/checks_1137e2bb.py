@@ -45,7 +45,7 @@ from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 from .extract import ERROR_PREFIXES
 
 TASK = "1137e2bb-bdf9-4876-b572-f29b7de5e595"
-VERSION = "1137e2bb-2026-11-01.1"  # task-specification version (gold-first fixes of 2026-11-01: total-column synonyms, annotation rows, summary fallback)
+VERSION = "1137e2bb-2026-11-01.2"  # .1: gold-first fixes (total-column synonyms, annotation rows, summary fallback); .2: rubric 9 numeric-format rule, annotation rows with quantity sums (human decisions 2026-11-01)
 D_ITEMS = [1, 2] + [i for i in range(3, 23) if i != 11] + [25, 26] + list(range(31, 63))
 J_ITEMS = [11, 23, 24, 27, 28, 29, 30]
 CRITICAL = {"C1": {"items": [5, 6, 7, 8, 18, 19, 20] + list(range(31, 56)), "name": "Line flags"},
@@ -158,18 +158,26 @@ def _norm(s) -> str:
     return t.rstrip(":?").strip()
 
 
+COERCIBLE_TRUE = ("1", "1.0", "true", "yes", "y")
+COERCIBLE_FALSE = ("0", "0.0", "false", "no", "n")
+
+
 def _flag(v):
+    """(value, form) of a flag cell. Numeric 0/1 -> (0/1, "numeric"): the format rubric 9 requires. An unambiguous
+    boolean or textual representation (TRUE/FALSE, Yes/No, Y/N, the text "1"/"0") -> (0/1, "coerced"): the logic items
+    (5-8, 15-20, 31-55) read it as its value, item 9 fails it as a format violation (human decision 2026-11-01).
+    Anything else (an "x" mark, words, other numbers) -> (None, None): not a flag value."""
     if isinstance(v, bool):
-        return int(v)
+        return int(v), "coerced"
     if isinstance(v, (int, float)) and not (isinstance(v, float) and not math.isfinite(v)) and v in (0, 1):
-        return int(v)
+        return int(v), "numeric"
     if isinstance(v, str):
-        s = v.strip().lower()
-        if s in ("1", "true", "yes", "y", "x", "error", "mismatch", "1.0"):
-            return 1
-        if s in ("0", "false", "no", "n", "ok", "none", "0.0"):
-            return 0
-    return None
+        s_ = v.strip().lower()
+        if s_ in COERCIBLE_TRUE:
+            return 1, "coerced"
+        if s_ in COERCIBLE_FALSE:
+            return 0, "coerced"
+    return None, None
 
 
 def _num(v):
@@ -258,8 +266,15 @@ def flag_cell(cell: dict) -> tuple[str, object]:
     st, v = cell["status"], cell["value"]
     if st != "ok":
         return st, v
-    f = _flag(v)
+    f, _form = _flag(v)
     return ("ok", f) if f is not None else ("non_binary", v)
+
+
+def flag_form(cell: dict) -> str | None:
+    """'numeric' (0/1 as a number), 'coerced' (boolean or textual representation read as 0/1) or None."""
+    if cell["status"] != "ok":
+        return None
+    return _flag(cell["value"])[1]
 
 
 def describe_cell(kind: str, value) -> str:
@@ -474,10 +489,15 @@ def parse_rows(sheet: dict, table: dict, reference_lines: list[dict]) -> dict:
     are exact decimals. Row classes: identified (PO, SKU, quantity resolved to one entity),
     unidentified (source data present but identity unresolved: unparseable or blank id, ambiguous
     entity, unresolved quantity), no_id (no source-field data at all, or an annotation row: a blank
-    quantity cell and blank business cells, whatever text the id cells hold - footer TOTAL rows,
-    Excel subtotal rows such as "PO1001 Total", legends and notes; gold-derived layout evidence of
-    2026-11-01). An annotation row is never a business row: it is not summed, not matched and never
-    counted as a row that could hold a missing input line."""
+    quantity cell and blank business cells whatever the id cells hold, or no cell that parses as an id
+    together with blank price and UOM cells - footer TOTAL rows, including one that sums the quantity
+    column, Excel subtotal rows such as "PO1001 Total", legends and notes; gold-derived layout evidence
+    of 2026-11-01). An annotation row is never a business row: it is not summed, not matched and never
+    counted as a row that could hold a missing input line. A row that carries business data but whose
+    identity cannot be resolved (a blank or unparseable id with prices present, an unresolved quantity)
+    stays ``unidentified``: it is a delivered row (it counts in the column sums of 18-20), it may hold
+    a missing input line (so the row-set items become cannot_assess rather than FAIL), and it never
+    matches a named line."""
     m = table["mapping"]
     cols = m["cols"]
     ref_ids, collisions = reference_ids(reference_lines)
@@ -517,7 +537,9 @@ def parse_rows(sheet: dict, table: dict, reference_lines: list[dict]) -> dict:
             else:
                 units = {"status": units_cell["status"], "value": None}
         source_present = any(cells[f]["status"] != "empty" for f in SOURCE_FIELDS if f in cells)
-        annotation = units_cell is not None and units_cell["status"] == "empty" and all(cells[f]["status"] == "empty" for f in BUSINESS_FIELDS if f in cells)
+        ids_absent = all(ids[k]["status"] != "ok" for k in ("po", "sku"))  # no cell parses as an id (blank, a label such as "Total", "PO1001 Total", a note)
+        prices_absent = all(cells[f]["status"] == "empty" for f in ("entered", "expected", "uom") if f in cells)
+        annotation = (units_cell is not None and units_cell["status"] == "empty" and all(cells[f]["status"] == "empty" for f in BUSINESS_FIELDS if f in cells)) or (ids_absent and prices_absent)
         if ids["po"]["status"] == "ok" and ids["sku"]["status"] == "ok" and units["status"] == "ok" and ids["po"]["entity_status"] != "ambiguous_entity" and ids["sku"]["entity_status"] != "ambiguous_entity":
             cls, reason = "identified", None
         elif not source_present:
@@ -1069,7 +1091,7 @@ def run_checks(extraction: dict, reference: dict, rubric: list[dict], integrity:
             results[8] = d.result("total = price flag + case flag on every row")
             d = _Decision(9, ev_base)
             _apply_column_dependencies(d, DEPENDENCIES[9], dep)
-            bad = []
+            bad, fmt = [], []
             for t, r in business_rows:
                 for f in FLAG_FIELDS:
                     if not mapped(f):
@@ -1079,10 +1101,15 @@ def run_checks(extraction: dict, reference: dict, rubric: list[dict], integrity:
                         d.cell(f, st, v, coord_of(t, r, f), r["excel_row"], recalc_status)
                     elif st != "ok":
                         bad.append({"row": r["excel_row"], "cell": coord_of(t, r, f), "value": v, "kind": st})
+                    elif flag_form(r["cells"][f]) == "coerced":  # rubric 9 requires numeric 0/1: a boolean or textual representation is a format violation here only
+                        fmt.append({"row": r["excel_row"], "cell": coord_of(t, r, f), "value": r["cells"][f]["value"]})
             if bad:
                 d.violation("non_binary_flag", f"{len(bad)} flag cell(s) blank or not 0/1, e.g. {[b['cell'] for b in bad[:5]]}", cells=[b["cell"] for b in bad[:10]])
-            d.deliverable = bad[:10] or None
-            results[9] = d.result("both flags binary (0/1) on every row")
+            if fmt:
+                d.violation("non_numeric_flag_format", f"{len(fmt)} flag cell(s) hold a boolean or textual representation instead of numeric 0/1 (format of rubric 9; read as their value by the logic items), e.g. {[(x['cell'], x['value']) for x in fmt[:5]]}",
+                            cells=[x["cell"] for x in fmt[:10]], count=len(fmt))
+            d.deliverable = (bad[:10] + fmt[:10]) or None
+            results[9] = d.result("both flags numeric 0/1 on every row")
             # item 10: no error values in the added columns (confirmed invalid -> FAIL; unrecalculated cells -> unassessable, both kept)
             d = _Decision(10, ev_base)
             _apply_column_dependencies(d, DEPENDENCIES[10], dep)

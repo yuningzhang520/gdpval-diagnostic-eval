@@ -1,12 +1,12 @@
 {
  "task_id": "1137e2bb-bdf9-4876-b572-f29b7de5e595",
  "graded_at": "2026-11-01",
- "grader_version": "engine-2026-11-01.1+1137e2bb-2026-11-01.1",
+ "grader_version": "engine-2026-11-01.1+1137e2bb-2026-11-01.2",
  "gold_files_sha256": {
   "Deliverable PO Entry audit.docx": "002e62a5d58aa419ce9ad4fa0688100cb5699da85a0c4e910f276cad6bd65c3e",
   "PO_Order_Entry_Audit.xlsx": "2239d1e20a2ba14da07f35a45950467bdd099c8ae465fdb105e44ca318df4070"
  },
- "note": "result on the expert deliverables after the evidence-backed grader fixes of 2026-11-01 (GOLD_FIRST_REPORT.md)",
+ "note": "result on the expert deliverables after the evidence-backed grader fixes of 2026-11-01 (GOLD_FIRST_REPORT.md); unchanged under task version .2 (rubric 9 format rule, annotation rows): the expert workbook uses numeric 0/1 flags",
  "no_recalc_path": {
   "verdicts": {
    "1": "pass",

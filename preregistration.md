@@ -726,10 +726,31 @@ equality, so float noise is not a mismatch; counts exact.
   Result after the fixes: 54 pass, 1 fail (21), 0 `cannot_assess`; C1 pass, C2 pass,
   C3 not confirmed (judge items pending); identical through the LibreOffice path. The
   catalog (24 rubric-relevant corruptions, 20 neutral transformations) and the two
-  recalculation-path cases land exactly on their declared maps. Open interpretation,
-  not decided and not pinned: whether textual booleans (Yes/No, TRUE/FALSE) in the flag
-  columns satisfy rubric 9 ("binary (0 or 1)"); the implementation currently accepts
-  them as 1/0 for items 5–8 and 9 (section 4).
+  recalculation-path cases land exactly on their declared maps.
+- Rubric 9 format rule (DECIDED by the human 2026-11-01; grader 1137e2bb-2026-11-01.2).
+  Item 9 ("flags are binary (0 or 1) across all rows") requires numeric 0/1: Excel
+  booleans TRUE/FALSE, Yes/No and the text "0"/"1" fail its format requirement. Items
+  5–8, 15–20 and 31–55 evaluate semantics independently and read an unambiguous
+  representation (TRUE/FALSE, Yes/No, Y/N, the text "1"/"0") as its value, so a format
+  failure never cascades into a business-rule failure. Anything else ("x" marks, words,
+  other numbers) is not a flag value and a blank stays a confirmed invalid flag (cell-value
+  rule). Superseded implementation: "x", "error", "mismatch" read as 1 and "ok", "none" as 0
+  for every item, and no format distinction existed. Regressions: gold variants R25–R28.
+- Business-row population rule (verified 2026-11-01; grader 1137e2bb-2026-11-01.2). Rows
+  below the header are `identified` (PO, SKU and quantity resolved to one input entity),
+  `unidentified` (business data present but identity unresolved: blank or unparseable id,
+  reference collision, unresolved quantity) or `no_id` (no source data, or an annotation
+  row: blank quantity with blank business cells, or no parseable id with blank prices and
+  UOM - footer TOTAL rows including one that sums the quantity column, Excel subtotal rows,
+  legends, notes). An identified row that matches no input line is an extra row and a
+  missing input line is a missing row: both fail C1 through 5 and 6. An unidentified row is
+  a delivered row: it counts in the column sums of 18–20 and in the reconciliation 15–17,
+  it may hold a missing input line (the row-set items are `cannot_assess`, attribution
+  unknown, never FAIL on its account), and it never matches a named line. Annotation rows
+  are never business rows. Regressions: gold variants N02–N04, N21, R17, R29.
+- Rubric-valid grouped SKU roll-up with PO-level drill-down (one row per SKU with the three
+  measures, PO rows beneath, grand total, sorted, filterable): graded like the expert
+  pivot (gold variant R30, neutral).
 
 ### 2.5 `c3525d4d-2012-45df-853e-2d2a0e902991` — Holiday floor-stand budget (Order Clerks)
 Inputs: `Email Trail Floorstands.docx` (base 5.65; side panels 2.24 × 2; shelf strips
@@ -1126,11 +1147,9 @@ Requirement layers (APPROVED 2026-10-30):
 
 ## 4. Decisions still needed from the human before freeze
 
-- 2026-11-01, `1137e2bb…` rubric 9 and 5–8: textual booleans in the flag columns
-  (Yes/No, TRUE/FALSE, "x") are currently accepted as 1/0. Proposed rule: accept Excel
-  booleans TRUE/FALSE and the literal 1/0 as binary for item 9; accept Yes/No and
-  TRUE/FALSE for the logic items 5–8; record any other text as a confirmed non-binary
-  value. Not applied; the current behaviour is unchanged until decided.
+- 2026-11-01, `1137e2bb…` rubric 9 and 5–8: DECIDED the same day (rule recorded in
+  section 2.4: item 9 numeric 0/1 only; 5–8 and 18–20 coerce unambiguous representations;
+  no cascade).
 
 1. Critical criteria: closed. 17 of the 18 criteria listed as PENDING were APPROVED on
    2026-10-30 as written (f841ddcf C3–C5; 47ef842d C1, C4; 1137e2bb C1, C3; c3525d4d
