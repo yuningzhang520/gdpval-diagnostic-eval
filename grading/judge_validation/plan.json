@@ -1,0 +1,90 @@
+{
+ "pass": "judge-validation-pass-1",
+ "created_at": "2026-11-01T21:21:17+00:00",
+ "model": "google/gemini-3.1-pro-preview",
+ "settings": {
+  "temperature": 1.0,
+  "max_tokens": 16384,
+  "max_retries": 3,
+  "reasoning_effort": "high"
+ },
+ "prompt_sha256": "1de955e607e16bd8d236469603bde099b3d309a885be170c21d7e759c57487b5",
+ "ceiling_usd": 15,
+ "concurrency": 1,
+ "repeats": 0,
+ "freeze_tag": "v1-calibration-freeze",
+ "authorization_ref": "docs/status.md decision 2026-11-01: Judge Validation authorized (one pass, frozen judge, separate ledger, 15 USD, concurrency 1, Dev project key)",
+ "order": [
+  {
+   "task_id": "a45bc83b-22f9-4def-8d89-9c5661b2b86f",
+   "run_uuid": "3gTajbGyyepRqcJBy7oUf7",
+   "judge_items": 60,
+   "reservation_usd": "7.06",
+   "dev_pass1_provider_usd": "2.351154"
+  },
+  {
+   "task_id": "c357f0e2-963d-4eb7-a6fa-3078fe55b3ba",
+   "run_uuid": "GnjmsoZZjfwGLUHNQxGpUU",
+   "judge_items": 54,
+   "reservation_usd": "6.11",
+   "dev_pass1_provider_usd": "2.034712"
+  },
+  {
+   "task_id": "7d7fc9a7-21a7-4b83-906f-416dea5ad04f",
+   "run_uuid": "XS29wn5pQJWyBtuczPe7yk",
+   "judge_items": 14,
+   "reservation_usd": "2.19",
+   "dev_pass1_provider_usd": "0.728216"
+  },
+  {
+   "task_id": "7b08cd4d-df60-41ae-9102-8aaa49306ba2",
+   "run_uuid": "BvogL7ZxkE4LvBejswLXVa",
+   "judge_items": 14,
+   "reservation_usd": "1.34",
+   "dev_pass1_provider_usd": "0.445484"
+  },
+  {
+   "task_id": "f841ddcf-2a28-4f6d-bac3-61b607219d3e",
+   "run_uuid": "8ekTJzpS95g8zy4MpW4sWa",
+   "judge_items": 7,
+   "reservation_usd": "0.61",
+   "dev_pass1_provider_usd": "0.202582"
+  },
+  {
+   "task_id": "1137e2bb-bdf9-4876-b572-f29b7de5e595",
+   "run_uuid": "JVHsgt8jf5sx7v5sJAbxuN",
+   "judge_items": 7,
+   "reservation_usd": "0.54",
+   "dev_pass1_provider_usd": "0.178324"
+  },
+  {
+   "task_id": "2ea2e5b5-257f-42e6-a7dc-93763f28b19d",
+   "run_uuid": "oGwLGtgqut7B9dmZdEcGrS",
+   "judge_items": 4,
+   "reservation_usd": "0.30",
+   "dev_pass1_provider_usd": "0.025898"
+  },
+  {
+   "task_id": "47ef842d-8eac-4b90-bda8-dd934c228c96",
+   "run_uuid": "bY3Wr3GkCHGQhDvFcoKsxZ",
+   "judge_items": 1,
+   "reservation_usd": "0.30",
+   "dev_pass1_provider_usd": "0.009102"
+  },
+  {
+   "task_id": "c3525d4d-2012-45df-853e-2d2a0e902991",
+   "run_uuid": "EqobVyTHJRFCGDErk3PFv5",
+   "judge_items": 5,
+   "reservation_usd": "0.30",
+   "dev_pass1_provider_usd": "0.091124"
+  },
+  {
+   "task_id": "b5d2e6f1-62a2-433a-bcdd-95b260cdd860",
+   "run_uuid": "a6r3d7JbVeqHqyUcEZFKRM",
+   "judge_items": 0,
+   "reservation_usd": "0",
+   "dev_pass1_provider_usd": "0.000000"
+  }
+ ],
+ "judge_units": 166
+}

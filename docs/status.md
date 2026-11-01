@@ -4076,6 +4076,75 @@ Judge Dev Pass 2 (targeted; plan `grading/judge_dev/pass2_plan.json`):
 - Ceiling 1 USD within the Judge Dev aggregate; output to `dev/grading_v1/`.
 - Runs after this commit.
 
+## Judge Dev Pass 2, per-call judge pricing, and the V1 calibration freeze (2026-11-01; tag `v1-calibration-freeze`)
+
+Judge Dev Pass 2 (plan `grading/judge_dev/pass2_plan.json`, commit e2208d3):
+- One re-judge of `2ea2e5b5…` `PTD5aFkm…` with evidence builder .3 into `dev/grading_v1/PTD5aFkm…/` (pass
+  `pass-20261101T211538618027Z-8ad3`).
+- 4 of 4 calls ok, 0.031366 USD; Judge Dev ledger 11.636271 USD of 30.
+- Against the saved labels: items 57 and 59 agree (2/2). Items 58 and 60 also pass.
+- Dev judge agreement:
+  - first pass (Pass 1): 4/6, the independent figure;
+  - after the builder fix: 6/6, a post-hoc calibration check, not an independent estimate.
+- The shared prompt was not changed. No human label gave evidence against it: every disagreement traced to the
+  evidence excerpt. The `c357f0e2…` AI QA judge leads remain recorded leads.
+
+Judge cost accounting (harness, for Codex Review 2):
+- `ProviderJudge.batch_result()` now returns each call's usage, and `PilotLauncher.run_judge_batch` settles judge batches
+  call by call (`calls_by_model`, `scope.same_sample`), so a call is priced at the long-context tier only when its own
+  prompt exceeds 200k tokens.
+- Before, the summed prompt of a batch was priced at the long tier. Dev examples, ledger against provider: `a45bc83b…`
+  4.45 against 2.35 USD, `c357f0e2…` 3.83 against 2.03 USD. The Judge Dev settlements stay as recorded.
+- The per-call guards keep the long-context worst case.
+- Test: `JudgeBatchSettlementTests.test_judge_batch_with_per_call_usage_is_tiered_call_by_call`.
+
+V1 calibration freeze (the shared judge once, every task's V1 grader and evidence builder; before any Validation output
+is revealed):
+- Record: `grading/freeze/v1_manifest.json`. It holds the engine and task versions, the judge model, settings and
+  prompt SHA-256, and the SHA-256 of the 57 grading and harness source files and of `config.json`.
+- `python -m grading.freeze_manifest verify` checks the record against the code.
+- Shared judge: `google/gemini-3.1-pro-preview`, temperature 1.0, max_tokens 16,384, max_retries 3, reasoning_effort
+  high, prompt SHA-256 `1de955e607e16bd8d236469603bde099b3d309a885be170c21d7e759c57487b5` (unchanged since Pass 1).
+- Engine and task versions:
+
+  | Component | Version |
+  |---|---|
+  | engine | `engine-2026-11-01.6` |
+  | `1137e2bb…` | .3 |
+  | `2ea2e5b5…` | .3 |
+  | `47ef842d…` | .2 |
+  | `7b08cd4d…` | .3 |
+  | `7d7fc9a7…` | .7 |
+  | `a45bc83b…` | .3 |
+  | `b5d2e6f1…` | .2 |
+  | `c3525d4d…` | .5 |
+  | `c357f0e2…` | .3 |
+  | `f841ddcf…` | .2 |
+
+  Each evidence builder carries its task's version.
+- `config.json` `judge.status` is FROZEN. `judge.validation` records the human's authorization: one pass, separate
+  ledger, 15 USD, concurrency 1, no repeat, Dev project key.
+- The tag `v1-calibration-freeze` is local and not pushed. It is distinct from `freeze-v1`, the formal freeze after
+  Codex Review 2.
+- Validation is graded once per frozen version and is never used to tune V1. Any later grader change is a new
+  version, its regression re-grades are not held-out Validation, and both candidates get the same re-grade.
+
+Judge Validation runner `grading.judge_validation`, plan `grading/judge_validation/plan.json`:
+- 166 judge units over nine runs. `b5d2e6f1…` has no judge items and is graded deterministically.
+- Order: largest first.
+- Reservations: 3x the same task's Dev Pass 1 provider cost, at least 0.30 USD.
+- Gates before the first call:
+  - the plan is committed;
+  - `grading/`, `harness/` and `config.json` are identical to the tag, with no uncommitted change;
+  - the manifest verifies.
+- Every call is guarded at its long-context worst case against the 15 USD ceiling, with the Dev key suffix checked.
+- No verdict is printed.
+- Tests: `grading/tests/test_judge_validation.py`.
+
+Pre-freeze tests (logs `logs/v1-freeze-20261101/`):
+- Grading suite: 426 tests, 5 skipped, 121.97 s, rc 0.
+- Harness modules via `run_isolated.sh`: 14 modules, 215 tests, all OK, 51 s.
+
 ## Known issues and findings (material check)
 
 - `rubric_json.form_content`: 8,036 items hold `null`, 2,417 items lack the key, zero
@@ -4130,8 +4199,9 @@ Judge Dev Pass 2 (targeted; plan `grading/judge_dev/pass2_plan.json`):
 
 - Gemini generation complete (Dev and Validation 10 of 10); Validation outputs stay sealed.
 - Dev labels saved and compared (4/6); Dev calibration of all ten tasks done.
-- Next: Judge Dev Pass 2 (`2ea2e5b5…`, 4 calls), then the shared judge freeze and the per-task V1 freeze, then the
-  Validation reveal and Judge Validation (authorized, 15 USD ceiling).
+- Judge Dev Pass 2 done; V1 calibration frozen (tag `v1-calibration-freeze`).
+- Next: the Validation reveal and Judge Validation (one pass, 15 USD ceiling), then the 10 verdict-free Validation
+  packets.
 
 ## Decisions taken (date · what · commit)
 
@@ -4469,7 +4539,8 @@ Judge Dev Pass 2 (targeted; plan `grading/judge_dev/pass2_plan.json`):
 - 2026-11-01 · engine .5 (xlsx media parts) and `47ef842d…` grader .2 (OOS header, picture chart) · 29fdaaa
 - 2026-11-01 · `1137e2bb…` grader .3 (summary measures, workbook pivots, variance headers) · 8e6ad63
 - 2026-11-01 · `c357f0e2…` grader .3 (edge case is not the Edge browser) · 146ce2a
-- 2026-11-01 · Dev labels checkpointed and compared (4/6); labelled-task calibration (`2ea2e5b5…` .3, `f841ddcf…` .2, `a45bc83b…` .3, engine .6); rubric decisions R-2.7-11, R-2.7-21 (`7d7fc9a7…` .7), R-2.5-27 (`c3525d4d…` .5); Judge Dev Pass 2 plan · (this commit)
+- 2026-11-01 · Dev labels checkpointed and compared (4/6); labelled-task calibration (`2ea2e5b5…` .3, `f841ddcf…` .2, `a45bc83b…` .3, engine .6); rubric decisions R-2.7-11, R-2.7-21 (`7d7fc9a7…` .7), R-2.5-27 (`c3525d4d…` .5); Judge Dev Pass 2 plan · e2208d3
+- 2026-11-01 · Judge Dev Pass 2 (`2ea2e5b5…`, 4 calls, 0.031 USD; 57 and 59 now agree); per-call judge pricing; V1 calibration freeze (shared judge + all task V1, `grading/freeze/v1_manifest.json`, tag `v1-calibration-freeze`); Judge Validation runner and plan · (this commit)
 
 ## Next stage (not started)
 

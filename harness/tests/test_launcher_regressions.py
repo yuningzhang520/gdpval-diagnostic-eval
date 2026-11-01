@@ -588,6 +588,23 @@ class JudgeBatchSettlementTests(_Base):
         self.assertEqual((snap["settled_usd"], snap["resolved_units"], snap["review_pending_units"]), ("4.914000", ["j1"], ["j2"]))  # 0.41 + 0.004 + 0.50 + 4.00
         self.assertEqual([e["type"] for e in self.entries(ledger)], ["reservation", "settlement", "manual_resolution", "manual_resolution", "reservation", "settlement", "reservation", "settlement", "reservation", "settlement", "stop"])
 
+    def test_judge_batch_with_per_call_usage_is_tiered_call_by_call(self):
+        """Judge calls each below the long-context threshold are priced at the standard tier even when their summed prompt
+        exceeds it (the provider tiers each request); without per-call usage the aggregate stays conservative."""
+        launcher, ledger = self.make(100, None)
+        prices = L.prices_from_config(cfg())
+        judge = next(m for m, p in prices.items() if p.get("long_context"))
+        launcher.ledger.prices[judge] = prices[judge]
+        one = {"input_tokens": 150_000, "output_tokens": 1_000, "cache_read_tokens": 0, "cache_write_tokens": 0}
+        agg = {k: 2 * v for k, v in one.items()}
+        per_call = {"usage": {judge: agg}, "retries": {}, "usage_incomplete": False, "note": "2 calls", "calls_by_model": {judge: [one, one]}}
+        r = launcher.run_judge_batch(unit_id="jpc", estimate_usd=Decimal("5"), batch_fn=lambda: per_call)
+        std = 2 * (Decimal(str(prices[judge]["input"])) * Decimal("0.15") + Decimal(str(prices[judge]["output"])) * Decimal("0.001"))
+        self.assertEqual(Decimal(r["settlement"]["cost_usd"]), std)
+        r2 = launcher.run_judge_batch(unit_id="jagg", estimate_usd=Decimal("5"), batch_fn=lambda: {**per_call, "calls_by_model": {}})  # no per-call usage: conservative aggregate
+        self.assertGreater(Decimal(r2["settlement"]["cost_usd"]), std)
+        self.assertFalse(r["settlement"]["manual_review_required"])
+
     def test_open_reservation_of_another_unit_blocks_new_paid_starts(self):
         """B2-1: a reservation never settled, voided or resolved (an earlier process died) refuses every new paid unit
         before any call; a void or a verified-amount resolution releases it; the unit's own idempotent reservation is fine."""

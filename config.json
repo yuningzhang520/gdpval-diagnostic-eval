@@ -1260,7 +1260,15 @@
     "max_retries": 3,
     "reasoning_effort": "high",
     "prompt_sha256": "1de955e607e16bd8d236469603bde099b3d309a885be170c21d7e759c57487b5",
-    "status": "APPROVED 2026-11-01 by the human (chat) for Judge Dev calibration only: model google/gemini-3.1-pro-preview, thinking HIGH (Inspect reasoning_effort 'high' -> ThinkingConfig(thinking_level=HIGH)), temperature 1.0, max_tokens 16,384 including thinking, Inspect max_retries 3, no other retry or backoff layer; nothing forwarded to google.genai; Dev outputs and the Dev project key (GOOGLE_API_KEY) only; never Validation or Formal",
+    "status": "FROZEN 2026-11-01 (shared judge freeze, tag v1-calibration-freeze; before the first Validation output was revealed): model google/gemini-3.1-pro-preview, thinking HIGH (Inspect reasoning_effort 'high' -> ThinkingConfig(thinking_level=HIGH)), temperature 1.0, max_tokens 16,384 including thinking, Inspect max_retries 3, no other retry or backoff layer; nothing forwarded to google.genai; the prompt is grading.judge.JUDGE_SYSTEM_PROMPT (prompt_sha256 below), unchanged since Judge Dev Pass 1. Earlier status: APPROVED 2026-11-01 for Judge Dev calibration only (Dev outputs, Dev project key). Validation: see 'validation'. Formal: not authorized",
+    "validation": {
+      "status": "APPROVED 2026-11-01 by the human (chat): one full pass over the ten Validation outputs with the frozen shared prompt and this configuration, executed only after the shared judge freeze and each task's V1 freeze; separate Judge Validation ledger; hard ceiling 15 USD; concurrency 1; no repeat pass or automatic whole-sample rerun; the Paid Tier Dev project key (GOOGLE_API_KEY); Validation judge verdicts hidden from the human until the corresponding Validation labels are saved",
+      "ceiling_usd": 15,
+      "ledger": "~/turing-eval-runs/judge_validation/ledger.json",
+      "concurrency": 1,
+      "repeats": 0,
+      "runner": "grading.judge_validation"
+    },
     "ceilings_usd": {
       "pass_1": 20,
       "judge_dev_aggregate": 30,

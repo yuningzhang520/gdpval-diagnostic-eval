@@ -740,7 +740,11 @@ class ProviderJudge:
         """What run_judge_batch settles: accumulated usage, retries (unobservable: empty), and whether any
         call's usage is missing or uncertain (then the ledger never prices the known part alone)."""
         statuses = [c["status"] for c in self.calls]
+        # per-call usage of this batch (the aggregate is exactly their sum): the ledger tiers each call by its own prompt
+        # size, as the provider bills, instead of pricing the summed prompt at the long-context tier
+        per_call = [dict(c["usage"]) for c in self.calls if c.get("usage")]
         return {"usage": self.usage_by_model, "retries": self.retries_by_model, "usage_incomplete": self.usage_incomplete, "calls": len(self.calls),
+                "calls_by_model": {self.model_name: per_call} if per_call else {},
                 "calls_ok": statuses.count("ok"), "calls_provider_error": statuses.count("provider_error"), "calls_not_attempted": statuses.count("not_attempted"),
                 "calls_usage_missing_or_uncertain": sum(1 for c in self.calls if c.get("usage_status") in ("missing", "uncertain")), "halted": self.halted,
                 "note": f"{len(self.calls)} judge call(s): {statuses.count('ok')} ok, {statuses.count('provider_error')} provider_error, {statuses.count('not_attempted')} not_attempted, "

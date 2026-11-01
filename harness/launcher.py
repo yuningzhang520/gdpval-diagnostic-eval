@@ -829,15 +829,21 @@ class PilotLauncher:
             settlement = self.ledger.settle(unit_id, known, note=note, estimated=True, fallback_to_reservation=not known, incomplete=True)
             self._after_unit(unit_id=unit_id, settlement=settlement, estimate_usd=estimate_usd)
             raise
-        if isinstance(result, dict):  # ProviderJudge.batch_result(): usage, retries, usage_incomplete, note
+        calls_by_model = None
+        if isinstance(result, dict):  # ProviderJudge.batch_result(): usage, retries, usage_incomplete, note, per-call usage
             usage, retries, incomplete, note = result.get("usage") or {}, result.get("retries") or {}, bool(result.get("usage_incomplete")), str(result.get("note") or "")
+            calls_by_model = result.get("calls_by_model") or None
         else:
             usage, retries = result
             incomplete, note = False, ""
         # Approved policy (2026-10-31): incomplete usage -> the ledger settles at max(priced known part, reservation), estimated,
         # with a persistent hold (one rule, in BudgetLedger.settle); the known usage stays in the settlement and the call log.
+        # Per-call usage of the same batch (its sum is the aggregate) is priced call by call, so the long-context tier
+        # applies only to a call whose own prompt exceeds the threshold; a conflict between the two sources settles at the
+        # larger figure with a hold (BudgetLedger.settle).
         settlement = self.ledger.settle(unit_id, usage, retries_by_model=retries, note=f"judge batch {note}".strip() + ("; usage incomplete" if incomplete else ""),
-                                        fallback_to_reservation=not usage, incomplete=incomplete)
+                                        fallback_to_reservation=not usage, incomplete=incomplete, calls_by_model=calls_by_model,
+                                        scope={"same_sample": True, "source": "per-call usage of this judge batch"} if calls_by_model else None)
         post = self._after_unit(unit_id=unit_id, settlement=settlement, estimate_usd=estimate_usd)
         return {"unit_id": unit_id, "settlement": settlement, "post_run": post, "ledger_after": self.ledger.snapshot(), "usage_incomplete": incomplete, "batch_note": note}
 
