@@ -5558,6 +5558,43 @@ Deadline exception:
   and no request was open, so it ended the sleeping worker and resumed the same pass on `GOOGLE_API_KEY_JUDGE` (PID
   58533): `pass_resume`, then `project_switch`.
 
+## Formal judge complete; labels saved and revealed; results in the report (2026-11-02)
+
+Formal judge:
+- Complete at 12:55:28Z (`pass_end`, 20 runs judged).
+- The second project's 250/day quota was reached during Opus `a45bc83b…`. The same pass continued on the third project:
+  the recovery of the 27 remaining items, 27/27 ok, then GPT `a45bc83b…`, 61/61 ok.
+- 330 of 332 judge items have a verdict (299 pass, 30 fail, 1 `cannot_assess`). Two are `invalid_judge_output`, both
+  Opus. No provider error.
+- Ledger: 12.079453 USD settled of 30 USD, of which 1.665296 USD is estimated; no hold or stop.
+
+Formal labels:
+- 20/20 valid (19 pass, 1 fail), saved by `formal/tooling/formal_labels.py save`.
+- Checkpoint `labeling/formal-v4-checkpoint/checkpoint.json`, read-only, SHA-256
+  `308771dd1f308ded222992eb2a1b947bb47b9f6eb5e7a16e985c8f356aabdb19`, 2026-11-02T12:48:10Z.
+
+Reveal (`labeling/formal-v4-reveal/`): `candidate_a` = Opus, `candidate_b` = GPT.
+- Agreement with the frozen graders: 17/20.
+  - Deterministic 8/10 (Opus 4/5, GPT 4/5).
+  - Judge 9/10, provisional (Opus 5/5, GPT 4/5).
+  - Nothing excluded.
+- Disagreements:
+  - F06, GPT `1137e2bb…` item 23: judge pass, human fail.
+  - F15 and F16, `c3525d4d…` item 27, both candidates: deterministic fail ("no revised per-unit cost shown"), human
+    pass. A grader false-fail pattern; the original verdicts are kept and no grader change is made.
+
+Verification list: `labeling/formal-v4-reveal/VERIFY.md` and `verification_list.json`.
+- 21 critical FAILs: Opus 7, GPT 14. They are automated and await the human's verification.
+- The visual-review case is `a45bc83b…` C3 Diagram (items 4 and 26-30, human-only), `not_confirmed` for both.
+- `47ef842d…` C4 Chart fails for both candidates, but both workbooks contain native charts: a possible grader issue to
+  verify.
+
+Results: `formal/tooling/formal_results.py` produces `formal/results_summary.json`, and report section 7 is filled
+from it.
+- Totals: Opus P/E 0.874 at E/W 0.873; GPT P/E 0.830 at E/W 0.856.
+- Low-coverage runs are grader extraction limits: Opus `7d7fc9a7…` vendor columns, GPT `2ea2e5b5…` slide sections.
+- Failure-taxonomy conclusions wait for the human's verification of the critical FAILs.
+
 ## Known issues and findings (material check)
 
 - `rubric_json.form_content`: 8,036 items hold `null`, 2,417 items lack the key, zero

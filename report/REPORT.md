@@ -61,10 +61,10 @@ scores rubric criteria one by one (`PLAN.md` section 2).
 |---|---|
 | Formal generation | Complete: 20/20 samples. No hold, stop, limit event or engineering failure. 17.979211 USD settled (run-level metadata, not a quality result) |
 | Deterministic grading | 20/20 sealed deterministic-only passes at `freeze-v1-grading-deterministic` |
-| Formal judge pass | Launched 2026-11-02 11:57:25Z at `freeze-v1-grading` under a deadline exception, so its verdicts are provisional (section 8.2). {{PENDING: completion state, items judged, provider errors}} |
-| Formal blind labels (20) | Packets built. {{PENDING: label checkpoint timestamp and SHA-256}} |
-| Judge Validation agreement | Not yet measured. {{PENDING}} |
-| Independent recheck of V1.9 (`freeze-v1-grading`) | Not done (section 4.5) |
+| Formal judge pass | Complete: 20/20 runs judged, 11:57:25Z to 12:55:28Z at `freeze-v1-grading`. Second project to its 250/day quota, then the third project for the same pass. 330/332 judge items have a verdict; 2 `invalid_judge_output`, no provider error. 12.079453 USD settled of 30 (1.665296 USD estimated). Verdicts provisional (section 8.2) |
+| Formal blind labels (20) | Saved 2026-11-02T12:48:10Z, checkpoint SHA-256 `308771dd1f308ded222992eb2a1b947bb47b9f6eb5e7a16e985c8f356aabdb19`. Agreement with the frozen graders 17/20 (section 7.6) |
+| Judge Validation agreement | 3/3 judge-only items, debug-set item excluded; coverage 163/166 |
+| Independent recheck of V1.9 (`freeze-v1-grading`) | Done (Codex recheck 2). Closed by the human with its findings recorded as known limitations (section 8.2) |
 
 ---
 
@@ -659,53 +659,147 @@ Exemplar critical cases:
 
 ## 7. Results
 
-All values in this section are placeholders. Each figure, once filled in, must trace to a versioned `results.jsonl`
-or `grades.jsonl`, the selected pass id and `config.json`.
+Every figure below comes from the run's authoritative pass (`grading.run_grading.authoritative_selection` at `freeze-v1-grading`, `cc684ef`),
+summarised in `~/turing-eval-runs/formal/results_summary.json` with each run's `results.jsonl` / `grades.jsonl` and pass id. Results were
+unsealed only after the human's 20 formal labels were checkpointed (2026-11-02T12:48:10Z, SHA-256 `308771dd…`).
 
-### 7.1 Run inventory and deliverables
+**Status of these numbers.**
+- Judge-derived verdicts are **provisional** (deadline exception, section 8.2).
+- Every critical FAIL is an automated verdict **awaiting the human's verification**; none is a confirmed failure yet.
+- Items the graders could not evaluate are reported as not evaluated, never as FAIL.
 
-| Task | Opus 5.5: deliverables present / required | GPT-6.1 Sol: deliverables present / required | Wall time (Opus / GPT) |
-|---|---|---|---|
-| each of the 10 tasks | TBD (Formal results sealed) | TBD | {{FORMAL: from run_outcome / Inspect log}} |
+### 7.1 Run inventory
+
+- 20/20 samples completed with no limit event, hold, stop or engineering failure (`docs/status.md`).
+- Every unit was accepted by the unit gate and designated canonical.
+- {{PENDING: deliverables present / required and wall time per run}}
 
 ### 7.2 Scores per task and model
 
-| Task | Model | P/E | E/W | Ungraded items (reason: count) | Critical status (current) | Critical status (preregistered) | Judge completeness |
+P = points of the evaluated items that pass; E = evaluated weight; W = rubric weight; P/E = score on what could be evaluated; E/W = coverage.
+Models with different coverage are not ranked by P/E alone (`PLAN.md` section 2).
+
+| Task | Model | P / E / W | P/E | E/W | Not evaluated (reason: count) | Critical overall | Judge items with a verdict |
 |---|---|---|---|---|---|---|---|
-| each of the 10 tasks x 2 | | TBD (Formal results sealed) | TBD | TBD | TBD | TBD (differs only for `2ea2e5b5…`) | {{PENDING: complete / partial}} |
+| `b5d2e6f1…` | Opus 5.5 | 58 / 60 / 65 | 0.967 | 0.923 | visual (human review): 1 | pass | 0/0 |
+| `b5d2e6f1…` | GPT-6.1 Sol | 42 / 58 / 65 | 0.724 | 0.892 | extraction failed: 1, visual (human review): 1 | fail | 0/0 |
+| `f841ddcf…` | Opus 5.5 | 82 / 83 / 88 | 0.988 | 0.943 | visual (human review): 1 | pass | 7/7 |
+| `f841ddcf…` | GPT-6.1 Sol | 61 / 81 / 88 | 0.753 | 0.920 | extraction failed: 1, visual (human review): 1 | fail | 7/7 |
+| `47ef842d…` | Opus 5.5 | 82 / 92 / 99 | 0.891 | 0.929 | visual (human review): 3 | fail | 1/1 |
+| `47ef842d…` | GPT-6.1 Sol | 76 / 92 / 99 | 0.826 | 0.929 | visual (human review): 3 | fail | 1/1 |
+| `1137e2bb…` | Opus 5.5 | 60 / 79 / 80 | 0.759 | 0.988 | extraction failed: 1 | fail | 7/7 |
+| `1137e2bb…` | GPT-6.1 Sol | 75 / 77 / 80 | 0.974 | 0.963 | extraction failed: 1, no number bound to the price-mismatch ph: 1, conflicting case-pack counts [2, 10]; ro: 1 | not_confirmed | 7/7 |
+| `c3525d4d…` | Opus 5.5 | 52 / 75 / 86 | 0.693 | 0.872 | extraction failed: 3, visual (human review): 1 | fail | 5/5 |
+| `c3525d4d…` | GPT-6.1 Sol | 55 / 75 / 86 | 0.733 | 0.872 | extraction failed: 3, visual (human review): 1 | fail | 5/5 |
+| `7b08cd4d…` | Opus 5.5 | 62 / 83 / 89 | 0.747 | 0.933 | visual (human review): 2 | fail | 14/14 |
+| `7b08cd4d…` | GPT-6.1 Sol | 62 / 82 / 89 | 0.756 | 0.921 | visual (human review): 2, The excerpt only provides the high-level: 1 | fail | 14/14 |
+| `7d7fc9a7…` | Opus 5.5 | 36 / 39 / 95 | 0.923 | 0.411 | extraction failed: 30, visual (human review): 1 | fail | 14/14 |
+| `7d7fc9a7…` | GPT-6.1 Sol | 66 / 84 / 95 | 0.786 | 0.884 | extraction failed: 3, visual (human review): 1 | fail | 14/14 |
+| `2ea2e5b5…` | Opus 5.5 | 78 / 85 / 85 | 0.918 | 1.000 | none | fail (preregistered: fail) | 4/4 |
+| `2ea2e5b5…` | GPT-6.1 Sol | 28 / 30 / 85 | 0.933 | 0.353 | extraction failed: 33 | fail (preregistered: fail) | 4/4 |
+| `c357f0e2…` | Opus 5.5 | 92 / 95 / 101 | 0.968 | 0.941 | evidence must be a non-empty list for pa: 1, visual (human review): 1 | fail | 53/54 |
+| `c357f0e2…` | GPT-6.1 Sol | 89 / 96 / 101 | 0.927 | 0.950 | visual (human review): 1 | fail | 54/54 |
+| `a45bc83b…` | Opus 5.5 | 66 / 73 / 87 | 0.904 | 0.839 | visual (human review): 8, evidence must be a non-empty list for pa: 1 | not_confirmed | 59/60 |
+| `a45bc83b…` | GPT-6.1 Sol | 68 / 74 / 87 | 0.919 | 0.851 | visual (human review): 8 | not_confirmed | 60/60 |
+
+Totals over the 10 tasks (sum of P, E and W; not a capability estimate, section 8.2):
+
+| Model | P / E / W | P/E | E/W |
+|---|---|---|---|
+| Opus 5.5 | 668 / 764 / 875 | 0.874 | 0.873 |
+| GPT-6.1 Sol | 622 / 749 / 875 | 0.830 | 0.856 |
+
+Low coverage is a grader extraction limit, not a model result:
+- Opus `7d7fc9a7…`: 29 items where the grader could not identify the vendor column of the two schedule sheets.
+- GPT `2ea2e5b5…`: 33 items where it could not identify the time, strategic and margin sections in the slides.
 
 ### 7.3 Critical criteria (35 per candidate)
 
-| Criterion | Opus 5.5 | GPT-6.1 Sol | Human verification of each FAIL |
-|---|---|---|---|
-| each of the 35 criteria | TBD (Formal results sealed) | TBD | TBD |
+Automated status under the current definition (`2ea2e5b5…` also under the preregistered one; it is the same here). Human
+verification of every FAIL is pending (`~/turing-eval-runs/labeling/formal-v4-reveal/VERIFY.md`).
+
+| Task | Criterion | Opus 5.5 | GPT-6.1 Sol | Human verification of each FAIL |
+|---|---|---|---|---|
+| `b5d2e6f1…` | C1 Structure | pass | pass |  |
+| `b5d2e6f1…` | C2 Brand totals | pass | fail | pending |
+| `b5d2e6f1…` | C3 PivotTable | pass | fail | pending |
+| `b5d2e6f1…` | C4 ST% logic | pass | pass |  |
+| `f841ddcf…` | C1 June shipped total | pass | fail | pending |
+| `f841ddcf…` | C2 Auditable PO-level evidence | pass | fail | pending |
+| `f841ddcf…` | C3 Slipped cohort | pass | fail | pending |
+| `f841ddcf…` | C4 Row or account arithmetic | pass | fail | pending |
+| `f841ddcf…` | C5 Narrative consistency | pass | not_confirmed |  |
+| `47ef842d…` | C1 Scope | pass | pass |  |
+| `47ef842d…` | C2 Rate and WOS | pass | pass |  |
+| `47ef842d…` | C3 Out-of-stock | pass | pass |  |
+| `47ef842d…` | C4 Chart | fail | fail | pending |
+| `1137e2bb…` | C1 Line flags | pass | pass |  |
+| `1137e2bb…` | C2 SKU summary | fail | pass | pending |
+| `1137e2bb…` | C3 Word summary | pass | not_confirmed |  |
+| `c3525d4d…` | C1 Store reconciliation | pass | pass |  |
+| `c3525d4d…` | C2 Budget arithmetic | fail | fail | pending |
+| `c3525d4d…` | C3 Email consistency | pass | pass |  |
+| `7b08cd4d…` | C1 Withholding and net revenue | fail | fail | pending |
+| `7b08cd4d…` | C2 Expenses | pass | pass |  |
+| `7b08cd4d…` | C3 Net income | pass | pass |  |
+| `7d7fc9a7…` | C1 Completeness | not_confirmed | pass |  |
+| `7d7fc9a7…` | C2 1250 reconciliation | not_confirmed | fail | pending |
+| `7d7fc9a7…` | C3 1251 reconciliation | not_confirmed | fail | pending |
+| `7d7fc9a7…` | C4 Summary linkage | fail | not_confirmed | pending |
+| `2ea2e5b5…` | C1 Deck structure | pass | not_confirmed |  |
+| `2ea2e5b5…` | C2 Activity shares | pass | fail | pending |
+| `2ea2e5b5…` | C3 Classification | fail | not_confirmed | pending |
+| `c357f0e2…` | C1 Plan structure | pass | pass |  |
+| `c357f0e2…` | C2 Permission boundaries | pass | fail | pending |
+| `c357f0e2…` | C3 Module and negative coverage | fail | fail | pending |
+| `a45bc83b…` | C1 Deliverable set | pass | pass |  |
+| `a45bc83b…` | C2 Hard requirements met as an architecture, consistently | pass | pass |  |
+| `a45bc83b…` | C3 Diagram | not_confirmed | not_confirmed |  |
+
+Counts: Opus 5.5: {'pass': 24, 'fail': 7, 'not_confirmed': 4}; GPT-6.1 Sol: {'pass': 15, 'fail': 14, 'not_confirmed': 6}.
+- `not_confirmed`: a member item is not evaluated or awaits a human visual verdict. For `a45bc83b…` C3 Diagram, the
+  six diagram items are human-only visual items.
+- Two shared FAILs should be checked first, because both candidates fail them identically: `c3525d4d…` C2, whose item
+  27 the human labelled pass on both outputs, and `47ef842d…` C4, where both workbooks contain native charts that the
+  grader could not match to the five UPCs.
 
 ### 7.4 Capability profile
 
-Per task and capability class, with numerators and denominators and no pooled headline percentage
-(`preregistration.md` 1.17): TBD (Formal results sealed). {{PENDING: the capability-map approval status, section
-4.7}}
+{{PENDING: the capability-map approval status, section 4.7}}
 
 ### 7.5 Where the models fell short, and which gaps a dataset could close
 
-- {{FORMAL: gaps observed, by error class and task, with evidence}}
-- {{FORMAL: for each gap, whether better data could address it (evaluation, training or both), linked to the
-  proposals in `report/dataset_proposal.md`}}
+{{PENDING: written only after the human has verified the critical FAILs; no failure-taxonomy conclusion is drawn from unverified FAILs}}
 
 ### 7.6 Grader reliability on Formal outputs
 
-| Measure | Opus 5.5 | GPT-6.1 Sol |
-|---|---|---|
-| Human vs automated verdict on the 10 blind items (5 critical-member, 5 judge-only) | TBD (Formal results sealed) | TBD |
-| Judge items with an evidence-based verdict / 166 | TBD | TBD |
-| Judge infrastructure verdicts (`provider_error`, `not_run`, `invalid_judge_output`) | TBD | TBD |
-| Judge vs deterministic disagreements adjudicated | TBD | TBD |
-| Visual items evaluated / 18 | TBD | TBD |
+Human blind labels vs the frozen graders on the 20 sampled items: one item per task, the same item on both candidates,
+candidate identity hidden. There were no `cannot_assess`, `provider_error` or not-yet-judged items, so nothing was excluded.
+
+| Items | All | Opus 5.5 | GPT-6.1 Sol |
+|---|---|---|---|
+| Deterministic | 8/10 | 4/5 | 4/5 |
+| Judge (provisional) | 9/10 | 5/5 | 4/5 |
+| All | 17/20 | 9/10 | 8/10 |
+
+Disagreements:
+- F06, GPT-6.1 Sol, `1137e2bb…` item 23 (judge): human fail, grader pass.
+- F15, Opus 5.5, `c3525d4d…` item 27 (deterministic): human pass, grader fail.
+- F16, GPT-6.1 Sol, `c3525d4d…` item 27 (deterministic): human pass, grader fail.
+- F15 and F16 are a deterministic false-fail pattern: the grader found 18.69 × 1,320 = 24,670.80 but recorded "no revised
+  per-unit cost shown". The original verdicts are kept; the human labels are recorded alongside them.
+- F06 is a judgment difference on how much a "brief plain-language definition" of the case-pack check requires.
+
+Formal judge coverage (provisional): 330 of 332 judge items have a verdict (299 pass, 30 fail, 1 `cannot_assess`).
+- 2 are `invalid_judge_output`, both Opus; neither is counted as a fail.
+- Opus: 164/166 with a verdict. GPT: 166/166.
+- Visual items (18 per candidate) await human verdicts and are not evaluated.
 
 Context:
-- Dev judge agreement was 4/6 on the first pass.
-- Held-out Validation deterministic agreement was 4/6.
-- Judge Validation agreement: {{PENDING}}.
+- Dev judge agreement 4/6 on the first pass.
+- Held-out Validation deterministic agreement 4/6 (V1).
+- Judge Validation judge-only agreement 3/3, with the debug-set item excluded and all labels pass; Validation judge
+  coverage 163/166.
 
 ---
 
