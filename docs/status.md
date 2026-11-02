@@ -5331,6 +5331,62 @@ Judge findings status:
 - Tests: `test_judge_formal`, with a new multi-root and duplicate test, and the full grading suite (result in the
   commit message).
 
+## Formal generation complete; deterministic passes, designations, blind packets, Docker on `b7ce2db` (2026-11-02)
+
+Generation: 20 samples, one per task and candidate, finished 11:04:41Z.
+- Both workers exited 0.
+- Settled 17.979211 USD: Opus 5.5 14.900901, GPT-6.1 Sol 3.078310.
+- No hold, estimated settlement, stop, engineering failure or limit event.
+- All three ledgers are clean (no open reservation, hold or stop).
+
+| Task | Candidate | Run | Cost (USD) | Root |
+|---|---|---|---|---|
+| `b5d2e6f1…` | claude-opus-5-5 | `Mae4tizWVH2BiinB5zKQV2` | 1.493437 | `formal/runs` |
+| `b5d2e6f1…` | gpt-6.1-sol | `d5sypgfTdCCwfsFV9jdzLd` | 0.302156 | `formal/runs` |
+| `f841ddcf…` | claude-opus-5-5 | `hdDnxUR6sUhQD6PHLnhKSm` | 0.921411 | `formal/opus/runs` |
+| `f841ddcf…` | gpt-6.1-sol | `P8gA2U2jR7VzNWKqqdJ5SZ` | 0.181770 | `formal/gpt/runs` |
+| `47ef842d…` | claude-opus-5-5 | `LVyjBBcU4iFqDKviwY2YJz` | 1.115620 | `formal/opus/runs` |
+| `47ef842d…` | gpt-6.1-sol | `dPR5yvN9wEfcMyQiAC2njB` | 0.324796 | `formal/gpt/runs` |
+| `1137e2bb…` | claude-opus-5-5 | `iS5pLfPvTxhxxXScg7HXVw` | 1.677193 | `formal/opus/runs` |
+| `1137e2bb…` | gpt-6.1-sol | `mE6xrcKcirXrQgh4ugBfbE` | 0.243842 | `formal/gpt/runs` |
+| `c3525d4d…` | claude-opus-5-5 | `fAFHskFwVPcLzn89SuYaxv` | 0.687388 | `formal/opus/runs` |
+| `c3525d4d…` | gpt-6.1-sol | `SJbeNCc6EYF5dHerim5UD6` | 0.230607 | `formal/gpt/runs` |
+| `7b08cd4d…` | claude-opus-5-5 | `KU4bWmuqsWUUbkTXEu9Fpj` | 0.917356 | `formal/opus/runs` |
+| `7b08cd4d…` | gpt-6.1-sol | `hX4B29t5iE2v3rFKMtqWqz` | 0.267212 | `formal/gpt/runs` |
+| `7d7fc9a7…` | claude-opus-5-5 | `czgd84YmwwTZzDpVKD5vhD` | 1.673360 | `formal/opus/runs` |
+| `7d7fc9a7…` | gpt-6.1-sol | `FDVJTwSvqDJFQj6JyTpkHY` | 0.376698 | `formal/gpt/runs` |
+| `2ea2e5b5…` | claude-opus-5-5 | `SaDUDAyEP45E3gNRVZWjgp` | 0.588023 | `formal/opus/runs` |
+| `2ea2e5b5…` | gpt-6.1-sol | `ehpELnbiUfAp5dFTeDNwt9` | 0.223819 | `formal/gpt/runs` |
+| `c357f0e2…` | claude-opus-5-5 | `AbudpM6dPVjwu2NSnwrZ6D` | 1.644991 | `formal/opus/runs` |
+| `c357f0e2…` | gpt-6.1-sol | `4FAJ3AmGzujC6FZ67Krt9B` | 0.324154 | `formal/gpt/runs` |
+| `a45bc83b…` | claude-opus-5-5 | `BVeKQk8ZWp6j2uxp9hsuGf` | 4.182122 | `formal/opus/runs` |
+| `a45bc83b…` | gpt-6.1-sol | `NHSUKRMDDbYoJoGyWnpjcN` | 0.603256 | `formal/gpt/runs` |
+
+Unit gate and designations:
+- `harness.unit_gate.evaluate_unit` (candidate class, frozen generation checkout) accepts all 20 units: completed, no
+  limit, collection complete.
+- One canonical designation per run in its own root (append-only; reason and authorization recorded).
+- `grading.judge_formal.finalized_runs` at `b7ce2db` lists the 20 runs, 10 per candidate, across the three roots, with
+  332 judge items. Its gates stay closed (no `freeze-v1-grading`).
+
+Deterministic grading:
+- 20/20 sealed deterministic-only passes from the clean checkout at `freeze-v1-grading-deterministic`, every exit 0,
+  spreadsheet recalculation `ok`.
+- Location: `~/turing-eval-runs/formal/grading_sealed/` (mode 700), driver
+  `~/turing-eval-runs/formal/tooling/formal_det_grade.py` (sha256 `bbeace17…`).
+- No score, verdict or output was opened by the agent.
+
+Blind packets:
+- 20/20 in `~/turing-eval-runs/labeling/formal-v4/` (F01-F20; queue v4 formal plans; seeded letters and order).
+- Sealed mapping `labeling/formal-v4-sealed/mapping.jsonl` (mode 600); builder `formal/tooling/formal_packets.py`
+  (sha256 `f6ba7750…`).
+- A count-only scan of the built packet text found no run id, model name or formal path.
+
+Docker-gated suites on `b7ce2db` (`v1.8-formal-roots`): 13/13 pass; logs `logs/docker-gated-b7ce2db-20261102T110625Z/`.
+- `regress_inspect` was first refused by its own `.env` ancestor check (an isolated working directory inside the
+  repository). It passed on rerun from the default isolated directory: 62 passed, 0 failed. Both results are kept.
+- Clean tree before and after, no container left running, no formal unit running during the suites.
+
 ## Known issues and findings (material check)
 
 - `rubric_json.form_content`: 8,036 items hold `null`, 2,417 items lack the key, zero
@@ -5745,7 +5801,8 @@ Judge findings status:
 - 2026-11-02 · Two-stage freeze: formal generation frozen on code baseline `b33cc37` (dependency check: the pending delta-review corrections do not reach the generation path); concurrency 1 on the single formal ledger; tag `freeze-v1-generation` · dda234f (local)
 - 2026-11-02 · Codex delta review corrections D1-D3, N1 (engine .12) and the formal judge's freeze-v1-grading requirement; formal generation armed from the clean checkout (waits for AC power); tag `v1.7-delta-review-corrections` · 2eb4060 (pushed)
 - 2026-11-02 · Formal generation switched to two independent candidate workers (ceiling 200 per candidate ledger, config snapshot `80433476…`); deterministic grading frozen at code `2eb4060`; tag `freeze-v1-grading-deterministic` · ef53050 (pushed)
-- 2026-11-02 · The formal judge reads the three formal runs roots, each with its own generation ledger; tag `v1.8-formal-roots` · (this commit; local)
+- 2026-11-02 · The formal judge reads the three formal runs roots, each with its own generation ledger; tag `v1.8-formal-roots` · b7ce2db (pushed)
+- 2026-11-02 · Formal generation complete (20/20, 17.979211 USD, no hold or stop); 20 deterministic passes sealed; 20 blind packets; Docker 13/13 on `b7ce2db` · (this commit; local)
 
 ## Next stage (not started)
 
