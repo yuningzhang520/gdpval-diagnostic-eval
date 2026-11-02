@@ -104,6 +104,24 @@ class RecoveryTests(unittest.TestCase):
         self.assertEqual((d[69]["eligible"], d[71]["eligible"]), (False, True))
         self.assertIn("would fail again", d[69]["reason"])
 
+    def test_a_base_call_without_a_request_hash_is_refused_and_one_with_it_is_eligible(self):
+        """Engine .11 (Codex Review 2 N3, approved 2026-11-02): without the base request's hash the recovery cannot be shown
+        to resend the base request, so it fails closed before any call; engine .10 accepted it."""
+        path = os.path.join(self.out, f"judge_calls_{RUN}_x.json")
+        rec = json.load(open(path))
+        for c in rec["calls"]:
+            if c["item"] == 69:
+                c.pop("request_sha256")
+        json.dump(rec, open(path, "w"))
+        d = JR.recovery_plan(self.out, RUN, BASE, [69, 71])["decision"]
+        self.assertEqual((d[69]["eligible"], d[71]["eligible"]), (False, True))  # negative: no hash; positive: the stored hash matches the stored unit
+        self.assertIn("no request hash", d[69]["reason"])
+        self.assertEqual(d[71]["base_request_sha256"], req_sha(unit(71)))
+        j = FakeJudge()
+        with self.assertRaises(JR.RecoveryError):
+            JR.recovery_pass(self.out, RUN, TASK, BASE, [69], j)
+        self.assertEqual(j.calls, [])
+
     def test_changed_evidence_is_refused_before_any_call(self):
         units = json.load(open(os.path.join(self.out, f"judge_units_{RUN}_{BASE}.json")))
         units["units"][1]["deliverable_excerpt"] = "edited"

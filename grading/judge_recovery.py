@@ -118,7 +118,9 @@ def recovery_plan(out_dir: str, run_uuid: str, base_pass: str, items: list[int])
                                                          "(a schema-valid completed call is never re-judged)"}
         elif len(earlier.get(i, [])) >= MAX_ATTEMPTS_PER_ITEM:
             decision[i] = {"eligible": False, "reason": f"already recovered once ({earlier[i]})"}
-        elif call.get("request_sha256") and call["request_sha256"] != expected_request_sha256(units[i]):
+        elif not call.get("request_sha256"):  # engine .11 (Review 2 N3, approved 2026-11-02): fail closed without the base request's identity
+            decision[i] = {"eligible": False, "reason": "the base call record carries no request hash: the recovery cannot be shown to send the base request"}
+        elif call["request_sha256"] != expected_request_sha256(units[i]):
             decision[i] = {"eligible": False, "reason": "the stored unit no longer renders the base request (evidence or prompt differs)"}
         else:
             decision[i] = {"eligible": True, "rule": RECOVERABLE[status], "base_call_status": status, "base_request_sha256": call.get("request_sha256")}

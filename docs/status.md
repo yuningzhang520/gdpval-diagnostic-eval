@@ -5079,6 +5079,45 @@ Remaining freeze gates (`freeze-v1` not authorized):
 | Judge Validation complete and the judge-only agreement measured | in progress (unattended) |
 | The human's explicit Formal launch authorization | not given |
 
+## Review 2 N1–N5 decisions, N3 check, backup and delta-review start (2026-11-02)
+
+Decisions by the human (chat, 2026-11-02):
+- N1: fix the outdated package wording (docs only).
+- N2 and N4: accepted as documented limitations; no code change before freeze.
+- N3: add the minimal fail-closed check with a positive and a negative test, commit it before the Codex delta review
+  starts, and move the delta range end to that commit.
+- N5: accepted as closed by the Docker logs bound to `7e30849` and `df4a560` plus the Judge Validation run.
+- GitHub backup authorized: one normal push, no force, of all commits and tags up to the N3 commit, to the verified
+  private repository.
+- No code change under `grading/`, `harness/` or `config.json` until the Codex delta review of the N3 commit finishes.
+
+N3 (engine-2026-11-02.11, tag `v1.6-recovery-hash-check`; preregistration 1.22):
+- `judge_recovery.recovery_plan` refuses an item whose base call record carries no `request_sha256`, before any call.
+- Test `test_a_base_call_without_a_request_hash_is_refused_and_one_with_it_is_eligible`:
+  - negative: no hash, refused, no call sent;
+  - positive: a stored hash matching the stored unit stays eligible.
+- The test fails on the V1.5 code (exported tag): the item without a hash was eligible.
+- Every stored judge call so far carries a hash (14 call files, Dev and Validation), so no recorded recovery would be
+  refused.
+- The Judge Validation worker runs the V1.5 checkout and is not affected.
+
+N1: `docs/codex_review_2.md` corrected:
+- the V1.1 "a parse error is never recovered" wording (§F and check 11), against the approved V1.2 schema retry;
+- the §2C version column, now the version at `5121e1a`: `2ea2e5b5…` .4, `47ef842d…` .3;
+- check 6: the builder receives the deterministic checks; the rendered request carries no deterministic verdict.
+
+Tests before the commit (logs `logs/r2-fixes/`):
+
+| Suite | Result | Wall time |
+|---|---|---|
+| Grading discover | 497 tests, 5 skipped, OK | 130.70 s |
+| Harness, 14 modules via `run_isolated.sh` | 203 tests, OK | 53 s |
+
+Codex delta review:
+- `docs/codex_review_2.md` section 6, range `git diff 5121e1a v1.6-recovery-hash-check -- grading harness config.json
+  preregistration.md`.
+- The prompt names the tag. The commit hash is reported in chat and in the next entry, not inside the commit itself.
+
 ## Known issues and findings (material check)
 
 - `rubric_json.form_content`: 8,036 items hold `null`, 2,417 items lack the key, zero
@@ -5487,7 +5526,8 @@ Remaining freeze gates (`freeze-v1` not authorized):
 - 2026-11-02 · Codex Review 2 Blocking corrections R2-B1–B5 (engine .10): per-attempt WAL, identity-based pass selection, inferred settlements estimated (no hold), guard liability, run/pass-bound label comparisons; tag `v1.4-review2-corrections` · 7e30849 (local)
 - 2026-11-02 · Docker-gated suites on `7e30849` (13 suites, all pass) and the historical impact audit (only the estimated portions of three ledgers change) · 9f94b88 (local)
 - 2026-11-02 · V1.3.1 (`2ea2e5b5…` .6, item 27 literal label), judge projects per workload and daily-quota pause/resume, generation budget wording (150 admission, 165 worst case approved); tag `v1.5-item27-quota-pause` · df4a560 (local)
-- 2026-11-02 · Judge Validation resumed unattended (worker checkout at `df4a560`), final verification on `df4a560` (Docker 13/13, numbers re-verified, coverage, preflight, backup readiness), N1–N5 dispositions proposed, Codex delta package (section 6) · (this commit; local)
+- 2026-11-02 · Judge Validation resumed unattended (worker checkout at `df4a560`), final verification on `df4a560` (Docker 13/13, numbers re-verified, coverage, preflight, backup readiness), N1–N5 dispositions proposed, Codex delta package (section 6) · c29dd21 (local)
+- 2026-11-02 · Review 2 N1–N5 decided; N3 fail-closed recovery check (engine .11), N1 package corrections; delta range end moved to the N3 commit; tag `v1.6-recovery-hash-check` · (this commit)
 
 ## Next stage (not started)
 

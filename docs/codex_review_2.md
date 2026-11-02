@@ -88,11 +88,11 @@ Other shared changes:
 
 ### C. Task graders, V0 to V1, and original against revised critical definitions
 
-| Task | V0 tag (commit, version) | V1 version at the pin | Task-module commits since `a9a1f88` | Rules (preregistration) |
+| Task | V0 tag (commit, version) | Version at the pin `5121e1a` (corrected 2026-11-02, Review 2 N1) | Task-module commits since `a9a1f88` | Rules (preregistration) |
 |---|---|---|---|---|
 | `1137e2bb…` | `grader-v0-1137e2bb` (3847219, .2) | .3 | 8e6ad63 | 2.4 "Dev calibration .3" |
-| `2ea2e5b5…` | `grader-v0-2ea2e5b5` (a8eb078, .2) | .3 | a8eb078 e2208d3 | 2.8 "Dev calibration .3", R-2.8-1 |
-| `47ef842d…` | `grader-v0-47ef842d` (25e9e38, .1) | .2 | 25e9e38 29fdaaa | 2.3 "Dev calibration .2" |
+| `2ea2e5b5…` | `grader-v0-2ea2e5b5` (a8eb078, .2) | .4 (V1 .3; V1.1 visual-review flag) | a8eb078 e2208d3 | 2.8 "Dev calibration .3", R-2.8-1 |
+| `47ef842d…` | `grader-v0-47ef842d` (25e9e38, .1) | .3 (V1 .2; V1.1 visual-review flag) | 25e9e38 29fdaaa | 2.3 "Dev calibration .2" |
 | `7b08cd4d…` | `grader-v0-7b08cd4d` (393a7bc, .1) | .3 | 393a7bc 1bf9170 4f71d3d | 2.6 "Dev calibration .3" |
 | `7d7fc9a7…` | `grader-v0-7d7fc9a7` (1b92af8, .5) | .7 | 1b92af8 e80f775 e2208d3 | 2.7 "Dev calibration .6", R-2.7-11, R-2.7-21 |
 | `a45bc83b…` | `grader-v0-a45bc83b` (ff86cb3, .1) | .3 | e2208d3 | 2.10 "Dev calibration .3" |
@@ -239,9 +239,14 @@ Gold-first evidence per task:
 - Judge Dev ledger settlements before `0c8efcb` priced summed prompts at the long-context tier and stay as recorded.
 - Done after `0c8efcb`: V1 re-grades of every Dev run under the frozen versions; the Docker-gated suites at `0c8efcb`
   and before `57e2a25`.
-- Judge protocol: a judge answer with a pass or fail verdict but an empty evidence list is a `judge_parse_error`
-  (`cannot_assess`). It is a completed call, so it is never recovered. Four such items are recorded on one Validation
-  run.
+- Judge protocol (corrected 2026-11-02, Review 2 N1): a judge answer with a pass or fail verdict but an empty evidence
+  list is schema-invalid (`judge_parse_error`, `cannot_assess`).
+  - Under V1.1 such a completed call was never recovered.
+  - Since V1.2 (engine .8, approved, §H) it gets exactly one schema retry with the identical request: inline, or as a
+    schema recovery for items recorded earlier. Two invalid responses give `invalid_judge_output`.
+  - A schema-valid completed call is never re-judged.
+  - Four such items were recorded on one Validation run (`a45bc83b…` 18, 19, 20, 64). Each later got its one schema
+    recovery.
 - Provider failures: twice a judge call failed with `RetryError` wrapping a google `ClientError` (V1/V1.1, before the
   status code was recorded). V1.2 records the detail and continues past recoverable failures.
 - With `max_retries` 10, Inspect's backoff (`wait_exponential_jitter(initial=3, max=1800)`, no total timeout) can hold a
@@ -271,8 +276,12 @@ Gold-first evidence per task:
 5. **`2ea2e5b5…` headings and pictures.** Check `slide_heading`, `locate_sections`, `parse_table` (group rows, the
    percent choice) and `is_grand_total`. Check every chart-dependent item's branch when a picture is present without
    a native chart, and when a native non-pie chart is present.
-6. **Evidence builders carry no verdict.** `build_units_*` must receive no grader verdict. Confirm the deliverable
-   excerpt is built from the extraction only and that the task requirement and source material are present per unit.
+6. **The judge request carries no deterministic verdict** (corrected 2026-11-02, Review 2 N1).
+   - `build_units_*` receives the deterministic checks for routing and extraction metadata, so it is not
+     verdict-blind.
+   - Confirm that no deterministic pass/fail reaches the rendered unit (`render_unit`).
+   - Confirm that the deliverable excerpt comes from the extraction, and that the task requirement and source
+     material are present per unit.
 7. **Judge cost safety.**
    - In `judge_dev.make_guard` and `judge_validation.make_guard`, confirm that the worst case is checked before every
      call against every applicable ceiling.
@@ -287,7 +296,8 @@ Gold-first evidence per task:
     `grading.task_grader_versions`, and that `ENGINE_VERSION` equals `grading.engine_version`.
 11. **Per-item recovery** (`judge_recovery`, `run_grading --judge-recover`). Confirm against the code:
     - only `provider_error` and `not_attempted` base calls are eligible;
-    - a completed call (any verdict or parse error) is never re-judged;
+    - a completed schema-valid call (any verdict) is never re-judged; a schema-invalid one gets exactly one schema
+      retry (V1.2, §H; corrected 2026-11-02, Review 2 N1);
     - each item gets at most one sent recovery attempt;
     - the stored unit is sent unchanged, with the hash checked before any call;
     - every non-recovered row is copied unchanged, and the base pass and its rows are never rewritten;
@@ -345,7 +355,7 @@ Validation and Judge Validation records (2026-11-01, code `0c8efcb`; details in 
   - item 71 (first evaluation) and item 69 (one retry) were recovered: 2 calls, both ok, same request hashes as the
     base, 0.049708 USD;
   - four items of that run (18, 19, 20, 64) keep `judge_parse_error` from their completed base calls and are not
-    re-judged;
+    re-judged under V1.1 (at that date; the approved V1.2 schema retry later sent each once more);
   - the resumed pass halted on the first call of `c357f0e2…` (item 12: `RetryError` wrapping a google
     `ClientError`); 53 calls were not attempted; the unit settled at its 6.11 USD reservation and is on hold.
 - After the V1.2 tag:
@@ -387,21 +397,24 @@ Review 2 (pinned `5121e1a`; report `/private/tmp/codex-r2/review-42FFBH0Q/REVIEW
 This delta covers every code change since that pin. It is a targeted review against the reviewed snapshot, not a
 rerun of Review 2.
 
-Range:
+Range (updated 2026-11-02: the end moved to the N3 commit, by the human's decision):
 - reviewed snapshot `5121e1a9d1897392f9a4a4f7526564b6975e0f7b`;
-- final proposed code commit `df4a560e66a6cc2d3c1612a28258b99b3ac6a21c` (tag `v1.5-item27-quota-pause`);
-- diff: `git diff 5121e1a df4a560 -- grading harness config.json preregistration.md`;
-- any later commit must be docs only: `git diff --name-only df4a560 HEAD -- grading harness config.json` prints nothing.
+- final proposed code commit: the commit tagged `v1.6-recovery-hash-check` (its hash is reported with the commit; resolve
+  it with `git rev-parse v1.6-recovery-hash-check^{commit}`);
+- diff: `git diff 5121e1a v1.6-recovery-hash-check -- grading harness config.json preregistration.md`;
+- any later commit must be docs only: `git diff --name-only v1.6-recovery-hash-check HEAD -- grading harness config.json`
+  prints nothing.
 
 | Commit | Tag | Content | Records |
 |---|---|---|---|
 | `be84ff6` | `v1.3-corrections` | V1.3: `2ea2e5b5…` grader .5 (item 45), `c3525d4d…` grader .6 (item 32); judge runner v1.3 (retryable / item-permanent / fatal classification, 600 s item cap, attempts and runner version); Formal budgets; `grading/judge_formal.py` (gated, never run) | preregistration 1.21; status "V1.3 corrections…" |
 | `7e30849` | `v1.4-review2-corrections` | R2-B1–B5, engine .10 | preregistration 1.22; status "Codex Review 2 Blocking corrections" |
 | `df4a560` | `v1.5-item27-quota-pause` | V1.3.1 (`2ea2e5b5…` .6, item 27 literal "Margin Impact"); one Google project per judge workload; daily-quota pause and resume in both judge runners; generation budget wording | preregistration 1.23; status "V1.3.1, judge projects…" |
+| (N3 commit) | `v1.6-recovery-hash-check` | engine .11: Review 2 N3, a judge-item recovery is refused when the base call record carries no request hash (`judge_recovery.recovery_plan`); positive and negative test; N1 package corrections (docs) | preregistration 1.22 "N3"; status "Review 2 N1–N5 decisions" |
 
 Verify each Blocking finding:
-- Rerun your own Review 2 probe logic against `df4a560` (`/private/tmp/codex-r2/review-42FFBH0Q/probes.py`, with the
-  snapshot paths pointed at a fresh export of `df4a560`).
+- Rerun your own Review 2 probe logic against the N3 commit (`/private/tmp/codex-r2/review-42FFBH0Q/probes.py`, with
+  the snapshot paths pointed at a fresh export of `v1.6-recovery-hash-check`).
 - Our adapted copy and its outputs are in `logs/r2-fixes/` (`codex_probe_adapted.py`, `before_*.log`,
   `codex_probe_after.json`).
 - The regression tests are `grading/tests/test_review2_blocking.py` and
@@ -442,17 +455,19 @@ Interactions to verify (each across the changed paths, not function by function)
    - `save_label_checkpoint` and `save_evidence_correction`.
 6. V1.3 and V1.3.1 graders, with out-of-scope neighbours (`V13CorrectionTests`, `V131CorrectionTests`). The held-out
    Validation result is not re-scored.
-7. The judge runner:
+7. The judge runner and recovery:
    - V1.3 classification and the 600 s cap;
    - the daily-quota rule: `judge.daily_quota_violation`, the instance-level `should_retry` override in
      `ProviderJudge._call`, `quota_resume_at`;
    - `judge_validation.resume` and the `judge_formal.run` pause and resume: no completed or exhausted item is sent
      again, a stopped pass is never resumed automatically, and the Formal pass refuses the Dev key
-     (`judge_formal.select_project_credential`).
+     (`judge_formal.select_project_credential`);
+   - N3: `judge_recovery.recovery_plan` refuses an item whose base call record has no request hash, before any call.
 
 Evidence:
 - Docker-gated suites, with each log folder bound to its commit (`HEADER.txt`, `SUMMARY.txt`):
-  `logs/docker-gated-7e30849-20261102T061847Z/` and `logs/docker-gated-df4a560-20261102T070301Z/`.
+  `logs/docker-gated-7e30849-20261102T061847Z/`, `logs/docker-gated-df4a560-20261102T070301Z/`, and the run on the N3
+  commit (`logs/docker-gated-<N3 short hash>-*/`).
 - Historical impact audit: `logs/r2-fixes/audit/` (read-only over the run records; before V1.3, after V1.4).
 - Status entries: "Review 2 corrections: Docker evidence and historical impact audit" and "Final verification…".
 
@@ -464,21 +479,27 @@ Constraints:
   `~/turing-eval-runs/judge_validation/`.
 - Do not open anything under `~/turing-eval-runs/validation/`, `~/turing-eval-runs/labeling/validation-v4/` or
   `~/turing-eval-runs/qa/`, and never quote Validation verdicts or judge responses.
-- Review 2's Non-blocking findings N1–N5 are listed with proposed dispositions in `docs/status.md`. Say if any of them
-  is in fact Blocking.
+- Review 2's Non-blocking findings and the human's decisions (`docs/status.md`):
+  - N1 fixed (package wording, this document);
+  - N2 and N4 accepted as documented limitations;
+  - N3 fixed;
+  - N5 accepted as closed by the Docker logs and the Judge Validation run.
+  Say if any of them is in fact Blocking.
 
 Prompt for a fresh Codex session:
 
 ```
 You are doing a narrow, read-only delta review. Read section 6 of /Users/yuning/turing-th/docs/codex_review_2.md and
-treat every statement in it as a claim to verify against the code at df4a560, not as a fact. Export df4a560 into a new
-directory under /tmp/codex-r2/ and review there; do not modify, add, stage or commit anything in /Users/yuning/turing-th
+treat every statement in it as a claim to verify against the code at tag v1.6-recovery-hash-check, not as a fact.
+Export that tag (git archive v1.6-recovery-hash-check) into a new directory under /tmp/codex-r2/ and review there; do not modify, add, stage or commit anything in /Users/yuning/turing-th
 or /Users/yuning/turing-th-jv. Do not read plan/, .env or any credential, and make no provider call (no judge_validation
 run/recover/resume, judge_formal run/resume, judge_dev, run_grading --judge, harness.launcher or harness.scheduler). Do not
 open ~/turing-eval-runs/validation/, ~/turing-eval-runs/labeling/validation-v4/ or ~/turing-eval-runs/qa/.
-First confirm that git diff --name-only df4a560 HEAD -- grading harness config.json prints nothing. Then verify that each
-of R2-B1-B5 is closed by rerunning your own probes, and verify the seven interaction checks across the changed code paths,
-in particular that the no-hold exception for an inferred buffer never bypasses budget authorization or any other
-fail-closed condition. Report findings as Blocking or Non-blocking with file:line at df4a560, the input, the observed and
+First confirm that git diff --name-only v1.6-recovery-hash-check HEAD -- grading harness config.json prints nothing.
+The review range is git diff 5121e1a v1.6-recovery-hash-check -- grading harness config.json preregistration.md. Then
+verify that each of R2-B1-B5 is closed by rerunning your own probes, verify the N3 recovery check, and verify the seven
+interaction checks across the changed code paths, in particular that the no-hold exception for an inferred buffer never
+bypasses budget authorization or any other fail-closed condition. Report findings as Blocking or Non-blocking with
+file:line at v1.6-recovery-hash-check, the input, the observed and
 the expected outcome, and state plainly what you did not check.
 ```

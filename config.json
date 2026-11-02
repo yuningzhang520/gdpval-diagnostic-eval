@@ -839,7 +839,7 @@
   },
   "grading": {
     "preregistration": "preregistration.md (draft; frozen at freeze-v1)",
-    "engine_version": "engine-2026-11-02.10",
+    "engine_version": "engine-2026-11-02.11",
     "task_grader_versions": {
       "1137e2bb-bdf9-4876-b572-f29b7de5e595": "1137e2bb-2026-11-01.3",
       "7d7fc9a7-21a7-4b83-906f-416dea5ad04f": "7d7fc9a7-2026-11-01.7",

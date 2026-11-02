@@ -512,6 +512,9 @@ re-derived under the corrected rules are reported next to them (`docs/status.md`
 - Human-label agreement (R2-B5): a comparison is made only when the label checkpoint, every label row and every grade
   row name the same run, and the grade rows are of one named pass. Missing identity fails closed. Blind labelling is
   unchanged.
+- Recovery identity (Review 2 N3; approved 2026-11-02; engine-2026-11-02.11; tag `v1.6-recovery-hash-check`): a
+  judge-item recovery is refused, before any call, when the base call record carries no request hash. Without it, the
+  recovery cannot be shown to resend the base request. Every stored judge call recorded so far carries one.
 
 ### 1.23 V1.3.1 and the judge quota rule (approved by the human 2026-11-02; tag `v1.5-item27-quota-pause`)
 `2ea2e5b5…` grader .6, rubric 27 ("The Margin Impact table includes a 'Margin Impact' column or row whose entries are

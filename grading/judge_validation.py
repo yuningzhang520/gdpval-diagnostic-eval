@@ -48,7 +48,8 @@ VERSION_TAGS = ((FREEZE_TAG, MANIFEST), ("v1.1-judge-item-recovery", os.path.joi
                 ("v1.2-judge-infrastructure", os.path.join(ROOT, "grading", "freeze", "v1.2_manifest.json")),  # V1.2: engine .8 judge infrastructure (approved 2026-11-01)
                 ("v1.3-corrections", os.path.join(ROOT, "grading", "freeze", "v1.3_manifest.json")),  # V1.3: engine .9 grader corrections and judge-runner reliability (approved 2026-11-01)
                 ("v1.4-review2-corrections", os.path.join(ROOT, "grading", "freeze", "v1.4_manifest.json")),  # V1.4: engine .10 Codex Review 2 Blocking corrections (approved 2026-11-02)
-                ("v1.5-item27-quota-pause", os.path.join(ROOT, "grading", "freeze", "v1.5_manifest.json")))  # V1.3.1 (2ea2e5b5 .6, item 27) and the daily-quota pause, one project per workload (approved 2026-11-02)
+                ("v1.5-item27-quota-pause", os.path.join(ROOT, "grading", "freeze", "v1.5_manifest.json")),  # V1.3.1 (2ea2e5b5 .6, item 27) and the daily-quota pause, one project per workload (approved 2026-11-02)
+                ("v1.6-recovery-hash-check", os.path.join(ROOT, "grading", "freeze", "v1.6_manifest.json")))  # engine .11: Review 2 N3, recovery refused without the base request hash (approved 2026-11-02)
 PASS_ID = "judge-validation-pass-1"
 FROZEN_PATHS = ("grading", "harness", "config.json")
 AUTH_REF = "docs/status.md decision 2026-11-01: Judge Validation authorized (one pass, frozen judge, separate ledger, 15 USD, concurrency 1, Dev project key)"
