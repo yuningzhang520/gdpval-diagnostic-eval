@@ -127,6 +127,26 @@ def recovery_plan(out_dir: str, run_uuid: str, base_pass: str, items: list[int])
     return {"base": base, "root": root, "units": units, "calls": calls, "decision": decision, "units_path": units_path}
 
 
+def authoritative_recovery(cfg: dict, host_dir: str | None, out_dir: str, run_uuid: str, judge_items: list[int]) -> dict:
+    """Engine .12 (Codex delta review D3): the base pass and the items of a run's automatic per-item recovery, taken
+    from the authoritative selection (grading.run_grading.report_selection: the run's bound ledger, its declared judge
+    ledgers and their write-ahead logs), never from the last results record alone. A blocked selection (an orphan
+    judged pass, attempt and record orders that disagree, an unfinished latest attempt, a missing or foreign binding)
+    yields no item and its basis; a current pass that is not a judged pass yields no item."""
+    from . import run_grading as RG
+    if not host_dir:
+        return {"base": None, "items": [], "blocked": "no host_dir: the run's ledger binding and judge history cannot be read"}
+    sel = RG.report_selection(cfg, host_dir, out_dir, run_uuid)
+    if sel.get("blocked"):
+        return {"base": None, "items": [], "blocked": sel.get("basis")}
+    current = next((p for p in grading_passes(out_dir, run_uuid) if p.get("grading_pass") == sel.get("pass")), None)
+    if not current or current.get("judge_mode") != "real":
+        return {"base": None, "items": [], "blocked": None}
+    plan = recovery_plan(out_dir, run_uuid, current["grading_pass"], list(judge_items))
+    return {"base": current["grading_pass"], "blocked": None,
+            "items": sorted(i for i, d in plan["decision"].items() if d["eligible"] and d["base_call_status"] in ("provider_error", "not_attempted"))}
+
+
 def recovery_pass(out_dir: str, run_uuid: str, task_id: str, base_pass: str, items: list[int], judge) -> dict:
     """Judge the eligible items once on their stored units and record a judge_item_recovery pass (see the module)."""
     plan = recovery_plan(out_dir, run_uuid, base_pass, items)

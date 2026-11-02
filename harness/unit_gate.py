@@ -142,9 +142,11 @@ def evaluate_unit(runs_root: str, rec: dict | None, *, gemini: bool, expected_ex
         reasons.append(f"not a completed sample record (kind {rec.get('kind')!r}, engineering failure {rec.get('engineering_failure')!r})")
     # engine .10 (Codex Review 2 R2-B3): an inferred buffer is now marked estimated; the approved policy settles it without a
     # hold, so the inferred buffer ALONE is no stop reason. Any other estimate basis stops, and so does a record written
-    # before estimate_basis existed (then 'estimated' never meant the inferred buffer).
-    basis = rec.get("estimate_basis")
-    other_estimate = rec.get("estimated") and (basis is None or bool(set(basis) - {"inferred_buffer"}))
+    # before estimate_basis existed (then 'estimated' never meant the inferred buffer). Engine .12 (Codex delta review
+    # N1): the exception needs exactly the non-empty basis ["inferred_buffer"] and the record's inferred settlement; an
+    # empty, missing, unknown or mixed basis stops.
+    inferred_only = rec.get("estimate_basis") == ["inferred_buffer"] and rec.get("inferred") is True
+    other_estimate = rec.get("estimated") and not inferred_only
     if other_estimate or rec.get("manual_review_required") or rec.get("stop_recorded"):
         reasons.append("settlement estimated, held for manual review, or a stop was recorded")
     uuid = rec.get("run_uuid")

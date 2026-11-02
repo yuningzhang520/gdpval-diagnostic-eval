@@ -113,14 +113,64 @@ def batch_liability_usd(judge) -> Decimal:
 
 
 def next_request_bound_usd(judge, request_chars: int, max_tokens: int) -> Decimal:
-    """The most the next request can add to the settlement: its worst-case cost if it completes, or, if it fails with a
-    recoverable error, the buffer the ledger then infers for it ((1 + max_retries) average metered calls)."""
+    """The next request's own increment as engine .10 bounded it: its estimated worst case if it completes, or, if it
+    fails with a recoverable error, the buffer the ledger infers for it at the current average. It omits the repricing
+    of the batch's earlier failures by a new metered call (Codex delta review D1); the guards use
+    next_liability_bound_usd since engine .12."""
     nxt = worst_case_usd(request_chars, max_tokens, "long")
     calls = [cl["usage"] for cl in (getattr(judge, "calls", None) or []) if cl.get("usage")]
     if not calls:
         return nxt
     avg = sum((call_cost_usd(u, "long") for u in calls), Decimal(0)) / len(calls)
     return max(nxt, avg * (1 + _max_retries_of(judge)))
+
+
+GUARD_CONTROL_TOKENS = 1024  # allowance for the chat template's control tokens around the system and user messages
+LEDGER_CALL_ROUNDING = Decimal("0.000002")  # the ledger rounds each of a call's four category amounts half-up to 0.000001 USD
+LEDGER_BUFFER_ROUNDING = Decimal("0.000001")  # and the inferred buffer once
+
+
+def request_bound_usd(request_bytes: int, max_tokens: int) -> Decimal:
+    """Engine .12 (Codex delta review D1): an upper bound of one judge call's cost, for the per-request guards. Prompt
+    tokens are at most the request's UTF-8 bytes plus GUARD_CONTROL_TOKENS (Gemini's subword vocabulary falls back to
+    single bytes, so no token spans less than one byte); output tokens, thinking included, at most max_tokens, which the
+    provider enforces; every prompt token at the long-context input rate, which no rate the ledger applies to a prompt
+    token exceeds (standard or long tier; uncached, cache read, or cache write at the input stand-in), and the output at
+    the long-context output rate. worst_case_usd (chars / 3) stays the reservation estimate; it is not a bound."""
+    tier = prices()["long"]
+    return ((Decimal(request_bytes) + GUARD_CONTROL_TOKENS) * tier["input"] + Decimal(max_tokens) * tier["output"]) / Decimal(1_000_000)
+
+
+def _bound_call_usd(usage: dict) -> Decimal:
+    """A metered call at long-context rates (cache writes at the input rate) plus the ledger's rounding: never below
+    what the ledger prices for it, whichever tier its prompt falls in."""
+    tier = prices()["long"]
+    return (Decimal(usage.get("input_tokens", 0)) * tier["input"] + Decimal(usage.get("cache_write_tokens", 0)) * tier["input"]
+            + Decimal(usage.get("cache_read_tokens", 0)) * tier["cache_read"] + Decimal(usage.get("output_tokens", 0)) * tier["output"]) / Decimal(1_000_000) + LEDGER_CALL_ROUNDING
+
+
+def next_liability_bound_usd(judge, request_chars: int, max_tokens: int, request_bytes: int | None = None) -> Decimal:
+    """Engine .12 (Codex delta review D1): the most the ledger can settle for this judge batch once the next request
+    has ended, whatever its outcome - what every per-request guard compares with its ceiling. The ledger settles a
+    judge batch (harness.budget.BudgetLedger.settle) at S * (1 + K / n): S the n metered calls, K the inferred buffer
+    calls of the batch's recoverable failures (grading.judge.inferred_buffer_calls) at the batch's AVERAGE metered call,
+    so every later metered call reprices all earlier failures. With X the next request's bound (request_bound_usd;
+    without request_bytes, 4 bytes per character, the UTF-8 maximum):
+      - it completes: (S + X) * (1 + K / (n + 1));
+      - it fails without usage: K grows by at most 1 + max_retries attempts (Inspect stops after max_retries retries) at
+        the unchanged average, S * (1 + (K + 1 + max_retries) / n); with n = 0 nothing can be inferred and the ledger
+        holds the unit at its reservation, which fit the ledger's ceiling when it was made.
+    Both are increasing in S and X and every term is rounded up to the ledger's precision, so the bound is never below
+    the settlement. With no failure (K = 0) it is S plus the larger of X and (1 + max_retries) average calls."""
+    from grading.judge import inferred_buffer_calls
+    calls = [cl["usage"] for cl in (getattr(judge, "calls", None) or []) if cl.get("usage")]
+    s, n = sum((_bound_call_usd(u) for u in calls), Decimal(0)), len(calls)
+    failures = list(getattr(judge, "recoverable_failures", None) or [])
+    k = inferred_buffer_calls(failures, _max_retries_of(judge)) if failures else 0
+    x = request_bound_usd(request_bytes if request_bytes is not None else 4 * request_chars, max_tokens) + LEDGER_CALL_ROUNDING
+    completes = (s + x) * (1 + Decimal(k) / (n + 1))
+    fails = s * (1 + Decimal(k + 1 + _max_retries_of(judge)) / n) if n else Decimal(0)
+    return max(completes, fails) + LEDGER_BUFFER_ROUNDING
 
 
 QUOTA_RESET_TZ = "America/Los_Angeles"  # Gemini API daily quotas reset at midnight Pacific time
@@ -286,7 +336,7 @@ def make_guard(judge_holder: dict, max_tokens: int, base: dict, extra_cap: tuple
     c = cfg()["judge"]
     cap1, capall = Decimal(str(c["ceilings_usd"]["pass_1"])), Decimal(str(c["ceilings_usd"]["judge_dev_aggregate"]))
 
-    def guard(request_chars: int):
+    def guard(request_chars: int, request_bytes: int | None = None):
         key = os.environ.get("GOOGLE_API_KEY") or ""
         if not key.endswith(DEV_KEY_SUFFIX):
             return "GOOGLE_API_KEY is not the Dev project key"
@@ -295,15 +345,16 @@ def make_guard(judge_holder: dict, max_tokens: int, base: dict, extra_cap: tuple
         j = judge_holder.get("judge")
         # Long-context rates bound what the ledger can settle for this unit (it prices the unit's summed usage, which may
         # cross the 200 k tier), so the ledger total stays within both ceilings, not only the provider bill.
-        # Engine .10 (R2-B4): the batch's liability includes the inferred buffer of its recoverable failures.
+        # Engine .10 (R2-B4): the batch's liability includes the inferred buffer of its recoverable failures; engine .12
+        # (D1): the bound is the whole settlement after the next request, the repricing of earlier failures included.
         so_far = batch_liability_usd(j)
-        nxt = next_request_bound_usd(j, request_chars, max_tokens)
-        if base["pass_1"] + so_far + nxt > cap1:
-            return f"Pass 1 ceiling {cap1} USD would be exceeded (spent {base['pass_1'] + so_far:.4f} + worst case {nxt:.4f})"
-        if base["aggregate"] + so_far + nxt > capall:
+        after = next_liability_bound_usd(j, request_chars, max_tokens, request_bytes)
+        if base["pass_1"] + after > cap1:
+            return f"Pass 1 ceiling {cap1} USD would be exceeded (spent {base['pass_1'] + so_far:.4f}; at most {base['pass_1'] + after:.4f} after the next request)"
+        if base["aggregate"] + after > capall:
             return f"Judge Dev aggregate ceiling {capall} USD would be exceeded"
-        if extra_cap is not None and extra_cap[1] + so_far + nxt > extra_cap[2]:
-            return f"{extra_cap[0]} ceiling {extra_cap[2]} USD would be exceeded (spent {extra_cap[1] + so_far:.4f} + worst case {nxt:.4f})"
+        if extra_cap is not None and extra_cap[1] + after > extra_cap[2]:
+            return f"{extra_cap[0]} ceiling {extra_cap[2]} USD would be exceeded (spent {extra_cap[1] + so_far:.4f}; at most {extra_cap[1] + after:.4f} after the next request)"
         return None
     return guard
 

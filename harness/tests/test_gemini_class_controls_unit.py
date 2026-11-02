@@ -273,6 +273,20 @@ class RecoveredSettlementLauncherTests(_Offline):
         self.assertIn(stop, G.evaluate_unit(runs, {**inv, "estimate_basis": ["inferred_buffer", "inspect_cost_floor"]}, gemini=True)["reasons"])  # any other estimate basis still stops
         self.assertIn(stop, G.evaluate_unit(runs, {k: v for k, v in inv.items() if k != "estimate_basis"}, gemini=True)["reasons"])  # a record without a basis: estimated meant another cause
 
+    def test_the_no_hold_exception_needs_exactly_the_inferred_buffer_basis(self):
+        """Codex delta review N1 (engine .12): an empty, missing, unknown or mixed basis, or a basis without the inferred
+        settlement, is no inferred-buffer-only estimate; the other fail-closed reasons stop whatever the basis."""
+        meta, lg, inv, runs = self.run_one(outcome=self.OK)
+        stop = "settlement estimated, held for manual review, or a stop was recorded"
+        reasons = lambda rec: G.evaluate_unit(runs, rec, gemini=True)["reasons"]
+        self.assertNotIn(stop, reasons(inv))  # exactly ["inferred_buffer"] with its inferred settlement: the approved no-hold policy
+        for basis in ([], None, ["unknown_reason"], ["inferred_buffer", "usage_conflict"], "inferred_buffer"):
+            self.assertIn(stop, reasons({**inv, "estimate_basis": basis}), basis)  # engine .11: [] was accepted
+        self.assertIn(stop, reasons({**inv, "inferred": False}))
+        for k, v in (("manual_review_required", True), ("stop_recorded", "synthetic stop")):
+            self.assertIn(stop, reasons({**inv, k: v}), k)
+        self.assertNotIn(stop, reasons({**inv, "estimated": False, "estimate_basis": []}))  # no estimate at all: nothing to except
+
     def test_without_the_class_policy_the_same_unit_is_held(self):
         meta, lg, inv, _ = self.run_one(policy=False, outcome=self.OK)
         self.assertEqual((meta["settlement"]["estimated"], meta["settlement"]["manual_review_required"], meta["settlement"]["cost_usd"]), (True, True, "5.000000"))

@@ -550,6 +550,43 @@ Judge projects and daily quotas:
   - a completed item is never re-judged, and an exhausted item (one already recovered once) is never sent again.
 - The judge model, prompt, rubric, settings and inputs are unchanged.
 
+### 1.24 Two-stage freeze and the Codex delta-review corrections (approved by the human 2026-11-02; engine-2026-11-02.12)
+Two-stage freeze:
+- `freeze-v1-generation` (commit `dda234f`, code baseline `b33cc37`) freezes the formal generation conditions only.
+- `freeze-v1-grading` is tagged at the reviewed correction commit after the targeted Codex recheck. No grader or judge
+  runs on a Formal output before it. The formal judge pass also waits for the Judge Validation agreement.
+- The formal judge's gates require `freeze-v1-grading`, its manifest and a grading-frozen `_status`. Old rule: the tag
+  `freeze-v1` and any `_status` starting with FROZEN, which a FROZEN-GENERATION status would satisfy.
+
+Corrections (Codex delta review of `b33cc37`; implementation and reliability only; rubric, critical items, judge prompt,
+judge settings and scoring policy unchanged):
+- D1, per-request judge budget guard:
+  - Old rule: the batch's current liability plus the larger of the next request's estimated worst case and
+    (1 + max_retries) average calls.
+  - Evidence: a successful call reprices every earlier inferred failure. A 0.35 USD ceiling settled at 2.328 USD, and
+    a 4.352912 USD ceiling at 26.013 USD (synthetic accounting, not a provider bill). The chars / 3 input estimate was
+    exceeded by 38 of the 235 metered judge calls.
+  - New rule: the bound is the whole settlement after the next request, for both outcomes in the settlement's own
+    formula: completing at most X, (S + X)(1 + K / (n + 1)); failing, S(1 + (K + 1 + max_retries) / n).
+  - X is a hard per-call bound: the request's UTF-8 bytes plus 1,024 control tokens of input and `max_tokens` of
+    output, at long-context rates, rounded up to the ledger's precision.
+  - The settlement and the no-hold policy are unchanged.
+- D2, Judge Validation stops:
+  - Old rule: a non-quota halt in a recovery returned 0, and a later resume continued a stopped pass.
+  - New rule: a non-quota halt of a recovery or a run returns a non-zero stop and is recorded. The resume records a
+    `resume_stop`, and every later resume refuses before any request.
+  - The daily-quota pause and its continuation are unchanged.
+- D3, recovery base:
+  - Old rule: the last judged results record.
+  - New rule: automatic recovery (Validation and Formal) and the pre-request history gate use the authoritative
+    selection over the run's canonical judge history. An orphan pass or disagreeing orders refuse before any request,
+    and `--base-pass` must be the current judged pass.
+- N1, the no-hold exception:
+  - Old rule: an estimate basis with nothing beyond `inferred_buffer`; an empty basis qualified.
+  - New rule: exactly `["inferred_buffer"]` with the inferred settlement. An empty, missing, unknown or mixed basis
+    stops.
+- Historical records, held-out measurements and earlier grading versions are kept unchanged.
+
 ---
 
 ## 2. Task selection and exclusions

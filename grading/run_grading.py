@@ -319,9 +319,12 @@ def judge_gate(args, run_uuid: str, env: dict, out_dir: str, host_dir: str) -> d
 
 
 def judge_history_gate(ledger: BudgetLedger, binding: dict, out_dir: str, run_uuid: str, rejudge: bool, host_dir: str | None = None, prices: dict | None = None,
-                       reservation_ledger: BudgetLedger | None = None) -> dict:
+                       reservation_ledger: BudgetLedger | None = None, base_pass: str | None = None) -> dict:
     """Refuse on any unresolved paid state of this run, from the canonical ledger (not the out_dir): open reservations,
-    held (manual review) or unresolvable units, UNKNOWN write-ahead calls; an earlier judged unit needs --rejudge."""
+    held (manual review) or unresolvable units, UNKNOWN write-ahead calls; an earlier judged unit needs --rejudge.
+    Engine .12 (Codex delta review D3): the recorded passes must establish the run's current pass from the same
+    history (grade.select_pass with the attempts, as report_selection), and a recovery's base_pass must be that
+    current pass, a judged one."""
     hist = combined_judge_history(ledger, binding, host_dir, prices) if host_dir else run_judge_history(ledger, binding)
     blocking = []
     if hist["units"]["open"]:
@@ -341,6 +344,12 @@ def judge_history_gate(ledger: BudgetLedger, binding: dict, out_dir: str, run_uu
         blocking.append(f"open reservation(s) in the ledger: {snap['open_reservations']}")
     if blocking:
         raise GradingCliError("judge pass refused (not bypassable by --rejudge): " + "; ".join(blocking) + "; reconcile with harness.ledger_admin first")
+    passes = grading_passes(out_dir, run_uuid)
+    sel = select_pass(passes, attempts=judge_attempts(hist, passes))
+    if sel["blocked"]:
+        raise GradingCliError(f"judge pass refused (not bypassable by --rejudge): the run's judge history does not establish its current pass ({sel['basis']}); reconcile first")
+    if base_pass is not None and ((sel.get("pass") or {}).get("grading_pass") != base_pass or (sel.get("pass") or {}).get("judge_mode") != "real"):
+        raise GradingCliError(f"judge recovery refused: base pass {base_pass} is not the run's current judged pass ({(sel.get('pass') or {}).get('grading_pass')}) in its judge history")
     prior = hist["units"]["judge_units"]
     prior_out = [p.get("grading_pass") for p in grading_passes(out_dir, run_uuid) if p.get("judge_mode") == "real"]  # engine .10: by pass identity, not a call count
     if (prior or prior_out) and not rejudge:
@@ -407,7 +416,7 @@ def main(argv=None, *, judge_factory=None, environ: dict | None = None) -> int:
             judge_ledger = BudgetLedger.open_existing(args.judge_ledger, prices_from_config(cfg))
             declare_judge_ledger(host_dir, sample.uuid, judge_ledger, "separate judge cost ledger (approved 2026-11-01)")
         history = judge_history_gate(ledger, judge_auth["binding"], args.out_dir, sample.uuid, bool(args.rejudge or recover_items), host_dir=host_dir, prices=prices_from_config(cfg),
-                                     reservation_ledger=judge_ledger)
+                                     reservation_ledger=judge_ledger, base_pass=args.base_pass if recover_items else None)
         stamp = dt.datetime.now(dt.timezone.utc).strftime("%Y%m%dT%H%M%S%fZ") + "-" + os.urandom(2).hex()  # unique even for two passes within one second
         judge_unit = f"{sample.uuid}:judge:{stamp}"
         log_path = judge_log_path(judge_ledger.path, sample.uuid, judge_unit)

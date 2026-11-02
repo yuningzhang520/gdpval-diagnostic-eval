@@ -24,6 +24,17 @@ class GateTests(unittest.TestCase):
         self.assertEqual((g["freeze_tag"]["ok"], g["config_frozen"]["ok"]), (False, False))
         self.assertTrue(g["judge_formal_config"]["ok"])  # the approved 30 USD, concurrency 1, one pass are configured
 
+    def test_a_generation_only_freeze_unlocks_nothing(self):
+        """Two-stage freeze (engine .12, 2026-11-02): freeze-v1-generation and a FROZEN-GENERATION status never satisfy the
+        formal judge's gates; it needs freeze-v1-grading and a grading freeze status."""
+        self.assertEqual(JF.FREEZE_TAG, "freeze-v1-grading")
+        for status, ok in (("FROZEN-GENERATION (tag freeze-v1-generation ...)", False), ("DRAFT ...", False), ("FROZEN (freeze-v1-grading ...)", True)):
+            c = JF.cfg(); c["_status"] = status
+            with mock.patch.object(JF, "cfg", return_value=c), mock.patch.object(JF.subprocess, "run", return_value=SimpleNamespace(stdout="")):
+                g = JF.gates()
+            self.assertEqual(g["config_frozen"]["ok"], ok, status)
+            self.assertFalse(g["ok"])  # no freeze-v1-grading tag here: still locked
+
     def test_run_requires_the_launch_authorization_and_the_restated_scope(self):
         with mock.patch.object(JF, "gates", return_value={"ok": True}):
             for by, ref, confirm in ((None, "status entry", "x"), ("human", None, "x"), ("human", "status entry", "judge-formal|other|30")):

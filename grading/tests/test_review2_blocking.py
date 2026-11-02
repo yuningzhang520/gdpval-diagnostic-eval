@@ -162,9 +162,11 @@ class GuardLiabilityTests(unittest.TestCase):
         one = JD.call_cost_usd({"input_tokens": 1_000_000}, "long")
         nxt = JD.next_request_bound_usd(h["judge"], 3, 0)
         self.assertEqual(nxt, one * 11)  # if the next request fails, the ledger infers (1 + max_retries) average calls
+        bound = JD.next_liability_bound_usd(h["judge"], 3, 0)  # engine .12 (D1): the whole settlement after the next request, rounded up
+        self.assertGreaterEqual(bound, one + nxt)
         with self.env():
-            self.assertIsNone(JV.make_guard(h, 0, Decimal(0), one + nxt)(3))  # exactly at the ceiling: allowed
-            self.assertIsNotNone(JV.make_guard(h, 0, Decimal(0), one + nxt - Decimal("0.000001"))(3))
+            self.assertIsNone(JV.make_guard(h, 0, Decimal(0), bound)(3))  # exactly at the ceiling: allowed
+            self.assertIsNotNone(JV.make_guard(h, 0, Decimal(0), bound - Decimal("0.000001"))(3))
             self.assertIsNotNone(JV.make_guard({"judge": None}, 0, Decimal(16), Decimal(15))(3))  # the ledger is already over: nothing more is authorized
         empty = SimpleNamespace(calls=[], recoverable_failures=[{"item": 1}], generate_params={"max_retries": 10})
         self.assertEqual(JD.batch_liability_usd(empty), 0)  # no metered call to average: the ledger holds the unit at its reservation instead

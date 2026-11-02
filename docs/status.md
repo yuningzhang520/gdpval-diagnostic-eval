@@ -5175,6 +5175,87 @@ configuration alone. Per the human's rule, the batch runs at concurrency 1 on th
 (`formal/ledger.json`, 150 USD admission). Modeled worst case on one ledger: 165 USD (150 - 5 + 20). The memory
 throttle (concurrency 2 -> 1) does not apply at concurrency 1.
 
+## Formal generation launch arrangements (2026-11-02; `freeze-v1-generation` = `dda234f`)
+
+- Clean checkout: `/Users/yuning/turing-th-gen` (git worktree, detached at `dda234f`, no uncommitted or untracked
+  file). `data/inputs`, `data/prompts` and `data/resources` are real copies, because staging refuses symlinked
+  sources. They and `config.json` are read-only. `private` is a symlink; it is read on the host only, for the unit
+  gate's expected file types.
+- The freeze record rebuilt from the checkout equals the committed record, except one entry: the committed record
+  lists `harness/fixtures/notes.txt`, a gitignored smoke-test fixture of the main working tree. It is not in the
+  commit or the checkout, and the generation path does not use it.
+- Preflight, `harness.launcher --dry-run` for all 20 units from the checkout, every check and the reservation logic,
+  no `eval()` (`~/turing-eval-runs/formal/preflight-gen-*`): 20/20 exit 0. Each records:
+  - code `dda234f`, not dirty; code loaded from the checkout (harness source `94aacc82…`);
+  - config `77f76531…` (FROZEN-GENERATION);
+  - staging verified; image `sha256:18cde712…`; no missing credential name; system prompt `6b539cf9…`.
+- Plan: `~/turing-eval-runs/scheduler_plans/formal-generation-2026-11-02.json` (read-only).
+  - 20 single-task jobs in the fixed order of `data/selected_tasks.json`, Opus 5.5 then GPT-6.1 Sol on each task.
+  - Estimates 8.00 / 5.00 USD.
+  - Ledger `~/turing-eval-runs/formal/ledger.json`, runs root `~/turing-eval-runs/formal/runs`.
+  - Dry-plan: one unit admitted (`formal_01_b5d2e6f1_opus`).
+- Launcher: `~/turing-eval-runs/scheduler_plans/launch_formal-generation-2026-11-02.sh`, detached.
+  - It waits for AC power (the host was on battery at 09:55Z), then runs `harness.scheduler` from the checkout under
+    `caffeinate -i -s`.
+  - Logs and state: `~/turing-eval-runs/scheduler/formal-generation-2026-11-02/` (`launch.log`, `scheduler.out`,
+    `events.jsonl`, `state.json`); each unit's console log is in `~/turing-eval-runs/batch_console/`.
+- Monitoring is limited to run-level metadata (status, limits, usage, cost). No Formal output is opened by the agent
+  implementing grading corrections.
+- Existing stop and hold rules apply. A unit the unit gate does not accept stops the class. A recovered provider
+  failure without usage settles with a hold that blocks the next start until the human reconciles it, as for the
+  compat GPT unit.
+
+## Codex delta review of `b33cc37`: corrections D1-D3, N1 (2026-11-02; engine .12; tag `v1.7-delta-review-corrections`)
+
+Review: `/tmp/codex-delta/review-QKRopWuD/REVIEW.md`, BLOCKED: D1-D3 Blocking, N1 Non-blocking. The review evidence
+is unchanged. The reproductions ran copies of Codex's three probe files, with only their root path changed, against a
+fresh export of `b33cc37`. All six Codex failures reproduced with Codex's numbers:
+- D1: 2.328 USD against a 0.35 USD ceiling, and 26.013 against 4.352912;
+- D2: `recover()` returned 0, and `resume()` after a `resume_stop` called recover and run;
+- D3: automatic recovery selected items [2, 3] of the orphan pass, and the gate allowed it;
+- N1: an empty basis was accepted.
+
+Corrections (preregistration 1.24):
+- D1: `judge_dev.next_liability_bound_usd` and `request_bound_usd`, used by the Dev, Validation and Formal guards;
+  `ProviderJudge` hands the guard the request's UTF-8 bytes.
+  - Evidence for the per-call bound: on the 235 metered judge calls to date, prompt tokens per character reach 0.634
+    (chars / 3 assumes 0.333; 38 calls exceed it), output tokens reach 3,365 of 16,384, and actual cost reaches 41 %
+    of the old per-call estimate.
+- D2: `judge_validation.STOPPED`, `terminal_stop()`, `recover()` / `run()` / `resume()`.
+- D3: `judge_recovery.authoritative_recovery`, used by Validation and Formal; `run_grading.judge_history_gate`
+  (`select_pass` over the canonical history, `base_pass`).
+- N1: `unit_gate.evaluate_unit`.
+- Two-stage freeze: `judge_formal` requires `freeze-v1-grading`, its manifest and a grading-frozen `_status`.
+
+Tests:
+- New regressions: `grading/tests/test_delta_review_corrections.py`, 15 tests; each failing case fails on engine
+  .11. They include a 120-batch property check of the bound against the real ledger settlement, and the real-registry
+  shape: earlier `halted` events without `resume_stop` do not block, and the quota pause continues. Also
+  `test_judge_formal` (generation-only freeze unlocks nothing) and the N1 harness test.
+- Adapted thresholds, same intent: one custom guard signature, and two boundaries computed from the new bound.
+- Grading discover: 513 tests, 5 skipped, OK, 134.7 s.
+- Harness, all 14 modules via `run_isolated.sh`: 218/219, 40.2 s. The one failure,
+  `test_launcher_regressions...placeholder_ceiling`, expects the formal ceiling to be a PLACEHOLDER. It has been 150
+  since `be84ff6` and the test fails identically on `b33cc37`. It is pre-existing and not changed here; earlier
+  "14 modules" runs did not include this module.
+- Codex probes on the corrected tree: 11/12 pass. `test_validation_recovery_halt_is_propagated` now raises
+  SystemExit, because its fixture's base pass has no host_dir or ledger history and the D3 correction refuses it
+  before `grade_run`. Halt propagation is tested on a valid history in the new file.
+- Judge request surface identical to `v1-calibration-freeze`; relative to `v1.6` only `ProviderJudge.__call__`
+  changed (call handling). Manifest `grading/freeze/v1.7_manifest.json` verifies.
+
+Historical impact (read-only; no record changed):
+- The corrections are pre-request guards, runner stops, recovery selection and the scheduler gate. No recorded
+  settlement, selection, verdict or agreement changes.
+- Replaying the new bound over every historical judge batch: no request would have been refused. Peak other units +
+  bound is 12.64 / 13.05 USD of Judge Dev's 30 USD, and 3.41 / 5.26 USD of Judge Validation's 15 USD (request bytes
+  taken as chars / 4 x chars).
+- The running Judge Validation worker (`df4a560`) has the D1-D3 defects. A detached watcher pauses it (SIGSTOP at a
+  point with no open request) if a recovery ends in a non-quota halt.
+
+Docker-gated suites on this commit: deferred until no formal unit runs, so test containers never compete with a
+formal sandbox for memory. They are not run yet.
+
 ## Known issues and findings (material check)
 
 - `rubric_json.form_content`: 8,036 items hold `null`, 2,417 items lack the key, zero
@@ -5586,7 +5667,8 @@ throttle (concurrency 2 -> 1) does not apply at concurrency 1.
 - 2026-11-02 · Judge Validation resumed unattended (worker checkout at `df4a560`), final verification on `df4a560` (Docker 13/13, numbers re-verified, coverage, preflight, backup readiness), N1–N5 dispositions proposed, Codex delta package (section 6) · c29dd21 (local)
 - 2026-11-02 · Review 2 N1–N5 decided; N3 fail-closed recovery check (engine .11), N1 package corrections; delta range end moved to the N3 commit; tag `v1.6-recovery-hash-check` · b33cc37 (pushed)
 - 2026-11-02 · Docker 13/13 on `b33cc37`; backup pushed (`main` to `b33cc37`, 4 tags) · b55c5b4 (local)
-- 2026-11-02 · Two-stage freeze: formal generation frozen on code baseline `b33cc37` (dependency check: the pending delta-review corrections do not reach the generation path); concurrency 1 on the single formal ledger; tag `freeze-v1-generation` · (this commit; local)
+- 2026-11-02 · Two-stage freeze: formal generation frozen on code baseline `b33cc37` (dependency check: the pending delta-review corrections do not reach the generation path); concurrency 1 on the single formal ledger; tag `freeze-v1-generation` · dda234f (local)
+- 2026-11-02 · Codex delta review corrections D1-D3, N1 (engine .12) and the formal judge's freeze-v1-grading requirement; formal generation armed from the clean checkout (waits for AC power); tag `v1.7-delta-review-corrections` · (this commit; local)
 
 ## Next stage (not started)
 

@@ -30,7 +30,7 @@ import subprocess
 import sys
 from decimal import ROUND_CEILING, Decimal
 
-from grading.judge_dev import DEV_KEY_SUFFIX, batch_liability_usd, call_cost_usd, next_request_bound_usd, on_ac_power, quota_resume_at, worst_case_usd
+from grading.judge_dev import DEV_KEY_SUFFIX, batch_liability_usd, call_cost_usd, next_liability_bound_usd, on_ac_power, quota_resume_at, worst_case_usd
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 BASE = os.path.expanduser("~/turing-eval-runs")
@@ -49,7 +49,8 @@ VERSION_TAGS = ((FREEZE_TAG, MANIFEST), ("v1.1-judge-item-recovery", os.path.joi
                 ("v1.3-corrections", os.path.join(ROOT, "grading", "freeze", "v1.3_manifest.json")),  # V1.3: engine .9 grader corrections and judge-runner reliability (approved 2026-11-01)
                 ("v1.4-review2-corrections", os.path.join(ROOT, "grading", "freeze", "v1.4_manifest.json")),  # V1.4: engine .10 Codex Review 2 Blocking corrections (approved 2026-11-02)
                 ("v1.5-item27-quota-pause", os.path.join(ROOT, "grading", "freeze", "v1.5_manifest.json")),  # V1.3.1 (2ea2e5b5 .6, item 27) and the daily-quota pause, one project per workload (approved 2026-11-02)
-                ("v1.6-recovery-hash-check", os.path.join(ROOT, "grading", "freeze", "v1.6_manifest.json")))  # engine .11: Review 2 N3, recovery refused without the base request hash (approved 2026-11-02)
+                ("v1.6-recovery-hash-check", os.path.join(ROOT, "grading", "freeze", "v1.6_manifest.json")),  # engine .11: Review 2 N3, recovery refused without the base request hash (approved 2026-11-02)
+                ("v1.7-delta-review-corrections", os.path.join(ROOT, "grading", "freeze", "v1.7_manifest.json")))  # engine .12: Codex delta review D1-D3, N1; formal judge requires freeze-v1-grading (approved 2026-11-02)
 PASS_ID = "judge-validation-pass-1"
 FROZEN_PATHS = ("grading", "harness", "config.json")
 AUTH_REF = "docs/status.md decision 2026-11-01: Judge Validation authorized (one pass, frozen judge, separate ledger, 15 USD, concurrency 1, Dev project key)"
@@ -138,7 +139,7 @@ def spent() -> dict:
 
 
 def make_guard(holder: dict, max_tokens: int, base_total: Decimal, ceiling: Decimal):
-    def guard(request_chars: int):
+    def guard(request_chars: int, request_bytes: int | None = None):
         key = os.environ.get("GOOGLE_API_KEY") or ""
         if not key.endswith(DEV_KEY_SUFFIX):
             return "GOOGLE_API_KEY is not the Dev project key"
@@ -146,9 +147,9 @@ def make_guard(holder: dict, max_tokens: int, base_total: Decimal, ceiling: Deci
             return "a Google credential override variable is set"
         j = holder.get("judge")
         so_far = batch_liability_usd(j)  # engine .10 (R2-B4): metered calls plus the inferred buffer the ledger settles for this batch
-        nxt = next_request_bound_usd(j, request_chars, max_tokens)
-        if base_total + so_far + nxt > ceiling:
-            return f"Judge Validation ceiling {ceiling} USD would be exceeded (ledger {base_total:.4f} + this run {so_far:.4f} + worst case {nxt:.4f})"
+        after = next_liability_bound_usd(j, request_chars, max_tokens, request_bytes)  # engine .12 (D1): the settlement after the next request, repricing included
+        if base_total + after > ceiling:
+            return f"Judge Validation ceiling {ceiling} USD would be exceeded (ledger {base_total:.4f} + this run {so_far:.4f}; at most {base_total + after:.4f} after the next request)"
         return None
     return guard
 
@@ -188,6 +189,7 @@ def grade_run(spec: dict, r: dict, log, extra_argv: list | None = None) -> dict:
 
 
 PAUSED = 2  # run / recover: the pass was checkpointed on an exhausted daily quota (approved 2026-11-02)
+STOPPED = 1  # run / recover / resume: any other stop (a non-quota halt, a recovery error, a ledger stop); engine .12 (Codex delta review D2)
 
 
 def quota_pause(run_uuid: str, daily_quota: dict) -> int:
@@ -195,6 +197,12 @@ def quota_pause(run_uuid: str, daily_quota: dict) -> int:
     later items are not_attempted and stay eligible for their first evaluation; the failed item keeps its one retry)."""
     registry({"kind": "quota_pause", "run_uuid": run_uuid, "daily_quota": daily_quota, "resume_at": quota_resume_at(daily_quota).isoformat(timespec="seconds")})
     return PAUSED
+
+
+def terminal_stop() -> dict | None:
+    """The pass's persisted terminal stop (engine .12, D2): the latest resume_stop event. An unattended resume refuses
+    before any request while one exists; continuing a stopped pass is the human's decision."""
+    return next((e for e in reversed(registry_events()) if e.get("kind") == "resume_stop"), None)
 
 
 def check() -> dict:
@@ -217,6 +225,7 @@ def run() -> int:
               "spent": {k: str(v) for k, v in spent().items() if k != "snapshot"}})
     runs = {r["run_uuid"]: r for r in validation_runs()}
     done = {e["run_uuid"] for e in registry_events() if e.get("kind") in ("run_done", "run_error")}
+    rc_out = 0
     for spec in plan["order"]:
         u = spec["run_uuid"]
         if u in done:
@@ -225,7 +234,7 @@ def run() -> int:
         if r is None or r["task_id"] != spec["task_id"] or len(r["judge_items"]) != spec["judge_items"]:
             registry({"kind": "skipped", "run_uuid": u, "reason": "the run no longer matches the plan"}); continue
         if spent()["snapshot"].get("stops"):
-            registry({"kind": "budget_stop", "stops": spent()["snapshot"]["stops"]}); break
+            registry({"kind": "budget_stop", "stops": spent()["snapshot"]["stops"]}); rc_out = STOPPED; break
         registry({"kind": "run_start", "run_uuid": u, "task_id": r["task_id"], "judge_items": len(r["judge_items"]), "reservation_usd": spec["reservation_usd"]})
         try:
             out = grade_run(spec, r, log)
@@ -235,28 +244,24 @@ def run() -> int:
         if out.get("daily_quota"):
             return quota_pause(u, out["daily_quota"])
         if out.get("halted"):
-            registry({"kind": "halted", "run_uuid": u, "reason": out["halted"]}); break
+            registry({"kind": "halted", "run_uuid": u, "reason": out["halted"]}); rc_out = STOPPED; break  # engine .12 (D2): the stop reaches the caller
         if r["judge_items"] and (out.get("provider_error") or out.get("not_attempted")):  # engine .8: one bounded per-item recovery pass afterwards
             items = auto_recovery_items(r)
             rc = recover(u, items) if items else 0
             if rc == PAUSED:
                 return PAUSED
             if rc != 0:
-                break
+                rc_out = rc; break
     registry({"kind": "pass_end", "spent": {k: str(v) for k, v in spent().items() if k != "snapshot"}})
-    return 0
+    return rc_out
 
 
 def auto_recovery_items(r: dict) -> list[int]:
-    """Items of the run's latest judged pass that are eligible for the one bounded recovery (provider_error retried
-    once, not_attempted run once); schema-invalid responses were already retried once inside the pass."""
+    """Items of the run's current judged pass that are eligible for the one bounded recovery (provider_error retried
+    once, not_attempted run once); schema-invalid responses were already retried once inside the pass. Engine .12
+    (D3): the current pass is the authoritative selection over the run's judge history; none while it is blocked."""
     from grading import judge_recovery as JR
-    from grading import run_grading as RG
-    judged = [p for p in RG.grading_passes(r["grading_out"], r["run_uuid"]) if p.get("judge_mode") == "real"]
-    if not judged:
-        return []
-    plan = JR.recovery_plan(r["grading_out"], r["run_uuid"], judged[-1]["grading_pass"], list(r["judge_items"]))
-    return sorted(i for i, d in plan["decision"].items() if d["eligible"] and d["base_call_status"] in ("provider_error", "not_attempted"))
+    return JR.authoritative_recovery(cfg(), r.get("host_dir"), r["grading_out"], r["run_uuid"], r["judge_items"])["items"]
 
 
 def recover(run_uuid: str, items: list[int]) -> int:
@@ -275,10 +280,12 @@ def recover(run_uuid: str, items: list[int]) -> int:
     r = {x["run_uuid"]: x for x in validation_runs()}.get(run_uuid)
     if r is None:
         raise SystemExit(f"{run_uuid} is not a canonical Validation run")
-    judged = [p for p in RG.grading_passes(r["grading_out"], run_uuid) if p.get("judge_mode") == "real"]
-    if not judged:
+    current = JR.authoritative_recovery(cfg(), r.get("host_dir"), r["grading_out"], run_uuid, r["judge_items"])  # engine .12 (D3): never the last record alone
+    if current["blocked"]:
+        raise SystemExit(f"recovery refused: the run's current pass cannot be established from its judge history ({current['blocked']})")
+    if not current["base"]:
         raise SystemExit("no judged pass to recover")
-    base = judged[-1]["grading_pass"]
+    base = current["base"]
     plan = JR.recovery_plan(r["grading_out"], run_uuid, base, items)
     refused = {i: d["reason"] for i, d in plan["decision"].items() if not d["eligible"]}
     if refused:
@@ -303,6 +310,9 @@ def recover(run_uuid: str, items: list[int]) -> int:
               "code_tag": ck["freeze"].get("tag")})
     if out.get("daily_quota"):
         return quota_pause(run_uuid, out["daily_quota"])
+    if out.get("halted"):  # engine .12 (D2): a non-quota halt ends the pass's automatic continuation
+        registry({"kind": "halted", "run_uuid": run_uuid, "reason": out["halted"], "source": "recovery"})
+        return STOPPED
     return 0
 
 
@@ -322,9 +332,14 @@ def resume(poll_s: int = 300, max_pauses: int = 10, sleep=None) -> int:
     existing 15 USD ceiling, the same frozen judge): after a pending quota pause has passed its resume time and only on AC
     power, first the eligible per-item recoveries of judged runs (provider_error retried once, never-sent items evaluated;
     completed items and exhausted ones, such as an item already recovered once, are never sent), then the runs not yet
-    judged. An exhausted daily quota checkpoints and pauses again; any other stop ends the resume and is recorded."""
+    judged. An exhausted daily quota checkpoints and pauses again; any other stop ends the resume and is recorded as a
+    resume_stop, which every later resume refuses before any request (engine .12, Codex delta review D2)."""
     import time as _time
     sleep = sleep or _time.sleep
+    stop = terminal_stop()
+    if stop:
+        registry({"kind": "resume_refused", "stop_at": stop.get("at"), "reason": f"the pass stopped ({str(stop.get('reason'))[:200]}); continuing it is the human's decision"})
+        return STOPPED
     pauses = 0
     registry({"kind": "resume_start"})
     while True:
@@ -351,12 +366,16 @@ def resume(poll_s: int = 300, max_pauses: int = 10, sleep=None) -> int:
             if rc == 0:
                 rc = run()
         except SystemExit as ex:  # a gate or ledger refusal: recorded, never bypassed
-            registry({"kind": "resume_stop", "reason": str(ex)[:300]}); return 1
+            registry({"kind": "resume_stop", "reason": str(ex)[:300]}); return STOPPED
         if rc == PAUSED:
             pauses += 1
             if pauses > max_pauses:
-                registry({"kind": "resume_stop", "reason": f"{pauses} quota pauses"}); return 1
+                registry({"kind": "resume_stop", "reason": f"{pauses} quota pauses"}); return STOPPED
             continue
+        if rc != 0:  # engine .12 (D2): a halted recovery or run, a recovery error or a ledger stop ends the pass's continuation
+            last = next((e for e in reversed(registry_events()) if e.get("kind") in ("halted", "recovery_error", "budget_stop")), {})
+            registry({"kind": "resume_stop", "reason": f"rc {rc}: {last.get('kind')} {str(last.get('reason') or last.get('error') or last.get('stops') or '')[:240]}"})
+            return rc
         registry({"kind": "resume_end", "rc": rc})
         return rc
 

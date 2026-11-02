@@ -59,7 +59,7 @@ class GuardAndFailureTests(Offline):
         def gen(messages):
             sent.append(1); return output('{"verdict": "pass", "evidence": [{"file": "f.xlsx", "location": "A1", "quote": "x"}], "rationale": "ok"}')
         state = {"n": 0}
-        def guard(chars):
+        def guard(chars, request_bytes=None):  # engine .12: the adapter also passes the request's UTF-8 bytes
             state["n"] += 1
             return "pass 1 ceiling would be exceeded" if state["n"] > 1 else None
         pj = J.ProviderJudge("google/gemini-3.1-pro-preview", generate=gen, cost_guard=guard)
@@ -145,7 +145,7 @@ class Pass2GuardTests(unittest.TestCase):
         from decimal import Decimal
         from grading import judge_dev as JD
         cfg = JD.cfg(); cfg["judge"]["ceilings_usd"] = {"pass_1": "20", "judge_dev_aggregate": "30"}
-        nxt = JD.worst_case_usd(7_000, 16_384, "long")
+        nxt = JD.next_liability_bound_usd(SimpleNamespace(calls=[]), 7_000, 16_384)  # engine .12 (D1): the guard's bound for an empty batch
         with mock.patch.object(JD, "cfg", return_value=cfg), mock.patch.dict(os.environ, {"GOOGLE_API_KEY": "x" + JD.DEV_KEY_SUFFIX}, clear=False):
             for k in ("GEMINI_API_KEY", "VERTEX_API_KEY", "GOOGLE_GENAI_USE_VERTEXAI"):
                 os.environ.pop(k, None)

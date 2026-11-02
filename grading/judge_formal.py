@@ -3,9 +3,10 @@ the 20 formal outputs, each judged as soon as its run is finalized while generat
 paid command refuses until every gate holds.
 
 Gates (FAIL-CLOSED, checked before any call):
-- the tag ``freeze-v1`` exists, the grading and harness code and config.json are identical to it, nothing is uncommitted,
-  and its freeze record (grading/freeze/freeze-v1_manifest.json) verifies;
-- config.json is marked FROZEN (``_status``);
+- the tag ``freeze-v1-grading`` exists, the grading and harness code and config.json are identical to it, nothing is
+  uncommitted, and its freeze record (grading/freeze/freeze-v1-grading_manifest.json) verifies (engine .12: the
+  two-stage freeze of 2026-11-02; ``freeze-v1-generation`` freezes generation only and unlocks nothing here);
+- config.json is marked FROZEN for grading (``_status``; a FROZEN-GENERATION status does not count);
 - ``judge.formal`` holds the approved ceiling (30 USD), concurrency 1, one pass;
 - ``run`` restates the human's Formal launch authorization (``--authorized-by``, ``--authorization-ref`` naming its
   docs/status.md entry, recorded verbatim; that authorization also authorizes this pass) and the scope
@@ -46,7 +47,7 @@ import sys
 import time
 from decimal import ROUND_CEILING, Decimal
 
-from grading.judge_dev import DEV_KEY_SUFFIX, batch_liability_usd, call_cost_usd, next_request_bound_usd, on_ac_power, quota_resume_at, worst_case_usd
+from grading.judge_dev import DEV_KEY_SUFFIX, call_cost_usd, next_liability_bound_usd, on_ac_power, quota_resume_at, worst_case_usd
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 BASE = os.path.expanduser("~/turing-eval-runs")
@@ -55,8 +56,8 @@ SEALED = os.path.join(BASE, "formal", "grading_sealed")
 JDIR = os.path.join(BASE, "judge_formal")
 LEDGER = os.path.join(JDIR, "ledger.json")
 REGISTRY = os.path.join(JDIR, "registry.jsonl")
-FREEZE_TAG = "freeze-v1"
-MANIFEST = os.path.join(ROOT, "grading", "freeze", "freeze-v1_manifest.json")
+FREEZE_TAG = "freeze-v1-grading"  # engine .12: two-stage freeze (approved 2026-11-02); freeze-v1-generation unlocks nothing here
+MANIFEST = os.path.join(ROOT, "grading", "freeze", "freeze-v1-grading_manifest.json")
 FROZEN_PATHS = ("grading", "harness", "config.json")
 PASS_ID = "judge-formal-pass-1"
 POLL_S = 60
@@ -95,7 +96,8 @@ def gates() -> dict:
         out["frozen_code"] = {"ok": not diff and not dirty, "differs": (diff or dirty).splitlines()[:6]}
         problems = verify(json.load(open(MANIFEST, encoding="utf-8"))) if os.path.isfile(MANIFEST) else ["freeze record missing"]
         out["freeze_record"] = {"ok": not problems, "problems": problems[:4]}
-    out["config_frozen"] = {"ok": str(cfg().get("_status", "")).startswith("FROZEN"), "status": str(cfg().get("_status", ""))[:60]}
+    status = str(cfg().get("_status", ""))
+    out["config_frozen"] = {"ok": status.startswith("FROZEN") and not status.startswith("FROZEN-GENERATION"), "status": status[:60]}  # a generation-only freeze is no grading freeze
     f = (cfg().get("judge") or {}).get("formal") or {}
     out["judge_formal_config"] = {"ok": Decimal(str(f.get("ceiling_usd", 0))) == Decimal(30) and f.get("concurrency") == 1 and f.get("passes") == 1 and f.get("repeats") == 0,
                                   "ceiling_usd": f.get("ceiling_usd"), "concurrency": f.get("concurrency"), "passes": f.get("passes")}
@@ -154,16 +156,15 @@ def select_project_credential() -> dict:
 
 
 def make_guard(holder: dict, max_tokens: int, base_total: Decimal, ceiling: Decimal, project_suffix: str | None = None):
-    def guard(request_chars: int):
+    def guard(request_chars: int, request_bytes: int | None = None):
         key = os.environ.get("GOOGLE_API_KEY") or ""
         if not project_suffix or not key.endswith(project_suffix) or key.endswith(DEV_KEY_SUFFIX):
             return "GOOGLE_API_KEY is not the Formal judge project key"
         if any(os.environ.get(k) for k in ("GEMINI_API_KEY", "VERTEX_API_KEY", "GOOGLE_GENAI_USE_VERTEXAI")):
             return "a Google credential override variable is set"
         j = holder.get("judge")
-        so_far = batch_liability_usd(j)  # engine .10 (R2-B4): metered calls plus the inferred buffer the ledger settles for this batch
-        nxt = next_request_bound_usd(j, request_chars, max_tokens)
-        if base_total + so_far + nxt > ceiling:
+        # engine .10 (R2-B4) / .12 (D1): the whole settlement of this batch after the next request, its inferred buffer and repricing included
+        if base_total + next_liability_bound_usd(j, request_chars, max_tokens, request_bytes) > ceiling:
             return f"formal judge ceiling {ceiling} USD would be exceeded"
         return None
     return guard
@@ -220,14 +221,11 @@ def reservation_usd(n_items: int, remaining: Decimal) -> Decimal:
 
 def recovery_items(r: dict) -> tuple[str | None, list[int]]:
     """The run's latest judged pass and its items eligible for the bounded per-item recovery: provider_error retried
-    once, a never-sent item evaluated (judge_recovery's bound; completed and exhausted items are never sent)."""
+    once, a never-sent item evaluated (judge_recovery's bound; completed and exhausted items are never sent). Engine .12
+    (D3): the current pass is the authoritative selection over the run's judge history; none while it is blocked."""
     from grading import judge_recovery as JR
-    from grading import run_grading as RG
-    judged = [p for p in RG.grading_passes(r["grading_out"], r["run_uuid"]) if p.get("judge_mode") == "real"]
-    if not judged:
-        return None, []
-    plan = JR.recovery_plan(r["grading_out"], r["run_uuid"], judged[-1]["grading_pass"], list(r["judge_items"]))
-    return judged[-1]["grading_pass"], sorted(i for i, d in plan["decision"].items() if d["eligible"] and d["base_call_status"] in ("provider_error", "not_attempted"))
+    current = JR.authoritative_recovery(cfg(), r.get("host_dir"), r["grading_out"], r["run_uuid"], r["judge_items"])
+    return current["base"], current["items"]
 
 
 def pending_pause() -> dict | None:

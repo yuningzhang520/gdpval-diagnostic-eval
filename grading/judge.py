@@ -724,7 +724,7 @@ class ProviderJudge:
         # reasoning_effort is an Inspect GenerateConfig field (Gemini 3: mapped by Inspect's Google adapter to ThinkingConfig(thinking_level));
         # nothing is forwarded to google.genai directly (approved 2026-11-01: thinking HIGH, temperature 1.0, max_tokens 16,384 incl. thinking, max_retries 3)
         self.generate_params = {"temperature": temperature, "max_tokens": max_tokens, "max_retries": max_retries, "timeout": timeout, "reasoning_effort": reasoning_effort}
-        # cost_guard(request_chars) -> None or a reason: called before every request; a reason stops this and every later unit
+        # cost_guard(request_chars, request_bytes=...) -> None or a reason: called before every request; a reason stops this and every later unit
         # of the batch before any request is sent (a budget stop: the units become not_attempted, never a rubric fail)
         self.cost_guard = cost_guard
         self.prompt_sha256 = hashlib.sha256(JUDGE_SYSTEM_PROMPT.encode("utf-8")).hexdigest()
@@ -806,7 +806,8 @@ class ProviderJudge:
                "request_sha256": hashlib.sha256((JUDGE_SYSTEM_PROMPT + "\n" + user).encode("utf-8")).hexdigest(), "request_chars": len(JUDGE_SYSTEM_PROMPT) + len(user),
                "prompt_sha256": self.prompt_sha256, "generate_params": dict(self.generate_params), "evidence_builder": unit.get("evidence_builder")}
         if not self.halted and self.cost_guard is not None:
-            reason = self.cost_guard(rec["request_chars"])
+            # engine .12 (D1): the request's UTF-8 bytes, the guard's hard bound on its prompt tokens
+            reason = self.cost_guard(rec["request_chars"], request_bytes=len(JUDGE_SYSTEM_PROMPT.encode("utf-8")) + len(user.encode("utf-8")))
             if reason:
                 self.halted = f"budget stop: {reason}"
         if self.halted:
