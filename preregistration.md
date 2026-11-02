@@ -587,6 +587,25 @@ judge settings and scoring policy unchanged):
     stops.
 - Historical records, held-out measurements and earlier grading versions are kept unchanged.
 
+### 1.25 Grading freeze and the formal judge deadline exception (approved by the human 2026-11-02; V1.9, tag `freeze-v1-grading`)
+- D2, terminal stops (Codex recheck of `v1.8-formal-roots`):
+  - Old rule: only `resume()` recorded the terminal `resume_stop`. A standalone `recover()` or `run()` halt recorded
+    `halted` only, and a later resume continued.
+  - Evidence: Codex's valid-history chain with a real recovery pass, WAL and settlement sent a second request and graded
+    another run.
+  - New rule: every new non-quota stop of `recover()` or `run()` is persisted as a `resume_stop` before its evidence,
+    once per stop, and every later resume refuses. Historical `halted` records without one (the authorized 2026-11-01
+    resumptions) are unchanged, as are quota pauses.
+- Formal runner: a stop recorded by an invocation returns non-zero; resume already refused every stop kind. Runs are
+  judged in the frozen task order with both candidates of a task adjacent, so a pass cut short covers both candidates of
+  each task reached.
+- Deadline exception (the human, 2026-11-02): the formal judge pass starts at `freeze-v1-grading` before the Judge
+  Validation agreement is measured and before the independent recheck of V1.9.
+  - Its verdicts are provisional until both exist.
+  - Missing verdicts and provider errors are never rubric fails.
+  - All formal results stay sealed until the human's 20 formal blind labels are saved.
+- Rubric, critical items, judge prompt, judge settings, verdict semantics and scoring policy are unchanged.
+
 ---
 
 ## 2. Task selection and exclusions

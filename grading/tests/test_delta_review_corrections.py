@@ -265,14 +265,14 @@ class D2TerminalStopTests(unittest.TestCase):
     def test_a_non_quota_halt_in_recovery_is_propagated_and_recorded(self):
         with mock.patch.object(JV, "grade_run", return_value=self.out(halted="3 distinct items failed with recoverable provider errors in this pass")):
             self.assertEqual(JV.recover("R", [2, 3]), JV.STOPPED)  # engine .11: 0
-        self.assertEqual(self.kinds(), ["recovery_start", "recovery_done", "halted"])
+        self.assertEqual(self.kinds(), ["recovery_start", "recovery_done", "resume_stop", "halted"])  # V1.9: the terminal stop is persisted first
 
     def test_resume_stops_after_a_halted_recovery_and_a_later_resume_refuses(self):
         with mock.patch.object(JV, "grade_run", return_value=self.out(halted="call for t:item02 failed with RetryError (unrecoverable: HTTP 500 INTERNAL); its cost is unknown")), \
              mock.patch.object(JV, "run") as run:
             self.assertEqual(JV.resume(sleep=lambda _: None), JV.STOPPED)  # engine .11: run() followed and the resume ended 0
         run.assert_not_called()
-        self.assertEqual(self.kinds(), ["resume_start", "recovery_start", "recovery_done", "halted", "resume_stop"])
+        self.assertEqual(self.kinds(), ["resume_start", "recovery_start", "recovery_done", "resume_stop", "halted"])  # V1.9: one resume_stop, written by recover()
         with mock.patch.object(JV, "recover") as rec, mock.patch.object(JV, "run") as run:
             self.assertEqual(JV.resume(sleep=lambda _: None), JV.STOPPED)
         rec.assert_not_called(); run.assert_not_called()  # engine .11: both were called
@@ -294,7 +294,7 @@ class D2TerminalStopTests(unittest.TestCase):
              mock.patch.object(JV, "grade_run", return_value=self.out(halted="call for t:item01 returned no usage; its cost cannot be accounted")) as graded:
             self.assertEqual(JV.run(), JV.STOPPED)  # engine .11: 0
         self.assertEqual(graded.call_count, 1)
-        self.assertEqual(self.kinds(), ["pass_start", "run_start", "run_done", "halted", "pass_end"])
+        self.assertEqual(self.kinds(), ["pass_start", "run_start", "run_done", "resume_stop", "halted", "pass_end"])
 
     def test_the_daily_quota_pause_still_continues_the_pass(self):
         # the real registry's shape: halted events of 2026-11-01, resolved by approved recoveries, carry no resume_stop
@@ -318,6 +318,128 @@ class D2TerminalStopTests(unittest.TestCase):
         self.assertEqual(run.call_count, 1); self.assertEqual(len(sleeps), 1)
         self.assertEqual(self.kinds()[3:], ["resume_start", "quota_resume", "recovery_start", "recovery_done", "quota_pause", "quota_resume", "recovery_start", "recovery_done",
                                             "resume_end"])
+
+
+class D2RecheckTests(D2TerminalStopTests):
+    """Codex recheck of v1.8-formal-roots (V1.9): a NEW non-quota stop from a standalone recover() or run() is persisted
+    as a resume_stop, so a later resume() refuses before any request or grading callback; one record per stop; the
+    quota continuation and the historical halted records (no resume_stop) are unchanged."""
+
+    def test_codex_standalone_recovery_chain_with_real_wal_and_settlement(self):
+        lg = self.r["ledger"]
+        JV.registry({"kind": "run_done", "run_uuid": "R", "task_id": TASK})
+        r2 = {**self.r, "run_uuid": "S"}
+        json.dump({"order": [{"run_uuid": u, "task_id": TASK, "judge_items": 3, "reservation_usd": "1"} for u in ("R", "S")]}, open(self.plan, "w"))
+        sent, later = [], []
+
+        def grade(spec, rr, log, extra_argv=None):
+            if rr["run_uuid"] == "S":
+                later.append("S")
+                return self.out(judge_unit="S:judge:1", grading_pass="S-pass", calls=1, calls_ok=1, provider_error=0)
+            uid = f"R:judge:{2 + len(sent)}"
+            n = {"k": 0}
+            base = extra_argv[extra_argv.index("--base-pass") + 1]
+            items = [int(i) for i in extra_argv[extra_argv.index("--judge-recover") + 1].split(",")]
+
+            def guard(chars, request_bytes=None):  # one request allowed, then a synthetic per-request budget stop (non-quota)
+                n["k"] += 1
+                return None if n["k"] == 1 else "synthetic next-request bound exceeds the pass ceiling"
+
+            def generate(_):
+                sent.append("R")
+                return SimpleNamespace(completion=VALID, usage=SimpleNamespace(input_tokens=1000, output_tokens=0, input_tokens_cache_read=0, input_tokens_cache_write=0), error=None)
+            j = J.ProviderJudge(MODEL, generate=generate, cost_guard=guard, log_path=RG.judge_log_path(lg.path, "R", uid), run_uuid="R", judge_unit=uid)
+            la = PilotLauncher(CFG, runs_root=os.path.join(os.path.dirname(lg.path), "accounting"), ledger=lg, eval_fn=lambda **kw: None)
+            state = {}
+
+            def batch():
+                state["pass"] = JR.recovery_pass(rr["grading_out"], "R", TASK, base, items, j)
+                return j.batch_result()
+            st = la.run_judge_batch(unit_id=uid, estimate_usd=Decimal("1"), batch_fn=batch)["settlement"]
+            return {"judge_unit": uid, "grading_pass": state["pass"]["grading_pass"], "calls": len(j.calls), "calls_ok": sum(c["status"] == "ok" for c in j.calls),
+                    "provider_error": 0, "not_attempted": sum(c["status"] == "not_attempted" for c in j.calls), "halted": j.halted, "cost_from_calls_usd": st["cost_usd"]}
+        with mock.patch.object(JV, "validation_runs", return_value=[self.r, r2]), mock.patch.object(JV, "spent", side_effect=lambda: {"snapshot": lg.snapshot()}), \
+             mock.patch.object(JV, "ensure_ledger", return_value=lg), mock.patch.object(JV, "grade_run", side_effect=grade):
+            first = JV.recover("R", [2, 3])
+            current = JR.authoritative_recovery(CFG, self.r["host_dir"], self.r["grading_out"], "R", [1, 2, 3])
+            snap = lg.snapshot()
+            second = JV.resume(sleep=lambda _: None)
+        self.assertEqual(first, JV.STOPPED)
+        self.assertFalse(current["blocked"]); self.assertEqual(current["items"], [2])  # the recovery pass is the current pass; the never-sent item stays eligible
+        self.assertFalse(snap["review_pending_units"]); self.assertFalse(snap["stops"]); self.assertFalse(snap["open_reservations"])
+        self.assertEqual(second, JV.STOPPED)
+        self.assertEqual((sent, later), (["R"], []))  # v1.8: ['R', 'R'] and ['S']: the later resume sent another request and graded run S
+        self.assertEqual(self.kinds()[-3:], ["resume_stop", "halted", "resume_refused"])
+
+    def test_a_standalone_run_halt_refuses_the_later_resume(self):
+        with mock.patch.object(JV, "ensure_ledger"), mock.patch.object(JV, "grade_run", return_value=self.out(halted="call for t:item01 returned no usage; its cost cannot be accounted")) as g:
+            self.assertEqual(JV.run(), JV.STOPPED)
+            with mock.patch.object(JV, "recover") as rec, mock.patch.object(JV, "run") as run:
+                self.assertEqual(JV.resume(sleep=lambda _: None), JV.STOPPED)
+        self.assertEqual(g.call_count, 1); rec.assert_not_called(); run.assert_not_called()
+        self.assertEqual(self.kinds()[-1], "resume_refused")
+
+    def test_a_standalone_recovery_error_refuses_the_later_resume(self):
+        with mock.patch.object(JV, "grade_run", side_effect=RuntimeError("synthetic")):
+            self.assertEqual(JV.recover("R", [2, 3]), JV.STOPPED)
+        with mock.patch.object(JV, "recover") as rec, mock.patch.object(JV, "run") as run:
+            self.assertEqual(JV.resume(sleep=lambda _: None), JV.STOPPED)
+        rec.assert_not_called(); run.assert_not_called()
+
+    def test_one_terminal_record_per_stop(self):
+        self.assertEqual(JV.record_stop("x", source="recovery", run_uuid="R"), JV.STOPPED)
+        JV.record_stop("x", source="recovery", run_uuid="R")
+        self.assertEqual(self.kinds().count("resume_stop"), 1)
+        with mock.patch.object(JV, "grade_run", return_value=self.out(halted="3 distinct items failed with recoverable provider errors in this pass")):
+            JV.record_stop("y", source="run", run_uuid="R")
+        self.assertEqual(self.kinds().count("resume_stop"), 2)  # another stop is another record
+
+    def test_a_quota_pause_records_no_terminal_stop(self):
+        quota = {"quota_id": "GenerateRequestsPerDayPerProjectPerModel", "quota_value": "250", "retry_delay": "1s"}
+        with mock.patch.object(JV, "grade_run", return_value=self.out(daily_quota=quota, halted="daily quota exhausted (GenerateRequestsPerDayPerProjectPerModel, value 250); paused until the provider's reset")):
+            self.assertEqual(JV.recover("R", [2, 3]), JV.PAUSED)
+        self.assertIsNone(JV.terminal_stop()); self.assertEqual(self.kinds()[-1], "quota_pause")
+
+
+class FormalStopTests(unittest.TestCase):
+    """V1.9: the formal runner's equivalent path - a stop ends the invocation with a non-zero result, and resume refuses
+    (it already refused every STOPS kind); runs are judged in task order with both candidates adjacent."""
+
+    def setUp(self):
+        self.d = tempfile.mkdtemp(prefix="v19_formal_")
+        for k, v in (("JDIR", self.d), ("REGISTRY", os.path.join(self.d, "registry.jsonl")), ("SEALED", os.path.join(self.d, "sealed"))):
+            p = mock.patch.object(JF, k, v); p.start(); self.addCleanup(p.stop)
+        for name, value in (("gates", {"ok": True, "freeze_tag": {"ok": True, "commit": "c0ffee"}}), ("select_project_credential", {"variable": "GOOGLE_API_KEY_VALIDATION", "suffix": "FRML"}),
+                            ("on_ac_power", True), ("ensure_ledger", SimpleNamespace(snapshot=lambda: {"remaining_usd": "30", "settled_usd": "0", "reserved_usd": "0"}))):
+            p = mock.patch.object(JF, name, return_value=value); p.start(); self.addCleanup(p.stop)
+        self.scope = f"judge-formal|{CFG['judge']['model']}|{CFG['judge']['formal']['ceiling_usd']}"
+
+    def test_a_halted_run_returns_non_zero_and_resume_refuses(self):
+        runs = [{"run_uuid": u, "task_id": TASK, "model": m, "judge_items": [1], "grading_out": os.path.join(self.d, "sealed", u)} for u, m in (("A", "m/a"), ("B", "m/b"))]
+        graded = []
+        with mock.patch.object(JF, "finalized_runs", return_value=runs), mock.patch.object(JF, "recovery_items", return_value=(None, [])), \
+             mock.patch.object(JF, "_grade", side_effect=lambda r, *a, **k: graded.append(r["run_uuid"]) or {"rc": 0, "calls": 1, "calls_ok": 0, "provider_error": 1, "not_attempted": 0,
+                                                                                                           "halted": "call for t:item01 failed with ServerError (unrecoverable)"}):
+            self.assertEqual(JF.run("human", "status entry", self.scope, poll_s=0, sleep=lambda s: None), 1)  # v1.8: 0
+            with self.assertRaisesRegex(SystemExit, "stopped|ended"):
+                JF.run("human", "status entry", self.scope, resume=True)
+        self.assertEqual(graded, ["A"])  # no further run after the halt
+
+    def test_runs_are_judged_in_task_order_with_both_candidates_adjacent(self):
+        order = [t["task_id"] for t in json.load(open(os.path.join(ROOT, "data", "selected_tasks.json")))["tasks"]]
+        d = tempfile.mkdtemp(prefix="v19_roots_")
+        log = os.path.join(d, "a.eval"); open(log, "w").write("x")
+        roots = []
+        for name, model in (("opus", "anthropic/claude-opus-5-5"), ("gpt", "openai/gpt-6.1-sol")):
+            root = os.path.join(d, name, "runs"); os.makedirs(root)
+            runs = [(f"{name}{i}", t) for i, t in enumerate(reversed(order[:3]))]
+            for u, _ in runs:
+                os.makedirs(os.path.join(root, u)); json.dump({"final": True}, open(os.path.join(root, u, "run_outcome.json"), "w"))
+            open(os.path.join(root, "canonical_designations.jsonl"), "w").write("".join(json.dumps({"run_uuid": u, "task_id": t, "designation": "canonical", "model": model}) + "\n" for u, t in runs))
+            open(os.path.join(root, "run_inventory.jsonl"), "w").write("".join(json.dumps({"run_uuid": u, "log_file": log, "unit_id": u}) + "\n" for u, _ in runs))
+            roots.append((root, os.path.join(d, name, "ledger.json")))
+        got = [(r["task_id"], r["model"].split("/")[0]) for r in JF.finalized_runs(tuple(roots))]
+        self.assertEqual(got, [(t, p) for t in order[:3] for p in ("anthropic", "openai")])
 
 
 if __name__ == "__main__":

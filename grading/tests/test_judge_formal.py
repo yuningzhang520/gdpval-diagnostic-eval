@@ -18,7 +18,8 @@ class GateTests(unittest.TestCase):
                 JF.run("human", "status entry", scope())
 
     def test_missing_freeze_tag_and_a_draft_config_fail_closed(self):
-        with mock.patch.object(JF.subprocess, "run", return_value=SimpleNamespace(stdout="")):
+        c = JF.cfg(); c["_status"] = "DRAFT. Not frozen."  # V1.9: the repository config is now grading-frozen; this case keeps a draft one
+        with mock.patch.object(JF.subprocess, "run", return_value=SimpleNamespace(stdout="")), mock.patch.object(JF, "cfg", return_value=c):
             g = JF.gates()
         self.assertFalse(g["ok"])
         self.assertEqual((g["freeze_tag"]["ok"], g["config_frozen"]["ok"]), (False, False))
@@ -132,7 +133,7 @@ class FinalizedRunTests(unittest.TestCase):
                 open(os.path.join(root, "run_inventory.jsonl"), "w").write("".join(json.dumps({"run_uuid": u, "log_file": log, "unit_id": u}) + "\n" for u, _ in runs))
                 roots.append((root, os.path.join(d, name, "ledger.json")))
             got = JF.finalized_runs(tuple(roots))
-            self.assertEqual([(r["run_uuid"], r["model"], os.path.basename(os.path.dirname(r["gen_ledger"]))) for r in got], [("RUNA", "m/opus", "opus"), ("RUNB", "m/gpt", "gpt")])
+            self.assertEqual(sorted((r["run_uuid"], r["model"], os.path.basename(os.path.dirname(r["gen_ledger"]))) for r in got), [("RUNA", "m/opus", "opus"), ("RUNB", "m/gpt", "gpt")])  # V1.9 orders by task, then model
             with self.assertRaisesRegex(SystemExit, "two canonical formal runs"):
                 JF.finalized_runs((roots[0], roots[0]))  # one task and model canonical in two roots: never two samples
 

@@ -1,5 +1,5 @@
 {
-  "_status": "FROZEN-GENERATION (tag freeze-v1-generation, 2026-11-02; code baseline b33cc37bff9a4a301380bc35889e6ffc4ad03dd1): the formal generation conditions (candidate models and pricing, generation, retries, limits, prompts, staged inputs, sandbox image, batches.formal) are frozen for the formal generation batch (record harness/freeze/freeze-v1-generation.json). NOT a grading freeze: the judge and grading sections may still change by versioned correction; grading and the formal judge require freeze-v1-grading.",
+  "_status": "FROZEN (two-stage freeze, 2026-11-02): generation frozen at freeze-v1-generation (dda234f; code baseline b33cc37); grading and the formal judge frozen at freeze-v1-grading (record grading/freeze/freeze-v1-grading_manifest.json). Later corrections get new tags and a recorded amendment; neither tag moves.",
   "drafted_at_utc": "2026-10-30T23:12:11+00:00",
   "code_commit_at_draft": "1941d4ac69566fdbc0a6dff821de57664e84f284",
   "code_commit_note": "The commit actually used by a run is recorded in that run's metadata, not here.",

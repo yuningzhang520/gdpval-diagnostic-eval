@@ -123,7 +123,10 @@ def finalized_runs(roots=None) -> list[dict]:
         if key in seen:
             raise SystemExit(f"two canonical formal runs for {key}: {seen[key]} and {r['run_uuid']}; refusing (k=1)")
         seen[key] = r["run_uuid"]
-    return out
+    # V1.9 (2026-11-02, deadline): judged in the frozen task order with both candidates of a task adjacent, so a
+    # pass cut short (quota, deadline) covers both candidates of every task it reached
+    order = [t["task_id"] for t in json.load(open(os.path.join(ROOT, "data", "selected_tasks.json"), encoding="utf-8"))["tasks"]]
+    return sorted(out, key=lambda r: (order.index(r["task_id"]) if r["task_id"] in order else len(order), r["model"] or ""))
 
 
 def _finalized_in(runs_root: str, gen_ledger: str) -> list[dict]:
@@ -285,6 +288,7 @@ def run(authorized_by: str | None, authorization_ref: str | None, confirm: str |
     os.chmod(SEALED, 0o700)
     log = open(os.path.join(SEALED, f"{PASS_ID}_{dt.datetime.now(dt.timezone.utc).strftime('%Y%m%dT%H%M%SZ')}.log"), "a", encoding="utf-8")
     registry({"kind": "pass_resume" if resume else "pass_start", "freeze_commit": g["freeze_tag"]["commit"], "authorization": {**auth, "confirm": confirm}, "credential": cred})
+    n_start = len(registry_events())
     idle = 0
     while True:
         p = pending_pause()
@@ -350,7 +354,8 @@ def run(authorized_by: str | None, authorization_ref: str | None, confirm: str |
         if out.get("halted"):
             registry({"kind": "halted", "run_uuid": r["run_uuid"]}); break
     registry({"kind": "pass_end", "judged": len({e["run_uuid"] for e in registry_events() if e.get("kind") == "run_done"})})
-    return 0
+    # V1.9 (Codex recheck of D2): a stop recorded by this invocation is a non-zero result (resume already refuses every STOPS kind)
+    return 1 if any(e.get("kind") in STOPS for e in registry_events()[n_start:]) else 0
 
 
 def status() -> dict:

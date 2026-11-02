@@ -5387,6 +5387,37 @@ Docker-gated suites on `b7ce2db` (`v1.8-formal-roots`): 13/13 pass; logs `logs/d
   repository). It passed on rerun from the default isolated directory: 62 passed, 0 failed. Both results are kept.
 - Clean tree before and after, no container left running, no formal unit running during the suites.
 
+## V1.9: D2 terminal stops, grading freeze, formal judge under the deadline exception (2026-11-02)
+
+Codex recheck of `v1.8-formal-roots` (`/tmp/codex-recheck/review-aUg7zw04/REVIEW.md`, evidence unchanged): BLOCKED on
+one D2 path.
+- A standalone `recover()` halt (valid canonical history, real recovery pass, WAL and settlement) was not persisted as a
+  terminal stop. A later `resume()` sent another request and graded another run.
+- D1, D3, N1, N3 and the six original Review 2 probes were confirmed.
+
+Correction (preregistration 1.25):
+- `judge_validation.record_stop` persists every new non-quota stop of `recover()` / `run()` (halt, recovery error,
+  ledger stop) as a `resume_stop`, before the halt evidence and once per stop. `resume()` writes its own only when its
+  child did not.
+- The formal runner returns non-zero after a stop. Its resume already refused every stop kind, so the persistence gap
+  does not exist there. It judges in task order with both candidates adjacent.
+
+Tests:
+- `D2RecheckTests` ports Codex's standalone chain (fails on V1.8: `['R','R']` requests and run S graded; now `['R']`,
+  no grading callback, `resume_refused`). It also covers a standalone run halt, a standalone recovery error, one record
+  per stop, and no terminal stop on a quota pause.
+- `FormalStopTests`: non-zero result and resume refusal; task-order interleaving.
+- Against a `v1.8-formal-roots` export the new tests give 8 failures and 1 error; after the correction all pass.
+
+Judge Validation on the third project (`GOOGLE_API_KEY_JUDGE`): not supported by the existing workflow, so not
+attempted.
+- The Validation guard accepts only the Dev project's key, and the pending quota pause holds the pass until
+  2026-11-03T08:05Z.
+- The worker (`df4a560`) stays paused with the watcher attached. No handoff, no duplicate call.
+
+Formal judge partitioning: not supported by the frozen runner (one credential setting, one registry, one ledger). One
+worker runs on the second project (`GOOGLE_API_KEY_VALIDATION`); the third project is unused.
+
 ## Known issues and findings (material check)
 
 - `rubric_json.form_content`: 8,036 items hold `null`, 2,417 items lack the key, zero
@@ -5802,7 +5833,8 @@ Docker-gated suites on `b7ce2db` (`v1.8-formal-roots`): 13/13 pass; logs `logs/d
 - 2026-11-02 · Codex delta review corrections D1-D3, N1 (engine .12) and the formal judge's freeze-v1-grading requirement; formal generation armed from the clean checkout (waits for AC power); tag `v1.7-delta-review-corrections` · 2eb4060 (pushed)
 - 2026-11-02 · Formal generation switched to two independent candidate workers (ceiling 200 per candidate ledger, config snapshot `80433476…`); deterministic grading frozen at code `2eb4060`; tag `freeze-v1-grading-deterministic` · ef53050 (pushed)
 - 2026-11-02 · The formal judge reads the three formal runs roots, each with its own generation ledger; tag `v1.8-formal-roots` · b7ce2db (pushed)
-- 2026-11-02 · Formal generation complete (20/20, 17.979211 USD, no hold or stop); 20 deterministic passes sealed; 20 blind packets; Docker 13/13 on `b7ce2db` · (this commit; local)
+- 2026-11-02 · Formal generation complete (20/20, 17.979211 USD, no hold or stop); 20 deterministic passes sealed; 20 blind packets; Docker 13/13 on `b7ce2db` · caecfc3 (pushed)
+- 2026-11-02 · V1.9: D2 terminal stops persisted from standalone recover/run; formal runner stop result and task-order judging; config grading-frozen; tag `freeze-v1-grading` · (this commit)
 
 ## Next stage (not started)
 

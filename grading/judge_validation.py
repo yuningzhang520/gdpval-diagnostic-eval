@@ -51,7 +51,8 @@ VERSION_TAGS = ((FREEZE_TAG, MANIFEST), ("v1.1-judge-item-recovery", os.path.joi
                 ("v1.5-item27-quota-pause", os.path.join(ROOT, "grading", "freeze", "v1.5_manifest.json")),  # V1.3.1 (2ea2e5b5 .6, item 27) and the daily-quota pause, one project per workload (approved 2026-11-02)
                 ("v1.6-recovery-hash-check", os.path.join(ROOT, "grading", "freeze", "v1.6_manifest.json")),  # engine .11: Review 2 N3, recovery refused without the base request hash (approved 2026-11-02)
                 ("v1.7-delta-review-corrections", os.path.join(ROOT, "grading", "freeze", "v1.7_manifest.json")),  # engine .12: Codex delta review D1-D3, N1; formal judge requires freeze-v1-grading (approved 2026-11-02)
-                ("v1.8-formal-roots", os.path.join(ROOT, "grading", "freeze", "v1.8_manifest.json")))  # engine .12: the formal judge reads the three formal runs roots, each with its own generation ledger (2026-11-02)
+                ("v1.8-formal-roots", os.path.join(ROOT, "grading", "freeze", "v1.8_manifest.json")),  # engine .12: the formal judge reads the three formal runs roots, each with its own generation ledger (2026-11-02)
+                ("freeze-v1-grading", os.path.join(ROOT, "grading", "freeze", "freeze-v1-grading_manifest.json")))  # V1.9: Codex recheck of D2 (terminal stops persisted), formal stop result and task-order judging; the grading freeze (2026-11-02)
 PASS_ID = "judge-validation-pass-1"
 FROZEN_PATHS = ("grading", "harness", "config.json")
 AUTH_REF = "docs/status.md decision 2026-11-01: Judge Validation authorized (one pass, frozen judge, separate ledger, 15 USD, concurrency 1, Dev project key)"
@@ -206,6 +207,18 @@ def terminal_stop() -> dict | None:
     return next((e for e in reversed(registry_events()) if e.get("kind") == "resume_stop"), None)
 
 
+def record_stop(reason: str, **ctx) -> int:
+    """Persist a NEW non-quota terminal stop of the pass as a resume_stop (V1.9, Codex recheck of D2), whichever
+    entry point produced it (resume, or a standalone recover / run), so that every later resume refuses before any
+    request. Idempotent: the same stop (same source, run and reason as the latest resume_stop) is recorded once.
+    Historical halted records without a resume_stop (the authorized 2026-11-01 resumptions) are never reinterpreted."""
+    last = terminal_stop()
+    if last and last.get("source") == ctx.get("source") and last.get("run_uuid") == ctx.get("run_uuid") and last.get("reason") == reason[:300]:
+        return STOPPED
+    registry({"kind": "resume_stop", "reason": reason[:300], **ctx})
+    return STOPPED
+
+
 def check() -> dict:
     plan_dirty = subprocess.run(["git", "status", "--porcelain", "--untracked-files=all", "--", PLAN], cwd=ROOT, capture_output=True, text=True).stdout.strip()
     fz = frozen_state()
@@ -235,7 +248,9 @@ def run() -> int:
         if r is None or r["task_id"] != spec["task_id"] or len(r["judge_items"]) != spec["judge_items"]:
             registry({"kind": "skipped", "run_uuid": u, "reason": "the run no longer matches the plan"}); continue
         if spent()["snapshot"].get("stops"):
-            registry({"kind": "budget_stop", "stops": spent()["snapshot"]["stops"]}); rc_out = STOPPED; break
+            stops = spent()["snapshot"]["stops"]
+            record_stop(f"ledger stop: {str(stops)[:240]}", source="run", run_uuid=u)  # V1.9: persisted first, before the stop's evidence
+            registry({"kind": "budget_stop", "stops": stops}); rc_out = STOPPED; break
         registry({"kind": "run_start", "run_uuid": u, "task_id": r["task_id"], "judge_items": len(r["judge_items"]), "reservation_usd": spec["reservation_usd"]})
         try:
             out = grade_run(spec, r, log)
@@ -245,6 +260,7 @@ def run() -> int:
         if out.get("daily_quota"):
             return quota_pause(u, out["daily_quota"])
         if out.get("halted"):
+            record_stop(f"run halted: {out['halted']}", source="run", run_uuid=u)  # V1.9: persisted first, before the halt evidence
             registry({"kind": "halted", "run_uuid": u, "reason": out["halted"]}); rc_out = STOPPED; break  # engine .12 (D2): the stop reaches the caller
         if r["judge_items"] and (out.get("provider_error") or out.get("not_attempted")):  # engine .8: one bounded per-item recovery pass afterwards
             items = auto_recovery_items(r)
@@ -302,6 +318,7 @@ def recover(run_uuid: str, items: list[int]) -> int:
     try:
         out = grade_run({"reservation_usd": str(est)}, r, log, extra_argv=["--judge-recover", ",".join(str(i) for i in items), "--base-pass", base])
     except Exception as ex:  # recorded, never retried automatically
+        record_stop(f"recovery error: {type(ex).__name__}: {str(ex)[:200]}", source="recovery", run_uuid=run_uuid)  # V1.9: never retried automatically
         registry({"kind": "recovery_error", "run_uuid": run_uuid, "error": f"{type(ex).__name__}: {str(ex)[:300]}"})
         return 1
     rec = [p for p in RG.grading_passes(r["grading_out"], run_uuid)][-1]
@@ -312,6 +329,7 @@ def recover(run_uuid: str, items: list[int]) -> int:
     if out.get("daily_quota"):
         return quota_pause(run_uuid, out["daily_quota"])
     if out.get("halted"):  # engine .12 (D2): a non-quota halt ends the pass's automatic continuation
+        record_stop(f"recovery halted: {out['halted']}", source="recovery", run_uuid=run_uuid)  # V1.9: persisted first, before the halt evidence
         registry({"kind": "halted", "run_uuid": run_uuid, "reason": out["halted"], "source": "recovery"})
         return STOPPED
     return 0
@@ -343,6 +361,7 @@ def resume(poll_s: int = 300, max_pauses: int = 10, sleep=None) -> int:
         return STOPPED
     pauses = 0
     registry({"kind": "resume_start"})
+    n_start = len(registry_events())
     while True:
         p = pending_pause()
         if p:
@@ -374,6 +393,8 @@ def resume(poll_s: int = 300, max_pauses: int = 10, sleep=None) -> int:
                 registry({"kind": "resume_stop", "reason": f"{pauses} quota pauses"}); return STOPPED
             continue
         if rc != 0:  # engine .12 (D2): a halted recovery or run, a recovery error or a ledger stop ends the pass's continuation
+            if any(e.get("kind") == "resume_stop" for e in registry_events()[n_start:]):  # V1.9: the child already persisted it
+                return rc
             last = next((e for e in reversed(registry_events()) if e.get("kind") in ("halted", "recovery_error", "budget_stop")), {})
             registry({"kind": "resume_stop", "reason": f"rc {rc}: {last.get('kind')} {str(last.get('reason') or last.get('error') or last.get('stops') or '')[:240]}"})
             return rc
