@@ -376,6 +376,36 @@ class ManualResolutionTests(unittest.TestCase):
         with self.assertRaises(b.LedgerConflict):
             lg.resolve_manually("held", resolution="settled_amount", by="reviewer", basis="twice", amount_usd="0.70")
 
+    def test_an_inferred_buffer_is_estimated_without_a_hold(self):
+        """Codex Review 2 R2-B3 (engine .10, 2026-11-02): two metered 1 USD calls plus an inferred buffer of 11 average
+        calls settle at 13 USD, estimated (engine .9: estimated false, reported as reliably accounted); the approved
+        no-hold policy for the buffer is unchanged; an older inferred settlement written without the flag is derived as
+        estimated, its event left as recorded."""
+        prices = {"m/x": {"input": 1, "output": 0}}
+        lg = b.BudgetLedger(self.path, 100, prices, label="judge_validation")
+        lg.reserve("j", "judge", 10, {})
+        st = lg.settle("j", {"m/x": {"input_tokens": 2_000_000, "output_tokens": 0}}, calls_by_model={"m/x": [{"input_tokens": 1_000_000, "output_tokens": 0}] * 2},
+                       scope={"same_sample": True}, recovered={"recovered": 1, "buffer_calls": 11})
+        self.assertEqual((st["cost_usd"], st["inferred"]["buffer_usd"], st["estimated"], st["estimate_basis"], st["manual_review_required"]), ("13.000000", "11.000000", True, ["inferred_buffer"], False))
+        snap = lg.snapshot()
+        self.assertEqual((snap["review_pending_units"], snap["estimated_portion_usd"]), ([], "13.000000"))
+        self.assertEqual(lg.stop_reasons(), [])  # no hold, no stop: the approved buffer policy
+        lg.reserve("plain", "judge", 10, {})
+        self.assertFalse(lg.settle("plain", {"m/x": {"input_tokens": 1_000_000, "output_tokens": 0}})["estimated"])  # out of scope: metered only
+        legacy = os.path.join(os.path.dirname(self.path), "legacy.json")
+        lg2 = b.BudgetLedger(legacy, 100, prices, label="judge_validation")
+        lg2.reserve("old", "judge", 10, {})
+        lg2.settle("old", {"m/x": {"input_tokens": 2_000_000, "output_tokens": 0}}, calls_by_model={"m/x": [{"input_tokens": 1_000_000, "output_tokens": 0}] * 2},
+                   scope={"same_sample": True}, recovered={"recovered": 1, "buffer_calls": 11})
+        state = json.load(open(legacy))
+        state["entries"][-1]["estimated"] = False  # as engine .9 wrote it
+        json.dump(state, open(legacy, "w"))
+        lg3 = b.BudgetLedger.open_existing(legacy, prices)
+        self.assertEqual(lg3.snapshot()["estimated_portion_usd"], "13.000000")
+        eff = lg3.effective_settlement("old")["effective"]
+        self.assertEqual((eff["estimated"], eff["estimate_basis"], eff["estimated_derived_from"]), (True, ["inferred_buffer"], "inferred"))
+        self.assertFalse(json.load(open(legacy))["entries"][-1]["estimated"])  # the recorded event is untouched
+
     def test_formal_generation_reservations_release_unused_amounts_within_the_150_ceiling(self):
         """Formal arithmetic (2026-11-01): 10 x 8 + 10 x 5 USD reservations fit the 150 USD ceiling one at a time, each
         settlement replaces its reservation by the actual cost (the unused part is released), and a reservation that the

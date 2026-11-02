@@ -266,18 +266,48 @@ def compare_criteria(criterion_labels: dict, item_labels: dict, critical_status:
     return {"rows": rows, "agreement": f"{sum(1 for r in decided if r['class'] == 'agree')}/{len(decided)}", "unlabelled": sorted(c for c in critical_status if c not in criterion_labels)}
 
 
+def check_identity(run_uuid: str, cp: dict, label_rows: list[dict], grades: list[dict], grading_pass: str | None = None) -> dict:
+    """Engine .10 (Codex Review 2 R2-B5): labels are compared only with the grade rows of the same run and of one named
+    pass. FAIL-CLOSED: the checkpoint must name this run, every label row of its copy must be this run's, and every grade
+    row must carry this run and one and the same grading pass (``grading_pass``, when given, must be that pass). Missing
+    identity is a mismatch, never a pass."""
+    if not cp.get("run_uuid"):
+        raise RuntimeError("the label checkpoint records no run identity; it cannot be bound to a run (insufficient identity evidence)")
+    if cp["run_uuid"] != run_uuid:
+        raise RuntimeError(f"the label checkpoint belongs to run {cp['run_uuid']!r}, not {run_uuid!r}; refusing a cross-run comparison")
+    foreign = sorted({str(r.get("run_uuid")) for r in label_rows if r.get("run_uuid") != run_uuid})
+    if foreign:
+        raise RuntimeError(f"the checkpointed labels hold rows of other run(s) {foreign}; refusing")
+    if not grades:
+        raise RuntimeError("no grade rows to compare: the pass identity cannot be established")
+    ids = {(g.get("run_uuid"), g.get("grading_pass")) for g in grades}
+    if any(not r or not gp for r, gp in ids):
+        raise RuntimeError("grade rows without a run uuid or grading pass: insufficient identity evidence; refusing")
+    if {r for r, _ in ids} != {run_uuid}:
+        raise RuntimeError(f"grade rows of other run(s) {sorted({r for r, _ in ids} - {run_uuid})}; refusing a cross-run comparison")
+    passes = sorted({gp for _, gp in ids})
+    if len(passes) != 1:
+        raise RuntimeError(f"grade rows of several passes {passes}; one pass per comparison")
+    if grading_pass is not None and passes[0] != grading_pass:
+        raise RuntimeError(f"grade rows are of pass {passes[0]!r}, not the requested pass {grading_pass!r}; refusing a cross-pass comparison")
+    return {"run_uuid": run_uuid, "checkpoint_run": cp["run_uuid"], "label_rows_run": run_uuid, "grade_rows_run": run_uuid, "grading_pass": passes[0], "label_rows": len(label_rows), "grade_rows": len(grades)}
+
+
 def compare_labels(out_dir: str, run_uuid: str, grades: list[dict], checkpoint_path: str | None = None, queue_items: list[int] | None = None,
-                   critical_status: dict | None = None, sensitivity: dict | None = None) -> dict:
+                   critical_status: dict | None = None, sensitivity: dict | None = None, grading_pass: str | None = None) -> dict:
     """Independent labels (from a saved checkpoint only) against the grader rows of one pass. Never modifies grades.
     With ``queue_items`` (the frozen review queue, approved 2026-11-01) only queued items enter the agreement sample;
-    queued items without a label are reported, labels outside the queue are ignored and counted."""
+    queued items without a label are reported, labels outside the queue are ignored and counted. Engine .10: the run and
+    pass identity of the checkpoint, its label rows and the grade rows are checked first (check_identity)."""
     checkpoint_path = checkpoint_path or latest_checkpoint(out_dir, run_uuid)
     if not checkpoint_path or not os.path.isfile(checkpoint_path):
         raise RuntimeError(f"no saved label checkpoint for run {run_uuid}: labels must be saved (grading.review save-labels) before any automated verdict is compared or revealed")
     cp = json.load(open(checkpoint_path, encoding="utf-8"))
     if _sha(cp["copy"]) != cp["sha256"]:
         raise RuntimeError("the checkpointed label copy no longer matches its recorded SHA-256")
-    all_labels = {r["item"]: r for r in read_labels(cp["copy"]) if r["label"]}
+    label_rows = read_labels(cp["copy"])
+    identity = check_identity(run_uuid, cp, label_rows, grades, grading_pass)
+    all_labels = {r["item"]: r for r in label_rows if r["label"]}
     criterion_labels = {k: v for k, v in all_labels.items() if isinstance(k, str)}
     labels = {k: v for k, v in all_labels.items() if not isinstance(k, str)}
     outside = []
@@ -302,7 +332,7 @@ def compare_labels(out_dir: str, run_uuid: str, grades: list[dict], checkpoint_p
         a["agreement"] = f"{a['agree']}/{decided}" if decided else "0/0"
         a["agreement_rate"] = (a["agree"] / decided) if decided else None
         a["coverage_loss"] = a["grader_cannot"]
-    out = {"run_uuid": run_uuid, "checkpoint": checkpoint_path, "checkpoint_sha256": cp["sha256"], "compared_at": _now(), "grading_pass": (grades[0].get("grading_pass") if grades else None),
+    out = {"run_uuid": run_uuid, "checkpoint": checkpoint_path, "checkpoint_sha256": cp["sha256"], "compared_at": _now(), "grading_pass": identity["grading_pass"], "identity": identity,
            "labelled_items": len(labels), "rows": rows, "summary": agg,
            **({"queue_items": sorted(queue_items), "queue_unlabelled": sorted(set(queue_items) - set(labels)), "labels_outside_queue_ignored": outside} if queue_items is not None else {}),
            **({"criteria": compare_criteria(criterion_labels, labels, critical_status or {}, sensitivity or {})} if criterion_labels or critical_status else {}),
@@ -335,6 +365,8 @@ def main(argv=None) -> int:
     from .grade import grading_passes
     passes = grading_passes(args.out_dir, args.run_uuid)
     chosen = next((x for x in passes if x.get("grading_pass") == args.grading_pass), None) if args.grading_pass else None
+    if args.grading_pass and chosen is None:  # engine .10 (R2-B5): a named pass that this run does not have is refused, never replaced
+        raise SystemExit(f"run {args.run_uuid} has no grading pass {args.grading_pass!r} in {args.out_dir}")
     if chosen is None:
         from .run_grading import authoritative_selection
         import json as _j
@@ -376,7 +408,7 @@ def main(argv=None) -> int:
                 raise SystemExit(f"task {task!r} has no frozen queue in {args.queue}")
             queue_items = [x["item"] for x in q["queues"][task]["items"]]
     print(json.dumps({k: v for k, v in compare_labels(args.out_dir, args.run_uuid, grades, args.checkpoint, queue_items=queue_items, critical_status=critical_status,
-                                                      sensitivity=sensitivity).items() if k != "rows"}, indent=1, default=str))
+                                                      sensitivity=sensitivity, grading_pass=args.grading_pass).items() if k != "rows"}, indent=1, default=str))
     return 0
 
 

@@ -137,10 +137,15 @@ def evaluate_unit(runs_root: str, rec: dict | None, *, gemini: bool, expected_ex
     reasons, facts = [], {"evaluated_at": _now()}
     if rec is None:
         return {"decision": "stop", "reasons": ["no inventory record for the unit: outcome unknown"], **facts}
-    facts.update({k: rec.get(k) for k in ("kind", "unit_id", "run_uuid", "task_id", "model", "settlement_cost_usd", "estimated", "inferred", "manual_review_required", "stop_recorded", "engineering_failure", "config_sha256")})
+    facts.update({k: rec.get(k) for k in ("kind", "unit_id", "run_uuid", "task_id", "model", "settlement_cost_usd", "estimated", "estimate_basis", "inferred", "manual_review_required", "stop_recorded", "engineering_failure", "config_sha256")})
     if rec.get("kind") != "sample" or rec.get("engineering_failure"):
         reasons.append(f"not a completed sample record (kind {rec.get('kind')!r}, engineering failure {rec.get('engineering_failure')!r})")
-    if rec.get("estimated") or rec.get("manual_review_required") or rec.get("stop_recorded"):
+    # engine .10 (Codex Review 2 R2-B3): an inferred buffer is now marked estimated; the approved policy settles it without a
+    # hold, so the inferred buffer ALONE is no stop reason. Any other estimate basis stops, and so does a record written
+    # before estimate_basis existed (then 'estimated' never meant the inferred buffer).
+    basis = rec.get("estimate_basis")
+    other_estimate = rec.get("estimated") and (basis is None or bool(set(basis) - {"inferred_buffer"}))
+    if other_estimate or rec.get("manual_review_required") or rec.get("stop_recorded"):
         reasons.append("settlement estimated, held for manual review, or a stop was recorded")
     uuid = rec.get("run_uuid")
     outcome_path = os.path.join(runs_root, str(uuid), "run_outcome.json") if uuid else None

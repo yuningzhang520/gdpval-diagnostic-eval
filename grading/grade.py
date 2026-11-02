@@ -39,7 +39,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # review infrastructure) carries ENGINE_VERSION; every task specification carries its own VERSION; a grading pass records
 # the combined grader version "<engine>+<task>" and the full git commit of the code that graded. config.grading must state
 # the engine version and the per-task versions (checked by run_grading before any grading).
-ENGINE_VERSION = "engine-2026-11-01.9"  # .9 (V1.3, approved 2026-11-01): judge failures classified retryable / permanent_request / fatal by HTTP status and provider reason, a 600 s wall-clock cap per judge item, attempts and elapsed time recorded, permanent request failures never recovered; .8: .8: judge infrastructure (approved 2026-11-01): provider error detail (HTTP status, quota, retry guidance), pacing, a recoverable failure no longer stops the batch (stop at 3 distinct failed items; unrecoverable stops at once), one schema retry of a schema-invalid response -> invalid_judge_output when both are invalid, inferred buffer accounting; .7: per-item judge recovery passes (grading.judge_recovery); a judge provider failure or an unattempted judge call is recorded as verdict provider_error / not_run (never cannot_assess); critical status lists the members needing human visual review (picture charts); .6: docx tables record the body paragraph they follow (table_after_paragraph); .2: a deterministic item may route itself to the judge (route_to_judge); scored once, as a J row; .3: critical status also under the preregistered definition when a task revised it; .4: recalculated values joined to sheets whose names LibreOffice truncated at 31 characters; .5: the xlsx package lists embedded media parts
+ENGINE_VERSION = "engine-2026-11-02.10"  # .10 (Codex Review 2 Blocking corrections, approved 2026-11-02): write-ahead judge log per request attempt (attempt_id; a schema retry is its own attempt; an unterminated attempt stays UNKNOWN), the durable / in-memory disagreement settled at the larger figure; judged pass selection by pass and attempt identity, never a success count; inferred buffers settle as estimated (no hold); per-call guards count the inferred liability; label comparisons bound to one run and one pass; .9 (V1.3, approved 2026-11-01): judge failures classified retryable / permanent_request / fatal by HTTP status and provider reason, a 600 s wall-clock cap per judge item, attempts and elapsed time recorded, permanent request failures never recovered; .8: .8: judge infrastructure (approved 2026-11-01): provider error detail (HTTP status, quota, retry guidance), pacing, a recoverable failure no longer stops the batch (stop at 3 distinct failed items; unrecoverable stops at once), one schema retry of a schema-invalid response -> invalid_judge_output when both are invalid, inferred buffer accounting; .7: per-item judge recovery passes (grading.judge_recovery); a judge provider failure or an unattempted judge call is recorded as verdict provider_error / not_run (never cannot_assess); critical status lists the members needing human visual review (picture charts); .6: docx tables record the body paragraph they follow (table_after_paragraph); .2: a deterministic item may route itself to the judge (route_to_judge); scored once, as a J row; .3: critical status also under the preregistered definition when a task revised it; .4: recalculated values joined to sheets whose names LibreOffice truncated at 31 characters; .5: the xlsx package lists embedded media parts
 TASK_MODULES = {CK.TASK: {"checks": CK.run_checks, "units": J.build_units_1137e2bb, "critical": CK.CRITICAL, "judge_items": CK.J_ITEMS, "visual_items": [], "version": CK.VERSION},
                 CK2.TASK: {"checks": CK2.run_checks, "units": J.build_units_7d7fc9a7, "critical": CK2.CRITICAL, "judge_items": CK2.J_ITEMS, "visual_items": CK2.V_ITEMS, "version": CK2.VERSION},
                 CK3.TASK: {"checks": CK3.run_checks, "units": J.build_units_2ea2e5b5, "critical": CK3.CRITICAL, "critical_preregistered": CK3.CRITICAL_PREREGISTERED, "judge_items": CK3.J_ITEMS,
@@ -153,26 +153,49 @@ def select_pass(passes: list[dict], prefer: str = "latest_with_judge", attempts:
     "at", "has_pass"}): when the LATEST attempt has no results record (it is UNKNOWN, still open or otherwise unfinished)
     the selection is ``blocked`` - no pass is returned as current, the older passes stay in ``history`` for review, and
     the warning names the attempt. Otherwise ``latest_with_judge`` selects the latest judged pass even when partial
-    (an older complete pass never hides a newer failure); without a judged pass the latest deterministic-only pass."""
+    (an older complete pass never hides a newer failure); without a judged pass the latest deterministic-only pass.
+
+    Engine .10 (Codex Review 2 R2-B2): a judged pass is identified by its pass identity (``judge_mode`` real: a judged
+    grading pass or a judge-item recovery, whatever its count of successful calls) and, with the attempt history, by its
+    judge unit: the current judged pass is the one the latest judge attempt with a results record produced. A judged
+    pass whose judge unit is missing from the history, or attempt and record orders that disagree, block the selection.
+    The result names the three states apart: ``latest_attempt`` (the latest attempted execution),
+    ``latest_complete_pass`` (the latest completed judged pass, for audit only) and ``pass`` (the authoritative state)."""
     graded = [p for p in passes if p.get("graded")]
     history = [{k: p.get(k) for k in ("grading_pass", "pass_kind", "judge_mode", "judge_completeness", "judge_unit", "graded_at")} for p in graded]
     authoritative = attempts is not None  # without the persisted attempt history this is historical inspection, never the authoritative result
     latest_attempt = max(attempts, key=lambda a: (a.get("at") or "", a.get("unit_id") or "")) if attempts else None  # reservations carry second stamps; the unit id carries microseconds
+    judged = [p for p in graded if p.get("judge_mode") == "real"]
+    complete = [p for p in judged if p.get("judge_completeness") == "complete"]
+    states = {"latest_attempt": latest_attempt, "latest_complete_pass": complete[-1].get("grading_pass") if complete else None}
     warnings = [] if authoritative else ["attempt history not loaded: historical view only, not an authoritative selection (use grading.run_grading.report_selection)"]
+
+    def blocked(basis: str, warning: str) -> dict:
+        return {"pass": None, "blocked": True, "authoritative": True, "history": history, "basis": basis, "warnings": [warning], **states}
     if latest_attempt and not latest_attempt.get("has_pass"):
         if latest_attempt.get("state") in ("unknown", "open", "held"):
-            return {"pass": None, "blocked": True, "authoritative": True, "history": history,
-                    "basis": f"latest judge attempt {latest_attempt['unit_id']} is {latest_attempt.get('state')} and produced no grading pass; no current pass is selected until it is reconciled",
-                    "warnings": [f"unfinished judge attempt {latest_attempt['unit_id']} ({latest_attempt.get('state')}); {len(graded)} earlier pass(es) are kept for review only"]}
+            return blocked(f"latest judge attempt {latest_attempt['unit_id']} is {latest_attempt.get('state')} and produced no grading pass; no current pass is selected until it is reconciled",
+                           f"unfinished judge attempt {latest_attempt['unit_id']} ({latest_attempt.get('state')}); {len(graded)} earlier pass(es) are kept for review only")
         warnings.append(f"latest judge attempt {latest_attempt['unit_id']} was reconciled ({latest_attempt.get('state')}) without producing a grading pass; the selection falls back to the latest recorded pass")
     if not graded:
-        return {"pass": None, "blocked": False, "authoritative": authoritative, "history": history, "basis": "no graded pass", "warnings": warnings + ["no graded pass recorded"]}
-    judged = [p for p in graded if p.get("judge_mode") == "real" and p.get("judge_verdicts")]
+        return {"pass": None, "blocked": False, "authoritative": authoritative, "history": history, "basis": "no graded pass", "warnings": warnings + ["no graded pass recorded"], **states}
+    if attempts is not None and judged:
+        known = {a.get("unit_id") for a in attempts}
+        orphan = [p.get("grading_pass") for p in judged if p.get("judge_unit") not in known]
+        if orphan:
+            return blocked(f"judged pass(es) {orphan} name judge unit(s) {[p.get('judge_unit') for p in judged if p.get('judge_unit') not in known]} absent from the run's ledger history; "
+                           "the current pass cannot be established", "judge history incomplete for the recorded passes")
+        by_unit = {p.get("judge_unit"): p for p in judged}
+        ordered = [by_unit[a["unit_id"]] for a in sorted(attempts, key=lambda a: (a.get("at") or "", a.get("unit_id") or "")) if a.get("has_pass") and a.get("unit_id") in by_unit]
+        if [p.get("grading_pass") for p in ordered] != [p.get("grading_pass") for p in judged]:
+            return blocked(f"judge attempt order {[p.get('grading_pass') for p in ordered]} and results record order {[p.get('grading_pass') for p in judged]} disagree; selection fails closed",
+                           "attempt and record orders disagree")
     if prefer == "latest_with_judge" and judged:
         chosen = judged[-1]
-        basis = f"latest judged pass {chosen.get('grading_pass')} (judge_completeness {chosen.get('judge_completeness')}) of {len(judged)} judged / {len(graded)} graded passes"
+        basis = f"latest judged pass {chosen.get('grading_pass')} ({chosen.get('pass_kind')}, judge_completeness {chosen.get('judge_completeness')}) of {len(judged)} judged / {len(graded)} graded passes"
         if chosen.get("judge_completeness") != "complete":
-            warnings.append(f"selected judged pass is {chosen.get('judge_completeness')}: {chosen.get('judge_call_summary')}; earlier passes are not used to hide this")
+            warnings.append(f"selected judged pass is {chosen.get('judge_completeness')}: {chosen.get('judge_call_summary')}; earlier passes are not used to hide this"
+                            + (f" (latest complete pass {states['latest_complete_pass']} kept for audit only)" if states["latest_complete_pass"] else ""))
         if len(judged) > 1:
             warnings.append(f"{len(judged)} judged passes exist for this run; only the latest is selected, the others stay recorded")
     else:
@@ -180,7 +203,7 @@ def select_pass(passes: list[dict], prefer: str = "latest_with_judge", attempts:
         basis = f"latest graded pass {chosen.get('grading_pass')} ({chosen.get('pass_kind')}); no judged pass" if not judged else f"latest graded pass {chosen.get('grading_pass')}"
         if chosen.get("judge_mode") != "real":
             warnings.append("judge-only items are pending in the selected pass")
-    return {"pass": chosen, "blocked": False, "authoritative": authoritative, "history": history, "basis": basis, "warnings": warnings}
+    return {"pass": chosen, "blocked": False, "authoritative": authoritative, "history": history, "basis": basis, "warnings": warnings, **states}
 
 
 def selected_grades(out_dir: str, run_uuid: str, prefer: str = "latest_with_judge", attempts: list[dict] | None = None) -> dict:

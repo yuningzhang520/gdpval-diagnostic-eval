@@ -489,6 +489,30 @@ under V1.2.
 - `provider_error` is never a rubric fail.
 - An item in flight when the runner changed keeps its own runner version in its record.
 
+### 1.22 Review 2 Blocking corrections (approved by the human 2026-11-02; V1.4, engine-2026-11-02.10)
+Five defects found by Codex Review 2 at `5121e1a` are corrected for every later pass and both candidates. No rubric
+semantics, judge prompt, candidate-specific rule or evaluation setting changes. Earlier records stay as written. Values
+re-derived under the corrected rules are reported next to them (`docs/status.md`).
+- Judge cost evidence (R2-B1):
+  - every provider request is its own write-ahead attempt, and a schema retry is a second attempt, never merged;
+  - a started attempt without a terminal event stays UNKNOWN;
+  - when the durable log and the in-memory usage of a failed batch disagree, the larger figure is settled and the
+    unit is held.
+- The current pass of a run (R2-B2):
+  - it is the pass produced by the latest judge attempt that has a results record, identified by pass identity
+    (a real judged pass or a judge-item recovery, whatever its number of successful calls);
+  - an older complete pass is never shown as the result of a newer failed recovery;
+  - a judged pass missing from the ledger history, or attempt and record orders that disagree, block the selection;
+  - the latest attempt, the latest complete pass and the authoritative pass are reported apart.
+- Accounting status (R2-B3): an amount that includes an inferred buffer is an estimate, recorded with
+  `estimate_basis` `inferred_buffer`. The approved policy holds: no hold, and no unit-gate stop on that basis alone.
+- Budget guards (R2-B4): before each judge request, the ledger total plus the batch's metered cost and inferred
+  buffer, plus the next request's worst case (its cost, or the buffer if it fails), must stay within the ceiling.
+  Generation and judge ledgers stay separate.
+- Human-label agreement (R2-B5): a comparison is made only when the label checkpoint, every label row and every grade
+  row name the same run, and the grade rows are of one named pass. Missing identity fails closed. Blind labelling is
+  unchanged.
+
 ---
 
 ## 2. Task selection and exclusions

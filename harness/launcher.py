@@ -696,7 +696,7 @@ class PilotLauncher:
         rec = {"recorded_at": _now(), "kind": kind, "run_label": self.run_label, "task_id": meta.get("task_id"), "model": meta.get("model"), "unit_id": meta.get("unit_id"),
                "run_uuid": binding.get("run_uuid"), "inspect_status": meta.get("inspect_status"), "dry_run": bool(meta.get("dry_run")), "error": meta.get("error"),
                "engineering_failure": (failure or {}).get("failure_class") or (meta.get("error") or "").split(":", 1)[0] or None,  # a sample or eval error: not a completed model attempt
-               "settlement_cost_usd": st.get("cost_usd"), "estimated": st.get("estimated"), "inferred": bool(st.get("inferred")),
+               "settlement_cost_usd": st.get("cost_usd"), "estimated": st.get("estimated"), "estimate_basis": st.get("estimate_basis"), "inferred": bool(st.get("inferred")),
                "manual_review_required": bool(meta.get("manual_review_required") or st.get("manual_review_required")),
                "stop_recorded": meta.get("stop_recorded") or (meta.get("post_run") or {}).get("stop_recorded"), "log_file": meta.get("log_file"), "log_dir": meta.get("log_dir"),
                "artifact_manifest": {k: (meta.get("artifact_manifest") or {}).get(k) for k in ("path", "sha256", "file_count")} if meta.get("artifact_manifest") else None,

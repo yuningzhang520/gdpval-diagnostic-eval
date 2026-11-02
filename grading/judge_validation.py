@@ -30,7 +30,7 @@ import subprocess
 import sys
 from decimal import ROUND_CEILING, Decimal
 
-from grading.judge_dev import DEV_KEY_SUFFIX, call_cost_usd, worst_case_usd
+from grading.judge_dev import DEV_KEY_SUFFIX, batch_liability_usd, call_cost_usd, next_request_bound_usd, worst_case_usd
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 BASE = os.path.expanduser("~/turing-eval-runs")
@@ -46,7 +46,8 @@ FREEZE_TAG = "v1-calibration-freeze"
 # and evidence builders byte-identical to V1 (checked by grading.freeze_manifest judge-surface).
 VERSION_TAGS = ((FREEZE_TAG, MANIFEST), ("v1.1-judge-item-recovery", os.path.join(ROOT, "grading", "freeze", "v1.1_manifest.json")),
                 ("v1.2-judge-infrastructure", os.path.join(ROOT, "grading", "freeze", "v1.2_manifest.json")),  # V1.2: engine .8 judge infrastructure (approved 2026-11-01)
-                ("v1.3-corrections", os.path.join(ROOT, "grading", "freeze", "v1.3_manifest.json")))  # V1.3: engine .9 grader corrections and judge-runner reliability (approved 2026-11-01)
+                ("v1.3-corrections", os.path.join(ROOT, "grading", "freeze", "v1.3_manifest.json")),  # V1.3: engine .9 grader corrections and judge-runner reliability (approved 2026-11-01)
+                ("v1.4-review2-corrections", os.path.join(ROOT, "grading", "freeze", "v1.4_manifest.json")))  # V1.4: engine .10 Codex Review 2 Blocking corrections (approved 2026-11-02)
 PASS_ID = "judge-validation-pass-1"
 FROZEN_PATHS = ("grading", "harness", "config.json")
 AUTH_REF = "docs/status.md decision 2026-11-01: Judge Validation authorized (one pass, frozen judge, separate ledger, 15 USD, concurrency 1, Dev project key)"
@@ -142,8 +143,8 @@ def make_guard(holder: dict, max_tokens: int, base_total: Decimal, ceiling: Deci
         if any(os.environ.get(k) for k in ("GEMINI_API_KEY", "VERTEX_API_KEY", "GOOGLE_GENAI_USE_VERTEXAI")):
             return "a Google credential override variable is set"
         j = holder.get("judge")
-        so_far = sum((call_cost_usd(cl["usage"], "long") for cl in (getattr(j, "calls", None) or []) if cl.get("usage")), Decimal(0))
-        nxt = worst_case_usd(request_chars, max_tokens, "long")
+        so_far = batch_liability_usd(j)  # engine .10 (R2-B4): metered calls plus the inferred buffer the ledger settles for this batch
+        nxt = next_request_bound_usd(j, request_chars, max_tokens)
         if base_total + so_far + nxt > ceiling:
             return f"Judge Validation ceiling {ceiling} USD would be exceeded (ledger {base_total:.4f} + this run {so_far:.4f} + worst case {nxt:.4f})"
         return None

@@ -92,9 +92,10 @@ class GradingChainTests(unittest.TestCase):
         from inspect_ai.model import ModelOutput, ModelUsage
         def generate(messages):
             o = ModelOutput.from_content("google/judge-test", good); o.usage = ModelUsage(input_tokens=500, output_tokens=50); return o
-        judge = J.ProviderJudge("google/judge-test", generate=generate)
+        judge = J.ProviderJudge("google/judge-test", generate=generate, judge_unit=f"{b['uuid']}:judge:t")
         rec2 = grade_run(host, fake_log(b), b["uuid"], task_id=TASK, rubric=RUBRIC, task_prompt=PROMPT, reference=REFERENCE, out_dir=out, judge=judge, recalc=False)
         self.assertEqual((rec1["pass_kind"], rec2["pass_kind"], rec1["pass_index"], rec2["pass_index"]), ("deterministic_only", "deterministic_plus_judge", 1, 2))
+        attempts = [{"unit_id": f"{b['uuid']}:judge:t", "state": "settled", "at": "2026-11-02T00:00:00+00:00", "has_pass": True}]
         self.assertNotEqual(rec1["grading_pass"], rec2["grading_pass"]); self.assertEqual(rec2["supersedes_pass"], rec1["grading_pass"]); self.assertIsNone(rec1["supersedes_pass"])
         passes = grading_passes(out, b["uuid"])
         self.assertEqual([p["grading_pass"] for p in passes], [rec1["grading_pass"], rec2["grading_pass"]])
@@ -102,11 +103,13 @@ class GradingChainTests(unittest.TestCase):
         self.assertEqual((blind["blocked"], len(blind["grades"])), (True, 0))  # pre-fix: (False, one row per rubric item of the old pass)
         self.assertFalse(blind["authoritative"]); self.assertIn("attempt history", blind["basis"])
         self.assertFalse(select_pass(passes)["authoritative"])  # the low-level view without attempts is historical inspection only
-        sel = select_pass(passes, attempts=[])  # attempt history loaded (none recorded): authoritative selection, no warning
+        orphan = select_pass(passes, attempts=[])  # engine .10 (R2-B2): a judged pass whose judge unit the loaded history does not hold has no execution identity
+        self.assertTrue(orphan["blocked"]); self.assertIn("absent from the run's ledger history", orphan["basis"])
+        sel = select_pass(passes, attempts=attempts)  # the attempt that produced the judged pass: authoritative selection, no warning
         self.assertEqual((sel["pass"]["grading_pass"], sel["warnings"], sel["authoritative"]), (rec2["grading_pass"], [], True)); self.assertIn("complete", sel["basis"])
         self.assertEqual(select_pass(passes[:1])["pass"]["grading_pass"], rec1["grading_pass"])  # with only a D-only pass, that pass is selected (with a pending-judge warning)
         self.assertEqual(rec2["judge_completeness"], "complete"); self.assertEqual(rec1["judge_completeness"], "none")
-        sg = selected_grades(out, b["uuid"], attempts=[])  # attempt history loaded (none): authoritative
+        sg = selected_grades(out, b["uuid"], attempts=attempts)  # attempt history loaded: authoritative
         self.assertEqual(({r["grading_pass"] for r in sg["grades"]}, len(sg["grades"]), sg["authoritative"]), ({rec2["grading_pass"]}, len(RUBRIC), True))  # statistics input: one pass, one row per item
         rows = [json.loads(l) for l in open(os.path.join(out, "grades.jsonl"))]
         self.assertEqual({r["grading_pass"] for r in rows}, {rec1["grading_pass"], rec2["grading_pass"]}); self.assertEqual(len(rows), 2 * len(RUBRIC))

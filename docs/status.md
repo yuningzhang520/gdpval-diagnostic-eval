@@ -1,6 +1,6 @@
 # Status
 
-Current stage: **Freeze preparation (2026-11-02): V1.3 corrections and judge-runner reliability (engine .9) implemented and tested, tag `v1.3-corrections`; Formal generation (150 USD) and the Formal judge pass (30 USD, separate ledger) configured, the pass prepared and gated, not run; Judge Validation in progress; `freeze-v1` not tagged, `config.json` still DRAFT; no Formal call.** Earlier header, kept for the record: Evaluation architecture implementation on baseline `f37f1e829af2efd5daf81e3a680ea691b16fcfbe`
+Current stage: **Freeze preparation (2026-11-02): Codex Review 2 BLOCKED at `5121e1a`; its five Blocking findings corrected (V1.4, engine .10, tag `v1.4-review2-corrections`), awaiting the narrow delta review; Formal measurement readiness BLOCKED until then. Earlier in the day:** V1.3 corrections and judge-runner reliability (engine .9) implemented and tested, tag `v1.3-corrections`; Formal generation (150 USD) and the Formal judge pass (30 USD, separate ledger) configured, the pass prepared and gated, not run; Judge Validation in progress; `freeze-v1` not tagged, `config.json` still DRAFT; no Formal call.** Earlier header, kept for the record: Evaluation architecture implementation on baseline `f37f1e829af2efd5daf81e3a680ea691b16fcfbe`
 (2026-11-01): Task 1 (`1137e2bb…`) gold-first verification done and Grader v0 tagged; run classes (dev /
 validation / compat / formal), batch runner, artifact manifests, run inventory, engine + task grader versions,
 development model (`google/gemini-3.8-flash`) and compatibility task (`87da214f…`) implemented and dry-run
@@ -4765,6 +4765,85 @@ Values to record at `freeze-v1`, re-verified on the freeze commit; the commit it
 - Operations: AC power and `caffeinate` for every Formal process. The item cap uses `time.monotonic`, which stops while
   macOS sleeps.
 
+## Codex Review 2 Blocking corrections R2-B1–B5 (V1.4, engine .10; 2026-11-02)
+
+Codex Review 2 (pinned `5121e1a`; report `/private/tmp/codex-r2/review-42FFBH0Q/REVIEW.md`, probes
+`evidence/unittest-probe-results.json`) returned BLOCKED with five Blocking findings. The human authorized diagnosis and
+minimal corrections of all five (chat, 2026-11-02). Codex's snapshot, report and evidence are untouched.
+- Reproduction: Codex's probe logic, adapted only in its paths (`logs/r2-fixes/codex_probe_adapted.py`), reproduced all
+  five on `3955422` (V1.3, these paths untouched) with the pinned values.
+- New regression tests failed before the corrections (`logs/r2-fixes/before_*.log`): 15 of 18 grading tests and the
+  ledger test. After the corrections every reproducer passes (`logs/r2-fixes/codex_probe_after.json`).
+
+| Finding | Root cause | Correction | Files |
+|---|---|---|---|
+| R2-B1 WAL merged schema-retry attempts | `scan_judge_log` kept one started and one terminal event per `unit_id`; a schema retry's second request overwrote the first | every request carries `attempt_id` on its started and terminal events; the scanner pairs by attempt (legacy logs: each terminal closes its unit's open started event, in log order); usage is summed per attempt; an unpaired started is UNKNOWN; `durable_usage` settles the element-wise larger of durable and in-memory usage when they disagree | `grading/judge.py`, `grading/run_grading.py` |
+| R2-B2 a failed latest recovery hidden by an older complete pass | `select_pass` dropped real-judge passes whose `judge_verdicts` was 0; for a recovery that field counted successful calls | judged passes identified by `judge_mode` real; the current one is the pass of the latest attempt that has a results record; blocked when a judged pass's unit is missing from the history or the orders disagree; `latest_attempt`, `latest_complete_pass` and `pass` reported apart; a recovery's `judge_verdicts` is its judge-row count, with `judge_calls_ok` separate | `grading/grade.py`, `grading/judge_recovery.py`, `grading/run_grading.py` |
+| R2-B3 inferred cost marked reliable | the inferred-buffer branch of `BudgetLedger.settle` added the buffer but never set `estimated` | `estimated` set, with `estimate_basis` (`inferred_buffer`, and the other causes by name); older inferred settlements derived as estimated without rewriting the event; the unit gate does not stop on `inferred_buffer` alone (approved no-hold policy) but stops on any other basis and on records without a basis | `harness/budget.py`, `harness/launcher.py`, `harness/unit_gate.py`, `grading/run_grading.py` |
+| R2-B4 guard excluded inferred liability | the Dev, Validation and Formal guards added only metered calls and the next worst case | one rule, `judge_dev.batch_liability_usd` (metered plus the average metered call × `judge.inferred_buffer_calls`, which the settlement uses too) and `next_request_bound_usd` (the larger of the worst case and the failure buffer), in all three guards; a ledger already over the ceiling authorizes nothing | `grading/judge_dev.py`, `grading/judge_validation.py`, `grading/judge_formal.py`, `grading/judge.py` |
+| R2-B5 labels accepted across runs | `compare_labels` checked only the copy's SHA-256 | `check_identity` requires the checkpoint's run, every label row's run and every grade row's run to match, with one named pass; missing identity fails closed; the CLI refuses an unknown `--grading-pass` (it used to fall back to the authoritative pass) | `grading/review.py` |
+
+Before and after (Codex's probes, unchanged logic):
+
+| Probe | Before (`3955422`) | After |
+|---|---|---|
+| two schema attempts, durable input tokens | 2,000,000 | 7,000,000 |
+| interrupted retry, UNKNOWN attempts | 0 (state ok) | 1 |
+| 2 metered + 11 inferred calls | estimated false, "reliably_accounted" | estimated true (basis `inferred_buffer`), no hold, "estimated" |
+| zero-success latest recovery | `complete-pass` selected | `latest-recovery` selected |
+| run A checkpoint compared for run B | accepted, 1/1 | rejected |
+| 1 metered call + 1 failure against 15 USD | allowed | refused (48 USD at the bounding long-context rate) |
+
+Tests:
+- `grading/tests/test_review2_blocking.py`, 20 tests:
+  - B1: two attempts, interrupted retry, mixed usage, legacy log order, durable-versus-memory disagreement;
+  - B2: zero-success recovery, incomplete recovery, multiple passes with order conflict and missing history, historical
+    view;
+  - B4: the 24 USD case against 15 USD, boundaries, a ledger already over the ceiling, the Dev guard, one buffer rule;
+  - B5: cross-run checkpoint, foreign label and grade rows, mixed passes, missing identity, legacy checkpoint, valid
+    match, unknown CLI pass;
+  - two interaction tests through the real adapter, WAL, ledger, guard, history join, selection and comparison.
+- `harness/tests/test_budget_unit.py`, B3: estimated with basis, no hold, no stop, legacy derivation.
+- `test_gemini_class_controls_unit.py`: two expectations changed from `estimated` False to True with basis
+  `inferred_buffer`. The no-hold and unit-gate assertions are kept, and two gate cases are added (another basis stops; a
+  record without a basis stops).
+- `test_grading_chain.py`: a judged pass without a ledger unit and an empty loaded history now blocks; the same pass with
+  its attempt is selected.
+- Two review-queue fixtures now give their grade rows a run and a pass.
+
+Interactions checked:
+- WAL to ledger: both attempts in the settlement.
+- Inferred buffer to guard: the guard's liability bounds the settlement, and a tight ceiling refuses.
+- Recovery to selection: a zero-success recovery that is held at its reservation is current.
+- Selection to label comparison: rows of the authoritative pass only.
+- Interrupted retry to selection: blocked.
+
+Limitations:
+- Legacy logs are paired by order, which assumes one request at a time per log; that holds for the adapter.
+- The guard prices at the long-context rate (conservative). Without a metered call it relies on the reservation, which
+  the ledger holds the unit at.
+- Run-inventory records written before engine .10 keep their flags. The unit gate treats a missing basis as a stop
+  cause.
+- A label comparison against a pass created after the checkpoint stays allowed: labels precede the reveal by design.
+
+Judge request surface: identical to `v1-calibration-freeze` (`judge-surface --request-only`). Against V1.3 only
+`ProviderJudge.__call__` (call handling) differs.
+
+Review 2 Non-blocking findings, documented for the human's acceptance (none fixed here):
+- N1. The package text is out of date in three places:
+  - the V1.1 "a parse error is never recovered" wording, superseded by the approved V1.2 schema retry;
+  - the §2C task-version table;
+  - "the builder never receives a verdict": the builder receives the checks, and the request carries no D verdict
+    (Codex confirmed the second part).
+- N2. `judge-surface --request-only` is a selective AST digest, not proof of every indirect request change. The full
+  source-file hashes in each freeze record still bind the code.
+- N3. A recovery does not refuse explicitly when the base call's request hash is missing; production records always
+  carry it. A small fail-closed check is possible.
+- N4. Provider error messages pass through redaction and an allowlist, with synthetic credential tests. There is no
+  proof for arbitrary provider payloads.
+- N5. Codex could not run Docker, the real judge or the Formal preflight. The Docker-gated suites are run here on the
+  correction commit (next entry).
+
 ## Known issues and findings (material check)
 
 - `rubric_json.form_content`: 8,036 items hold `null`, 2,417 items lack the key, zero
@@ -5169,7 +5248,8 @@ Values to record at `freeze-v1`, re-verified on the freeze commit; the commit it
 - 2026-11-01 · Validation labels checkpointed 10/10; `c357f0e2…` inferred settlement; Codex package re-pinned to `5121e1a` · 7890cec
 - 2026-11-01 · Validation deterministic comparison 4/6, two V1 false fails diagnosed (not fixed), private backup pushed (main `abb6dd6`, 18 tags), Formal preflight at V1.2 · 4b3474e (local)
 - 2026-11-02 · V1.3 corrections (`2ea2e5b5…` .5, `c3525d4d…` .6), judge runner V1.3 (engine .9: classification, 600 s item cap), Formal budgets (150 USD generation, 30 USD judge, separate ledgers), Formal judge pass prepared and gated; tag `v1.3-corrections` · be84ff6 (local)
-- 2026-11-02 · V1.3 regression evidence, Formal preflight at V1.3 (150 USD), freeze-v1 checklist; `2ea2e5b5…` item-27 implementation finding (not fixed, awaiting the human) · (this commit; local)
+- 2026-11-02 · V1.3 regression evidence, Formal preflight at V1.3 (150 USD), freeze-v1 checklist; `2ea2e5b5…` item-27 implementation finding (not fixed, awaiting the human) · 3955422 (local)
+- 2026-11-02 · Codex Review 2 Blocking corrections R2-B1–B5 (engine .10): per-attempt WAL, identity-based pass selection, inferred settlements estimated (no hold), guard liability, run/pass-bound label comparisons; tag `v1.4-review2-corrections` · (this commit; local)
 
 ## Next stage (not started)
 

@@ -193,7 +193,9 @@ def recovery_pass(out_dir: str, run_uuid: str, task_id: str, base_pass: str, ite
            "base_engine_version": base.get("engine_version"), "code": code_provenance(), "grading_pass": gp, "pass_kind": "judge_item_recovery", "base_pass": base_pass,
            "supersedes_pass": previous[-1].get("grading_pass") if previous else None, "pass_index": len(previous) + 1, "graded": True, "judge_mode": "real",
            "judge_unit": getattr(judge, "judge_unit", None), "judge_units_combined": [base.get("judge_unit"), getattr(judge, "judge_unit", None)], "score": score,
-           "judge_verdicts": sum(1 for g in jrows if g.get("call_status") == "ok"),
+           # engine .10 (Codex Review 2 R2-B2): judge_verdicts means what it means for every judged pass (the judge rows the
+           # pass records); the count of successful calls is judge_calls_ok. Selection never reads either count.
+           "judge_verdicts": len(jrows), "judge_calls_ok": sum(1 for g in jrows if g.get("call_status") == "ok"),
            "judge_call_summary": {"ok": sum(1 for g in jrows if g.get("call_status") == "ok"), "provider_error": sum(1 for g in jrows if g.get("error_class") == "provider_error"),
                                   "judge_parse_error": sum(1 for g in jrows if g.get("error_class") == "judge_parse_error"),
                                   "invalid_judge_output": sum(1 for g in jrows if g.get("error_class") == "invalid_judge_output"),

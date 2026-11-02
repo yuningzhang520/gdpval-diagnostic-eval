@@ -215,7 +215,9 @@ class RecoveredSettlementTests(_Offline):
         st = lg.settle("u", usage, calls_by_model=calls, scope={"same_sample": True}, recovered={"unknown": 1, "recovered": 1, "attempts": [{"index": 1, "status": 429, "recovered": True}]})
         per_call = Decimal("0.100000") * Decimal("0.75") + Decimal("0.002") * Decimal("3.75")  # 0.0825 USD per call
         self.assertEqual(Decimal(st["cost_usd"]), per_call * 3)  # 2 metered calls + 1 average-call buffer
-        self.assertEqual((st["estimated"], st["manual_review_required"], st["inferred"]["buffer_usd"], st["inferred"]["reconciliation_required"]), (False, False, "0.082500", "provider dashboard"))
+        # engine .10 (Codex Review 2 R2-B3): the inferred amount is an estimate (basis: the buffer alone); still no hold
+        self.assertEqual((st["estimated"], st["estimate_basis"], st["manual_review_required"], st["inferred"]["buffer_usd"], st["inferred"]["reconciliation_required"]),
+                         (True, ["inferred_buffer"], False, "0.082500", "provider dashboard"))
         self.assertEqual(lg.snapshot()["review_pending_units"], [])
         self.assertTrue(any(f.startswith("inferred:") for f in st["flags"]))
 
@@ -258,15 +260,18 @@ class RecoveredSettlementLauncherTests(_Offline):
     def test_recovered_429_on_a_usable_unit_is_inferred_without_a_hold(self):
         meta, lg, inv, runs = self.run_one(outcome=self.OK)
         st = meta["settlement"]
-        self.assertEqual((st["estimated"], st["manual_review_required"], bool(st["inferred"])), (False, False, True))
+        self.assertEqual((st["estimated"], st["manual_review_required"], bool(st["inferred"])), (True, False, True))  # engine .10 (R2-B3): estimated, no hold
         self.assertEqual(Decimal(st["cost_usd"]), Decimal("0.082500") * 3)
         self.assertEqual(meta["eval_kwargs"]["max_retries"], 10)
-        self.assertEqual((inv["inferred"], inv["estimated"], inv["manual_review_required"], inv["inspect_max_retries"]), (True, False, False, 10))
+        self.assertEqual((inv["inferred"], inv["estimated"], inv["estimate_basis"], inv["manual_review_required"], inv["inspect_max_retries"]), (True, True, ["inferred_buffer"], False, 10))
         self.assertEqual(inv["recovered_attempts"], {"unknown": 1, "recovered": 1, "applied": True})
         self.assertEqual(lg.snapshot()["review_pending_units"], [])
         self.assertTrue(meta["recovered_attempts"]["applied"]); self.assertEqual(meta["recovered_attempts"]["attempts"][0]["status"], 429)
         gate = G.evaluate_unit(runs, inv, gemini=True)
-        self.assertTrue(gate["inferred"]); self.assertNotIn("settlement estimated, held for manual review, or a stop was recorded", gate["reasons"])
+        self.assertTrue(gate["inferred"]); self.assertNotIn("settlement estimated, held for manual review, or a stop was recorded", gate["reasons"])  # the approved no-hold policy
+        stop = "settlement estimated, held for manual review, or a stop was recorded"
+        self.assertIn(stop, G.evaluate_unit(runs, {**inv, "estimate_basis": ["inferred_buffer", "inspect_cost_floor"]}, gemini=True)["reasons"])  # any other estimate basis still stops
+        self.assertIn(stop, G.evaluate_unit(runs, {k: v for k, v in inv.items() if k != "estimate_basis"}, gemini=True)["reasons"])  # a record without a basis: estimated meant another cause
 
     def test_without_the_class_policy_the_same_unit_is_held(self):
         meta, lg, inv, _ = self.run_one(policy=False, outcome=self.OK)

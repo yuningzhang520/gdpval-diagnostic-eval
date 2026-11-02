@@ -118,6 +118,27 @@ def judge_log_path(ledger_path: str, run_uuid: str, judge_unit: str) -> str:
     return os.path.join(os.path.dirname(os.path.realpath(ledger_path)), "judge_logs", run_uuid, f"{safe}.jsonl")
 
 
+USAGE_KEYS = ("input_tokens", "output_tokens", "cache_read_tokens", "cache_write_tokens")
+
+
+def durable_usage(log_path: str, judge) -> dict:
+    """The usage a failed judge batch is settled on (correction B): the write-ahead log's finished attempts, each once,
+    cross-checked against the adapter's in-memory usage. Engine .10 (Codex Review 2 R2-B1): when the two disagree the
+    element-wise larger figure per model is settled and the disagreement is named in the source - never silently the
+    smaller known value. That settlement path is always estimated and held (BudgetLedger.settle, incomplete)."""
+    durable = usage_from_judge_log(log_path)
+    memory = getattr(judge, "usage_by_model", None) or {}
+    agrees = memory == durable["usage"]
+    durable["memory_cross_check"] = {"usage": memory, "agrees": agrees}
+    if not agrees:
+        merged = {m: {k: max(int((durable["usage"].get(m) or {}).get(k, 0) or 0), int((memory.get(m) or {}).get(k, 0) or 0)) for k in USAGE_KEYS}
+                  for m in sorted(set(durable["usage"]) | set(memory))}
+        durable["durable_usage"] = durable["usage"]
+        durable["usage"] = merged
+        durable["source"] += "; durable and in-memory usage disagree: settled at the element-wise larger figure (estimated, held for reconciliation)"
+    return durable
+
+
 def run_judge_history(ledger: BudgetLedger, binding: dict) -> dict:
     """Paid judge history of one run from the canonical ledger and its write-ahead logs: judge units, open / held /
     unresolvable units, UNKNOWN calls (started without terminal event)."""
@@ -321,7 +342,7 @@ def judge_history_gate(ledger: BudgetLedger, binding: dict, out_dir: str, run_uu
     if blocking:
         raise GradingCliError("judge pass refused (not bypassable by --rejudge): " + "; ".join(blocking) + "; reconcile with harness.ledger_admin first")
     prior = hist["units"]["judge_units"]
-    prior_out = [p.get("grading_pass") for p in grading_passes(out_dir, run_uuid) if p.get("judge_mode") == "real" and p.get("judge_verdicts")]
+    prior_out = [p.get("grading_pass") for p in grading_passes(out_dir, run_uuid) if p.get("judge_mode") == "real"]  # engine .10: by pass identity, not a call count
     if (prior or prior_out) and not rejudge:
         raise GradingCliError(f"a paid judge pass already exists for run {run_uuid} (ledger units {prior}; out_dir passes {prior_out}); pass --rejudge to run and pay for another one")
     return {"history": hist, "prior_judge_units": prior, "prior_judged_passes_in_out_dir": prior_out}
@@ -410,10 +431,8 @@ def main(argv=None, *, judge_factory=None, environ: dict | None = None) -> int:
             else:
                 state["rec"] = grade_run(host_dir, log, sample.uuid, judge=judge, **common)
             return judge.batch_result()
-        def recover_usage():  # correction B: durable evidence first; the adapter's memory only cross-checks it
-            durable = usage_from_judge_log(log_path)
-            durable["memory_cross_check"] = {"usage": getattr(judge, "usage_by_model", None), "agrees": (getattr(judge, "usage_by_model", None) or {}) == durable["usage"]}
-            return durable
+        def recover_usage():  # correction B: durable evidence first; the adapter's memory cross-checks it
+            return durable_usage(log_path, judge)
         try:
             judge_run = launcher.run_judge_batch(unit_id=judge_unit, estimate_usd=args.judge_estimate_usd, batch_fn=batch_fn, recover_usage=recover_usage)
         except (BudgetExhausted, LedgerConflict) as ex:  # a recorded stop, hold, open reservation or an already-claimed unit: no reservation, no judge call
@@ -432,7 +451,7 @@ def main(argv=None, *, judge_factory=None, environ: dict | None = None) -> int:
         accounting = ("manual_review_required" if judge_settlement and judge_settlement.get("manual_review_required") else "estimated" if judge_settlement and judge_settlement.get("estimated")
                       else "reliably_accounted" if judge_settlement else "not_settled")
         grading = {"source": "judge ledger settlement", "unit_id": (judge_run or {}).get("unit_id"), "usage_incomplete": (judge_run or {}).get("usage_incomplete"), "accounting_status": accounting,
-                   **({k: judge_settlement.get(k) for k in ("cost_usd", "estimated", "manual_review_required", "flags", "note", "resolution", "previous_cost_usd", "resolved_from", "raw_events")} if judge_settlement else {}),
+                   **({k: judge_settlement.get(k) for k in ("cost_usd", "estimated", "inferred", "manual_review_required", "flags", "note", "resolution", "previous_cost_usd", "resolved_from", "raw_events")} if judge_settlement else {}),
                    "priced_from_calls": grading_cost(getattr(judge, "usage_by_model", {}) or {}, prices_from_config(cfg)) if getattr(judge, "usage_by_model", None) else None, "calls_log": judge_calls_path,
                    "write_ahead_log": getattr(judge, "log_path", None), "halted": getattr(judge, "halted", None), "rejudge_of": history["prior_judge_units"] if args.rejudge else []}
     cost = run_cost_record(sample.uuid, {"source": "launcher ledger settlement" if settlement else "not linked (no --ledger/--unit-id)", "unit_id": args.unit_id,

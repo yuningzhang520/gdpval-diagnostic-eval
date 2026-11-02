@@ -294,6 +294,8 @@ class BudgetLedger:
                 _require(uid in open_res, f"event {i}: settlement without an open reservation for {uid}")
                 _require(e["kind"] == open_res[uid]["kind"], f"event {i}: settlement kind differs from the reservation for {uid}")
                 open_res.pop(uid)
+                if e.get("inferred") and not e.get("estimated"):  # engine .10 (R2-B3): a settlement written before the flag was set; the recorded event stays as it is
+                    e = {**e, "estimated": True, "estimate_basis": ["inferred_buffer"], "estimated_derived_from": "inferred"}
                 settled[uid] = e
                 settled_total += Decimal(e["cost_usd"])
                 if e.get("estimated"):
@@ -444,6 +446,8 @@ class BudgetLedger:
                 raise LedgerConflict(f"unit {unit_id} has no open reservation to settle")
             breakdown = {c: Decimal(0) for c in CATEGORIES}
             flags: list[str] = []
+            # engine .10 (Codex Review 2 R2-B3): why the amount is an estimate; the approved inferred buffer alone holds nothing
+            basis: list[str] = ["caller_estimated"] if estimated else []
             per_model = {}
             unpriced = []
             manual_review = False
@@ -472,7 +476,7 @@ class BudgetLedger:
                         + "; ".join(f"{c}: aggregated {rec['aggregated'][c]} vs per-call {rec['per_call'][c]} (diff {rec['difference'][c]})" for c in CATEGORIES if rec["difference"][c])
                         + f"; settled at the larger figure ({_d(cost['total'])} USD); estimated; manual review required before further paid starts"]
                     reconciliation[model] = rec | {"cost_per_call": str(cost_calls["total"]), "cost_conservative_aggregate": str(cost_agg["total"])}
-                    estimated = True
+                    estimated = True; basis.append("usage_conflict")
                     manual_review = True
                 elif rec is not None:
                     cost = price_calls(calls, price)
@@ -490,7 +494,7 @@ class BudgetLedger:
                         cost = dict(cost)
                         cost["input"] = _d(cost["input"] + (inspect_total - _d(cost["total"])))
                         cost["total"] = inspect_total
-                        estimated = True
+                        estimated = True; basis.append("inspect_cost_floor")
                 per_model[model] = {k: str(v) for k, v in cost.items() if k not in ("flags", "tiers")} | {"flags": cost["flags"], "tiers": cost.get("tiers", {cost.get("tier", "standard"): 1})}
                 flags.extend(f"{model}: {f}" for f in cost["flags"])
                 for c in CATEGORIES:
@@ -502,7 +506,7 @@ class BudgetLedger:
                     flags.append(f"{model}: {n} retried request(s); usage of failed attempts unknown, estimated at {n} x uncached input cost")
                 elif n:
                     flags.append(f"{model}: {n} retried request(s) with no priced usage; unknown cost")
-                    estimated = True
+                    estimated = True; basis.append("retry_unpriced")
             total = sum(breakdown.values(), Decimal(0)) + retry_est
             inferred = None
             if recovered and not (hold or incomplete) and not unpriced:
@@ -520,12 +524,13 @@ class BudgetLedger:
                 else:
                     buffer = _d(priced / metered * n_buf)
                     total += buffer
+                    estimated = True; basis.append("inferred_buffer")  # engine .10 (Codex Review 2 R2-B3): an inferred amount is an estimate, never reliably accounted; no hold (approved policy)
                     inferred = {"buffer_usd": str(buffer), "buffer_calls": n_buf, "basis": f"{n_buf} average metered call(s): {_d(priced)} USD / {metered} metered call(s) x {n_buf}",
                                 "reported_usd": str(_d(priced)), "recovered_attempts": recovered, "reconciliation_required": "provider dashboard"}
                     flags.append(f"inferred: {recovered.get('recovered')} recovered 429/5xx attempt(s) without usage; settled at reported usage {_d(priced)} + buffer {buffer} USD ({n_buf} average metered call(s)); not provider-confirmed")
             if unpriced:
                 total = max(total, Decimal(res["estimated_usd"]))
-                estimated = True
+                estimated = True; basis.append("unpriced")
                 manual_review = True
                 flags.append(f"estimated_unknown_cost: no reliable price for {sorted(unpriced)}; settled at max(priced part, reservation) = {_d(total)} USD; "
                              "the reservation is not a bill; manual account review required before further paid starts")
@@ -533,7 +538,7 @@ class BudgetLedger:
                 if not fallback_to_reservation:
                     raise LedgerConflict("no usage given; pass fallback_to_reservation=True to settle conservatively or void() a unit that never ran")
                 total = max(total, Decimal(res["estimated_usd"]))
-                estimated = True
+                estimated = True; basis.append("no_usage_reservation")
                 flags.append("settled at the reserved amount (no usage available; conservative)")
             if hold or incomplete:
                 # Approved policy (2026-10-31): missing or incomplete usage (any call whose usage is unknown, or an exception
@@ -543,14 +548,14 @@ class BudgetLedger:
                 if total < floor:
                     flags.append(f"incomplete usage: priced known part {_d(total)} USD is below the reservation; settled at the reservation {_d(floor)} USD")
                     total = floor
-                estimated = True
+                estimated = True; basis.append("incomplete_usage")
                 manual_review = True
                 flags.append("hold: usage missing or incomplete; conservative estimate; manual reconciliation required before further paid starts")
             entry = {"type": "settlement", "unit_id": unit_id, "kind": res["kind"], "cost_usd": str(_d(total)),
                      "breakdown": {c: str(_d(v)) for c, v in breakdown.items()}, "retry_estimate_usd": str(_d(retry_est)),
                      "per_model": per_model, "raw_usage": usage_by_model or {}, "raw_calls": calls_by_model or {}, "usage_scope": scope,
                      "usage_reconciliation": reconciliation, "inspect_total_cost_usd": str(_d(inspect_cost_total)) if inspect_cost_known else None,
-                     "estimated": bool(estimated or retry_est > 0), "inferred": inferred,
+                     "estimated": bool(estimated or retry_est > 0), "estimate_basis": sorted(set(basis + (["retry_estimate"] if retry_est > 0 else []))), "inferred": inferred,
                      "manual_review_required": manual_review, "flags": flags, "note": note, "reserved_usd": res["estimated_usd"], "at": _now()}
             return self._append(state, entry)
 

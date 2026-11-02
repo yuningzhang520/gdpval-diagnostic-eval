@@ -38,7 +38,7 @@ import sys
 import time
 from decimal import ROUND_CEILING, Decimal
 
-from grading.judge_dev import DEV_KEY_SUFFIX, call_cost_usd, worst_case_usd
+from grading.judge_dev import DEV_KEY_SUFFIX, batch_liability_usd, call_cost_usd, next_request_bound_usd, worst_case_usd
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 BASE = os.path.expanduser("~/turing-eval-runs")
@@ -138,8 +138,8 @@ def make_guard(holder: dict, max_tokens: int, base_total: Decimal, ceiling: Deci
         if any(os.environ.get(k) for k in ("GEMINI_API_KEY", "VERTEX_API_KEY", "GOOGLE_GENAI_USE_VERTEXAI")):
             return "a Google credential override variable is set"
         j = holder.get("judge")
-        so_far = sum((call_cost_usd(cl["usage"], "long") for cl in (getattr(j, "calls", None) or []) if cl.get("usage")), Decimal(0))
-        nxt = worst_case_usd(request_chars, max_tokens, "long")
+        so_far = batch_liability_usd(j)  # engine .10 (R2-B4): metered calls plus the inferred buffer the ledger settles for this batch
+        nxt = next_request_bound_usd(j, request_chars, max_tokens)
         if base_total + so_far + nxt > ceiling:
             return f"formal judge ceiling {ceiling} USD would be exceeded"
         return None

@@ -116,7 +116,8 @@ Y
                 w = csv.writer(f); w.writerow(["run_uuid", "item", "weight", "criterion", "label", "evidence"])
                 w.writerow(["u", 1, 2, "A", "pass", "x"]); w.writerow(["u", 9, 1, "Z", "fail", "y"])
             R.save_label_checkpoint(d, "u", csvp, "tester")
-            grades = [{"item": 1, "verdict": "pass", "source": "D", "weight": 2}, {"item": 2, "verdict": "cannot_assess", "source": "D", "weight": 1}, {"item": 9, "verdict": "pass", "source": "D", "weight": 1}]
+            ident = {"run_uuid": "u", "grading_pass": "p1"}  # engine .10 (R2-B5): grade rows carry their run and pass
+            grades = [{**ident, "item": 1, "verdict": "pass", "source": "D", "weight": 2}, {**ident, "item": 2, "verdict": "cannot_assess", "source": "D", "weight": 1}, {**ident, "item": 9, "verdict": "pass", "source": "D", "weight": 1}]
             out = R.compare_labels(d, "u", grades, queue_items=[1, 2])
         self.assertEqual((out["labelled_items"], out["queue_unlabelled"], out["labels_outside_queue_ignored"]), (1, [2], [9]))
 
@@ -185,7 +186,7 @@ class PolicyV2Tests(unittest.TestCase):
             rows = R.read_labels(csvp)
             self.assertEqual([r["item"] for r in rows], ["C2", 10])
             R.save_label_checkpoint(d, "u", csvp, "tester")
-            out = R.compare_labels(d, "u", [{"item": 10, "verdict": "fail", "source": "D", "weight": 1}], queue_items=[10],
+            out = R.compare_labels(d, "u", [{"run_uuid": "u", "grading_pass": "p1", "item": 10, "verdict": "fail", "source": "D", "weight": 1}], queue_items=[10],
                                    critical_status={"C2": "pass"}, sensitivity={"C2": {"preregistered_status": "fail", "differing_items": [10]}})
         c2 = out["criteria"]["rows"][0]
         self.assertEqual((c2["class"], c2["preregistered"]["human_derived"], c2["preregistered"]["class"]), ("agree", "fail", "agree"))

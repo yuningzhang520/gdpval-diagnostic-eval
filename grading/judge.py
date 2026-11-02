@@ -754,6 +754,14 @@ class ProviderJudge:
         self.item_wall_clock_cap_s = float(item_wall_clock_cap_s) if item_wall_clock_cap_s else None
         self._item_started: dict = {}
         self._timeout_s: float | None = None
+        # Engine .10 (Codex Review 2 R2-B1): every provider request is one attempt with its own id on its started and
+        # terminal events, so a schema retry of the same unit is never merged with the first request
+        self._attempt_nonce = os.urandom(4).hex()
+        self._attempt_seq = 0
+
+    def _new_attempt_id(self) -> str:
+        self._attempt_seq += 1
+        return f"{self._attempt_nonce}-{self._attempt_seq}"
 
     def _persist(self, event: dict) -> None:
         """Append one JSON line and fsync. A failure here must stop the request from being sent."""
@@ -785,7 +793,7 @@ class ProviderJudge:
         from inspect_ai.model import ChatMessageSystem, ChatMessageUser
         user = render_unit(unit)
         messages = [ChatMessageSystem(content=JUDGE_SYSTEM_PROMPT), ChatMessageUser(content=user)]
-        rec = {"unit_id": unit["unit_id"], "item": unit["item"], "model": self.model_name, "judge_id": self.judge_id, "runner_version": JUDGE_RUNNER_VERSION,
+        rec = {"unit_id": unit["unit_id"], "item": unit["item"], "attempt_id": self._new_attempt_id(), "model": self.model_name, "judge_id": self.judge_id, "runner_version": JUDGE_RUNNER_VERSION,
                "started_at": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
                "request_sha256": hashlib.sha256((JUDGE_SYSTEM_PROMPT + "\n" + user).encode("utf-8")).hexdigest(), "request_chars": len(JUDGE_SYSTEM_PROMPT) + len(user),
                "prompt_sha256": self.prompt_sha256, "generate_params": dict(self.generate_params), "evidence_builder": unit.get("evidence_builder")}
@@ -796,7 +804,7 @@ class ProviderJudge:
         if self.halted:
             # Approved policy: after a call whose usage could not be accounted, no further paid request is sent in this batch.
             rec.update({"status": "not_attempted", "error": {"class": "halted_after_usage_uncertain", "message": self.halted}, "raw_response": None, "usage": None, "usage_status": "not_attempted", "seconds": 0.0})
-            self._persist({"phase": "not_attempted", **{k: rec[k] for k in ("unit_id", "item", "request_sha256", "error")}})
+            self._persist({"phase": "not_attempted", **{k: rec[k] for k in ("unit_id", "item", "attempt_id", "request_sha256", "error")}})
             self.calls.append(rec)
             return rec
         if self.pacing_pause_s and self._last_end is not None:
@@ -812,10 +820,10 @@ class ProviderJudge:
                           "message": f"item wall-clock cap of {self.item_wall_clock_cap_s:.0f} s already reached; not sent", "failure_class": "retryable", "recoverability": "recoverable",
                           "wall_clock_cap_s": self.item_wall_clock_cap_s, "timed_out": True}
                 rec.update({"status": "provider_error", "error": detail, "raw_response": None, "usage": None, "usage_status": "not_attempted", "seconds": 0.0})
-                self._persist({"phase": "not_attempted", **{k: rec[k] for k in ("unit_id", "item", "request_sha256", "error")}})
+                self._persist({"phase": "not_attempted", **{k: rec[k] for k in ("unit_id", "item", "attempt_id", "request_sha256", "error")}})
                 self.calls.append(rec)
                 return rec
-        self._persist({"phase": "started", **{k: rec[k] for k in ("unit_id", "item", "request_sha256", "request_chars", "started_at", "runner_version")}})  # raises -> request never sent
+        self._persist({"phase": "started", **{k: rec[k] for k in ("unit_id", "item", "attempt_id", "request_sha256", "request_chars", "started_at", "runner_version")}})  # raises -> request never sent
         t0 = time.monotonic()
         try:
             out = self._call(messages)
@@ -836,7 +844,7 @@ class ProviderJudge:
                 self.usage_incomplete = True
                 if self.stop_on_uncertain_usage or detail["recoverability"] == "unrecoverable":
                     self.halted = f"call for {unit['unit_id']} failed with {type(ex).__name__} ({detail['recoverability']}: HTTP {detail.get('http_status')} {detail.get('provider_status')}); its cost is unknown"
-            self._persist({"phase": "finished", **{k: rec[k] for k in ("unit_id", "item", "status", "error", "raw_response", "usage", "usage_status", "seconds")}})
+            self._persist({"phase": "finished", **{k: rec[k] for k in ("unit_id", "item", "attempt_id", "status", "error", "raw_response", "usage", "usage_status", "seconds")}})
             self.calls.append(rec)
             return rec
         raw = getattr(out, "completion", None)
@@ -858,7 +866,7 @@ class ProviderJudge:
                 self.halted = f"call for {unit['unit_id']} returned no usage; its cost cannot be accounted"
         rec["seconds"] = round(time.monotonic() - t0, 3)
         self._last_end = time.monotonic()
-        self._persist({"phase": "finished", **{k: rec[k] for k in ("unit_id", "item", "status", "error", "raw_response", "usage", "usage_status", "seconds", "served_model", "stop_reason")}})
+        self._persist({"phase": "finished", **{k: rec[k] for k in ("unit_id", "item", "attempt_id", "status", "error", "raw_response", "usage", "usage_status", "seconds", "served_model", "stop_reason")}})
         self.calls.append(rec)
         return rec
 
@@ -873,8 +881,7 @@ class ProviderJudge:
         if self.recoverable_failures:
             if per_call:  # engine .8: unknown usage of recoverable failures -> inferred buffer of (1 + max_retries) average metered calls per failed request
                 attempts = 1 + int(self.generate_params.get("max_retries") or 0)
-                # V1.3: the recorded attempt count where the provider layer reports it, else the upper bound 1 + max_retries
-                buffer = sum(int(f["attempts"]) if isinstance(f.get("attempts"), int) and f["attempts"] > 0 else attempts for f in self.recoverable_failures)
+                buffer = inferred_buffer_calls(self.recoverable_failures, self.generate_params.get("max_retries"))
                 recovered = {"recovered": len(self.recoverable_failures), "buffer_calls": buffer, "attempts_per_failed_request": attempts,
                              "failures": self.recoverable_failures, "source": "judge batch: provider failures without usage"}
             else:  # nothing metered to infer from: the conservative settlement with a hold applies
@@ -887,38 +894,72 @@ class ProviderJudge:
                         f"{sum(1 for c in self.calls if c.get('usage_status') in ('missing', 'uncertain'))} with missing/uncertain usage"}
 
 
+def inferred_buffer_calls(failures: list[dict], max_retries) -> int:
+    """The inferred buffer of a batch's recoverable provider failures, in average metered calls (engine .8; V1.3: the
+    recorded attempt count where the provider layer reports it, else the upper bound 1 + max_retries). One rule for the
+    ledger settlement (batch_result) and the per-call ceiling guards (grading.judge_dev.batch_liability_usd)."""
+    upper = 1 + int(max_retries or 0)
+    return sum(int(f["attempts"]) if isinstance(f.get("attempts"), int) and f["attempts"] > 0 else upper for f in failures)
+
+
 def scan_judge_log(log_path: str) -> dict:
-    """Terminal state of every judge call recorded in a write-ahead log: ok / provider_error / not_attempted, or UNKNOWN
-    when a 'started' event has no terminal event (the request may have reached the provider; it is neither a success,
-    a failure, free nor retryable until a human reconciles the unit)."""
-    units: dict[str, dict] = {}
+    """Terminal state of every judge request recorded in a write-ahead log: ok / provider_error / not_attempted, or
+    UNKNOWN when a 'started' event has no terminal event (the request may have reached the provider; it is neither a
+    success, a failure, free nor retryable until a human reconciles the unit).
+
+    Engine .10 (Codex Review 2 R2-B1): the unit of account is the request ATTEMPT, not the judge unit. Events written
+    since engine .10 carry ``attempt_id`` (started and terminal of one request); a schema retry is a second attempt of
+    the same unit. Logs written before carry no attempt id: each terminal event closes the open started event of its
+    unit in log order (the adapter sends one request at a time per log), and a started event that no terminal event
+    follows stays UNKNOWN. ``attempts`` lists every attempt; ``calls`` keeps the per-unit view (the latest attempt's
+    events; the state UNKNOWN when any attempt of the unit is); ``unknown`` names units, ``unknown_attempts`` attempts."""
+    attempts: dict[str, dict] = {}
     if not os.path.exists(log_path):
-        return {"path": log_path, "calls": {}, "unknown": [], "events": 0}
+        return {"path": log_path, "calls": {}, "attempts": {}, "unknown": [], "unknown_attempts": [], "events": 0}
     n = 0
+    open_legacy: dict[str, str] = {}
     with open(log_path, encoding="utf-8") as f:
         for line in f:
             if not line.strip():
                 continue
             e = json.loads(line); n += 1
-            u = units.setdefault(e["unit_id"], {"started": None, "terminal": None})
-            if e.get("phase") == "started":
-                u["started"] = e
-            elif e.get("phase") in ("finished", "not_attempted"):
-                u["terminal"] = e
+            uid, phase, aid = e["unit_id"], e.get("phase"), e.get("attempt_id")
+            if aid is None:  # written before engine .10
+                if phase == "started":
+                    aid = f"{uid}#legacy-{n}"
+                    open_legacy[uid] = aid
+                elif phase == "finished" and uid in open_legacy:
+                    aid = open_legacy.pop(uid)
+                else:
+                    aid = f"{uid}#legacy-{n}"
+            a = attempts.setdefault(aid, {"attempt_id": aid, "unit_id": uid, "item": e.get("item"), "started": None, "terminal": None, "order": n})
+            if phase == "started":
+                a["started"] = e
+            elif phase in ("finished", "not_attempted"):
+                a["terminal"] = e
+    units: dict[str, dict] = {}
+    for a in sorted(attempts.values(), key=lambda x: x["order"]):
+        a["state"] = "UNKNOWN" if a["started"] and not a["terminal"] else (a["terminal"] or {}).get("status", "not_attempted" if a["terminal"] else "UNKNOWN")
+        u = units.setdefault(a["unit_id"], {"attempts": []})
+        u.update({"started": a["started"], "terminal": a["terminal"]})
+        u["attempts"].append(a["attempt_id"])
     for uid, u in units.items():
-        u["state"] = "UNKNOWN" if u["started"] and not u["terminal"] else (u["terminal"] or {}).get("status", "not_attempted" if u["terminal"] else "UNKNOWN")
-    return {"path": log_path, "calls": units, "unknown": sorted(uid for uid, u in units.items() if u["state"] == "UNKNOWN"), "events": n}
+        states = [attempts[k]["state"] for k in u["attempts"]]
+        u["state"] = "UNKNOWN" if "UNKNOWN" in states else states[-1]
+    unknown_attempts = [k for k, a in sorted(attempts.items(), key=lambda x: x[1]["order"]) if a["state"] == "UNKNOWN"]
+    return {"path": log_path, "calls": units, "attempts": attempts, "unknown": sorted({attempts[k]["unit_id"] for k in unknown_attempts}), "unknown_attempts": unknown_attempts, "events": n}
 
 
 def usage_from_judge_log(log_path: str) -> dict:
-    """Durable recovery (correction B): the usage of every call whose terminal event is on disk, summed per model; calls
-    with a started event and no terminal event are UNKNOWN (counted, never priced, never retried); finished calls without
+    """Durable recovery (correction B): the usage of every request attempt whose terminal event is on disk, summed per
+    model, each attempt exactly once (engine .10: a schema retry's two requests are two attempts); attempts with a
+    started event and no terminal event are UNKNOWN (counted, never priced, never retried); finished attempts without
     usage are counted too. Source of truth after a crash - the in-memory adapter state is only a cross-check."""
     scan = scan_judge_log(log_path)
     usage: dict[str, dict] = {}
     without_usage = 0
-    for uid, c in scan["calls"].items():
-        term = c.get("terminal") or {}
+    for a in scan["attempts"].values():
+        term = a.get("terminal") or {}
         u = term.get("usage")
         if term.get("phase") == "finished" and u:
             acc = usage.setdefault(term.get("model") or "unknown", {"input_tokens": 0, "output_tokens": 0, "cache_read_tokens": 0, "cache_write_tokens": 0})
@@ -926,7 +967,8 @@ def usage_from_judge_log(log_path: str) -> dict:
                 acc[k] += int(u.get(k, 0) or 0)
         elif term.get("phase") == "finished":
             without_usage += 1
-    return {"usage": usage, "unknown_calls": len(scan["unknown"]), "unknown_units": scan["unknown"], "finished_without_usage": without_usage, "calls": len(scan["calls"]),
+    return {"usage": usage, "unknown_calls": len(scan["unknown_attempts"]), "unknown_units": scan["unknown"], "finished_without_usage": without_usage,
+            "calls": len(scan["attempts"]), "units": len(scan["calls"]),
             "source": f"write-ahead log {os.path.basename(log_path)}" if os.path.exists(log_path) else "no write-ahead log on disk"}
 
 

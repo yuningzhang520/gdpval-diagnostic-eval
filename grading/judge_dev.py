@@ -91,6 +91,37 @@ def call_cost_usd(usage: dict, tier_name: str = "std") -> Decimal:
             + Decimal(usage.get("output_tokens", 0)) * tier["output"]) / Decimal(1_000_000)
 
 
+def _max_retries_of(judge) -> int:
+    mr = (getattr(judge, "generate_params", None) or {}).get("max_retries")
+    return int(mr if mr is not None else cfg()["judge"]["max_retries"])
+
+
+def batch_liability_usd(judge) -> Decimal:
+    """What the ledger can settle for this judge batch so far (engine .10, Codex Review 2 R2-B4), in the settlement's
+    terms (harness.budget.BudgetLedger.settle): every metered call, plus the inferred buffer of the batch's recoverable
+    provider failures - the batch's average metered call times grading.judge.inferred_buffer_calls - priced at the
+    long-context rates that bound the settlement. Without a metered call nothing can be inferred: the ledger then holds
+    the unit at its reservation, which fit the ceiling when it was made."""
+    from grading.judge import inferred_buffer_calls
+    calls = [cl["usage"] for cl in (getattr(judge, "calls", None) or []) if cl.get("usage")]
+    metered = sum((call_cost_usd(u, "long") for u in calls), Decimal(0))
+    failures = list(getattr(judge, "recoverable_failures", None) or [])
+    if not calls or not failures:
+        return metered
+    return metered + metered / len(calls) * inferred_buffer_calls(failures, _max_retries_of(judge))
+
+
+def next_request_bound_usd(judge, request_chars: int, max_tokens: int) -> Decimal:
+    """The most the next request can add to the settlement: its worst-case cost if it completes, or, if it fails with a
+    recoverable error, the buffer the ledger then infers for it ((1 + max_retries) average metered calls)."""
+    nxt = worst_case_usd(request_chars, max_tokens, "long")
+    calls = [cl["usage"] for cl in (getattr(judge, "calls", None) or []) if cl.get("usage")]
+    if not calls:
+        return nxt
+    avg = sum((call_cost_usd(u, "long") for u in calls), Decimal(0)) / len(calls)
+    return max(nxt, avg * (1 + _max_retries_of(judge)))
+
+
 def registry(event: dict, pass_id: str = PASS_ID) -> None:
     os.makedirs(JDIR, exist_ok=True)
     with open(REGISTRY, "a", encoding="utf-8") as f:
@@ -234,8 +265,9 @@ def make_guard(judge_holder: dict, max_tokens: int, base: dict, extra_cap: tuple
         j = judge_holder.get("judge")
         # Long-context rates bound what the ledger can settle for this unit (it prices the unit's summed usage, which may
         # cross the 200 k tier), so the ledger total stays within both ceilings, not only the provider bill.
-        so_far = sum((call_cost_usd(cl["usage"], "long") for cl in (getattr(j, "calls", None) or []) if cl.get("usage")), Decimal(0))
-        nxt = worst_case_usd(request_chars, max_tokens, "long")
+        # Engine .10 (R2-B4): the batch's liability includes the inferred buffer of its recoverable failures.
+        so_far = batch_liability_usd(j)
+        nxt = next_request_bound_usd(j, request_chars, max_tokens)
         if base["pass_1"] + so_far + nxt > cap1:
             return f"Pass 1 ceiling {cap1} USD would be exceeded (spent {base['pass_1'] + so_far:.4f} + worst case {nxt:.4f})"
         if base["aggregate"] + so_far + nxt > capall:

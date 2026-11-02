@@ -839,7 +839,7 @@
   },
   "grading": {
     "preregistration": "preregistration.md (draft; frozen at freeze-v1)",
-    "engine_version": "engine-2026-11-01.9",
+    "engine_version": "engine-2026-11-02.10",
     "task_grader_versions": {
       "1137e2bb-bdf9-4876-b572-f29b7de5e595": "1137e2bb-2026-11-01.3",
       "7d7fc9a7-21a7-4b83-906f-416dea5ad04f": "7d7fc9a7-2026-11-01.7",
@@ -1263,6 +1263,7 @@
     "pacing_pause_s": 2.0,
     "provider_error_stop_items": 3,
     "item_wall_clock_cap_s": 600,
+    "infrastructure_change_v1_4": "APPROVED by the human 2026-11-02 (Codex Review 2 Blocking corrections, engine-2026-11-02.10; infrastructure and accounting only, not model-visible, the judge request unchanged): the write-ahead judge log records every provider request as its own attempt (attempt_id), so a schema retry is never merged and an unterminated attempt stays UNKNOWN; a failed batch settles at the larger of durable and in-memory usage when they disagree (held); every per-call guard counts the batch's metered calls plus the inferred buffer the ledger settles, and bounds the next request by its worst case or its failure buffer; an inferred buffer settles as estimated (estimate_basis inferred_buffer) without a hold, as approved; judged-pass selection by pass and attempt identity; label comparisons bound to one run and one pass",
     "infrastructure_change_v1_3": "APPROVED by the human 2026-11-01 (V1.3, engine-2026-11-01.9; infrastructure only, not model-visible): a 600 s wall-clock cap per judge item over its requests, Inspect's retries and backoff (and its schema retry), after which the item is provider_error and the batch continues; failures classified by HTTP status and provider status / reason: 408, 429, 5xx and rate-limit / quota signals (including those reported as 403) retryable, authentication, permission, billing, invalid key and missing model fatal (stop the batch), other 4xx such as 400 invalid request and 413 oversized permanent for the item (provider_error without backoff, batch continues); attempts, elapsed time and runner version recorded",
     "infrastructure_change_2026_11_01": "APPROVED by the human 2026-11-01 (V1.2, engine-2026-11-01.8; infrastructure only, not model-visible): Inspect max_retries 3 -> 10 (Inspect's own retry; no other retry or backoff layer), a 2.0 s pause between judge requests, a recoverable provider failure no longer stops the batch (new requests stop after 3 distinct failed items; authentication, billing and invalid-configuration errors stop at once), one schema retry of a schema-invalid response with the identical request (invalid_judge_output when both are invalid), provider error detail recorded; prompt, model, temperature, max_tokens and reasoning_effort unchanged",
     "prompt_sha256": "1de955e607e16bd8d236469603bde099b3d309a885be170c21d7e759c57487b5",
