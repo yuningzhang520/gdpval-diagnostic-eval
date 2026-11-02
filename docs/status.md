@@ -4972,6 +4972,113 @@ Engineering notes:
   was on battery, and two of my tests had timing mistakes. Corrected in the tests; the runners were unchanged.
 - The judge request surface is identical to `v1-calibration-freeze`.
 
+## Final verification on `df4a560`, N1–N5, freeze readiness (2026-11-02)
+
+Code under verification:
+- `df4a560e66a6cc2d3c1612a28258b99b3ac6a21c` (tag `v1.5-item27-quota-pause`), clean tree.
+- Later commits are docs only.
+- Nothing is FROZEN, and there is no `freeze-v1`.
+
+Tests and Docker on `df4a560`:
+- Grading discover: 496 tests, 5 skipped, OK.
+- Harness, 14 modules: 203 tests, OK.
+- Docker-gated suites: all 13 pass (logs `logs/docker-gated-df4a560-20261102T070301Z/`, `HEADER.txt` binds commit, tag
+  and clean tree before and after; 3 min 25 s; no container left running):
+  - Gold recalculation 3/3 and 2/2;
+  - recalc 16, grading CLI 61;
+  - compose 15, tools 8, limits 74, cost limit 14, closeout 92/92;
+  - launcher contract 11, message-limit parallel 20, pilot CLI 13, inspect 62.
+
+V1.3.1 regression evidence (`dev/grading_v1.3.1/`, `validation/grading_v1.3.1/`; the held-out passes untouched):
+- Against the V1.3 re-grades only item 27 changes: Validation `2ea2e5b5…` moves from pass to fail ("no column or row
+  labeled 'Margin Impact'"); Dev is unchanged (it already failed).
+- The four `2ea2e5b5…` judge units are identical in content.
+- The held-out Validation deterministic result stays 4/6.
+
+Re-verified numbers on the final code (`logs/r2-fixes/audit/audit_final_df4a560.json`; read-only; 694 original record
+files unchanged):
+
+| Quantity | Value on `df4a560` | Same as the V1.4 audit |
+|---|---|---|
+| Settled, generation ledgers | dev 22.255219, validation 17.488478, compat 2.043342 USD | yes |
+| Settled, judge ledgers | judge_dev 11.636271, judge_validation 1.241102 USD (13.758898 remaining of 15) | yes |
+| Estimated portions | dev 5.452624, validation 4.808123, judge_dev 0.550000, judge_validation 1.191394 USD | yes |
+| Write-ahead logs | 14, no UNKNOWN attempt | yes |
+| Label agreement | 15 comparisons, identity verified, recomputed equal: Dev 4/6 (Pass 2 2/2), Validation deterministic 4/6 | yes |
+| Pass selection | 34 run directories, same pass and blocked state; plus the 2 new V1.3.1 regression directories | yes |
+| Grader coverage | 580 rubric items over 10 tasks, each assigned once: D 396, J 166, V 18; no overlap, gap or extra (`grader_coverage_df4a560.json`) | — |
+
+No-hold exception probe (`logs/r2-fixes/nohold_probe.txt`):
+- The unit gate drops the "estimated" reason only for a settlement whose basis is exactly `inferred_buffer`.
+- Each of these still stops: manual review, a recorded stop, another basis, a legacy record without a basis, an
+  engineering failure.
+- An inferred settlement that crosses the ledger ceiling records "budget ceiling reached" and "2x its estimate", and
+  the next reservation is refused (`BudgetExhausted`).
+
+Final configuration and image (Formal launcher dry-run on `df4a560`, scratch `formal/preflight-20261102T070755Z/`, 20/20
+units, 20 s, no provider call):
+- `config.json` SHA-256 `c44b1cbe377d9bab0dd6805b9f27150324950b0f1ebe3b1c7af32c9fa68cc3de`, status DRAFT.
+- Shared prompt `harness/system_prompt_draft.txt`: stripped-text SHA-256 `6b539cf9…` (file bytes `67238ba0…`), the
+  same for both candidates.
+- Image `sha256:18cde712cde1867c94b8f23ae1f4066b0aa3146fdbd8deac70d1b4aa043ea9ee`, linux/arm64, created
+  2026-10-30T08:28:15Z.
+- Formal generation: ceiling 150, holds 8 / 5 USD, per-sample limit 20 USD.
+- Staged files verified for all 10 tasks.
+- Grader versions: engine `engine-2026-11-02.10`; `2ea2e5b5…` .6, `c3525d4d…` .6; the others unchanged since V1.
+
+Private GitHub backup readiness (checked, not pushed):
+- Remote `yuningzhang520/gdpval-diagnostic-eval` main is `abb6dd6`.
+- 6 commits ahead, a fast-forward.
+- Tags `v1.3-corrections`, `v1.4-review2-corrections` and `v1.5-item27-quota-pause` are not on the remote, and no
+  pushed tag differs.
+- The unpushed history has no forbidden path (`private/`, `plan/`, `logs/`, `data/inputs|prompts|resources`, parquet,
+  office files, `.env`) and no secret-like string.
+- `.env` is untracked, mode 600.
+- A push needs the human's authorization.
+
+Worktrees:
+- `/Users/yuning/turing-th` (main, clean).
+- `/Users/yuning/turing-th-jv`: detached at `df4a560`; the Judge Validation worker's checkout, with symlinks to
+  `private/` and the ignored `data/` inputs, excluded locally in `.git/info/exclude`; provenance clean. Removed when
+  the worker ends.
+
+Judge Validation, unattended (approved 2026-11-02):
+- Started 07:02:39Z (`resume`, PID 50148 under `caffeinate -i -s -m`, log
+  `judge_validation/resume_20261102T070239Z.log`) from the worker checkout.
+- Uses the Dev key and the existing 15 USD ledger.
+- The known exhaustion is checkpointed as `quota_pause`: item 20's provider record, failure 00:10:19Z, retry guidance
+  28,178 s. It resumes at 08:05:00Z.
+- Then it runs:
+  - the `c357f0e2…` recovery (item 12 retried once, 53 items evaluated for the first time);
+  - the 7 Validation runs not yet judged (52 judge items).
+- `a45bc83b…` item 20 stays `provider_error` (exhausted).
+- The Mac is on AC power now. With the lid closed macOS can still sleep.
+
+Review 2 Non-blocking findings, with proposed dispositions (not accepted until the human decides):
+
+| # | Finding (Codex Review 2 §4, §7) | Impact | Proposed disposition |
+|---|---|---|---|
+| N1 | The package text is out of date in three places: V1.1's "a parse error is never recovered" (superseded by the approved V1.2 schema retry); the §2C task-version table; "the builder never receives a verdict" (the builder receives the checks; the request carries no D verdict) | documentation accuracy only; no measurement effect | accept; correct the three statements in the review package and anywhere public docs repeat them (docs only) |
+| N2 | `judge-surface --request-only` is a selective AST digest of `judge.py`; it does not prove every indirect request change. The full source-file hashes in each freeze record still bind the code | the scope of one auxiliary check | accept as a documented limitation; every "request surface identical" statement names it as an auxiliary check beside the full file hashes |
+| N3 | A recovery does not refuse explicitly when the base call's request hash is missing (production records always carry it) | provenance hardening; no observed case | accept, with an optional two-line fail-closed check if the human wants it before freeze |
+| N4 | Provider error messages pass through redaction and an allowlist with synthetic credential tests; no proof for arbitrary provider payloads | low; the real error payloads recorded (429 quota messages) hold no secret | accept; keep the secret-pattern scan of records and the backup gate before any publication |
+| N5 | Codex could not run Docker, the real judge or the Formal preflight | a verification gap | treat as closed by the evidence above (Docker on `7e30849` and `df4a560`, Formal preflight on `df4a560`); the real judge path is exercised by Judge Validation; ask the delta reviewer to check the SHA binding of the Docker logs |
+
+Codex delta review: package `docs/codex_review_2.md` section 6, range `git diff 5121e1a df4a560 -- grading harness
+config.json preregistration.md`, with the seven interaction checks and the no-hold exception check. Not started.
+
+Remaining freeze gates (`freeze-v1` not authorized):
+
+| Gate | State |
+|---|---|
+| All Blocking corrections committed and regression-tested | done: `be84ff6`, `7e30849`, `df4a560` |
+| No unresolved Blocking finding after the Codex delta review | pending: delta review not started |
+| Accepted Non-blocking findings documented | N1–N5 documented with proposed dispositions; acceptance is the human's |
+| Final reviewed commit, configuration, prompt, grader versions and hashes confirmed | values above for `df4a560`; to be re-confirmed on the reviewed commit at freeze (`config.json` FROZEN changes its hash; `sandbox.image_digest` set to the image ID) |
+| Second project's daily quota for the Formal judge pass | unverified (console check by the human; quota increase optional) |
+| Judge Validation complete and the judge-only agreement measured | in progress (unattended) |
+| The human's explicit Formal launch authorization | not given |
+
 ## Known issues and findings (material check)
 
 - `rubric_json.form_content`: 8,036 items hold `null`, 2,417 items lack the key, zero
@@ -5379,7 +5486,8 @@ Engineering notes:
 - 2026-11-02 · V1.3 regression evidence, Formal preflight at V1.3 (150 USD), freeze-v1 checklist; `2ea2e5b5…` item-27 implementation finding (not fixed, awaiting the human) · 3955422 (local)
 - 2026-11-02 · Codex Review 2 Blocking corrections R2-B1–B5 (engine .10): per-attempt WAL, identity-based pass selection, inferred settlements estimated (no hold), guard liability, run/pass-bound label comparisons; tag `v1.4-review2-corrections` · 7e30849 (local)
 - 2026-11-02 · Docker-gated suites on `7e30849` (13 suites, all pass) and the historical impact audit (only the estimated portions of three ledgers change) · 9f94b88 (local)
-- 2026-11-02 · V1.3.1 (`2ea2e5b5…` .6, item 27 literal label), judge projects per workload and daily-quota pause/resume, generation budget wording (150 admission, 165 worst case approved); tag `v1.5-item27-quota-pause` · (this commit; local)
+- 2026-11-02 · V1.3.1 (`2ea2e5b5…` .6, item 27 literal label), judge projects per workload and daily-quota pause/resume, generation budget wording (150 admission, 165 worst case approved); tag `v1.5-item27-quota-pause` · df4a560 (local)
+- 2026-11-02 · Judge Validation resumed unattended (worker checkout at `df4a560`), final verification on `df4a560` (Docker 13/13, numbers re-verified, coverage, preflight, backup readiness), N1–N5 dispositions proposed, Codex delta package (section 6) · (this commit; local)
 
 ## Next stage (not started)
 

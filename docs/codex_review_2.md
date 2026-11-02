@@ -380,3 +380,105 @@ or ~/turing-eval-runs/qa/, and never quote Validation verdicts or judge response
 with file:line evidence. Report findings as Blocking or Non-blocking with the input, the observed and the expected
 outcome, and say plainly what you did not check.
 ```
+
+## 6. Narrow delta review after Review 2 (prepared 2026-11-02)
+
+Review 2 (pinned `5121e1a`; report `/private/tmp/codex-r2/review-42FFBH0Q/REVIEW.md`) returned BLOCKED with R2-B1–B5.
+This delta covers every code change since that pin. It is a targeted review against the reviewed snapshot, not a
+rerun of Review 2.
+
+Range:
+- reviewed snapshot `5121e1a9d1897392f9a4a4f7526564b6975e0f7b`;
+- final proposed code commit `df4a560e66a6cc2d3c1612a28258b99b3ac6a21c` (tag `v1.5-item27-quota-pause`);
+- diff: `git diff 5121e1a df4a560 -- grading harness config.json preregistration.md`;
+- any later commit must be docs only: `git diff --name-only df4a560 HEAD -- grading harness config.json` prints nothing.
+
+| Commit | Tag | Content | Records |
+|---|---|---|---|
+| `be84ff6` | `v1.3-corrections` | V1.3: `2ea2e5b5…` grader .5 (item 45), `c3525d4d…` grader .6 (item 32); judge runner v1.3 (retryable / item-permanent / fatal classification, 600 s item cap, attempts and runner version); Formal budgets; `grading/judge_formal.py` (gated, never run) | preregistration 1.21; status "V1.3 corrections…" |
+| `7e30849` | `v1.4-review2-corrections` | R2-B1–B5, engine .10 | preregistration 1.22; status "Codex Review 2 Blocking corrections" |
+| `df4a560` | `v1.5-item27-quota-pause` | V1.3.1 (`2ea2e5b5…` .6, item 27 literal "Margin Impact"); one Google project per judge workload; daily-quota pause and resume in both judge runners; generation budget wording | preregistration 1.23; status "V1.3.1, judge projects…" |
+
+Verify each Blocking finding:
+- Rerun your own Review 2 probe logic against `df4a560` (`/private/tmp/codex-r2/review-42FFBH0Q/probes.py`, with the
+  snapshot paths pointed at a fresh export of `df4a560`).
+- Our adapted copy and its outputs are in `logs/r2-fixes/` (`codex_probe_adapted.py`, `before_*.log`,
+  `codex_probe_after.json`).
+- The regression tests are `grading/tests/test_review2_blocking.py` and
+  `harness/tests/test_budget_unit.py::ManualResolutionTests::test_an_inferred_buffer_is_estimated_without_a_hold`.
+
+Interactions to verify (each across the changed paths, not function by function):
+1. WAL attempt accounting and settlement:
+   - `judge.py` `ProviderJudge.__call__`, `scan_judge_log` and `usage_from_judge_log`;
+   - `run_grading.durable_usage` (via `recover_usage` in `main`);
+   - `launcher.run_judge_batch` and `BudgetLedger.settle`.
+   Every attempt is priced exactly once. An unterminated attempt stays UNKNOWN and blocks
+   (`run_grading.judge_history_gate`, `judge_attempts`). A durable/memory disagreement never settles the smaller figure.
+2. Inferred liability and every budget guard:
+   - `judge_dev.batch_liability_usd`, `next_request_bound_usd` and `judge.inferred_buffer_calls`;
+   - the guards in `judge_dev.make_guard`, `judge_validation.make_guard` and `judge_formal.make_guard`.
+   Compare with the settlement's buffer rule in `BudgetLedger.settle`. Check that a ledger already over its ceiling
+   authorizes nothing, and that generation and judge ledgers stay separate.
+3. The B3 `estimated` flag and the approved no-hold exception:
+   - `BudgetLedger.settle` `estimate_basis`, `_derive` legacy derivation, `launcher` inventory record,
+     `unit_gate.evaluate_unit`.
+   The exception must drop only the "estimated" reason when the basis is exactly `inferred_buffer`. It must never
+   bypass:
+   - ledger admission (`reserve`, `BudgetExhausted`, `stop_reasons`: ceiling, 2x estimate, engineering failures, holds,
+     recorded stops);
+   - `manual_review_required`;
+   - any other unit-gate reason (execution, collection, outcome eligibility, structural checks, manifest consistency);
+   - the judge history gate.
+   A record without a basis must keep stopping.
+4. Latest-attempt selection and authoritative pass identity:
+   - `grade.select_pass`, `run_grading.judge_attempts`, `report_selection`, `authoritative_selection`;
+   - the recovery record (`judge_recovery.recovery_pass`: `judge_verdicts`, `judge_calls_ok`);
+   - the recovery and resume paths that pick a base pass (`judge_validation.auto_recovery_items`,
+     `judge_formal.recovery_items`).
+   Cover a zero-success recovery, an order conflict, a judged pass missing from the history, and a recovery held at its
+   reservation.
+5. Label checkpoint, run and grading-pass identity:
+   - `review.check_identity`, `compare_labels` and the `compare` CLI, including an unknown `--grading-pass`;
+   - `save_label_checkpoint` and `save_evidence_correction`.
+6. V1.3 and V1.3.1 graders, with out-of-scope neighbours (`V13CorrectionTests`, `V131CorrectionTests`). The held-out
+   Validation result is not re-scored.
+7. The judge runner:
+   - V1.3 classification and the 600 s cap;
+   - the daily-quota rule: `judge.daily_quota_violation`, the instance-level `should_retry` override in
+     `ProviderJudge._call`, `quota_resume_at`;
+   - `judge_validation.resume` and the `judge_formal.run` pause and resume: no completed or exhausted item is sent
+     again, a stopped pass is never resumed automatically, and the Formal pass refuses the Dev key
+     (`judge_formal.select_project_credential`).
+
+Evidence:
+- Docker-gated suites, with each log folder bound to its commit (`HEADER.txt`, `SUMMARY.txt`):
+  `logs/docker-gated-7e30849-20261102T061847Z/` and `logs/docker-gated-df4a560-20261102T070301Z/`.
+- Historical impact audit: `logs/r2-fixes/audit/` (read-only over the run records; before V1.3, after V1.4).
+- Status entries: "Review 2 corrections: Docker evidence and historical impact audit" and "Final verification…".
+
+Constraints:
+- Read-only. Write only under `/tmp/codex-r2/`, and make no provider call.
+- Do not run `grading.judge_validation` (`run`, `recover`, `resume`), `grading.judge_formal` (`run`, `resume`),
+  `grading.judge_dev`, `grading.run_grading --judge`, `harness.launcher` or `harness.scheduler`.
+- A Judge Validation worker runs unattended from `/Users/yuning/turing-th-jv`. Do not touch it, its process or
+  `~/turing-eval-runs/judge_validation/`.
+- Do not open anything under `~/turing-eval-runs/validation/`, `~/turing-eval-runs/labeling/validation-v4/` or
+  `~/turing-eval-runs/qa/`, and never quote Validation verdicts or judge responses.
+- Review 2's Non-blocking findings N1–N5 are listed with proposed dispositions in `docs/status.md`. Say if any of them
+  is in fact Blocking.
+
+Prompt for a fresh Codex session:
+
+```
+You are doing a narrow, read-only delta review. Read section 6 of /Users/yuning/turing-th/docs/codex_review_2.md and
+treat every statement in it as a claim to verify against the code at df4a560, not as a fact. Export df4a560 into a new
+directory under /tmp/codex-r2/ and review there; do not modify, add, stage or commit anything in /Users/yuning/turing-th
+or /Users/yuning/turing-th-jv. Do not read plan/, .env or any credential, and make no provider call (no judge_validation
+run/recover/resume, judge_formal run/resume, judge_dev, run_grading --judge, harness.launcher or harness.scheduler). Do not
+open ~/turing-eval-runs/validation/, ~/turing-eval-runs/labeling/validation-v4/ or ~/turing-eval-runs/qa/.
+First confirm that git diff --name-only df4a560 HEAD -- grading harness config.json prints nothing. Then verify that each
+of R2-B1-B5 is closed by rerunning your own probes, and verify the seven interaction checks across the changed code paths,
+in particular that the no-hold exception for an inferred buffer never bypasses budget authorization or any other
+fail-closed condition. Report findings as Blocking or Non-blocking with file:line at df4a560, the input, the observed and
+the expected outcome, and state plainly what you did not check.
+```
