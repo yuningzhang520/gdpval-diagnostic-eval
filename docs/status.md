@@ -5316,6 +5316,21 @@ Judge findings status:
 - B2 / D2, B3 / D3 and N1: corrected in `2eb4060`, pending the same recheck.
 - No claim is made that the grading pipeline passed independent review.
 
+## Formal judge runner: three formal runs roots (2026-11-02; tag `v1.8-formal-roots`)
+
+- `grading.judge_formal.finalized_runs` reads every formal runs root (`RUNS_ROOTS`):
+  - `formal/runs` (the two `b5d2e6f1…` units);
+  - `formal/opus/runs`;
+  - `formal/gpt/runs`.
+- Each run carries its own root's generation ledger (`gen_ledger`), used by `_grade` and `_grade_deterministic`.
+- One task and model with canonical runs in two roots refuses (k=1).
+- No generation code changes, and the deterministic scoring path is unchanged; the formal judge stays locked until
+  `freeze-v1-grading`.
+- Formal runs still need their canonical designations before the judge pass. These are written after generation, one
+  per task and candidate, append-only.
+- Tests: `test_judge_formal`, with a new multi-root and duplicate test, and the full grading suite (result in the
+  commit message).
+
 ## Known issues and findings (material check)
 
 - `rubric_json.form_content`: 8,036 items hold `null`, 2,417 items lack the key, zero
@@ -5729,7 +5744,8 @@ Judge findings status:
 - 2026-11-02 · Docker 13/13 on `b33cc37`; backup pushed (`main` to `b33cc37`, 4 tags) · b55c5b4 (local)
 - 2026-11-02 · Two-stage freeze: formal generation frozen on code baseline `b33cc37` (dependency check: the pending delta-review corrections do not reach the generation path); concurrency 1 on the single formal ledger; tag `freeze-v1-generation` · dda234f (local)
 - 2026-11-02 · Codex delta review corrections D1-D3, N1 (engine .12) and the formal judge's freeze-v1-grading requirement; formal generation armed from the clean checkout (waits for AC power); tag `v1.7-delta-review-corrections` · 2eb4060 (pushed)
-- 2026-11-02 · Formal generation switched to two independent candidate workers (ceiling 200 per candidate ledger, config snapshot `80433476…`); deterministic grading frozen at code `2eb4060`; tag `freeze-v1-grading-deterministic` · (this commit; local)
+- 2026-11-02 · Formal generation switched to two independent candidate workers (ceiling 200 per candidate ledger, config snapshot `80433476…`); deterministic grading frozen at code `2eb4060`; tag `freeze-v1-grading-deterministic` · ef53050 (pushed)
+- 2026-11-02 · The formal judge reads the three formal runs roots, each with its own generation ledger; tag `v1.8-formal-roots` · (this commit; local)
 
 ## Next stage (not started)
 

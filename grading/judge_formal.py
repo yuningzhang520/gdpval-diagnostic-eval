@@ -52,6 +52,11 @@ from grading.judge_dev import DEV_KEY_SUFFIX, call_cost_usd, next_liability_boun
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 BASE = os.path.expanduser("~/turing-eval-runs")
 RUNS = os.path.join(BASE, "formal", "runs")
+# 2026-11-02 (the human, deadline): formal generation ran in three independent roots, each with its own generation
+# ledger - the first two units on the single-ledger scheduler, then one harness.batch worker per candidate.
+RUNS_ROOTS = ((RUNS, os.path.join(BASE, "formal", "ledger.json")),
+              (os.path.join(BASE, "formal", "opus", "runs"), os.path.join(BASE, "formal", "opus", "ledger.json")),
+              (os.path.join(BASE, "formal", "gpt", "runs"), os.path.join(BASE, "formal", "gpt", "ledger.json")))
 SEALED = os.path.join(BASE, "formal", "grading_sealed")
 JDIR = os.path.join(BASE, "judge_formal")
 LEDGER = os.path.join(JDIR, "ledger.json")
@@ -105,10 +110,25 @@ def gates() -> dict:
     return out
 
 
-def finalized_runs() -> list[dict]:
-    """Canonical formal runs whose outcome is final and whose eval log exists (metadata only; no output is opened)."""
+def finalized_runs(roots=None) -> list[dict]:
+    """Canonical formal runs whose outcome is final and whose eval log exists (metadata only; no output is opened), from
+    every formal runs root (RUNS_ROOTS), each run with its own root's generation ledger. Fail closed when one task and
+    model has canonical runs in two roots (k=1: never two samples)."""
+    out = []
+    for runs_root, gen_ledger in (roots or RUNS_ROOTS):
+        out += _finalized_in(runs_root, gen_ledger)
+    seen = {}
+    for r in out:
+        key = (r["task_id"], r["model"])
+        if key in seen:
+            raise SystemExit(f"two canonical formal runs for {key}: {seen[key]} and {r['run_uuid']}; refusing (k=1)")
+        seen[key] = r["run_uuid"]
+    return out
+
+
+def _finalized_in(runs_root: str, gen_ledger: str) -> list[dict]:
     from grading.grade import TASK_MODULES
-    des_p, inv_p = os.path.join(RUNS, "canonical_designations.jsonl"), os.path.join(RUNS, "run_inventory.jsonl")
+    des_p, inv_p = os.path.join(runs_root, "canonical_designations.jsonl"), os.path.join(runs_root, "run_inventory.jsonl")
     if not (os.path.isfile(des_p) and os.path.isfile(inv_p)):
         return []
     des = [json.loads(l) for l in open(des_p, encoding="utf-8") if l.strip()]
@@ -118,7 +138,7 @@ def finalized_runs() -> list[dict]:
         u, t = d.get("run_uuid"), d.get("task_id")
         if d.get("designation") != "canonical" or u not in inv or t not in TASK_MODULES:
             continue
-        host = os.path.join(RUNS, u)
+        host = os.path.join(runs_root, u)
         oc = os.path.join(host, "run_outcome.json")
         try:
             final = json.load(open(oc, encoding="utf-8")).get("final") is True
@@ -128,7 +148,7 @@ def finalized_runs() -> list[dict]:
         if final and log and os.path.isfile(log):
             mod = __import__(f"grading.checks_{t[:8]}", fromlist=["J_ITEMS"])
             out.append({"task_id": t, "run_uuid": u, "model": d.get("model"), "host_dir": host, "eval_log": log, "unit_id": inv[u].get("unit_id"),
-                        "judge_items": list(mod.J_ITEMS), "grading_out": os.path.join(SEALED, u)})
+                        "judge_items": list(mod.J_ITEMS), "grading_out": os.path.join(SEALED, u), "gen_ledger": gen_ledger})
     return out
 
 
@@ -186,7 +206,7 @@ def _grade(r: dict, est: Decimal, log, auth: dict, extra: list | None = None, pr
                           cost_guard=make_guard(holder, c["max_tokens"], base, Decimal(str(c["formal"]["ceiling_usd"])), project_suffix))
         holder["judge"] = j
         return j
-    argv = ["--host-dir", r["host_dir"], "--eval-log", r["eval_log"], "--task-id", r["task_id"], "--out-dir", r["grading_out"], "--ledger", os.path.join(BASE, "formal", "ledger.json"),
+    argv = ["--host-dir", r["host_dir"], "--eval-log", r["eval_log"], "--task-id", r["task_id"], "--out-dir", r["grading_out"], "--ledger", r["gen_ledger"],
             "--unit-id", r["unit_id"], "--judge", "--judge-model", c["model"], "--judge-estimate-usd", str(est), "--confirm-judge", f"{r['run_uuid']}|{c['model']}|{est}",
             "--authorized-by", auth["by"], "--authorization-ref", auth["ref"], "--env-file", os.path.join(ROOT, ".env"), "--judge-ledger", LEDGER] + list(extra or [])
     with contextlib.redirect_stdout(log):
@@ -204,7 +224,7 @@ def _grade_deterministic(r: dict, log) -> dict:
     os.makedirs(r["grading_out"], mode=0o700, exist_ok=True)
     with contextlib.redirect_stdout(log):
         rc = RG.main(["--host-dir", r["host_dir"], "--eval-log", r["eval_log"], "--task-id", r["task_id"], "--out-dir", r["grading_out"],
-                      "--ledger", os.path.join(BASE, "formal", "ledger.json"), "--unit-id", r["unit_id"]])
+                      "--ledger", r["gen_ledger"], "--unit-id", r["unit_id"]])
     return {"rc": rc, "calls": 0}
 
 

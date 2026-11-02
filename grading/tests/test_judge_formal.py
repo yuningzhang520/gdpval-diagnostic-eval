@@ -115,8 +115,26 @@ class FinalizedRunTests(unittest.TestCase):
             open(os.path.join(d, "canonical_designations.jsonl"), "w").write("".join(json.dumps({"run_uuid": u, "task_id": task, "designation": "canonical", "model": "m"}) + "\n"
                                                                                 for u in ("RUNFINAL", "RUNOPEN", "RUNNOOUTCOME")))
             open(os.path.join(d, "run_inventory.jsonl"), "w").write("".join(json.dumps({"run_uuid": u, "log_file": log, "unit_id": u}) + "\n" for u in ("RUNFINAL", "RUNOPEN", "RUNNOOUTCOME")))
-            with mock.patch.object(JF, "RUNS", d):
+            with mock.patch.object(JF, "RUNS_ROOTS", ((d, os.path.join(d, "ledger.json")),)):
                 self.assertEqual([r["run_uuid"] for r in JF.finalized_runs()], ["RUNFINAL"])  # a run still writing (not final) is never read
+
+    def test_every_formal_root_is_read_with_its_own_ledger_and_a_duplicate_refuses(self):
+        """2026-11-02: formal generation ran in three independent roots (single-ledger scheduler, one worker per candidate)."""
+        task = "1137e2bb-bdf9-4876-b572-f29b7de5e595"
+        with tempfile.TemporaryDirectory() as d:
+            log = os.path.join(d, "a.eval"); open(log, "w").write("x")
+            roots = []
+            for name, runs in (("opus", (("RUNA", "m/opus"),)), ("gpt", (("RUNB", "m/gpt"),))):
+                root = os.path.join(d, name, "runs"); os.makedirs(root)
+                for u, m in runs:
+                    os.makedirs(os.path.join(root, u)); json.dump({"final": True}, open(os.path.join(root, u, "run_outcome.json"), "w"))
+                open(os.path.join(root, "canonical_designations.jsonl"), "w").write("".join(json.dumps({"run_uuid": u, "task_id": task, "designation": "canonical", "model": m}) + "\n" for u, m in runs))
+                open(os.path.join(root, "run_inventory.jsonl"), "w").write("".join(json.dumps({"run_uuid": u, "log_file": log, "unit_id": u}) + "\n" for u, _ in runs))
+                roots.append((root, os.path.join(d, name, "ledger.json")))
+            got = JF.finalized_runs(tuple(roots))
+            self.assertEqual([(r["run_uuid"], r["model"], os.path.basename(os.path.dirname(r["gen_ledger"]))) for r in got], [("RUNA", "m/opus", "opus"), ("RUNB", "m/gpt", "gpt")])
+            with self.assertRaisesRegex(SystemExit, "two canonical formal runs"):
+                JF.finalized_runs((roots[0], roots[0]))  # one task and model canonical in two roots: never two samples
 
 
 if __name__ == "__main__":
