@@ -5542,6 +5542,22 @@ Deadline exception:
 - The formal judge verdicts stay provisional only for the outstanding independent recheck of V1.9, and stay sealed until
   the human's formal labels are saved.
 
+## Codex recheck 2 of V1.9 closed as known limitations; formal judge on the third project (2026-11-02)
+
+- Codex recheck 2 (`/private/tmp/codex-recheck2/review-UaziWR8v/REVIEW.md`): BLOCKED (B1-B3) plus N1. The human
+  closed it as known limitations: no code change, refreeze, Docker rerun or further round before submission. Details
+  in `report/REPORT.md` 8.2.
+- Checks run with booleans only:
+  - the three Google key variables hold distinct values;
+  - no V1.9-era judge completion record has a non-quota halt without its terminal marker. The two legacy Judge
+    Validation records of 2026-11-01 lack one by design.
+  - No worker was stopped.
+- At 12:40:03Z the formal pass exhausted the second project's 250/day quota during Opus `a45bc83b…`: 34 ok, 1 quota
+  error, 26 never sent. It recorded `quota_pause` with project `GOOGLE_API_KEY_VALIDATION`.
+- The detached supervisor (`formal/tooling/formal_project_handoff.py`) then handed off. Judge Validation had finished
+  and no request was open, so it ended the sleeping worker and resumed the same pass on `GOOGLE_API_KEY_JUDGE` (PID
+  58533): `pass_resume`, then `project_switch`.
+
 ## Known issues and findings (material check)
 
 - `rubric_json.form_content`: 8,036 items hold `null`, 2,417 items lack the key, zero

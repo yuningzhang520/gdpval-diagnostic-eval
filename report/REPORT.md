@@ -765,17 +765,42 @@ Budgets authorized for Formal (`config.json` `batches.formal.budget_decision`, `
   - n = 36 blind item labels in all.
   - Dev judge agreement was 4/6 on the first pass. Held-out Validation deterministic agreement was 4/6, and both
     misses were grader defects that are now corrected but not re-validated on held-out data.
-  - Judge Validation agreement has not been measured yet.
+  - Judge Validation: 3/3 judge-only items agree with the human, all four labels and verdicts pass, so failure
+    detection is untested. `1137e2bb…` item 28 also agrees but is excluded as a judge debug-set item. Coverage is
+    163/166 Validation judge items; three are infrastructure failures, never fails (`docs/status.md` "Judge Validation
+    complete").
   - The judge and the development model share a provider family.
   - 100% rubric coverage does not mean 100% definitive or accurate grading.
-- **Deadline exception.** The Formal judge pass started at `freeze-v1-grading` before the Judge Validation
-  agreement was measured and before the independent recheck of V1.9 (`preregistration.md` 1.25). The Formal judge
-  verdicts are **provisional** until both exist.
-- **Open review.** The Codex recheck of V1.9 (D2 terminal stops, the formal stop result and task-order judging,
-  explicit judge projects) has not been done (section 4.5).
+- **Deadline exception.**
+  - The Formal judge pass started at `freeze-v1-grading` (11:57:25Z) before the Judge Validation agreement was
+    measured and before the independent recheck of V1.9 (`preregistration.md` 1.25).
+  - The agreement was measured at about 12:17Z with the same frozen judge.
+  - The recheck then ran and was closed by the human with its findings recorded below. Whether the Formal judge
+    verdicts stay labelled provisional is the human's decision.
+- **Codex recheck 2 of V1.9 (`/private/tmp/codex-recheck2/review-UaziWR8v/REVIEW.md`): known limitations.**
+  - The human closed it without a code change, refreeze or further round before submission. All four findings
+    concern stop / pause control, under conditions not present in this run.
+  - B1 (Blocking): the Judge Validation terminal-stop marker (`resume_stop`) is written after the `recovery_done` /
+    `run_done` record that already carries the non-quota halt. A process interrupted between the two writes would
+    leave no durable refusal for a later resume.
+  - B2 (Blocking): the formal entry removes `GOOGLE_API_KEY` from the environment before the project selector reads
+    the refused other-workload keys. A selected key equal to the Dev project's key would then pass the generic
+    cross-workload check; the fixed historical Dev-suffix check remains.
+  - B3 (Blocking): pauses and switches are bound to the variable name. Two variables holding the same key would count
+    as two projects, and a switch would close that same project's own quota pause.
+  - N1 (Non-blocking): the Judge Validation CLI selects the project before checking for a terminal stop. Resume still
+    refuses before any recovery or run.
+  - Checks in this run, 2026-11-02, nothing printed but booleans and event kinds:
+    - `GOOGLE_API_KEY`, `GOOGLE_API_KEY_VALIDATION` and `GOOGLE_API_KEY_JUDGE` hold three distinct values (compared
+      by hash). The B2 and B3 conditions are therefore absent.
+    - No `run_done` / `recovery_done` record of either judge pass carries a non-quota halt without its terminal
+      marker, apart from two 2026-11-01 Judge Validation records. Those predate the V1.9 rule and were resolved by
+      the human's authorized recoveries and resumption. The formal pass has no non-quota halt; its only halt is the
+      12:40:03Z daily-quota pause. The B1 situation did not occur.
 - **Judge-project quotas.**
-  - The Dev Google project allows 250 `gemini-3.1-pro` requests per day, measured from the provider's 429 detail. The
-    second project's quota is unverified.
+  - The Dev and second Google projects each allow 250 `gemini-3.1-pro` requests per day (the provider's 429 detail).
+    The second project's quota was exhausted at 12:40:03Z during the formal pass, which continued as the same pass
+    on the third project (`project_switch`, only unfinished items, one worker).
   - The Formal pass needs 332 items before retries, so it may span quota days and projects.
   - Daily-quota pauses, project switches and exhausted items are recorded. Missing verdicts are never FAILs, but they
     reduce coverage and leave criteria `not_confirmed`.
