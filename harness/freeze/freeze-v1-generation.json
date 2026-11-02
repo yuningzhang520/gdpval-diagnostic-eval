@@ -1,0 +1,554 @@
+{
+ "freeze": "freeze-v1-generation",
+ "scope": "formal GENERATION conditions only (candidate models and pricing, generation, retries, limits, system and task prompts, staged inputs, pre-staged resources, sandbox image, collection, batches.formal, concurrency.pilot used per unit); not a grading or judge freeze (freeze-v1-grading)",
+ "code_baseline_commit": "b33cc37bff9a4a301380bc35889e6ffc4ad03dd1",
+ "config_sha256": "77f765314253c2c3a2251443e952593e295652c5f947b1b2322ecab7be186e4b",
+ "config_status": "FROZEN-GENERATION (tag freeze-v1-generation, 2026-11-02; code baseline b33cc37bff9a4a301380bc35889e6ffc4ad03dd1): the formal generation conditions (candidate models and pricing, generation, retries, limits, prompts, staged inputs, sandbox image, batches.formal) are frozen for the formal generation batch (record harness/freeze/freeze-v1-generation.json). NOT a grading freeze: the judge and grading sections may still change by versioned correction; grading and the formal judge require freeze-v1-grading.",
+ "generation_sections_sha256": {
+  "tasks": "c7df2eb805eb2d7dc8cbc445bab92e42987063471ab217090a1060741387a237",
+  "models": "685092cf848ced9180667341845693604a4cb89277494672b5feecb091d76caf",
+  "generation": "eaab6001500fd720e850e57de1275e4004f4bec4c764a2bac3678da4b181f492",
+  "sandbox": "871a5b66ba9b51e57a1057b3c27ec5523e98f129b599583f6a9bdcdf81e250ce",
+  "collection": "d7f9a5a83c7b1ab62a4c76bc6afbc52910b76584a5c5ba9ee3c0139e0327a3bc",
+  "retries": "0135c21ce4ffcfcb0f758d63425a2abd30b9cd890bd002add37092ef735bc672",
+  "pre_staged_resources": "78defd3ac9e124050904791cf184b69c9d726c2f5efd2c2e50df4c14101fd366",
+  "dataset": "e7de4bc28d3f3c9941533cac990e4dee5c00cdeb3ff8e656a94a649265e1773c",
+  "batches.formal": "ebe77ea42e0e76a5c9b34367cc91b6ef7278974fb12645a57319a5d77119dde9",
+  "concurrency.pilot": "38ce4fc869d334365b68b9b10f193cd1275740957e274a31e3cb98c9aa3cb8b6"
+ },
+ "system_prompt": {
+  "file": "harness/system_prompt_draft.txt",
+  "sha256_stripped_text": "6b539cf9171a0f303a5afd3fe64d68536e3db00f9ba767478d8415331cd558e9",
+  "file_sha256": "67238ba0f24ad2c5e6dd546d36f117ab49e5084ae5fa380c5df8b88e20b6a393"
+ },
+ "task_order": [
+  "b5d2e6f1-62a2-433a-bcdd-95b260cdd860",
+  "f841ddcf-2a28-4f6d-bac3-61b607219d3e",
+  "47ef842d-8eac-4b90-bda8-dd934c228c96",
+  "1137e2bb-bdf9-4876-b572-f29b7de5e595",
+  "c3525d4d-2012-45df-853e-2d2a0e902991",
+  "7b08cd4d-df60-41ae-9102-8aaa49306ba2",
+  "7d7fc9a7-21a7-4b83-906f-416dea5ad04f",
+  "2ea2e5b5-257f-42e6-a7dc-93763f28b19d",
+  "c357f0e2-963d-4eb7-a6fa-3078fe55b3ba",
+  "a45bc83b-22f9-4def-8d89-9c5661b2b86f"
+ ],
+ "unit_order": [
+  "b5d2e6f1-62a2-433a-bcdd-95b260cdd860|anthropic/claude-opus-5-5",
+  "b5d2e6f1-62a2-433a-bcdd-95b260cdd860|openai/gpt-6.1-sol",
+  "f841ddcf-2a28-4f6d-bac3-61b607219d3e|anthropic/claude-opus-5-5",
+  "f841ddcf-2a28-4f6d-bac3-61b607219d3e|openai/gpt-6.1-sol",
+  "47ef842d-8eac-4b90-bda8-dd934c228c96|anthropic/claude-opus-5-5",
+  "47ef842d-8eac-4b90-bda8-dd934c228c96|openai/gpt-6.1-sol",
+  "1137e2bb-bdf9-4876-b572-f29b7de5e595|anthropic/claude-opus-5-5",
+  "1137e2bb-bdf9-4876-b572-f29b7de5e595|openai/gpt-6.1-sol",
+  "c3525d4d-2012-45df-853e-2d2a0e902991|anthropic/claude-opus-5-5",
+  "c3525d4d-2012-45df-853e-2d2a0e902991|openai/gpt-6.1-sol",
+  "7b08cd4d-df60-41ae-9102-8aaa49306ba2|anthropic/claude-opus-5-5",
+  "7b08cd4d-df60-41ae-9102-8aaa49306ba2|openai/gpt-6.1-sol",
+  "7d7fc9a7-21a7-4b83-906f-416dea5ad04f|anthropic/claude-opus-5-5",
+  "7d7fc9a7-21a7-4b83-906f-416dea5ad04f|openai/gpt-6.1-sol",
+  "2ea2e5b5-257f-42e6-a7dc-93763f28b19d|anthropic/claude-opus-5-5",
+  "2ea2e5b5-257f-42e6-a7dc-93763f28b19d|openai/gpt-6.1-sol",
+  "c357f0e2-963d-4eb7-a6fa-3078fe55b3ba|anthropic/claude-opus-5-5",
+  "c357f0e2-963d-4eb7-a6fa-3078fe55b3ba|openai/gpt-6.1-sol",
+  "a45bc83b-22f9-4def-8d89-9c5661b2b86f|anthropic/claude-opus-5-5",
+  "a45bc83b-22f9-4def-8d89-9c5661b2b86f|openai/gpt-6.1-sol"
+ ],
+ "selected_tasks_sha256": "6a81c8df0fab30dc5e60daa71ff763542ef11413556cda74de125c6c9419d495",
+ "manifest_sha256": "c5fa3e9a6532d1687a35fa8cdc6d252f51496f8a2f4c31dc01d5b45b74216e69",
+ "staged_inputs": {
+  "b5d2e6f1-62a2-433a-bcdd-95b260cdd860": {
+   "prompt_file": "data/prompts/b5d2e6f1-62a2-433a-bcdd-95b260cdd860.txt",
+   "prompt_sha256": "8d5b8aea3ec5bc0ee8d70debc31998beb4a22b280978b6d59228cf67cdde7651",
+   "prompt_file_sha256": "8d5b8aea3ec5bc0ee8d70debc31998beb4a22b280978b6d59228cf67cdde7651",
+   "staged_files": [
+    {
+     "source": "data/inputs/b5d2e6f1-62a2-433a-bcdd-95b260cdd860/Weekly Sales Data.xlsx",
+     "sandbox_path": "/workspace/inputs/Weekly Sales Data.xlsx",
+     "bytes": 83029,
+     "sha256": "60e80dd2cb7d73c3e4845c5399fb95ce5560628f16e2b18a29ec16b84ab3bb53"
+    }
+   ]
+  },
+  "f841ddcf-2a28-4f6d-bac3-61b607219d3e": {
+   "prompt_file": "data/prompts/f841ddcf-2a28-4f6d-bac3-61b607219d3e.txt",
+   "prompt_sha256": "69a8efb123161b5e21ea56f808e1a7e50930191836507f1f2761d26679192eac",
+   "prompt_file_sha256": "69a8efb123161b5e21ea56f808e1a7e50930191836507f1f2761d26679192eac",
+   "staged_files": [
+    {
+     "source": "data/inputs/f841ddcf-2a28-4f6d-bac3-61b607219d3e/PO Log.xlsx",
+     "sandbox_path": "/workspace/inputs/PO Log.xlsx",
+     "bytes": 17433,
+     "sha256": "796e2d0246ecf2a79db200568fd5a6760b376a186b052897b009cb6c149e7b0b"
+    }
+   ]
+  },
+  "47ef842d-8eac-4b90-bda8-dd934c228c96": {
+   "prompt_file": "data/prompts/47ef842d-8eac-4b90-bda8-dd934c228c96.txt",
+   "prompt_sha256": "3e98480ce7de25720378e78da90e0b6620c234da18401e89cd6131c02ab325af",
+   "prompt_file_sha256": "3e98480ce7de25720378e78da90e0b6620c234da18401e89cd6131c02ab325af",
+   "staged_files": [
+    {
+     "source": "data/inputs/47ef842d-8eac-4b90-bda8-dd934c228c96/Reference Inventory.xlsx",
+     "sandbox_path": "/workspace/inputs/Reference Inventory.xlsx",
+     "bytes": 376229,
+     "sha256": "fd88d7344a7839b37e5a0bbe5abb5b9e60d972d7e39f27fc741427e84f575fd0"
+    }
+   ]
+  },
+  "1137e2bb-bdf9-4876-b572-f29b7de5e595": {
+   "prompt_file": "data/prompts/1137e2bb-bdf9-4876-b572-f29b7de5e595.txt",
+   "prompt_sha256": "0c5324071ed144193b13ada0820ea1b82624af092961749a25e72d02e8f8a094",
+   "prompt_file_sha256": "0c5324071ed144193b13ada0820ea1b82624af092961749a25e72d02e8f8a094",
+   "staged_files": [
+    {
+     "source": "data/inputs/1137e2bb-bdf9-4876-b572-f29b7de5e595/Reference_PO Data.xlsx",
+     "sandbox_path": "/workspace/inputs/Reference_PO Data.xlsx",
+     "bytes": 7201,
+     "sha256": "ce8f43c8d80b536f0b12e1b7ed0285b1313055f836815bac4586a2cc7343726e"
+    }
+   ]
+  },
+  "c3525d4d-2012-45df-853e-2d2a0e902991": {
+   "prompt_file": "data/prompts/c3525d4d-2012-45df-853e-2d2a0e902991.txt",
+   "prompt_sha256": "f9e6cc445580b5cf30fd8edbbef311ab123a163ae23ef6356498817c7a9cb3ca",
+   "prompt_file_sha256": "f9e6cc445580b5cf30fd8edbbef311ab123a163ae23ef6356498817c7a9cb3ca",
+   "staged_files": [
+    {
+     "source": "data/inputs/c3525d4d-2012-45df-853e-2d2a0e902991/Email Trail Floorstands.docx",
+     "sandbox_path": "/workspace/inputs/Email Trail Floorstands.docx",
+     "bytes": 11381,
+     "sha256": "0d79e0cdd2e811609e73dcadc34d682f6d27c38b712de4824385e98f52e3b347"
+    },
+    {
+     "source": "data/inputs/c3525d4d-2012-45df-853e-2d2a0e902991/Holiday Floorstand Store List Original.xlsx",
+     "sandbox_path": "/workspace/inputs/Holiday Floorstand Store List Original.xlsx",
+     "bytes": 20651,
+     "sha256": "123c0b1cf9e9b6ecfccc06501a205384c58366059d70c74b82fc476d2b6d21cf"
+    },
+    {
+     "source": "data/inputs/c3525d4d-2012-45df-853e-2d2a0e902991/Holiday Matrix final count.xlsx",
+     "sandbox_path": "/workspace/inputs/Holiday Matrix final count.xlsx",
+     "bytes": 21536,
+     "sha256": "8548106161db37c37ff079eb0eec6ff98625da4ce565d96ccfb0403d7703be1d"
+    }
+   ]
+  },
+  "7b08cd4d-df60-41ae-9102-8aaa49306ba2": {
+   "prompt_file": "data/prompts/7b08cd4d-df60-41ae-9102-8aaa49306ba2.txt",
+   "prompt_sha256": "71bdc1610cf1299ab014086b6ec4f17362a2da2dc6fba792a6fb672bf1e8e301",
+   "prompt_file_sha256": "71bdc1610cf1299ab014086b6ec4f17362a2da2dc6fba792a6fb672bf1e8e301",
+   "staged_files": [
+    {
+     "source": "data/inputs/7b08cd4d-df60-41ae-9102-8aaa49306ba2/Fall Music Tour Ref File.xlsx",
+     "sandbox_path": "/workspace/inputs/Fall Music Tour Ref File.xlsx",
+     "bytes": 15961,
+     "sha256": "3d0ebb819537dc8be6a584e938dbae2b646058403798a4130528d71f982886fb"
+    }
+   ]
+  },
+  "7d7fc9a7-21a7-4b83-906f-416dea5ad04f": {
+   "prompt_file": "data/prompts/7d7fc9a7-21a7-4b83-906f-416dea5ad04f.txt",
+   "prompt_sha256": "6495bff3041b48c19dd608020fc9a293ffdcb0f5571564db3f462202952814a9",
+   "prompt_file_sha256": "6495bff3041b48c19dd608020fc9a293ffdcb0f5571564db3f462202952814a9",
+   "staged_files": [
+    {
+     "source": "data/inputs/7d7fc9a7-21a7-4b83-906f-416dea5ad04f/Aurisic_Prepaid_Expenses_Apr25.pdf",
+     "sandbox_path": "/workspace/inputs/Aurisic_Prepaid_Expenses_Apr25.pdf",
+     "bytes": 6833,
+     "sha256": "97bc326172d029a043b82a9091aae5aa5ff2cc926824159688c5092f6f9f4cfb"
+    },
+    {
+     "source": "data/inputs/7d7fc9a7-21a7-4b83-906f-416dea5ad04f/Aurisic_Prepaid_Expenses_Feb25.pdf",
+     "sandbox_path": "/workspace/inputs/Aurisic_Prepaid_Expenses_Feb25.pdf",
+     "bytes": 2779,
+     "sha256": "ca54cb87100f534e2339369a6a8798b6f1be07f32fe23b9d29d7115ca61f8787"
+    },
+    {
+     "source": "data/inputs/7d7fc9a7-21a7-4b83-906f-416dea5ad04f/Aurisic_Prepaid_Expenses_Jan25.pdf",
+     "sandbox_path": "/workspace/inputs/Aurisic_Prepaid_Expenses_Jan25.pdf",
+     "bytes": 17640,
+     "sha256": "c00c4b44a0b5ba1453c155e54e963076c50a5809960089afc5f27e1679a4c5b1"
+    },
+    {
+     "source": "data/inputs/7d7fc9a7-21a7-4b83-906f-416dea5ad04f/Aurisic_Prepaid_Expenses_Mar25.pdf",
+     "sandbox_path": "/workspace/inputs/Aurisic_Prepaid_Expenses_Mar25.pdf",
+     "bytes": 6133,
+     "sha256": "10a2082e4dc87fc396641841351606d33f801090a876208fe14d512fd1c09e96"
+    },
+    {
+     "source": "data/inputs/7d7fc9a7-21a7-4b83-906f-416dea5ad04f/Aurisic_Prepaid_Insurance.pdf",
+     "sandbox_path": "/workspace/inputs/Aurisic_Prepaid_Insurance.pdf",
+     "bytes": 347944,
+     "sha256": "da0efd444c9be29c459a52b1f85a753f91ad3667c3bb43bf7cc0d9d862400099"
+    },
+    {
+     "source": "data/inputs/7d7fc9a7-21a7-4b83-906f-416dea5ad04f/COA.xlsx",
+     "sandbox_path": "/workspace/inputs/COA.xlsx",
+     "bytes": 10643,
+     "sha256": "7018fed4750a883d8407e6eaa876c582aa721328ea32a21fefb94e7981673cc8"
+    }
+   ]
+  },
+  "2ea2e5b5-257f-42e6-a7dc-93763f28b19d": {
+   "prompt_file": "data/prompts/2ea2e5b5-257f-42e6-a7dc-93763f28b19d.txt",
+   "prompt_sha256": "93c975a12dba13dc194d410225bf41da3aa58e45bf9cbc963d0426b0edd2ec14",
+   "prompt_file_sha256": "93c975a12dba13dc194d410225bf41da3aa58e45bf9cbc963d0426b0edd2ec14",
+   "staged_files": [
+    {
+     "source": "data/inputs/2ea2e5b5-257f-42e6-a7dc-93763f28b19d/Work Time Study - Source.xlsx",
+     "sandbox_path": "/workspace/inputs/Work Time Study - Source.xlsx",
+     "bytes": 329418,
+     "sha256": "bb09ca2a9999b404d7fced9202b42949cd9f142f39554e254bac77b3686dae9e"
+    }
+   ]
+  },
+  "c357f0e2-963d-4eb7-a6fa-3078fe55b3ba": {
+   "prompt_file": "data/prompts/c357f0e2-963d-4eb7-a6fa-3078fe55b3ba.txt",
+   "prompt_sha256": "9902b39e2dfb58fb163d5e48576609a8609ba90c35d3c139104fb2bd93fa6e67",
+   "prompt_file_sha256": "9902b39e2dfb58fb163d5e48576609a8609ba90c35d3c139104fb2bd93fa6e67",
+   "staged_files": [
+    {
+     "source": "data/inputs/c357f0e2-963d-4eb7-a6fa-3078fe55b3ba/UAT Plan - Template.xlsx",
+     "sandbox_path": "/workspace/inputs/UAT Plan - Template.xlsx",
+     "bytes": 8454,
+     "sha256": "834f529b7fc225ceec030a6f59475f18a3319a8d21886b6ed0dff67455f52b26"
+    }
+   ]
+  },
+  "a45bc83b-22f9-4def-8d89-9c5661b2b86f": {
+   "prompt_file": "data/prompts/a45bc83b-22f9-4def-8d89-9c5661b2b86f.txt",
+   "prompt_sha256": "0b7c75e49b8fbbf431c12d28b66bb7f7d4ee0f7e2fe6faa96c7384aa7a0b4331",
+   "prompt_file_sha256": "0b7c75e49b8fbbf431c12d28b66bb7f7d4ee0f7e2fe6faa96c7384aa7a0b4331",
+   "staged_files": [
+    {
+     "source": "data/inputs/a45bc83b-22f9-4def-8d89-9c5661b2b86f/Current_Architecture.pdf",
+     "sandbox_path": "/workspace/inputs/Current_Architecture.pdf",
+     "bytes": 51194,
+     "sha256": "024b4aef0c191aa73a42ba213cfa7c79d5361397f88162240949da00d13d751a"
+    },
+    {
+     "source": "data/inputs/a45bc83b-22f9-4def-8d89-9c5661b2b86f/Current_Architecture_Summary.docx",
+     "sandbox_path": "/workspace/inputs/Current_Architecture_Summary.docx",
+     "bytes": 11647,
+     "sha256": "9b8edc7cc58c7c301316b8cf8adca302c84ac8f6c16c6d7f985facfa66ae0adf"
+    },
+    {
+     "source": "data/resources/a45bc83b-22f9-4def-8d89-9c5661b2b86f/icons/category-icons.zip",
+     "sandbox_path": "/workspace/resources/icons/category-icons.zip",
+     "bytes": 795968,
+     "sha256": "e5bc3abd3527dc2500e9bff7f15870783e2c764129c49b7cd4c1b4e105345002"
+    },
+    {
+     "source": "data/resources/a45bc83b-22f9-4def-8d89-9c5661b2b86f/icons/core-products-icons.zip",
+     "sandbox_path": "/workspace/resources/icons/core-products-icons.zip",
+     "bytes": 318678,
+     "sha256": "6531a10f58bc599c24d9a455d81dd757c1a03c3c43da9cddf639b859c1c1eece"
+    },
+    {
+     "source": "data/resources/a45bc83b-22f9-4def-8d89-9c5661b2b86f/icons/google-cloud-legacy-icons.zip",
+     "sandbox_path": "/workspace/resources/icons/google-cloud-legacy-icons.zip",
+     "bytes": 2268104,
+     "sha256": "a6d9d7921758042538b462f03cf64614c2cebd96743b3ed63580a769fc7de3e9"
+    },
+    {
+     "source": "data/resources/a45bc83b-22f9-4def-8d89-9c5661b2b86f/pages/01_cloud_google_com_icons.html",
+     "sandbox_path": "/workspace/resources/pages/01_cloud_google_com_icons.html",
+     "bytes": 1994419,
+     "sha256": "fafcc0dce4c9b8ba1b0c32baf04b2e76c98b5391c20b079e8be15bcd02236807"
+    },
+    {
+     "source": "data/resources/a45bc83b-22f9-4def-8d89-9c5661b2b86f/pages/01_cloud_google_com_icons.txt",
+     "sandbox_path": "/workspace/resources/pages/01_cloud_google_com_icons.txt",
+     "bytes": 34854,
+     "sha256": "307cbefd7a51d88ada5b5a3e6dac69efc5da820ab8181d00123f0d9f934e72ef"
+    },
+    {
+     "source": "data/resources/a45bc83b-22f9-4def-8d89-9c5661b2b86f/pages/02_cloud_google_com_docs.html",
+     "sandbox_path": "/workspace/resources/pages/02_cloud_google_com_docs.html",
+     "bytes": 290142,
+     "sha256": "e22f380c9e320eabf1f4f234d85b17e8193bc383587fcd5b311115f6f79f63ed"
+    },
+    {
+     "source": "data/resources/a45bc83b-22f9-4def-8d89-9c5661b2b86f/pages/02_cloud_google_com_docs.txt",
+     "sandbox_path": "/workspace/resources/pages/02_cloud_google_com_docs.txt",
+     "bytes": 4654,
+     "sha256": "6cdf75c7401e1138996d26b4ff9f66e976da3c18a71bcc9838fdee76ed1d68e7"
+    },
+    {
+     "source": "data/resources/a45bc83b-22f9-4def-8d89-9c5661b2b86f/pages/03_cloud_google_com_solutions_web-hosting.html",
+     "sandbox_path": "/workspace/resources/pages/03_cloud_google_com_solutions_web-hosting.html",
+     "bytes": 2081653,
+     "sha256": "f12f344aa1a388791962e98ef88dd76e3b959c8f46360d2618cad025e88cb798"
+    },
+    {
+     "source": "data/resources/a45bc83b-22f9-4def-8d89-9c5661b2b86f/pages/03_cloud_google_com_solutions_web-hosting.txt",
+     "sandbox_path": "/workspace/resources/pages/03_cloud_google_com_solutions_web-hosting.txt",
+     "bytes": 39355,
+     "sha256": "9b6b053de12c61bd2537568d3b5d870b3efbb72b5713a2a21d9c5ef88275099c"
+    },
+    {
+     "source": "data/resources/a45bc83b-22f9-4def-8d89-9c5661b2b86f/pages/04_cloud_google_com_load-balancing.html",
+     "sandbox_path": "/workspace/resources/pages/04_cloud_google_com_load-balancing.html",
+     "bytes": 2115141,
+     "sha256": "9a59e98cbd5b1a968439cdae68fbddb6bf431fbb8a88f387c326a0c1fb67f6b6"
+    },
+    {
+     "source": "data/resources/a45bc83b-22f9-4def-8d89-9c5661b2b86f/pages/04_cloud_google_com_load-balancing.txt",
+     "sandbox_path": "/workspace/resources/pages/04_cloud_google_com_load-balancing.txt",
+     "bytes": 44777,
+     "sha256": "37df7a9737005ac8e3aaa8063fada8d50044ed7cdf47e03bb261f38867260fd8"
+    },
+    {
+     "source": "data/resources/a45bc83b-22f9-4def-8d89-9c5661b2b86f/pages/05_cloud_google_com_dns.html",
+     "sandbox_path": "/workspace/resources/pages/05_cloud_google_com_dns.html",
+     "bytes": 2076284,
+     "sha256": "e4c86c0f043e6ba89eeb66dcbcf401cf2690f9ad151fb9dce3174a7301c3f2ca"
+    },
+    {
+     "source": "data/resources/a45bc83b-22f9-4def-8d89-9c5661b2b86f/pages/05_cloud_google_com_dns.txt",
+     "sandbox_path": "/workspace/resources/pages/05_cloud_google_com_dns.txt",
+     "bytes": 41403,
+     "sha256": "f595ac08b4f973f5918d5d77e8236457e3f9b26385abdfce1c74066db514d6a4"
+    },
+    {
+     "source": "data/resources/a45bc83b-22f9-4def-8d89-9c5661b2b86f/pages/06_cloud_google_com_cdn.html",
+     "sandbox_path": "/workspace/resources/pages/06_cloud_google_com_cdn.html",
+     "bytes": 2171010,
+     "sha256": "24af5bbc639ebebbccd409af831f1ea0dce792bc7b27241158577147e49f0fd7"
+    },
+    {
+     "source": "data/resources/a45bc83b-22f9-4def-8d89-9c5661b2b86f/pages/06_cloud_google_com_cdn.txt",
+     "sandbox_path": "/workspace/resources/pages/06_cloud_google_com_cdn.txt",
+     "bytes": 44243,
+     "sha256": "d7d52470edefa3ed6265dbbc7a1cfd63d0081a65c2e54ddd9f06f348cb40373e"
+    },
+    {
+     "source": "data/resources/a45bc83b-22f9-4def-8d89-9c5661b2b86f/pages/07_cloud_google_com_security_products_armor.html",
+     "sandbox_path": "/workspace/resources/pages/07_cloud_google_com_security_products_armor.html",
+     "bytes": 2106429,
+     "sha256": "cc70beac6c2b36411513b66d1636547b98151c8c2d40bf5d7ce71924af2c0d2b"
+    },
+    {
+     "source": "data/resources/a45bc83b-22f9-4def-8d89-9c5661b2b86f/pages/07_cloud_google_com_security_products_armor.txt",
+     "sandbox_path": "/workspace/resources/pages/07_cloud_google_com_security_products_armor.txt",
+     "bytes": 42040,
+     "sha256": "59e0338994965fea8f6e2112d0608288f3358ccaf15272b37bf9fe45a1065ed2"
+    },
+    {
+     "source": "data/resources/a45bc83b-22f9-4def-8d89-9c5661b2b86f/pages/08_cloud_google_com_storage.html",
+     "sandbox_path": "/workspace/resources/pages/08_cloud_google_com_storage.html",
+     "bytes": 2267091,
+     "sha256": "ef5de090f372a4c875ed5e014adc510c410dea0bdf9e106f2ce7168d26cb6c22"
+    },
+    {
+     "source": "data/resources/a45bc83b-22f9-4def-8d89-9c5661b2b86f/pages/08_cloud_google_com_storage.txt",
+     "sandbox_path": "/workspace/resources/pages/08_cloud_google_com_storage.txt",
+     "bytes": 56897,
+     "sha256": "235229ac4d56585e581eb95a7535be4239674e8bcc484207925125feaa80156d"
+    },
+    {
+     "source": "data/resources/a45bc83b-22f9-4def-8d89-9c5661b2b86f/pages/09_cloud_google_com_products_firestore.html",
+     "sandbox_path": "/workspace/resources/pages/09_cloud_google_com_products_firestore.html",
+     "bytes": 2157921,
+     "sha256": "0edc2d711ba415d5e0c161eb94e855a5d31522ce9b2888bf8f5e4ebcf3bafc37"
+    },
+    {
+     "source": "data/resources/a45bc83b-22f9-4def-8d89-9c5661b2b86f/pages/09_cloud_google_com_products_firestore.txt",
+     "sandbox_path": "/workspace/resources/pages/09_cloud_google_com_products_firestore.txt",
+     "bytes": 49714,
+     "sha256": "60c221e394d659849adff5b501c0c62e0a381f32c11668d91b172b430ad89eb0"
+    },
+    {
+     "source": "data/resources/a45bc83b-22f9-4def-8d89-9c5661b2b86f/pages/10_cloud_google_com_sql.html",
+     "sandbox_path": "/workspace/resources/pages/10_cloud_google_com_sql.html",
+     "bytes": 2308754,
+     "sha256": "eb38ca78c768652a3f80bd80fec5a751e3f62588d4b9fc1b2474f070a736b2f8"
+    },
+    {
+     "source": "data/resources/a45bc83b-22f9-4def-8d89-9c5661b2b86f/pages/10_cloud_google_com_sql.txt",
+     "sandbox_path": "/workspace/resources/pages/10_cloud_google_com_sql.txt",
+     "bytes": 59934,
+     "sha256": "b9f32c2a908f75748f998c3b0adad109c00a41dc7baa663dc5cea3920b586759"
+    },
+    {
+     "source": "data/resources/a45bc83b-22f9-4def-8d89-9c5661b2b86f/pages/11_cloud_google_com_blog_products_application-development_13-popular-application-ar.html",
+     "sandbox_path": "/workspace/resources/pages/11_cloud_google_com_blog_products_application-development_13-popular-application-ar.html",
+     "bytes": 301478,
+     "sha256": "9764e74b2f4380ef7eeac89d27fc0cc70788d85ae866ec65864d65c77c19bfe0"
+    },
+    {
+     "source": "data/resources/a45bc83b-22f9-4def-8d89-9c5661b2b86f/pages/11_cloud_google_com_blog_products_application-development_13-popular-application-ar.txt",
+     "sandbox_path": "/workspace/resources/pages/11_cloud_google_com_blog_products_application-development_13-popular-application-ar.txt",
+     "bytes": 13711,
+     "sha256": "b398ccee57678b997fb0b6baf2ccb6d12618b77557809d74c6c2a616b0a4db20"
+    }
+   ]
+  }
+ },
+ "pre_staged_resources": [
+  {
+   "source": "data/inputs/a45bc83b-22f9-4def-8d89-9c5661b2b86f/Current_Architecture.pdf",
+   "sha256": "024b4aef0c191aa73a42ba213cfa7c79d5361397f88162240949da00d13d751a"
+  },
+  {
+   "source": "data/inputs/a45bc83b-22f9-4def-8d89-9c5661b2b86f/Current_Architecture_Summary.docx",
+   "sha256": "9b8edc7cc58c7c301316b8cf8adca302c84ac8f6c16c6d7f985facfa66ae0adf"
+  },
+  {
+   "source": "data/resources/a45bc83b-22f9-4def-8d89-9c5661b2b86f/icons/category-icons.zip",
+   "sha256": "e5bc3abd3527dc2500e9bff7f15870783e2c764129c49b7cd4c1b4e105345002"
+  },
+  {
+   "source": "data/resources/a45bc83b-22f9-4def-8d89-9c5661b2b86f/icons/core-products-icons.zip",
+   "sha256": "6531a10f58bc599c24d9a455d81dd757c1a03c3c43da9cddf639b859c1c1eece"
+  },
+  {
+   "source": "data/resources/a45bc83b-22f9-4def-8d89-9c5661b2b86f/icons/google-cloud-legacy-icons.zip",
+   "sha256": "a6d9d7921758042538b462f03cf64614c2cebd96743b3ed63580a769fc7de3e9"
+  },
+  {
+   "source": "data/resources/a45bc83b-22f9-4def-8d89-9c5661b2b86f/pages/01_cloud_google_com_icons.html",
+   "sha256": "fafcc0dce4c9b8ba1b0c32baf04b2e76c98b5391c20b079e8be15bcd02236807"
+  },
+  {
+   "source": "data/resources/a45bc83b-22f9-4def-8d89-9c5661b2b86f/pages/01_cloud_google_com_icons.txt",
+   "sha256": "307cbefd7a51d88ada5b5a3e6dac69efc5da820ab8181d00123f0d9f934e72ef"
+  },
+  {
+   "source": "data/resources/a45bc83b-22f9-4def-8d89-9c5661b2b86f/pages/02_cloud_google_com_docs.html",
+   "sha256": "e22f380c9e320eabf1f4f234d85b17e8193bc383587fcd5b311115f6f79f63ed"
+  },
+  {
+   "source": "data/resources/a45bc83b-22f9-4def-8d89-9c5661b2b86f/pages/02_cloud_google_com_docs.txt",
+   "sha256": "6cdf75c7401e1138996d26b4ff9f66e976da3c18a71bcc9838fdee76ed1d68e7"
+  },
+  {
+   "source": "data/resources/a45bc83b-22f9-4def-8d89-9c5661b2b86f/pages/03_cloud_google_com_solutions_web-hosting.html",
+   "sha256": "f12f344aa1a388791962e98ef88dd76e3b959c8f46360d2618cad025e88cb798"
+  },
+  {
+   "source": "data/resources/a45bc83b-22f9-4def-8d89-9c5661b2b86f/pages/03_cloud_google_com_solutions_web-hosting.txt",
+   "sha256": "9b6b053de12c61bd2537568d3b5d870b3efbb72b5713a2a21d9c5ef88275099c"
+  },
+  {
+   "source": "data/resources/a45bc83b-22f9-4def-8d89-9c5661b2b86f/pages/04_cloud_google_com_load-balancing.html",
+   "sha256": "9a59e98cbd5b1a968439cdae68fbddb6bf431fbb8a88f387c326a0c1fb67f6b6"
+  },
+  {
+   "source": "data/resources/a45bc83b-22f9-4def-8d89-9c5661b2b86f/pages/04_cloud_google_com_load-balancing.txt",
+   "sha256": "37df7a9737005ac8e3aaa8063fada8d50044ed7cdf47e03bb261f38867260fd8"
+  },
+  {
+   "source": "data/resources/a45bc83b-22f9-4def-8d89-9c5661b2b86f/pages/05_cloud_google_com_dns.html",
+   "sha256": "e4c86c0f043e6ba89eeb66dcbcf401cf2690f9ad151fb9dce3174a7301c3f2ca"
+  },
+  {
+   "source": "data/resources/a45bc83b-22f9-4def-8d89-9c5661b2b86f/pages/05_cloud_google_com_dns.txt",
+   "sha256": "f595ac08b4f973f5918d5d77e8236457e3f9b26385abdfce1c74066db514d6a4"
+  },
+  {
+   "source": "data/resources/a45bc83b-22f9-4def-8d89-9c5661b2b86f/pages/06_cloud_google_com_cdn.html",
+   "sha256": "24af5bbc639ebebbccd409af831f1ea0dce792bc7b27241158577147e49f0fd7"
+  },
+  {
+   "source": "data/resources/a45bc83b-22f9-4def-8d89-9c5661b2b86f/pages/06_cloud_google_com_cdn.txt",
+   "sha256": "d7d52470edefa3ed6265dbbc7a1cfd63d0081a65c2e54ddd9f06f348cb40373e"
+  },
+  {
+   "source": "data/resources/a45bc83b-22f9-4def-8d89-9c5661b2b86f/pages/07_cloud_google_com_security_products_armor.html",
+   "sha256": "cc70beac6c2b36411513b66d1636547b98151c8c2d40bf5d7ce71924af2c0d2b"
+  },
+  {
+   "source": "data/resources/a45bc83b-22f9-4def-8d89-9c5661b2b86f/pages/07_cloud_google_com_security_products_armor.txt",
+   "sha256": "59e0338994965fea8f6e2112d0608288f3358ccaf15272b37bf9fe45a1065ed2"
+  },
+  {
+   "source": "data/resources/a45bc83b-22f9-4def-8d89-9c5661b2b86f/pages/08_cloud_google_com_storage.html",
+   "sha256": "ef5de090f372a4c875ed5e014adc510c410dea0bdf9e106f2ce7168d26cb6c22"
+  },
+  {
+   "source": "data/resources/a45bc83b-22f9-4def-8d89-9c5661b2b86f/pages/08_cloud_google_com_storage.txt",
+   "sha256": "235229ac4d56585e581eb95a7535be4239674e8bcc484207925125feaa80156d"
+  },
+  {
+   "source": "data/resources/a45bc83b-22f9-4def-8d89-9c5661b2b86f/pages/09_cloud_google_com_products_firestore.html",
+   "sha256": "0edc2d711ba415d5e0c161eb94e855a5d31522ce9b2888bf8f5e4ebcf3bafc37"
+  },
+  {
+   "source": "data/resources/a45bc83b-22f9-4def-8d89-9c5661b2b86f/pages/09_cloud_google_com_products_firestore.txt",
+   "sha256": "60c221e394d659849adff5b501c0c62e0a381f32c11668d91b172b430ad89eb0"
+  },
+  {
+   "source": "data/resources/a45bc83b-22f9-4def-8d89-9c5661b2b86f/pages/10_cloud_google_com_sql.html",
+   "sha256": "eb38ca78c768652a3f80bd80fec5a751e3f62588d4b9fc1b2474f070a736b2f8"
+  },
+  {
+   "source": "data/resources/a45bc83b-22f9-4def-8d89-9c5661b2b86f/pages/10_cloud_google_com_sql.txt",
+   "sha256": "b9f32c2a908f75748f998c3b0adad109c00a41dc7baa663dc5cea3920b586759"
+  },
+  {
+   "source": "data/resources/a45bc83b-22f9-4def-8d89-9c5661b2b86f/pages/11_cloud_google_com_blog_products_application-development_13-popular-application-ar.html",
+   "sha256": "9764e74b2f4380ef7eeac89d27fc0cc70788d85ae866ec65864d65c77c19bfe0"
+  },
+  {
+   "source": "data/resources/a45bc83b-22f9-4def-8d89-9c5661b2b86f/pages/11_cloud_google_com_blog_products_application-development_13-popular-application-ar.txt",
+   "sha256": "b398ccee57678b997fb0b6baf2ccb6d12618b77557809d74c6c2a616b0a4db20"
+  }
+ ],
+ "harness_sources_sha256": {
+  "harness/__init__.py": "f1c7fafda7f8d9c67cf6ece530566d8999e332773cca9b38009129197508c40a",
+  "harness/batch.py": "33b1e62fcf620e2719c8417072ec143153116690106ac726c88f1b9a5cd8b1c0",
+  "harness/budget.py": "cfaccad1db20c3fa844e8f1a3d28ba970f876a18b77664caab9a1e4a19c39d28",
+  "harness/collect.py": "4e58fc79c74a361eb27efae4a7503b1cf1c6dab0c5829611044d9f9255fd3b28",
+  "harness/compose.yaml": "f0ae0775947c7eb68e901e2fc4f6b3d21becbbc07c326292547f559e949b886a",
+  "harness/fixtures/make_fixtures.py": "52e9614bc5abbb02f3973246cefb14ab432d92ea3eb7049b24e640ab1afc2271",
+  "harness/fixtures/notes.txt": "3b64a79e0f2918f4b7e1455e955e9684ca033416fce795628d4d1482245e010b",
+  "harness/fixtures/pivot_uno.py": "975a188b378566a5d86ff7951f79f7811d378c231b0896ac656d19dcc08af114",
+  "harness/image.py": "1b6e32f2f85cfaaa7333ce17e9ddc88e444dc85b45516e450f5699ce2bbd6ed4",
+  "harness/launcher.py": "6d3a61e622e31b64ffc231845efa4b36f737af52d6e815bf2c7207aecfce3fe4",
+  "harness/ledger_admin.py": "a6df203464a4221d45d6662956c3e901927749b1fbab660055c6b94767db2fd1",
+  "harness/redact.py": "a286a8dec47340817375e74f2df4b2773d3bdbd48928b663ac9098a52487e108",
+  "harness/run_metadata.py": "9d3989ea0c36551f28bb8acaf36d03d6f260534c3f98224f55a3dbeb5e5472a9",
+  "harness/samples.py": "6f3f8b8585cd7684fdaa78269b9d6b1bcf778c762558f344802c1bccee144a8e",
+  "harness/scheduler.py": "cd97122d8ee4dd97c175fa67cd444375aba8256d2f788913589d43ab887d0434",
+  "harness/smoke.py": "0ecdaa1aa86e9f2cee99157370cb07f4744e4007d21dd35aa45d56bd4521bd12",
+  "harness/system_prompt_draft.txt": "67238ba0f24ad2c5e6dd546d36f117ab49e5084ae5fa380c5df8b88e20b6a393",
+  "harness/task.py": "58582d580391b1d4447d4ee5d1c9d5ca8127dc9215d664ba2f479fdc757ff511",
+  "harness/tools.py": "2e372e93cbd9e52f4898c3814cc05d8d1dc34456f0432cc05c5e8717bfb148cc",
+  "harness/unit_gate.py": "4f2331b20e049e626278b01bab37c0f3d13dda543099fc45d4271579e28b75ee"
+ },
+ "image": {
+  "id": "sha256:18cde712cde1867c94b8f23ae1f4066b0aa3146fdbd8deac70d1b4aa043ea9ee",
+  "os": "linux",
+  "architecture": "arm64",
+  "created": "2026-10-30T08:28:15.816616674Z",
+  "repo_digests": [
+   "gdpval-sandbox@sha256:18cde712cde1867c94b8f23ae1f4066b0aa3146fdbd8deac70d1b4aa043ea9ee"
+  ],
+  "config_image": "sha256:18cde712cde1867c94b8f23ae1f4066b0aa3146fdbd8deac70d1b4aa043ea9ee",
+  "config_image_digest": "sha256:18cde712cde1867c94b8f23ae1f4066b0aa3146fdbd8deac70d1b4aa043ea9ee (pinned at freeze-v1-generation: the local image ID, equal to sandbox.image; a local build has no repository digest)"
+ },
+ "dependencies": {
+  "python": "3.11.4",
+  "inspect_ai": "0.3.286",
+  "anthropic": "2.3.0",
+  "openai": "3.41.0",
+  "google-genai": "2.34.0",
+  "docker_server": "29.6.1",
+  "uv_lock_sha256": "53102b8e97c0f15c7f3e252ce0b70da360c1e055fa0b258fc34e6b4b3cf139ee",
+  "pyproject_sha256": "383daba571b60df805e7b46089713813909031fa7eb86b46f0190206feaa23c2"
+ },
+ "budget": {
+  "admission_threshold_usd": "150",
+  "reservation_usd_by_model": {
+   "anthropic/claude-opus-5-5": "8.00",
+   "openai/gpt-6.1-sol": "5.00"
+  },
+  "per_sample_cost_limit_usd": 20.0,
+  "ledger_topology": "one ledger (formal/ledger.json), one unit at a time",
+  "modeled_worst_case_usd": "165 = 150 - 5 (the smallest reservation, the last admitted start) + 20 (one in-flight sample's Inspect cost limit)"
+ },
+ "verification_problems": []
+}

@@ -1,5 +1,5 @@
 {
-  "_status": "DRAFT. Not frozen: freeze-v1 has not been tagged. Pilot A/B/judge ids, limits and the 30 USD ceiling are proposed values pending final approval; placeholders are literal strings beginning with PLACEHOLDER.",
+  "_status": "FROZEN-GENERATION (tag freeze-v1-generation, 2026-11-02; code baseline b33cc37bff9a4a301380bc35889e6ffc4ad03dd1): the formal generation conditions (candidate models and pricing, generation, retries, limits, prompts, staged inputs, sandbox image, batches.formal) are frozen for the formal generation batch (record harness/freeze/freeze-v1-generation.json). NOT a grading freeze: the judge and grading sections may still change by versioned correction; grading and the formal judge require freeze-v1-grading.",
   "drafted_at_utc": "2026-10-30T23:12:11+00:00",
   "code_commit_at_draft": "1941d4ac69566fdbc0a6dff821de57664e84f284",
   "code_commit_note": "The commit actually used by a run is recorded in that run's metadata, not here.",
@@ -724,7 +724,7 @@
     "compose_sha256": "f0ae0775947c7eb68e901e2fc4f6b3d21becbbc07c326292547f559e949b886a",
     "image": "sha256:18cde712cde1867c94b8f23ae1f4066b0aa3146fdbd8deac70d1b4aa043ea9ee",
     "image_id": "sha256:18cde712cde1867c94b8f23ae1f4066b0aa3146fdbd8deac70d1b4aa043ea9ee",
-    "image_digest": "PLACEHOLDER (pinned at freeze; a local build has no repository digest until pushed or exported)",
+    "image_digest": "sha256:18cde712cde1867c94b8f23ae1f4066b0aa3146fdbd8deac70d1b4aa043ea9ee (pinned at freeze-v1-generation: the local image ID, equal to sandbox.image; a local build has no repository digest)",
     "dockerfile": "docker/sandbox/Dockerfile",
     "requirements": "docker/sandbox/requirements.txt",
     "network_mode": "none",
@@ -1226,7 +1226,7 @@
       ],
       "concurrency": "config.concurrency.<label> (1 on every axis until memory and stability evidence)",
       "ledger": "one ledger file per run class (ledger label = run label; the launcher refuses a ledger or runs root whose path does not carry the label)",
-      "status": "DRAFT: ceiling fixed at freeze-v1; runs only after the human's freeze approval and batch authorization"
+      "status": "FROZEN for generation at freeze-v1-generation (2026-11-02); launch authorized by the human 2026-11-02: 10 tasks x 2 candidates, k=1, attempts=1, fixed task order (data/selected_tasks.json) with both candidates of a task adjacent (Opus 5.5 then GPT-6.1 Sol), one unit at a time on this one ledger (harness.scheduler drives one unit per run class; a per-candidate ledger split would need code changes), 150 USD admission threshold, 165 USD single-ledger modeled worst case"
     }
   },
   "compat_tasks": [

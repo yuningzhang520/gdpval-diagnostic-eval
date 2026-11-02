@@ -1,6 +1,6 @@
 # Status
 
-Current stage: **Freeze preparation (2026-11-02): Codex Review 2 BLOCKED at `5121e1a`; its five Blocking findings corrected (V1.4, engine .10, tag `v1.4-review2-corrections`), awaiting the narrow delta review; Formal measurement readiness BLOCKED until then. Earlier in the day:** V1.3 corrections and judge-runner reliability (engine .9) implemented and tested, tag `v1.3-corrections`; Formal generation (150 USD) and the Formal judge pass (30 USD, separate ledger) configured, the pass prepared and gated, not run; Judge Validation in progress; `freeze-v1` not tagged, `config.json` still DRAFT; no Formal call.** Earlier header, kept for the record: Evaluation architecture implementation on baseline `f37f1e829af2efd5daf81e3a680ea691b16fcfbe`
+Current stage: **Two-stage freeze (2026-11-02): formal GENERATION frozen (`freeze-v1-generation`, code baseline `b33cc37`) and the formal generation batch authorized; the Codex delta review of `b33cc37` returned BLOCKED (D1-D3, N1), corrections in progress for `freeze-v1-grading`; no grader or judge runs on a Formal output before that tag.** Earlier header, kept for the record: **Freeze preparation (2026-11-02): Codex Review 2 BLOCKED at `5121e1a`; its five Blocking findings corrected (V1.4, engine .10, tag `v1.4-review2-corrections`), awaiting the narrow delta review; Formal measurement readiness BLOCKED until then. Earlier in the day:** V1.3 corrections and judge-runner reliability (engine .9) implemented and tested, tag `v1.3-corrections`; Formal generation (150 USD) and the Formal judge pass (30 USD, separate ledger) configured, the pass prepared and gated, not run; Judge Validation in progress; `freeze-v1` not tagged, `config.json` still DRAFT; no Formal call.** Earlier header, kept for the record: Evaluation architecture implementation on baseline `f37f1e829af2efd5daf81e3a680ea691b16fcfbe`
 (2026-11-01): Task 1 (`1137e2bb…`) gold-first verification done and Grader v0 tagged; run classes (dev /
 validation / compat / formal), batch runner, artifact manifests, run inventory, engine + task grader versions,
 development model (`google/gemini-3.8-flash`) and compatibility task (`87da214f…`) implemented and dry-run
@@ -5139,6 +5139,42 @@ Codex delta review:
 - From the N3 commit on, no code change under `grading/`, `harness/` or `config.json` until the Codex delta review of
   `b33cc37` finishes.
 
+## Formal generation: two-stage freeze, `freeze-v1-generation` (2026-11-02)
+
+Decision (the human, chat 2026-11-02): formal generation first, under a two-stage freeze. `freeze-v1-generation`
+freezes the generation conditions only; grading and the formal judge require `freeze-v1-grading`, tagged after the
+targeted Codex recheck of the delta-review corrections. Launch authorized: 10 tasks x 2 candidates, k=1, attempts=1,
+fixed task order with both candidates of a task adjacent, no reruns, existing stop and hold rules.
+
+Generation-path dependency check (before any provider call; pending corrections D1-D3, N1 of the Codex delta review):
+- The pending corrections change `grading/` (judge guards, Judge Validation halt and resume, recovery selection, the
+  history gate), `config.json` `grading.engine_version`, and `harness/unit_gate.py` (N1 no-hold basis).
+- No `harness` module imports `grading`; the generation path (`harness.scheduler` -> `harness.batch` ->
+  `harness.launcher` -> `budget`, `task`, `tools`, `collect`, `samples`, `image`) cannot reach D1-D3.
+- `harness/budget.py`, launcher, batch, scheduler, task, tools, collect and samples are unchanged by the corrections.
+- `unit_gate.evaluate_unit` (the scheduler's post-unit gate): old and new code give identical decisions and reasons
+  on all 25 real dev / validation / compat inventory records, under both class flags (50 evaluations). For formal
+  units the inferred-buffer exception is unreachable: `batches.formal` has no recovered-retry settlement, so a
+  recovered failure without usage settles with a hold, as for the compat GPT unit.
+- Conclusion: the generation runner at `b33cc37` is not affected by the pending corrections.
+
+Freeze commit (this commit): code identical to `b33cc37` (only `docs/status.md` differs before it, commit
+`b55c5b4`); `config.json` `_status` FROZEN-GENERATION, `sandbox.image_digest` pinned to the local image ID
+`sha256:18cde712…` (equal to `sandbox.image`; no repository digest exists for a local build), `batches.formal.status`
+recorded. Record `harness/freeze/freeze-v1-generation.json`: config SHA-256, per-section hashes, harness sources,
+system and task prompts, the 43 staged input files and 27 pre-staged resources each verified against its config
+entry, task and unit order, image, dependency versions (Python 3.11.4, inspect_ai 0.3.286, anthropic 2.3.0,
+openai 3.41.0, Docker 29.6.1, `uv.lock` hash). `grading.judge_formal` stays locked: it requires the tag `freeze-v1`
+and its manifest (neither exists); the grading corrections move that requirement to `freeze-v1-grading`.
+
+Ledger topology and concurrency, decided before the first provider call: `harness.scheduler` derives one runs root
+and one ledger per run class and admits at most one unit per class; the launcher takes each ledger's ceiling from
+the single `batches.formal.budget_ceiling_usd`; `grading.judge_formal` reads one formal runs root. A per-candidate
+ledger split (Opus 85 / GPT 65 USD) would need code changes, so safe parallel accounting cannot be established by
+configuration alone. Per the human's rule, the batch runs at concurrency 1 on the existing single formal ledger
+(`formal/ledger.json`, 150 USD admission). Modeled worst case on one ledger: 165 USD (150 - 5 + 20). The memory
+throttle (concurrency 2 -> 1) does not apply at concurrency 1.
+
 ## Known issues and findings (material check)
 
 - `rubric_json.form_content`: 8,036 items hold `null`, 2,417 items lack the key, zero
@@ -5549,7 +5585,8 @@ Codex delta review:
 - 2026-11-02 · V1.3.1 (`2ea2e5b5…` .6, item 27 literal label), judge projects per workload and daily-quota pause/resume, generation budget wording (150 admission, 165 worst case approved); tag `v1.5-item27-quota-pause` · df4a560 (local)
 - 2026-11-02 · Judge Validation resumed unattended (worker checkout at `df4a560`), final verification on `df4a560` (Docker 13/13, numbers re-verified, coverage, preflight, backup readiness), N1–N5 dispositions proposed, Codex delta package (section 6) · c29dd21 (local)
 - 2026-11-02 · Review 2 N1–N5 decided; N3 fail-closed recovery check (engine .11), N1 package corrections; delta range end moved to the N3 commit; tag `v1.6-recovery-hash-check` · b33cc37 (pushed)
-- 2026-11-02 · Docker 13/13 on `b33cc37`; backup pushed (`main` to `b33cc37`, 4 tags) · (this commit; local)
+- 2026-11-02 · Docker 13/13 on `b33cc37`; backup pushed (`main` to `b33cc37`, 4 tags) · b55c5b4 (local)
+- 2026-11-02 · Two-stage freeze: formal generation frozen on code baseline `b33cc37` (dependency check: the pending delta-review corrections do not reach the generation path); concurrency 1 on the single formal ledger; tag `freeze-v1-generation` · (this commit; local)
 
 ## Next stage (not started)
 
