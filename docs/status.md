@@ -5118,6 +5118,27 @@ Codex delta review:
   preregistration.md`.
 - The prompt names the tag. The commit hash is reported in chat and in the next entry, not inside the commit itself.
 
+## N3 commit `b33cc37`: Docker evidence, backup pushed, delta review ready (2026-11-02)
+
+- N3 commit `b33cc37bff9a4a301380bc35889e6ffc4ad03dd1` (tag `v1.6-recovery-hash-check`). The Codex delta range is
+  `git diff 5121e1a b33cc37 -- grading harness config.json preregistration.md` (`docs/codex_review_2.md` section 6).
+- Docker-gated suites on `b33cc37`, all 13 pass:
+  - logs `logs/docker-gated-b33cc37-20261102T073152Z/`; `HEADER.txt` binds commit and tag, clean before and after,
+    no container left;
+  - Gold recalculation 3/3 and 2/2;
+  - recalc 16, grading CLI 61;
+  - compose 15, tools 8, limits 74, cost limit 14, closeout 92/92;
+  - launcher contract 11, message-limit parallel 20, pilot CLI 13, inspect 62.
+- Private GitHub backup (authorized 2026-11-02):
+  - before the push: fast-forward from `abb6dd6`, 8 commits; no forbidden path and no secret-like string in
+    `abb6dd6..b33cc37`; the repository PRIVATE;
+  - one normal push, no force, of `main` (`abb6dd6..b33cc37`) and tags `v1.3-corrections`, `v1.4-review2-corrections`,
+    `v1.5-item27-quota-pause`, `v1.6-recovery-hash-check`;
+  - after the push, the remote `main` and all four tags equal the local refs.
+  - Later commits, this one included, are local.
+- From the N3 commit on, no code change under `grading/`, `harness/` or `config.json` until the Codex delta review of
+  `b33cc37` finishes.
+
 ## Known issues and findings (material check)
 
 - `rubric_json.form_content`: 8,036 items hold `null`, 2,417 items lack the key, zero
@@ -5527,7 +5548,8 @@ Codex delta review:
 - 2026-11-02 · Docker-gated suites on `7e30849` (13 suites, all pass) and the historical impact audit (only the estimated portions of three ledgers change) · 9f94b88 (local)
 - 2026-11-02 · V1.3.1 (`2ea2e5b5…` .6, item 27 literal label), judge projects per workload and daily-quota pause/resume, generation budget wording (150 admission, 165 worst case approved); tag `v1.5-item27-quota-pause` · df4a560 (local)
 - 2026-11-02 · Judge Validation resumed unattended (worker checkout at `df4a560`), final verification on `df4a560` (Docker 13/13, numbers re-verified, coverage, preflight, backup readiness), N1–N5 dispositions proposed, Codex delta package (section 6) · c29dd21 (local)
-- 2026-11-02 · Review 2 N1–N5 decided; N3 fail-closed recovery check (engine .11), N1 package corrections; delta range end moved to the N3 commit; tag `v1.6-recovery-hash-check` · (this commit)
+- 2026-11-02 · Review 2 N1–N5 decided; N3 fail-closed recovery check (engine .11), N1 package corrections; delta range end moved to the N3 commit; tag `v1.6-recovery-hash-check` · b33cc37 (pushed)
+- 2026-11-02 · Docker 13/13 on `b33cc37`; backup pushed (`main` to `b33cc37`, 4 tags) · (this commit; local)
 
 ## Next stage (not started)
 
