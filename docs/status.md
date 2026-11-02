@@ -5418,6 +5418,27 @@ attempted.
 Formal judge partitioning: not supported by the frozen runner (one credential setting, one registry, one ledger). One
 worker runs on the second project (`GOOGLE_API_KEY_VALIDATION`); the third project is unused.
 
+## V1.9 addition: explicit judge projects; Judge Validation handoff to the third project (2026-11-02)
+
+Change of plan (the human): both judge runners select their Google project explicitly. This replaces the hard-coded
+Dev key of Judge Validation and the fixed second project of the formal judge.
+- Code: `judge_dev.select_judge_project`; `judge_validation --credential-env`, `PROJECT` and its guard;
+  `judge_formal --credential-env`.
+- Config: `judge.{validation,formal}.credential_env(s)`, `refused_credential_envs`.
+- A quota pause records its project, and a pause of another project is closed by a recorded `project_switch`. The
+  terminal stop is checked before any project logic.
+- Infrastructure only: judge model, prompt, request parameters, rubric and scoring are unchanged.
+- Tests: `ProjectSelectionTests`, `ValidationProjectSwitchTests`, `FormalProjectSwitchTests`. They include the real
+  registry's legacy Dev pause, a same-project pause that still waits, and a terminal stop that is not bypassed.
+- A bug the tests caught before any use: the refused-project check first compared against `GOOGLE_API_KEY` after the
+  selection had copied the chosen key into it, which refused the formal project's own key. It now reads the other
+  workloads' keys before the selection.
+- The earlier entry's "not supported" findings (third project for Judge Validation, a project switch for the formal
+  pass) describe `e081f6d` and are superseded by this change. Formal partitioning across two concurrent workers stays
+  unsupported: one worker at a time.
+- The Docker run on `e081f6d` (`logs/docker-gated-e081f6d-20261102T114254Z/`, 13/13 rc 0) overlapped these working-tree
+  edits (`porcelain_after 2`). It is not clean commit evidence and is superseded by the run on the freeze commit.
+
 ## Known issues and findings (material check)
 
 - `rubric_json.form_content`: 8,036 items hold `null`, 2,417 items lack the key, zero
@@ -5834,7 +5855,8 @@ worker runs on the second project (`GOOGLE_API_KEY_VALIDATION`); the third proje
 - 2026-11-02 · Formal generation switched to two independent candidate workers (ceiling 200 per candidate ledger, config snapshot `80433476…`); deterministic grading frozen at code `2eb4060`; tag `freeze-v1-grading-deterministic` · ef53050 (pushed)
 - 2026-11-02 · The formal judge reads the three formal runs roots, each with its own generation ledger; tag `v1.8-formal-roots` · b7ce2db (pushed)
 - 2026-11-02 · Formal generation complete (20/20, 17.979211 USD, no hold or stop); 20 deterministic passes sealed; 20 blind packets; Docker 13/13 on `b7ce2db` · caecfc3 (pushed)
-- 2026-11-02 · V1.9: D2 terminal stops persisted from standalone recover/run; formal runner stop result and task-order judging; config grading-frozen; tag `freeze-v1-grading` · (this commit)
+- 2026-11-02 · V1.9: D2 terminal stops persisted from standalone recover/run; formal runner stop result and task-order judging; config grading-frozen · e081f6d (local)
+- 2026-11-02 · V1.9: explicit judge projects (`--credential-env`), project switch on another project's quota pause; tag `freeze-v1-grading` · (this commit)
 
 ## Next stage (not started)
 

@@ -125,6 +125,31 @@ def next_request_bound_usd(judge, request_chars: int, max_tokens: int) -> Decima
     return max(nxt, avg * (1 + _max_retries_of(judge)))
 
 
+def select_judge_project(workload: str, variable: str | None = None, env_file: str | None = None) -> dict:
+    """V1.9 (the human, 2026-11-02): the Google project a judge workload runs on, chosen explicitly (a runner's
+    --credential-env, else config judge.<workload>.credential_env) from that workload's allowed variables
+    (judge.<workload>.credential_envs). Its key is put into GOOGLE_API_KEY in this process only and re-checked after
+    Inspect's .env initialisation; a key equal to one of judge.<workload>.refused_credential_envs (another workload's
+    project) is refused. Names and the 4-character suffix only; nothing is printed. Infrastructure only: the judge
+    model, prompt, request parameters, rubric and scoring are unchanged."""
+    from harness.launcher import load_env_file, select_credential, verify_credential_after_dotenv
+    c = cfg()["judge"][workload]
+    var = variable or c["credential_env"]
+    allowed = list(c.get("credential_envs") or [c["credential_env"]])
+    if var not in allowed:
+        raise SystemExit(f"{var} is not an allowed Google key variable for the {workload} judge workload ({allowed})")
+    if env_file:
+        load_env_file(env_file)
+    # the other workloads' keys, read before the selection copies the chosen key into GOOGLE_API_KEY
+    refused = {o: os.environ[o][-4:] for o in (c.get("refused_credential_envs") or []) if o != var and os.environ.get(o)}
+    cred = select_credential("google", {"credential_env": {"google": var}}, os.environ)
+    for other, suffix in refused.items():
+        if suffix == cred.get("suffix"):
+            raise SystemExit(f"{var} holds the same key as {other} (another workload's project); refusing")
+    verify_credential_after_dotenv(cred)
+    return {k: cred.get(k) for k in ("variable", "provider_variable", "suffix", "dotenv_override_markers_removed")}
+
+
 GUARD_CONTROL_TOKENS = 1024  # allowance for the chat template's control tokens around the system and user messages
 LEDGER_CALL_ROUNDING = Decimal("0.000002")  # the ledger rounds each of a call's four category amounts half-up to 0.000001 USD
 LEDGER_BUFFER_ROUNDING = Decimal("0.000001")  # and the inferred buffer once

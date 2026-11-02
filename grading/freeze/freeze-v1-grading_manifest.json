@@ -1,6 +1,6 @@
 {
  "freeze": "freeze-v1-grading",
- "scope": "freeze-v1-grading (2026-11-02; V1.9, engine-2026-11-02.12): the grading and formal judge freeze - V1.8 plus the Codex recheck D2 correction (new non-quota stops of recover/run persisted as resume_stop; one record per stop), the formal runner's non-zero stop result and task-order judging; deterministic scoring identical to freeze-v1-grading-deterministic; rubric, critical items, judge prompt and settings unchanged; judge request surface identical to v1-calibration-freeze",
+ "scope": "freeze-v1-grading (2026-11-02; V1.9, engine-2026-11-02.12): the grading and formal judge freeze - V1.8 plus the Codex recheck D2 correction (new non-quota stops of recover/run persisted as resume_stop; one record per stop), the formal runner's non-zero stop result and task-order judging, and explicit judge projects (--credential-env from config judge.<workload>.credential_envs; a quota pause of one project does not hold the pass on another); deterministic scoring identical to freeze-v1-grading-deterministic; rubric, critical items, judge prompt and settings unchanged; judge request surface identical to v1-calibration-freeze",
  "engine_version": "engine-2026-11-02.12",
  "judge": {
   "model": "google/gemini-3.1-pro-preview",
@@ -133,10 +133,10 @@
   "grading/gold_variants_f841ddcf.py": "453eff2f18a4d96764002561ae30c3b28ac04fa518a52475e7fa646affe3d718",
   "grading/grade.py": "e3015c0cf5f56f9c25421554dfa16c3ab0891dac7a6712a86eac14cde88bf4e9",
   "grading/judge.py": "a32ed83f5ce87b4ddb1cd3e12ec74aed26310e47e0ba1c15435952ab7959abc5",
-  "grading/judge_dev.py": "4f38e846c133cda0feace43aa4243e977b301669328a885411ae17dd0a72a777",
-  "grading/judge_formal.py": "54956bdf14e48f5c82cc81880049ccef2cf93af7c5b3e0629240495bcc7782e1",
+  "grading/judge_dev.py": "21188600efb34a39bd388d3ea0201f6ba8e7869b5c4d88f4a2728c4ae5d1181b",
+  "grading/judge_formal.py": "153d2230020982cd3474e8a0fcd9d627c02d4ce730ce2b5b20296e091abbda16",
   "grading/judge_recovery.py": "15d95ebe8aaaec0c0da865d6f6e384b56a18f072550247e5c99b41e97bda253e",
-  "grading/judge_validation.py": "40314d567836ff2efa1aa80c79d118f26bbc389d3737d46c16d15ff6c2c4c396",
+  "grading/judge_validation.py": "b2316ba43735ec102892b31377d399fae6d07050df32e0e3890cb0b074dcaeea",
   "grading/label_batch.py": "d81797fc396e1ec6b38554d6917280d469873b2f2844a80d02c34dfa50551278",
   "grading/review.py": "a5db99860ccb622ab39aa0935e84a5b34b495b3b7053d48f10fb1384377c210c",
   "grading/review_queue.py": "f2b0fbf8a4645e1f0f654c6dd1b0377a03bff51bfc94b0534ce1aef7531b9cb4",
@@ -159,5 +159,5 @@
   "harness/tools.py": "2e372e93cbd9e52f4898c3814cc05d8d1dc34456f0432cc05c5e8717bfb148cc",
   "harness/unit_gate.py": "9b5c935b9a0219fd4b9198ef25b3d8f6f385fad86a9ebc372ed72348ca335fda"
  },
- "config_sha256": "99212ed214f2e6722a44c42c0d67e4043f045d1ea9d009712c19c23b1b633179"
+ "config_sha256": "26357b8d133591f224f3db49e7ce69e411a823a3283a9c83655ab44597441ebf"
 }

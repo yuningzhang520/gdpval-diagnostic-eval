@@ -132,7 +132,7 @@ class FormalProjectTests(unittest.TestCase):
         env = {"GOOGLE_API_KEY": "dev-" + JD.DEV_KEY_SUFFIX, "GOOGLE_API_KEY_VALIDATION": "dev-" + JD.DEV_KEY_SUFFIX}
         c = JF.cfg()  # the real configuration; ROOT points at an empty directory so the real .env is never read
         with mock.patch.dict(os.environ, env, clear=True), mock.patch.object(JF, "cfg", return_value=c), mock.patch.object(JF, "ROOT", tempfile.mkdtemp()):
-            with self.assertRaisesRegex(SystemExit, "Dev project"):
+            with self.assertRaisesRegex(SystemExit, "Dev project|another workload's project"):  # V1.9: refused first by judge.formal.refused_credential_envs
                 JF.select_project_credential()
 
     def test_the_formal_project_key_is_selected_into_the_provider_variable(self):

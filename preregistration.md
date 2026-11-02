@@ -605,6 +605,17 @@ judge settings and scoring policy unchanged):
   - Missing verdicts and provider errors are never rubric fails.
   - All formal results stay sealed until the human's 20 formal blind labels are saved.
 - Rubric, critical items, judge prompt, judge settings, verdict semantics and scoring policy are unchanged.
+- Judge projects (the human, 2026-11-02; infrastructure only):
+  - Each judge runner selects its Google project explicitly (`--credential-env`, else config
+    `judge.<workload>.credential_env`) from its allowed variables:
+    - Judge Validation: the Dev project, or the third project (`GOOGLE_API_KEY_JUDGE`);
+    - formal: the second project (`GOOGLE_API_KEY_VALIDATION`), or the third project.
+  - A key equal to another workload's project is refused.
+  - One worker at a time per pass.
+  - A quota pause records its project. A pause recorded on one project does not hold the same pass on another, which
+    continues with only its unfinished items (recorded `project_switch`).
+  - A terminal stop still refuses on any project.
+  - Old rule: Judge Validation only on the Dev project; formal only on the second project; one project per workload.
 
 ---
 

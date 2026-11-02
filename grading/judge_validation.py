@@ -140,11 +140,25 @@ def spent() -> dict:
     return {"settled": Decimal(snap["settled_usd"]), "reserved": Decimal(snap["reserved_usd"]), "total": Decimal(snap["settled_usd"]) + Decimal(snap["reserved_usd"]), "snapshot": snap}
 
 
-def make_guard(holder: dict, max_tokens: int, base_total: Decimal, ceiling: Decimal):
+# V1.9 (the human, 2026-11-02): the Google project this process judges on; the Dev project unless select_project() chose
+# another allowed one (config judge.validation.credential_envs). Names and the 4-character suffix only.
+PROJECT = {"variable": "GOOGLE_API_KEY", "suffix": DEV_KEY_SUFFIX}
+
+
+def select_project(variable: str | None = None, env_file: str | None = None) -> dict:
+    from grading.judge_dev import select_judge_project
+    global PROJECT
+    PROJECT = select_judge_project("validation", variable, env_file)
+    return PROJECT
+
+
+def make_guard(holder: dict, max_tokens: int, base_total: Decimal, ceiling: Decimal, project_suffix: str | None = None):
+    expected = project_suffix or DEV_KEY_SUFFIX
+
     def guard(request_chars: int, request_bytes: int | None = None):
         key = os.environ.get("GOOGLE_API_KEY") or ""
-        if not key.endswith(DEV_KEY_SUFFIX):
-            return "GOOGLE_API_KEY is not the Dev project key"
+        if not key.endswith(expected):
+            return "GOOGLE_API_KEY is not the selected judge project's key" if project_suffix else "GOOGLE_API_KEY is not the Dev project key"
         if any(os.environ.get(k) for k in ("GEMINI_API_KEY", "VERTEX_API_KEY", "GOOGLE_GENAI_USE_VERTEXAI")):
             return "a Google credential override variable is set"
         j = holder.get("judge")
@@ -173,7 +187,7 @@ def grade_run(spec: dict, r: dict, log, extra_argv: list | None = None) -> dict:
         def factory(model, cfgd):
             j = ProviderJudge(model, temperature=c["temperature"], max_tokens=c["max_tokens"], max_retries=c["max_retries"], reasoning_effort=c["reasoning_effort"],
                               pacing_pause_s=c.get("pacing_pause_s", 0.0), provider_error_stop_items=c.get("provider_error_stop_items"), item_wall_clock_cap_s=c.get("item_wall_clock_cap_s"),
-                              cost_guard=make_guard(holder, c["max_tokens"], base, ceiling))
+                              cost_guard=make_guard(holder, c["max_tokens"], base, ceiling, PROJECT["suffix"]))
             holder["judge"] = j
             return j
         argv += ["--judge", "--judge-model", c["model"], "--judge-estimate-usd", str(est), "--confirm-judge", f"{r['run_uuid']}|{c['model']}|{est}",
@@ -197,7 +211,8 @@ STOPPED = 1  # run / recover / resume: any other stop (a non-quota halt, a recov
 def quota_pause(run_uuid: str, daily_quota: dict) -> int:
     """Checkpoint: the registry records the pause and when the pass may resume; nothing else changes (the batch's
     later items are not_attempted and stay eligible for their first evaluation; the failed item keeps its one retry)."""
-    registry({"kind": "quota_pause", "run_uuid": run_uuid, "daily_quota": daily_quota, "resume_at": quota_resume_at(daily_quota).isoformat(timespec="seconds")})
+    registry({"kind": "quota_pause", "run_uuid": run_uuid, "daily_quota": daily_quota, "resume_at": quota_resume_at(daily_quota).isoformat(timespec="seconds"),
+              "project": PROJECT["variable"]})  # V1.9: the pause belongs to this project's daily quota
     return PAUSED
 
 
@@ -336,12 +351,12 @@ def recover(run_uuid: str, items: list[int]) -> int:
 
 
 def pending_pause() -> dict | None:
-    """The latest quota pause that no later resume event closed."""
+    """The latest quota pause that no later resume event closed (V1.9: a project_switch closes it too)."""
     last = None
     for e in registry_events():
         if e.get("kind") == "quota_pause":
             last = e
-        elif e.get("kind") == "quota_resume":
+        elif e.get("kind") in ("quota_resume", "project_switch"):
             last = None
     return last
 
@@ -360,10 +375,14 @@ def resume(poll_s: int = 300, max_pauses: int = 10, sleep=None) -> int:
         registry({"kind": "resume_refused", "stop_at": stop.get("at"), "reason": f"the pass stopped ({str(stop.get('reason'))[:200]}); continuing it is the human's decision"})
         return STOPPED
     pauses = 0
-    registry({"kind": "resume_start"})
+    registry({"kind": "resume_start", "project": PROJECT["variable"]})
     n_start = len(registry_events())
     while True:
         p = pending_pause()
+        if p and p.get("project", "GOOGLE_API_KEY") != PROJECT["variable"]:  # V1.9: another project's daily quota does not hold this one
+            registry({"kind": "project_switch", "from": p.get("project", "GOOGLE_API_KEY"), "to": PROJECT["variable"], "paused_at": p["at"],
+                      "note": "the pending pause was the other project's daily quota; the same pass continues on the selected project (the human, 2026-11-02)"})
+            continue
         if p:
             wait = (dt.datetime.fromisoformat(p["resume_at"]) - dt.datetime.now(dt.timezone.utc)).total_seconds()
             if wait > 0:
@@ -443,7 +462,10 @@ def main(argv=None) -> int:
     ap.add_argument("--env-file", default=os.path.join(ROOT, ".env"), help="resume: credential file loaded into this process (names only; existing variables win)")
     ap.add_argument("--run-uuid", default=None, help="recover: the interrupted Validation run")
     ap.add_argument("--items", default=None, help="recover: comma-separated judge items")
+    ap.add_argument("--credential-env", default=None, help="run / recover / resume: the Google key variable (project) to judge on, one of config judge.validation.credential_envs (default judge.validation.credential_env)")
     a = ap.parse_args(argv)
+    if a.command in ("run", "recover", "resume"):
+        select_project(a.credential_env, a.env_file)  # V1.9: explicit project; names and suffix only
     if a.command == "plan":
         p = write_plan()
         print(json.dumps({k: p[k] for k in ("judge_units", "ceiling_usd")} | {"order": [(x["task_id"][:8], x["judge_items"], x["reservation_usd"]) for x in p["order"]]}, indent=1))
@@ -452,8 +474,6 @@ def main(argv=None) -> int:
     elif a.command == "run":
         return run()
     elif a.command == "resume":
-        from harness.launcher import load_env_file
-        load_env_file(a.env_file)
         return resume()
     elif a.command == "recover":
         if not (a.run_uuid and a.items):

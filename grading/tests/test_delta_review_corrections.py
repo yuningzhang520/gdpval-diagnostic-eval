@@ -442,5 +442,97 @@ class FormalStopTests(unittest.TestCase):
         self.assertEqual(got, [(t, p) for t in order[:3] for p in ("anthropic", "openai")])
 
 
+class ProjectSelectionTests(unittest.TestCase):
+    """V1.9 (the human, 2026-11-02): each judge runner selects its Google project explicitly (--credential-env or config)
+    from its allowed variables; another workload's project is refused; a quota pause of one project does not hold the
+    same pass on another (recorded project_switch); a terminal stop still refuses. Synthetic keys only."""
+    ENV = {"GOOGLE_API_KEY": "synthetic-dev-" + JD.DEV_KEY_SUFFIX, "GOOGLE_API_KEY_VALIDATION": "synthetic-formal-FRML", "GOOGLE_API_KEY_JUDGE": "synthetic-judge-JDG1"}
+
+    def select(self, workload, var, env=None):
+        with mock.patch.dict(os.environ, env or self.ENV, clear=True), mock.patch("harness.launcher.verify_credential_after_dotenv", return_value={"checked": True}):
+            cred = JD.select_judge_project(workload, var)
+            return cred, os.environ.get("GOOGLE_API_KEY")
+
+    def test_allowed_projects_per_workload(self):
+        self.assertEqual(self.select("validation", None)[0]["suffix"], JD.DEV_KEY_SUFFIX)  # the default stays the Dev project
+        cred, key = self.select("validation", "GOOGLE_API_KEY_JUDGE")
+        self.assertEqual((cred["variable"], cred["suffix"], key), ("GOOGLE_API_KEY_JUDGE", "JDG1", "synthetic-judge-JDG1"))
+        self.assertEqual(self.select("formal", None)[0]["variable"], "GOOGLE_API_KEY_VALIDATION")
+        self.assertEqual(self.select("formal", "GOOGLE_API_KEY_JUDGE")[0]["suffix"], "JDG1")
+        for workload, var in (("validation", "GOOGLE_API_KEY_VALIDATION"), ("formal", "GOOGLE_API_KEY"), ("validation", "OTHER_KEY")):
+            with self.assertRaisesRegex(SystemExit, "not an allowed"):
+                self.select(workload, var)
+        with self.assertRaisesRegex(SystemExit, "same key as GOOGLE_API_KEY_VALIDATION"):  # a variable that holds another workload's key
+            self.select("validation", "GOOGLE_API_KEY_JUDGE", {**self.ENV, "GOOGLE_API_KEY_JUDGE": "synthetic-formal-FRML"})
+
+    def test_the_validation_guard_checks_the_selected_project(self):
+        h = {"judge": SimpleNamespace(calls=[], recoverable_failures=[], generate_params={"max_retries": 10})}
+        with mock.patch.dict(os.environ, {"GOOGLE_API_KEY": "synthetic-judge-JDG1"}, clear=True):
+            self.assertIsNone(JV.make_guard(h, 16384, Decimal(0), Decimal(15), "JDG1")(1000, request_bytes=1000))
+            self.assertRegex(JV.make_guard(h, 16384, Decimal(0), Decimal(15))(1000) or "", "not the Dev project key")  # default unchanged
+        with mock.patch.dict(os.environ, {"GOOGLE_API_KEY": "synthetic-dev-" + JD.DEV_KEY_SUFFIX}, clear=True):
+            self.assertRegex(JV.make_guard(h, 16384, Decimal(0), Decimal(15), "JDG1")(1000) or "", "selected judge project")
+
+
+class ValidationProjectSwitchTests(D2TerminalStopTests):
+    def future_pause(self, project=None):
+        later = (dt.datetime.now(dt.timezone.utc) + dt.timedelta(hours=20)).isoformat(timespec="seconds")
+        JV.registry({"kind": "quota_pause", "run_uuid": "R", "resume_at": later, **({"project": project} if project else {})})
+
+    def test_a_legacy_dev_pause_does_not_hold_the_pass_on_the_judge_project(self):
+        self.future_pause()  # the real registry's pause: no project field, recorded on the Dev project
+        sleeps = []
+        with mock.patch.object(JV, "PROJECT", {"variable": "GOOGLE_API_KEY_JUDGE", "suffix": "JDG1"}), mock.patch.object(JV, "auto_recovery_items", return_value=[2]), \
+             mock.patch.object(JV, "recover", return_value=0) as rec, mock.patch.object(JV, "run", return_value=0) as run:
+            self.assertEqual(JV.resume(sleep=sleeps.append), 0)
+        self.assertEqual(sleeps, []); rec.assert_called_once(); run.assert_called_once()
+        ev = JV.registry_events()
+        sw = next(e for e in ev if e["kind"] == "project_switch")
+        self.assertEqual((sw["from"], sw["to"]), ("GOOGLE_API_KEY", "GOOGLE_API_KEY_JUDGE"))
+        self.assertEqual([e["kind"] for e in ev][1:4], ["resume_start", "project_switch", "resume_end"])
+
+    def test_the_same_projects_pause_still_waits(self):
+        self.future_pause("GOOGLE_API_KEY_JUDGE")
+        calls = []
+
+        def sleep(s):
+            calls.append(s)
+            raise KeyboardInterrupt  # stop the test once the runner waits
+        with mock.patch.object(JV, "PROJECT", {"variable": "GOOGLE_API_KEY_JUDGE", "suffix": "JDG1"}), mock.patch.object(JV, "recover") as rec:
+            with self.assertRaises(KeyboardInterrupt):
+                JV.resume(sleep=sleep)
+        self.assertTrue(calls and calls[0] > 3600); rec.assert_not_called()
+
+    def test_a_terminal_stop_is_not_bypassed_by_a_project_switch(self):
+        self.future_pause()
+        JV.record_stop("recovery halted: 3 distinct items failed", source="recovery", run_uuid="R")
+        with mock.patch.object(JV, "PROJECT", {"variable": "GOOGLE_API_KEY_JUDGE", "suffix": "JDG1"}), mock.patch.object(JV, "recover") as rec, mock.patch.object(JV, "run") as run:
+            self.assertEqual(JV.resume(sleep=lambda _: None), JV.STOPPED)
+        rec.assert_not_called(); run.assert_not_called()
+        self.assertNotIn("project_switch", self.kinds())
+
+    def test_a_pause_records_its_project(self):
+        quota = {"quota_id": "GenerateRequestsPerDayPerProjectPerModel", "quota_value": "250", "retry_delay": "1s"}
+        with mock.patch.object(JV, "PROJECT", {"variable": "GOOGLE_API_KEY_JUDGE", "suffix": "JDG1"}), \
+             mock.patch.object(JV, "grade_run", return_value=self.out(daily_quota=quota, halted="daily quota exhausted")):
+            self.assertEqual(JV.recover("R", [2, 3]), JV.PAUSED)
+        self.assertEqual(JV.registry_events()[-1]["project"], "GOOGLE_API_KEY_JUDGE")
+
+
+class FormalProjectSwitchTests(FormalStopTests):
+    def test_a_validation_project_pause_continues_on_the_judge_project(self):
+        later = (dt.datetime.now(dt.timezone.utc) + dt.timedelta(hours=20)).isoformat(timespec="seconds")
+        JF.registry({"kind": "pass_start"}); JF.registry({"kind": "quota_pause", "run_uuid": "A", "resume_at": later, "project": "GOOGLE_API_KEY_VALIDATION"})
+        sleeps = []
+        with mock.patch.object(JF, "select_project_credential", return_value={"variable": "GOOGLE_API_KEY_JUDGE", "suffix": "JDG1"}) as sel, \
+             mock.patch.object(JF, "finalized_runs", return_value=[]):
+            JF.run("human", "status entry", self.scope, poll_s=0, max_idle_polls=0, resume=True, sleep=sleeps.append, credential_env="GOOGLE_API_KEY_JUDGE")
+        sel.assert_called_once_with("GOOGLE_API_KEY_JUDGE")
+        self.assertEqual(sleeps, [])  # the other project's pause does not hold the pass
+        ev = JF.registry_events()
+        self.assertEqual([e["kind"] for e in ev][2:4], ["pass_resume", "project_switch"])
+        self.assertEqual((ev[3]["from"], ev[3]["to"]), ("GOOGLE_API_KEY_VALIDATION", "GOOGLE_API_KEY_JUDGE"))
+
+
 if __name__ == "__main__":
     unittest.main()

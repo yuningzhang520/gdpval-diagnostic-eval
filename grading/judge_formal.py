@@ -164,18 +164,15 @@ def ensure_ledger():
     return BudgetLedger.open_existing(LEDGER, prices_from_config(cfg()))
 
 
-def select_project_credential() -> dict:
+def select_project_credential(variable: str | None = None) -> dict:
     """The Formal judge project's key in this process (names and the 4-character suffix only; nothing printed): the
-    configured variable (judge.formal.credential_env) into GOOGLE_API_KEY, Inspect's .env initialisation re-checked, the
-    Dev project's key refused."""
-    from harness.launcher import load_env_file, select_credential, verify_credential_after_dotenv
-    load_env_file(os.path.join(ROOT, ".env"))
-    var = cfg()["judge"]["formal"]["credential_env"]
-    cred = select_credential("google", {"credential_env": {"google": var}}, os.environ)
+    selected variable (V1.9: --credential-env from judge.formal.credential_envs, default judge.formal.credential_env)
+    into GOOGLE_API_KEY, Inspect's .env initialisation re-checked, the Dev project's key refused."""
+    from grading.judge_dev import select_judge_project
+    cred = select_judge_project("formal", variable, os.path.join(ROOT, ".env"))
     if cred.get("suffix") == DEV_KEY_SUFFIX:
-        raise SystemExit(f"{var} holds the Dev project's key; the Formal judge pass runs on its own project")
-    verify_credential_after_dotenv(cred)
-    return {k: cred.get(k) for k in ("variable", "provider_variable", "suffix", "dotenv_override_markers_removed")}
+        raise SystemExit(f"{cred.get('variable')} holds the Dev project's key; the Formal judge pass runs on its own project")
+    return cred
 
 
 def make_guard(holder: dict, max_tokens: int, base_total: Decimal, ceiling: Decimal, project_suffix: str | None = None):
@@ -256,12 +253,13 @@ def pending_pause() -> dict | None:
     for e in registry_events():
         if e.get("kind") == "quota_pause":
             last = e
-        elif e.get("kind") == "quota_resume":
+        elif e.get("kind") in ("quota_resume", "project_switch"):  # V1.9: a project switch closes the other project's pause
             last = None
     return last
 
 
-def run(authorized_by: str | None, authorization_ref: str | None, confirm: str | None, poll_s: int = POLL_S, max_idle_polls: int = 600, resume: bool = False, sleep=None) -> int:
+def run(authorized_by: str | None, authorization_ref: str | None, confirm: str | None, poll_s: int = POLL_S, max_idle_polls: int = 600, resume: bool = False, sleep=None,
+        credential_env: str | None = None) -> int:
     sleep = sleep or time.sleep
     g = gates()
     if not g["ok"]:
@@ -283,7 +281,7 @@ def run(authorized_by: str | None, authorization_ref: str | None, confirm: str |
             raise SystemExit(f"the pass ended or stopped ({stops or 'pass_end'}); continuing it is the human's decision")
     units = int(cfg()["batches"]["formal"]["units_total"])
     os.environ.pop("GOOGLE_API_KEY", None)  # the Formal project's key only (select_project_credential), never an inherited one
-    cred = select_project_credential()
+    cred = select_project_credential(credential_env)
     os.makedirs(SEALED, mode=0o700, exist_ok=True)
     os.chmod(SEALED, 0o700)
     log = open(os.path.join(SEALED, f"{PASS_ID}_{dt.datetime.now(dt.timezone.utc).strftime('%Y%m%dT%H%M%SZ')}.log"), "a", encoding="utf-8")
@@ -292,6 +290,10 @@ def run(authorized_by: str | None, authorization_ref: str | None, confirm: str |
     idle = 0
     while True:
         p = pending_pause()
+        if p and p.get("project", cfg()["judge"]["formal"]["credential_env"]) != cred["variable"]:  # V1.9: another project's daily quota does not hold this one
+            registry({"kind": "project_switch", "from": p.get("project", cfg()["judge"]["formal"]["credential_env"]), "to": cred["variable"], "paused_at": p["at"],
+                      "note": "the pending pause was the other project's daily quota; the same pass continues on the selected project (the human, 2026-11-02)"})
+            continue
         if p:
             wait = (dt.datetime.fromisoformat(p["resume_at"]) - dt.datetime.now(dt.timezone.utc)).total_seconds()
             if wait > 0:
@@ -325,7 +327,8 @@ def run(authorized_by: str | None, authorization_ref: str | None, confirm: str |
                 registry({"kind": "recovery_error", "run_uuid": r["run_uuid"], "error": type(ex).__name__}); break
             registry({"kind": "recovery_done", "run_uuid": r["run_uuid"], **{k: v for k, v in rec.items() if k != "daily_quota"}})
             if rec.get("daily_quota"):
-                registry({"kind": "quota_pause", "run_uuid": r["run_uuid"], "daily_quota": rec["daily_quota"], "resume_at": quota_resume_at(rec["daily_quota"]).isoformat(timespec="seconds")}); continue
+                registry({"kind": "quota_pause", "run_uuid": r["run_uuid"], "daily_quota": rec["daily_quota"], "resume_at": quota_resume_at(rec["daily_quota"]).isoformat(timespec="seconds"),
+                          "project": cred["variable"]}); continue
             if rec.get("halted"):
                 registry({"kind": "halted", "run_uuid": r["run_uuid"]}); break
             continue
@@ -350,7 +353,8 @@ def run(authorized_by: str | None, authorization_ref: str | None, confirm: str |
             registry({"kind": "run_error", "run_uuid": r["run_uuid"], "error": type(ex).__name__}); continue
         registry({"kind": "run_done", "run_uuid": r["run_uuid"], "task_id": r["task_id"], **{k: v for k, v in out.items() if k != "daily_quota"}})
         if out.get("daily_quota"):
-            registry({"kind": "quota_pause", "run_uuid": r["run_uuid"], "daily_quota": out["daily_quota"], "resume_at": quota_resume_at(out["daily_quota"]).isoformat(timespec="seconds")}); continue
+            registry({"kind": "quota_pause", "run_uuid": r["run_uuid"], "daily_quota": out["daily_quota"], "resume_at": quota_resume_at(out["daily_quota"]).isoformat(timespec="seconds"),
+                      "project": cred["variable"]}); continue
         if out.get("halted"):
             registry({"kind": "halted", "run_uuid": r["run_uuid"]}); break
     registry({"kind": "pass_end", "judged": len({e["run_uuid"] for e in registry_events() if e.get("kind") == "run_done"})})
@@ -372,11 +376,12 @@ def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description="formal judge pass (one pass, frozen judge, hidden results)")
     ap.add_argument("command", choices=("check", "run", "resume", "status"))
     ap.add_argument("--authorized-by", default=None); ap.add_argument("--authorization-ref", default=None); ap.add_argument("--confirm", default=None)
+    ap.add_argument("--credential-env", default=None, help="run / resume: the Google key variable (project) to judge on, one of config judge.formal.credential_envs (default judge.formal.credential_env)")
     a = ap.parse_args(argv)
     if a.command == "check":
         print(json.dumps({"gates": gates(), "finalized_runs": len(finalized_runs())}, indent=1, default=str))
     elif a.command in ("run", "resume"):
-        return run(a.authorized_by, a.authorization_ref, a.confirm, resume=a.command == "resume")
+        return run(a.authorized_by, a.authorization_ref, a.confirm, resume=a.command == "resume", credential_env=a.credential_env)
     else:
         print(json.dumps(status(), indent=1, default=str))
     return 0
