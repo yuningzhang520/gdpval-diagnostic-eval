@@ -4737,9 +4737,9 @@ freeze-v1 checklist. Nothing is marked FROZEN and no tag is created until every 
 | Gate | State |
 |---|---|
 | V1.3 and runner patches committed and regression-tested | done: `be84ff6`, tag `v1.3-corrections` (tests in the previous entry) |
-| Codex Review 2 (pinned `5121e1a`): no unresolved Blocking finding | in progress (read-only under Codex's `/tmp/codex-r2/`); no findings received |
-| Narrow delta review: `git diff 5121e1a <final> -- grading harness config.json preregistration.md` | not started (after Review 2) |
-| Accepted Non-blocking findings documented | pending the reviews |
+| Codex Review 2 (pinned `5121e1a`): no unresolved Blocking finding | BLOCKED with R2-B1–B5; all five corrected at `7e30849` (tag `v1.4-review2-corrections`), awaiting the narrow delta review |
+| Narrow delta review: `git diff 5121e1a 7e30849 -- grading harness config.json preregistration.md` (V1.3, judge runner, R2-B1–B5 and their interactions) | not started |
+| Accepted Non-blocking findings documented | Review 2 N1–N5 documented (Review 2 corrections entry), acceptance is the human's; delta review pending |
 | `2ea2e5b5…` item-27 implementation (finding above) | the human's decision |
 | Formal judge pass against the 250-requests-per-day judge quota (332 items) | the human's decision |
 | Final commit, config, prompt, grader versions and hashes verified and recorded | at freeze |
@@ -4843,6 +4843,69 @@ Review 2 Non-blocking findings, documented for the human's acceptance (none fixe
   proof for arbitrary provider payloads.
 - N5. Codex could not run Docker, the real judge or the Formal preflight. The Docker-gated suites are run here on the
   correction commit (next entry).
+
+## Review 2 corrections: Docker evidence and historical impact audit (2026-11-02; code `7e30849`)
+
+Grading and harness suites on the correction code, before the commit (logs `logs/r2-fixes/`):
+- grading discover: 482 tests, 5 skipped, OK, 126.79 s (first run: 3 errors, the expectations listed in the previous
+  entry; then 482 OK);
+- harness, 14 modules via `run_isolated.sh`: 203 tests, OK, 52 s (first run: 2 failures in
+  `test_gemini_class_controls_unit`, the `estimated` expectations corrected in the previous entry).
+
+Docker-gated suites on commit `7e308494ba4085c0573610129589a009fe1c24df` (tag `v1.4-review2-corrections`):
+- Logs are in `logs/docker-gated-7e30849-20261102T061847Z/`.
+- `HEADER.txt` records the commit, a clean tree before and after, the times and Docker 29.6.1.
+- `SUMMARY.txt` records each suite's exit code and wall time.
+- No containers were left running.
+
+| Suite | Result | Wall time |
+|---|---|---|
+| `7d7fc9a7…` `GoldRecalcDockerTests` | 3/3 OK | 8 s |
+| `1137e2bb…` `GoldRecalcDockerTests` | 2/2 OK | 11 s |
+| `grading.tests.regress_recalc_docker` | 16 PASS | 3 s |
+| `grading.tests.regress_grading_cli` | 61 PASS | 7 s |
+| `harness.tests.regress_compose_local` | 15 PASS | 9 s |
+| `harness.tests.regress_tools` | 8 PASS | 10 s |
+| `harness.tests.regress_limits` | 74 PASS, 0 unverified | 47 s |
+| `harness.tests.regress_cost_limit` | 14 PASS | 13 s |
+| `harness.tests.regress_closeout` | 92/92 PASS | 39 s |
+| `harness.tests.regress_launcher_contract` | 11 PASS | 3 s |
+| `harness.tests.regress_message_limit_parallel` | 20 PASS | 18 s |
+| `harness.tests.regress_pilot_cli` | 13 PASS | 6 s |
+| `harness.tests.regress_inspect` | 62 passed (first invocation refused by the isolation check: my working directory was inside the repository; rerun from a temporary directory) | 42 s |
+
+Historical impact audit (read-only; no provider call):
+- Method:
+  - `logs/r2-fixes/audit/audit.py` ran once with the V1.3 code (exported from tag `v1.3-corrections`) and once with the
+    V1.4 code;
+  - outputs `audit_before_v1.3.json` and `audit_after_v1.4.json`; B4 replay `audit_b4.txt`;
+  - 772 record files (grading directories, ledgers, judge logs, ledger bindings) are identical in size and
+    modification time before and after (`records_before.txt`, `records_after.txt`).
+
+| Record | Before (V1.3 reading) | After (V1.4 reading) | Changed |
+|---|---|---|---|
+| 14 judge write-ahead logs (Judge Dev 10, Judge Validation 4) | usage, UNKNOWN 0 | identical; no log holds two attempts of one unit | no |
+| Settled amounts of the 5 ledgers (dev 22.255219, validation 17.488478, compat 2.043342, judge_dev 11.636271, judge_validation 1.241102 USD) | as recorded | identical | no |
+| Estimated portion, dev ledger | 0.000000 | 5.452624 (two Gemini recovered-429 inferred settlements) | **yes** |
+| Estimated portion, validation ledger | 0.000000 | 4.808123 (two inferred settlements) | **yes** |
+| Estimated portion, judge_validation ledger | 0.913046 | 1.191394 (the `a45bc83b…` schema-recovery unit, 0.278348, with an inferred buffer for item 20) | **yes** |
+| Authoritative selection, 34 run directories (Dev, Dev V1, Validation, V1.3 regression) | pass and blocked state | identical in all 34 | no |
+| 15 label comparisons (Dev 5, Validation 10) | recorded agreement | run and pass identity verified in all 15; every recomputed summary equals the recorded one | no |
+| B4 guard replay of every recorded judge batch | — | highest (other units of the ledger + the batch's peak liability and next-request bound): Judge Dev 12.3083 / 30 USD, Judge Validation 2.1944 / 15 USD; no historical request would have been refused | no |
+
+- Unchanged agreement results:
+  - Dev: 4/6, and Pass 2 2/2 (`dev/grading_v1/`);
+  - Validation deterministic: 4/6 (held-out, against V1).
+- The Dev Pass 2 comparison reads the run's checkpoint from `dev/grading/<run>/labels/`. Its grade rows are from
+  `dev/grading_v1/`, and it is the same run, so identity is verified.
+- Original records stay as written. The corrected estimated portions are derived values, reported here beside the
+  original ones.
+- Not verifiable from retained evidence: none of the audited items. Anything outside the audit's scope (provider-side
+  billing) remains a provider-dashboard reconciliation, as before.
+
+Budgets (unchanged by the corrections):
+- Formal generation 150 USD; Formal judge 30 USD, concurrency 1, its own ledger. Together **180 USD**.
+- Judge Validation 15 USD (13.758898 USD remaining).
 
 ## Known issues and findings (material check)
 
@@ -5249,7 +5312,8 @@ Review 2 Non-blocking findings, documented for the human's acceptance (none fixe
 - 2026-11-01 · Validation deterministic comparison 4/6, two V1 false fails diagnosed (not fixed), private backup pushed (main `abb6dd6`, 18 tags), Formal preflight at V1.2 · 4b3474e (local)
 - 2026-11-02 · V1.3 corrections (`2ea2e5b5…` .5, `c3525d4d…` .6), judge runner V1.3 (engine .9: classification, 600 s item cap), Formal budgets (150 USD generation, 30 USD judge, separate ledgers), Formal judge pass prepared and gated; tag `v1.3-corrections` · be84ff6 (local)
 - 2026-11-02 · V1.3 regression evidence, Formal preflight at V1.3 (150 USD), freeze-v1 checklist; `2ea2e5b5…` item-27 implementation finding (not fixed, awaiting the human) · 3955422 (local)
-- 2026-11-02 · Codex Review 2 Blocking corrections R2-B1–B5 (engine .10): per-attempt WAL, identity-based pass selection, inferred settlements estimated (no hold), guard liability, run/pass-bound label comparisons; tag `v1.4-review2-corrections` · (this commit; local)
+- 2026-11-02 · Codex Review 2 Blocking corrections R2-B1–B5 (engine .10): per-attempt WAL, identity-based pass selection, inferred settlements estimated (no hold), guard liability, run/pass-bound label comparisons; tag `v1.4-review2-corrections` · 7e30849 (local)
+- 2026-11-02 · Docker-gated suites on `7e30849` (13 suites, all pass) and the historical impact audit (only the estimated portions of three ledgers change) · (this commit; local)
 
 ## Next stage (not started)
 
