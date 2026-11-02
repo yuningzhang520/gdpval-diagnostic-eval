@@ -5256,6 +5256,66 @@ Historical impact (read-only; no record changed):
 Docker-gated suites on this commit: deferred until no formal unit runs, so test containers never compete with a
 formal sandbox for memory. They are not run yet.
 
+## Formal generation: two independent workers; deterministic grading freeze (2026-11-02)
+
+Decision (the human, chat 2026-11-02, deadline): formal generation at concurrency 2 with two independent existing
+`harness.batch` processes, one per candidate; no generation code change.
+
+Transition:
+- The single-ledger scheduler (`formal-generation-2026-11-02`) ran two units on `formal/ledger.json` (runs root
+  `formal/runs`):
+  - Opus 5.5 `b5d2e6f1…`, run `Mae4tizWVH2BiinB5zKQV2`, 1.493437 USD, accepted;
+  - GPT-6.1 Sol `b5d2e6f1…`, run `d5sypgfTdCCwfsFV9jdzLd`, 0.302156 USD.
+- At 10:04:47Z `stop_new` stopped further admissions. The in-flight unit finished, and the scheduler exited at 10:09Z.
+
+Workers:
+- Both run from the frozen checkout (`dda234f`), on the remaining 9 tasks in the frozen order (`b5d2e6f1…` excluded:
+  its units exist).
+- Each has its own runs root, ledger, inventory, batch records and Inspect logs.
+- Config snapshot `~/turing-eval-runs/config_snapshots/config_formal-two-workers_80433476eaa1.json` (sha256
+  `80433476…`, read-only): the frozen config with only `batches.formal.budget_ceiling_usd` 150 -> 200. Staging
+  verification still reads the checkout's frozen config.
+- Opus worker: `formal/opus/` (ledger id `2469f621…`, ceiling 200), started 10:06:45Z.
+- GPT worker: `formal/gpt/` (ledger id `6df9d29e…`, ceiling 200), started 10:09:16Z, after the old scheduler's GPT unit
+  ended, so one unit per candidate is ever active.
+- Both run under `caffeinate -i -s` on AC power; logs `formal/<worker>/worker.log` and `batch_console.log`.
+- A dry run of both workers (9 units each, every gate, no `eval()`) passed first; the dry-run records are in each
+  runs root.
+- Shared mutable state: none besides Docker, which gives each sample its own container, and read-only inputs.
+
+Exposure (modeled, not measured):
+- Each unit is capped by Inspect's 20 USD per-sample cost limit, kept; the last request may overshoot it.
+- A 200 USD ceiling admits all 9 units even if every earlier one costs 20 USD (after 8, 40 USD remain, above the 8 or
+  5 USD reservation).
+- Per candidate ledger: at most 9 x 20 = 180 USD. Combined with the two settled units: at most about 361.80 USD.
+- The existing stop rules stay: more than 2x the reservation (Opus 16, GPT 10 USD), an engineering failure class
+  twice, a hold. A stop or hold blocks only that candidate's ledger.
+
+Hold handling (the human's rule):
+- A hold caused only by a provider error that Inspect retried within the same turn, on a completed sample with
+  collected artifacts: the agent resolves it with `ledger_admin` at reported usage plus one average call, marked
+  inferred and not provider-confirmed, keeping the hold evidence and the reconciliation requirement, then continues
+  that worker.
+- Any other hold stops only that candidate's worker and is reported.
+
+Deterministic grading freeze (`freeze-v1-grading-deterministic`, this commit):
+- From `b33cc37` to `2eb4060`, the task checks, extraction, engine, review materials and gold variants are unchanged;
+  `grade.py` changes only `ENGINE_VERSION`; the `run_grading`, `judge.py` and judge-runner changes lie only on the
+  `--judge` path. The deterministic-only path therefore equals the one the Codex delta review's Gold/synthetic
+  regressions and the Docker-gated Gold and recalculation suites passed on `b33cc37`.
+- Record `grading/freeze/freeze-v1-grading-deterministic.json`: code `2eb4060` with its V1.7 manifest, engine and task
+  grader versions, config hash, grading source hashes, and SHA-256 of 99 rubric and reference files under `private/`.
+- No existing gate is bypassed: deterministic grading has no freeze gate, and its own gates (grader-version match,
+  run and ledger binding, outcome eligibility) stay.
+- The formal judge stays locked (it requires `freeze-v1-grading`). Deterministic results stay sealed until the human's
+  blind labels are saved.
+
+Judge findings status:
+- B1 / D1, inferred-buffer repricing: corrected in `2eb4060` before the human's deferral arrived, but not
+  independently verified. It stays an unresolved Codex Blocking finding until the targeted recheck.
+- B2 / D2, B3 / D3 and N1: corrected in `2eb4060`, pending the same recheck.
+- No claim is made that the grading pipeline passed independent review.
+
 ## Known issues and findings (material check)
 
 - `rubric_json.form_content`: 8,036 items hold `null`, 2,417 items lack the key, zero
@@ -5668,7 +5728,8 @@ formal sandbox for memory. They are not run yet.
 - 2026-11-02 · Review 2 N1–N5 decided; N3 fail-closed recovery check (engine .11), N1 package corrections; delta range end moved to the N3 commit; tag `v1.6-recovery-hash-check` · b33cc37 (pushed)
 - 2026-11-02 · Docker 13/13 on `b33cc37`; backup pushed (`main` to `b33cc37`, 4 tags) · b55c5b4 (local)
 - 2026-11-02 · Two-stage freeze: formal generation frozen on code baseline `b33cc37` (dependency check: the pending delta-review corrections do not reach the generation path); concurrency 1 on the single formal ledger; tag `freeze-v1-generation` · dda234f (local)
-- 2026-11-02 · Codex delta review corrections D1-D3, N1 (engine .12) and the formal judge's freeze-v1-grading requirement; formal generation armed from the clean checkout (waits for AC power); tag `v1.7-delta-review-corrections` · (this commit; local)
+- 2026-11-02 · Codex delta review corrections D1-D3, N1 (engine .12) and the formal judge's freeze-v1-grading requirement; formal generation armed from the clean checkout (waits for AC power); tag `v1.7-delta-review-corrections` · 2eb4060 (pushed)
+- 2026-11-02 · Formal generation switched to two independent candidate workers (ceiling 200 per candidate ledger, config snapshot `80433476…`); deterministic grading frozen at code `2eb4060`; tag `freeze-v1-grading-deterministic` · (this commit; local)
 
 ## Next stage (not started)
 
