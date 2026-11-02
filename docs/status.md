@@ -5510,6 +5510,38 @@ Judge Validation agreement, debug-set exclusion:
 - Under the rule that items used to debug the judge are never reused to validate it, item 28 is excluded from the
   judge-human agreement. It is reported separately.
 
+## Judge Validation complete; judge-human agreement (2026-11-02)
+
+Run: the resumed pass on `GOOGLE_API_KEY_JUDGE` (`freeze-v1-grading`) ended at 12:16:16Z (`pass_end`, `resume_end`
+rc 0).
+- The `c357f0e2…` recovery: 52/52 ok.
+- Seven runs: 52/52 ok.
+- 104 calls, no provider error, 3.537666 USD from calls.
+- Ledger: 4.847818 USD settled of 15 USD, of which 1.260466 USD is estimated (inferred buffers); no hold or stop.
+
+Coverage: 163 of 166 Validation judge items have a verdict in the authoritative passes; no selection is blocked. Three
+are unresolved infrastructure failures, never counted as fails:
+- `a45bc83b…` item 20, `provider_error`, exhausted;
+- `a45bc83b…` item 64, `invalid_judge_output`, its schema retry also invalid;
+- `c357f0e2…` item 15, `provider_error`, exhausted (the request that hit the Dev daily quota inside a recovery).
+
+Judge-human agreement on the queue v4 Validation judge-only items:
+- Labels checkpointed 2026-11-01T23:26:55Z, before any Validation verdict was revealed. Official `grading.review
+  compare` at `freeze-v1-grading`; new comparison records were added and the earlier ones kept.
+- 3/3 counted: `c357f0e2…` item 24, `7d7fc9a7…` item 18, `47ef842d…` item 57.
+- `1137e2bb…` item 28 also agrees (pass/pass) but is excluded: it is in the judge debug set.
+- Limitation: all four human labels and judge verdicts are pass, so this sample does not test the judge's detection of
+  failures.
+- The same compare on the current grader gives 6/6 deterministic Validation items. That is regression evidence only;
+  the preregistered held-out Validation deterministic result stays 4/6 (V1).
+
+Deadline exception:
+- The formal judge pass started at 11:57:25Z, before this agreement existed. It ran under the exception, as recorded.
+- The agreement was measured at about 12:17Z with the same frozen judge, while that pass was running (16 of 20 runs
+  judged). The Judge Validation gate is therefore met for the whole pass.
+- The formal judge verdicts stay provisional only for the outstanding independent recheck of V1.9, and stay sealed until
+  the human's formal labels are saved.
+
 ## Known issues and findings (material check)
 
 - `rubric_json.form_content`: 8,036 items hold `null`, 2,417 items lack the key, zero
