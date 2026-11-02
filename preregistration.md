@@ -513,6 +513,40 @@ re-derived under the corrected rules are reported next to them (`docs/status.md`
   row name the same run, and the grade rows are of one named pass. Missing identity fails closed. Blind labelling is
   unchanged.
 
+### 1.23 V1.3.1 and the judge quota rule (approved by the human 2026-11-02; tag `v1.5-item27-quota-pause`)
+`2ea2e5b5…` grader .6, rubric 27 ("The Margin Impact table includes a 'Margin Impact' column or row whose entries are
+only 'Cost' or 'Investment'"):
+- Applies to: the margin section's table, its headers and group-row labels.
+- Pass: a header or group-row label contains the phrase "Margin Impact" (case and spacing ignored), and every entry is
+  Cost or Investment.
+- Fail: the table is located and no header or group row carries the phrase, or an entry is neither Cost nor
+  Investment.
+- Uncertainty is unchanged: an unlocated or ambiguous section, or no table, is handled as before.
+- Old rule: the word "margin" anywhere in a header or group row, looser than the literal label confirmed 2026-11-01.
+- Evidence: the V1.3 regression evidence. The Validation deck's "Margin Segment / Activity" with "SUBTOTAL: COST IMPACT"
+  rows passed.
+- New rule: the literal phrase, applied to both candidates.
+- The held-out Validation result stays 4/6. Re-grades under .6 are regression evidence only.
+- Regressions:
+  - literal header (pass);
+  - mixed case and spacing (pass);
+  - "Margin Segment / Activity" (fail);
+  - out of scope: a literal label with another entry still fails on the entries.
+
+Judge projects and daily quotas:
+- One Google project per workload, never split within one workload to bypass a quota:
+  - Judge Validation stays on the Dev project (`GOOGLE_API_KEY`);
+  - the Formal judge pass runs on the second project (`GOOGLE_API_KEY_VALIDATION`) and refuses the Dev key.
+- An HTTP 429 whose quota violation is per day ends Inspect's retries of that request. Every other retry decision stays
+  Inspect's.
+- The batch halts at once. The failed item is `provider_error` and keeps its one retry; the later items are not sent.
+- The pass is checkpointed (`quota_pause`). It resumes at the later of the provider's retry guidance and the next
+  midnight Pacific time, plus 5 minutes, and an unattended start waits for AC power.
+- It continues as the same logical pass:
+  - eligible per-item recoveries first, then the remaining runs;
+  - a completed item is never re-judged, and an exhausted item (one already recovered once) is never sent again.
+- The judge model, prompt, rubric, settings and inputs are unchanged.
+
 ---
 
 ## 2. Task selection and exclusions

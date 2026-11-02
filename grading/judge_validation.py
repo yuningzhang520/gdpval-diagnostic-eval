@@ -30,7 +30,7 @@ import subprocess
 import sys
 from decimal import ROUND_CEILING, Decimal
 
-from grading.judge_dev import DEV_KEY_SUFFIX, batch_liability_usd, call_cost_usd, next_request_bound_usd, worst_case_usd
+from grading.judge_dev import DEV_KEY_SUFFIX, batch_liability_usd, call_cost_usd, next_request_bound_usd, on_ac_power, quota_resume_at, worst_case_usd
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 BASE = os.path.expanduser("~/turing-eval-runs")
@@ -47,7 +47,8 @@ FREEZE_TAG = "v1-calibration-freeze"
 VERSION_TAGS = ((FREEZE_TAG, MANIFEST), ("v1.1-judge-item-recovery", os.path.join(ROOT, "grading", "freeze", "v1.1_manifest.json")),
                 ("v1.2-judge-infrastructure", os.path.join(ROOT, "grading", "freeze", "v1.2_manifest.json")),  # V1.2: engine .8 judge infrastructure (approved 2026-11-01)
                 ("v1.3-corrections", os.path.join(ROOT, "grading", "freeze", "v1.3_manifest.json")),  # V1.3: engine .9 grader corrections and judge-runner reliability (approved 2026-11-01)
-                ("v1.4-review2-corrections", os.path.join(ROOT, "grading", "freeze", "v1.4_manifest.json")))  # V1.4: engine .10 Codex Review 2 Blocking corrections (approved 2026-11-02)
+                ("v1.4-review2-corrections", os.path.join(ROOT, "grading", "freeze", "v1.4_manifest.json")),  # V1.4: engine .10 Codex Review 2 Blocking corrections (approved 2026-11-02)
+                ("v1.5-item27-quota-pause", os.path.join(ROOT, "grading", "freeze", "v1.5_manifest.json")))  # V1.3.1 (2ea2e5b5 .6, item 27) and the daily-quota pause, one project per workload (approved 2026-11-02)
 PASS_ID = "judge-validation-pass-1"
 FROZEN_PATHS = ("grading", "harness", "config.json")
 AUTH_REF = "docs/status.md decision 2026-11-01: Judge Validation authorized (one pass, frozen judge, separate ledger, 15 USD, concurrency 1, Dev project key)"
@@ -181,8 +182,18 @@ def grade_run(spec: dict, r: dict, log, extra_argv: list | None = None) -> dict:
     rec = RG.grading_passes(r["grading_out"], r["run_uuid"])[-1] if RG.grading_passes(r["grading_out"], r["run_uuid"]) else {}
     return {"rc": rc, "judge_unit": rec.get("judge_unit"), "grading_pass": rec.get("grading_pass"), "graded": rec.get("graded"), "gate": rec.get("gate"), "grader_version": rec.get("grader_version"),
             "calls": len(calls), "calls_ok": sum(1 for x in calls if x.get("status") == "ok"), "not_attempted": sum(1 for x in calls if x.get("status") == "not_attempted"),
-            "provider_error": sum(1 for x in calls if x.get("status") == "provider_error"), "halted": getattr(j, "halted", None),
+            "provider_error": sum(1 for x in calls if x.get("status") == "provider_error"), "halted": getattr(j, "halted", None), "daily_quota": getattr(j, "daily_quota", None),
             "cost_from_calls_usd": str(sum((call_cost_usd(x["usage"]) for x in calls if x.get("usage")), Decimal(0)).quantize(Decimal("0.000001")))}
+
+
+PAUSED = 2  # run / recover: the pass was checkpointed on an exhausted daily quota (approved 2026-11-02)
+
+
+def quota_pause(run_uuid: str, daily_quota: dict) -> int:
+    """Checkpoint: the registry records the pause and when the pass may resume; nothing else changes (the batch's
+    later items are not_attempted and stay eligible for their first evaluation; the failed item keeps its one retry)."""
+    registry({"kind": "quota_pause", "run_uuid": run_uuid, "daily_quota": daily_quota, "resume_at": quota_resume_at(daily_quota).isoformat(timespec="seconds")})
+    return PAUSED
 
 
 def check() -> dict:
@@ -220,11 +231,16 @@ def run() -> int:
         except Exception as ex:  # recorded, never retried automatically
             registry({"kind": "run_error", "run_uuid": u, "error": f"{type(ex).__name__}: {str(ex)[:300]}"}); continue
         registry({"kind": "run_done", "run_uuid": u, "task_id": r["task_id"], "unit_id": out["judge_unit"], **{k: v for k, v in out.items() if k != "judge_unit"}})
+        if out.get("daily_quota"):
+            return quota_pause(u, out["daily_quota"])
         if out.get("halted"):
             registry({"kind": "halted", "run_uuid": u, "reason": out["halted"]}); break
         if r["judge_items"] and (out.get("provider_error") or out.get("not_attempted")):  # engine .8: one bounded per-item recovery pass afterwards
             items = auto_recovery_items(r)
-            if items and recover(u, items) != 0:
+            rc = recover(u, items) if items else 0
+            if rc == PAUSED:
+                return PAUSED
+            if rc != 0:
                 break
     registry({"kind": "pass_end", "spent": {k: str(v) for k, v in spent().items() if k != "snapshot"}})
     return 0
@@ -282,8 +298,66 @@ def recover(run_uuid: str, items: list[int]) -> int:
     rec = [p for p in RG.grading_passes(r["grading_out"], run_uuid)][-1]
     registry({"kind": "recovery_done", "run_uuid": run_uuid, "task_id": r["task_id"], "unit_id": out.get("judge_unit"), "recovery_pass": out.get("grading_pass"),
               "pass_kind": rec.get("pass_kind"), "judge_completeness": rec.get("judge_completeness"), "calls": out.get("calls"), "calls_ok": out.get("calls_ok"),
-              "provider_error": out.get("provider_error"), "not_attempted": out.get("not_attempted"), "cost_from_calls_usd": out.get("cost_from_calls_usd"), "halted": out.get("halted")})
+              "provider_error": out.get("provider_error"), "not_attempted": out.get("not_attempted"), "cost_from_calls_usd": out.get("cost_from_calls_usd"), "halted": out.get("halted"),
+              "code_tag": ck["freeze"].get("tag")})
+    if out.get("daily_quota"):
+        return quota_pause(run_uuid, out["daily_quota"])
     return 0
+
+
+def pending_pause() -> dict | None:
+    """The latest quota pause that no later resume event closed."""
+    last = None
+    for e in registry_events():
+        if e.get("kind") == "quota_pause":
+            last = e
+        elif e.get("kind") == "quota_resume":
+            last = None
+    return last
+
+
+def resume(poll_s: int = 300, max_pauses: int = 10, sleep=None) -> int:
+    """Unattended continuation of the one logical Judge Validation pass (approved 2026-11-02; Dev project key,
+    existing 15 USD ceiling, the same frozen judge): after a pending quota pause has passed its resume time and only on AC
+    power, first the eligible per-item recoveries of judged runs (provider_error retried once, never-sent items evaluated;
+    completed items and exhausted ones, such as an item already recovered once, are never sent), then the runs not yet
+    judged. An exhausted daily quota checkpoints and pauses again; any other stop ends the resume and is recorded."""
+    import time as _time
+    sleep = sleep or _time.sleep
+    pauses = 0
+    registry({"kind": "resume_start"})
+    while True:
+        p = pending_pause()
+        if p:
+            wait = (dt.datetime.fromisoformat(p["resume_at"]) - dt.datetime.now(dt.timezone.utc)).total_seconds()
+            if wait > 0:
+                sleep(wait); continue
+            registry({"kind": "quota_resume", "paused_at": p["at"], "resume_at": p["resume_at"]})
+        if not on_ac_power():
+            if not any(e.get("kind") == "power_wait" for e in registry_events()[-3:]):
+                registry({"kind": "power_wait", "reason": "on battery: an unattended paid batch starts only on AC power"})
+            sleep(poll_s); continue
+        try:
+            rc = 0
+            runs = {r["run_uuid"]: r for r in validation_runs()}
+            for spec in json.load(open(PLAN, encoding="utf-8"))["order"]:
+                r = runs.get(spec["run_uuid"])
+                items = auto_recovery_items(r) if r and r["judge_items"] else []
+                if items:
+                    rc = recover(r["run_uuid"], items)
+                    if rc:
+                        break
+            if rc == 0:
+                rc = run()
+        except SystemExit as ex:  # a gate or ledger refusal: recorded, never bypassed
+            registry({"kind": "resume_stop", "reason": str(ex)[:300]}); return 1
+        if rc == PAUSED:
+            pauses += 1
+            if pauses > max_pauses:
+                registry({"kind": "resume_stop", "reason": f"{pauses} quota pauses"}); return 1
+            continue
+        registry({"kind": "resume_end", "rc": rc})
+        return rc
 
 
 def status() -> dict:
@@ -323,7 +397,8 @@ def write_plan() -> dict:
 
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description="Judge Validation (one pass, frozen judge)")
-    ap.add_argument("command", choices=("plan", "check", "run", "status", "recover"))
+    ap.add_argument("command", choices=("plan", "check", "run", "status", "recover", "resume"))
+    ap.add_argument("--env-file", default=os.path.join(ROOT, ".env"), help="resume: credential file loaded into this process (names only; existing variables win)")
     ap.add_argument("--run-uuid", default=None, help="recover: the interrupted Validation run")
     ap.add_argument("--items", default=None, help="recover: comma-separated judge items")
     a = ap.parse_args(argv)
@@ -334,6 +409,10 @@ def main(argv=None) -> int:
         print(json.dumps(check(), indent=1))
     elif a.command == "run":
         return run()
+    elif a.command == "resume":
+        from harness.launcher import load_env_file
+        load_env_file(a.env_file)
+        return resume()
     elif a.command == "recover":
         if not (a.run_uuid and a.items):
             raise SystemExit("recover needs --run-uuid and --items")

@@ -230,6 +230,34 @@ class V13CorrectionTests(unittest.TestCase):
         self.assertEqual(CK.run_checks(deck, REFERENCE, RUBRIC)["items"][45]["verdict"], "fail")  # out of scope: every slide identified, the absence is confirmed
 
 
+class V131CorrectionTests(unittest.TestCase):
+    """V1.3.1 correction .6 (approved 2026-11-02; found in the V1.3 regression evidence, the held-out Validation result
+    unchanged): item 27 passes only with the literal label "Margin Impact" in a header or group row (confirmed 2026-11-01)."""
+    H, tb, slide, table_shape = V1LayoutTests.H, V1LayoutTests.tb, V1LayoutTests.slide, V1LayoutTests.table_shape
+
+    def item27(self, margin_rows):
+        act = [["Activity Category", "Hours", "% Total IT"]] + [[c, "1", f"{p:.2f}%"] for c, p in REFERENCE["pct"].items()]
+        deck = {"inventory": [{"path": "d.pptx", "kind": "pptx"}], "pptx": {"d.pptx": {"slide_count": 2, "slide_height": self.H, "slides": [
+            self.slide(1, [self.tb("TextBox 2", 300000, ["BASELINE ACTIVITY ALLOCATION"]), self.table_shape(act)]),
+            self.slide(2, [self.tb("TextBox 2", 300000, ["MARGIN IMPACT ANALYSIS"]), self.table_shape(margin_rows)])]}}}
+        return CK.run_checks(deck, REFERENCE, RUBRIC)["items"][27]
+
+    def test_a_header_or_group_label_with_the_literal_phrase_passes(self):
+        self.assertEqual(self.item27([["Margin Impact", "Activity Category", "Hours", "% of Total Hours"], ["Cost", "Break/Fix", "1", "50%"], ["Investment", "Automation", "1", "50%"]])["verdict"], "pass")
+        self.assertEqual(self.item27([["Activity Category", "Margin  impact", "Hours"], ["Break/Fix", "Cost", "1"], ["Automation", "Investment", "1"]])["verdict"], "pass")  # case and spacing
+
+    def test_margin_segment_without_margin_impact_fails(self):
+        r = self.item27([["Margin Segment / Activity", "Operational Definition & Purpose", "Hours", "% Hrs"], ["Break/Fix", "Firefighting", "1", "50%"],
+                         ["SUBTOTAL: COST IMPACT", "1 Category", "1", "50%"], ["Automation", "Replaces toil", "1", "50%"], ["SUBTOTAL: INVESTMENT IMPACT", "1 Category", "1", "50%"]])
+        self.assertEqual(r["verdict"], "fail")  # .5: pass (the word "margin" alone was accepted); the Validation deck's layout
+        self.assertIn("Margin Impact", r["note"])
+
+    def test_the_entry_rule_is_unchanged(self):
+        r = self.item27([["Margin Impact", "Activity Category", "Hours"], ["Cost", "Break/Fix", "1"], ["Overhead", "Automation", "1"]])
+        self.assertEqual(r["verdict"], "fail")  # out of scope: a literal label with entries other than Cost / Investment still fails
+        self.assertIn("other than Cost / Investment", r["note"])
+
+
 class GoldVariantTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):

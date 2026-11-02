@@ -53,11 +53,13 @@ class PassLoopTests(unittest.TestCase):
         for k, v in (("JDIR", self.d.name), ("REGISTRY", os.path.join(self.d.name, "registry.jsonl")), ("SEALED", os.path.join(self.d.name, "sealed"))):
             p = mock.patch.object(JF, k, v); p.start(); self.addCleanup(p.stop)
         p = mock.patch.object(JF, "gates", return_value={"ok": True, "freeze_tag": {"ok": True, "commit": "c0ffee"}}); p.start(); self.addCleanup(p.stop)
+        for name, value in (("on_ac_power", True), ("select_project_credential", {"variable": "GOOGLE_API_KEY_VALIDATION", "suffix": "FRML"})):  # 2026-11-02: AC power and the Formal project's key
+            p = mock.patch.object(JF, name, return_value=value); p.start(); self.addCleanup(p.stop)
         self.runs = [{"run_uuid": f"R{i}", "task_id": "t", "judge_items": [1, 2], "grading_out": os.path.join(self.d.name, "sealed", f"R{i}")} for i in range(2)]
 
     def test_each_finalized_run_is_judged_once_and_the_registry_carries_no_verdict(self):
         graded = []
-        fake = lambda r, est, log, auth, extra=None: graded.append(r["run_uuid"]) or {"rc": 0, "calls": 2, "calls_ok": 2, "provider_error": 0, "not_attempted": 0, "halted": None}
+        fake = lambda r, est, log, auth, extra=None, project_suffix=None: graded.append(r["run_uuid"]) or {"rc": 0, "calls": 2, "calls_ok": 2, "provider_error": 0, "not_attempted": 0, "halted": None}
         cfg = JF.cfg(); cfg["batches"]["formal"]["units_total"] = 2
         with mock.patch.object(JF, "finalized_runs", return_value=self.runs), mock.patch.object(JF, "_grade", side_effect=fake), \
              mock.patch.object(JF, "ensure_ledger", return_value=FakeLedger(30)), mock.patch.object(JF, "cfg", return_value=cfg):

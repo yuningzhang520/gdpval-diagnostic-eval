@@ -153,7 +153,9 @@ class GuardLiabilityTests(unittest.TestCase):
         self.assertEqual(JD.batch_liability_usd(h["judge"]), one * 12)  # 1 metered call + 11 average calls inferred
         with self.env():
             self.assertIsNotNone(JV.make_guard(h, 0, Decimal(0), Decimal(15))(3))  # engine .9: None (allowed)
-            self.assertIsNotNone(JF.make_guard(h, 0, Decimal(0), Decimal(15))(3))
+        with mock.patch.dict(os.environ, {"GOOGLE_API_KEY": "synthetic-FRML"}, clear=True):  # the Formal project's own key
+            self.assertIsNone(JF.make_guard({"judge": None}, 0, Decimal(0), Decimal(15), project_suffix="FRML")(3))
+            self.assertIsNotNone(JF.make_guard(h, 0, Decimal(0), Decimal(15), project_suffix="FRML")(3))  # refused on the liability, not the key
 
     def test_boundaries_and_a_ceiling_already_exceeded(self):
         h = self.holder(failures=0)

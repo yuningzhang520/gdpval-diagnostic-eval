@@ -4907,6 +4907,71 @@ Budgets (unchanged by the corrections):
 - Formal generation 150 USD; Formal judge 30 USD, concurrency 1, its own ledger. Together **180 USD**.
 - Judge Validation 15 USD (13.758898 USD remaining).
 
+## V1.3.1, judge projects and daily-quota pause, generation budget wording (V1.5; 2026-11-02)
+
+Decisions by the human (chat, 2026-11-02):
+- the B1–B5 report is accepted as implementation progress, not as independent verification;
+- `7e30849` and tag `v1.4-review2-corrections` are preserved;
+- V1.3.1 is approved;
+- the judge quota protocol is approved;
+- unattended resumption of Judge Validation is approved;
+- the generation budget is approved without new admission code;
+- the cumulative Codex delta review is to be prepared;
+- Formal freeze is still not authorized.
+
+V1.3.1 (`2ea2e5b5…` grader .6; preregistration 1.23):
+- Item 27 requires the literal phrase "Margin Impact" in a header or group row.
+- `V131CorrectionTests` has three tests: literal header pass, case/spacing pass, "Margin Segment / Activity" fail, and an
+  out-of-scope entry-rule fail.
+- The held-out Validation result stays 4/6. Re-grades under .6 are regression evidence (final verification entry).
+
+Judge projects and daily quotas (preregistration 1.23):
+- `grading.judge.daily_quota_violation` recognises an HTTP 429 whose QuotaFailure is per day.
+- The judge's own Inspect model instance stops retrying that request (`should_retry`); every other retry decision stays
+  Inspect's.
+- The batch halts at once: the failed item keeps its one retry, and the later items are not sent.
+- `judge_validation`:
+  - `run` and `recover` checkpoint `quota_pause` with `resume_at`;
+  - `resume` waits for the resume time and for AC power, then continues the same logical pass: eligible per-item
+    recoveries in plan order, then the remaining runs;
+  - completed and exhausted items are never sent;
+  - a gate or ledger refusal ends the resume with `resume_stop`.
+- `judge_formal`:
+  - the second project's key (`judge.formal.credential_env` = `GOOGLE_API_KEY_VALIDATION`) is put into
+    `GOOGLE_API_KEY` in its own process and re-checked after Inspect's .env initialisation;
+  - the Dev key is refused, and the guard requires the Formal project's key suffix;
+  - quota pauses and the recoveries of unsent items happen within the one pass;
+  - `resume` continues a started pass that was paused or interrupted, never one that stopped or ended.
+- Tests: `grading/tests/test_judge_quota_pause.py` (11), plus updates to `test_judge_formal.py` and
+  `test_review2_blocking.py`. The Formal guard test now passes the Formal project key, so it is refused on liability,
+  not on the key.
+- Actual quotas:
+  - Dev project: 250 requests per day for `gemini-3.1-pro`, from the provider's own 429 detail on 2026-11-01
+    (`GenerateRequestsPerDayPerProjectPerModel`, `quotaValue` 250).
+  - Second project: not verifiable from here without a paid call or console access. The API key cannot read quota
+    settings; gcloud is not installed and has no configuration on this Mac (checked). It needs the human's check in the provider console, where a
+    quota increase can also be requested.
+
+Generation budget (`config.json` `batches.formal.budget_decision`):
+- 150 USD is the admission threshold, not a guarantee of realized spend.
+- The documented theoretical worst case of the current scheduler is 165 USD (150 − the last 5 USD reservation + the
+  20 USD per-sample limit), conditional on the existing per-sample limits.
+- The human approved generation spending up to 165 USD under those assumptions. No new admission control.
+- The Formal judge (30 USD) and Judge Validation (15 USD) authorizations are unchanged.
+- Nominal Formal budget 180 USD (150 + 30); worst-case authorized Formal spending 195 USD (165 + 30).
+
+Tests before the commit (logs `logs/r2-fixes/`):
+
+| Suite | Result | Wall time |
+|---|---|---|
+| Grading discover | 496 tests, 5 skipped, OK | 123.77 s |
+| Harness, 14 modules via `run_isolated.sh` | 203 tests, OK | 52 s |
+
+Engineering notes:
+- The first run of the new quota tests hung: the Formal pass-loop tests did not mock the AC-power check while the Mac
+  was on battery, and two of my tests had timing mistakes. Corrected in the tests; the runners were unchanged.
+- The judge request surface is identical to `v1-calibration-freeze`.
+
 ## Known issues and findings (material check)
 
 - `rubric_json.form_content`: 8,036 items hold `null`, 2,417 items lack the key, zero
@@ -5313,7 +5378,8 @@ Budgets (unchanged by the corrections):
 - 2026-11-02 · V1.3 corrections (`2ea2e5b5…` .5, `c3525d4d…` .6), judge runner V1.3 (engine .9: classification, 600 s item cap), Formal budgets (150 USD generation, 30 USD judge, separate ledgers), Formal judge pass prepared and gated; tag `v1.3-corrections` · be84ff6 (local)
 - 2026-11-02 · V1.3 regression evidence, Formal preflight at V1.3 (150 USD), freeze-v1 checklist; `2ea2e5b5…` item-27 implementation finding (not fixed, awaiting the human) · 3955422 (local)
 - 2026-11-02 · Codex Review 2 Blocking corrections R2-B1–B5 (engine .10): per-attempt WAL, identity-based pass selection, inferred settlements estimated (no hold), guard liability, run/pass-bound label comparisons; tag `v1.4-review2-corrections` · 7e30849 (local)
-- 2026-11-02 · Docker-gated suites on `7e30849` (13 suites, all pass) and the historical impact audit (only the estimated portions of three ledgers change) · (this commit; local)
+- 2026-11-02 · Docker-gated suites on `7e30849` (13 suites, all pass) and the historical impact audit (only the estimated portions of three ledgers change) · 9f94b88 (local)
+- 2026-11-02 · V1.3.1 (`2ea2e5b5…` .6, item 27 literal label), judge projects per workload and daily-quota pause/resume, generation budget wording (150 admission, 165 worst case approved); tag `v1.5-item27-quota-pause` · (this commit; local)
 
 ## Next stage (not started)
 

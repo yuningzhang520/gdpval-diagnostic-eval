@@ -28,6 +28,7 @@ import hashlib
 import json
 import os
 import random
+import re
 import subprocess
 import sys
 from decimal import Decimal
@@ -120,6 +121,35 @@ def next_request_bound_usd(judge, request_chars: int, max_tokens: int) -> Decima
         return nxt
     avg = sum((call_cost_usd(u, "long") for u in calls), Decimal(0)) / len(calls)
     return max(nxt, avg * (1 + _max_retries_of(judge)))
+
+
+QUOTA_RESET_TZ = "America/Los_Angeles"  # Gemini API daily quotas reset at midnight Pacific time
+QUOTA_RESUME_MARGIN_S = 300
+
+
+def quota_resume_at(daily_quota: dict, now: dt.datetime | None = None) -> dt.datetime:
+    """When a pass paused on an exhausted daily quota may send again (approved 2026-11-02): the later of the provider's
+    retry guidance (RetryInfo, from the failed request) and the next midnight Pacific time, plus a 5-minute margin, so a
+    resumed pass does not spend an item on a quota that has not reset yet."""
+    from zoneinfo import ZoneInfo
+    now = now or dt.datetime.now(dt.timezone.utc)
+    at = dt.datetime.fromisoformat(daily_quota["at"]) if daily_quota.get("at") else now
+    hint = at
+    m = re.fullmatch(r"(\d+(?:\.\d+)?)s", str(daily_quota.get("retry_delay") or ""))
+    if m:
+        hint = at + dt.timedelta(seconds=float(m.group(1)))
+    local = at.astimezone(ZoneInfo(QUOTA_RESET_TZ))
+    midnight = (local + dt.timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0).astimezone(dt.timezone.utc)
+    return max(hint, midnight) + dt.timedelta(seconds=QUOTA_RESUME_MARGIN_S)
+
+
+def on_ac_power() -> bool:
+    """True when macOS reports AC power (pmset); an unattended paid batch starts only then (approved 2026-11-02)."""
+    try:
+        out = subprocess.run(["pmset", "-g", "batt"], capture_output=True, text=True, timeout=20).stdout
+    except (OSError, subprocess.SubprocessError):
+        return False
+    return "AC Power" in out.splitlines()[0] if out else False
 
 
 def registry(event: dict, pass_id: str = PASS_ID) -> None:

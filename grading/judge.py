@@ -758,6 +758,9 @@ class ProviderJudge:
         # terminal events, so a schema retry of the same unit is never merged with the first request
         self._attempt_nonce = os.urandom(4).hex()
         self._attempt_seq = 0
+        # Approved 2026-11-02: a daily-quota exhaustion halts the batch at once (no request until the provider's reset);
+        # the runner checkpoints the pass and resumes it after the reset
+        self.daily_quota: dict | None = None
 
     def _new_attempt_id(self) -> str:
         self._attempt_seq += 1
@@ -785,6 +788,11 @@ class ProviderJudge:
         if self._model is None:
             cfg = GenerateConfig(**{k: v for k, v in self.generate_params.items() if v is not None})
             self._model = get_model(self.model_name, config=cfg, **self._model_args)
+            inspect_should_retry = self._model.should_retry
+
+            def should_retry(ex):  # approved 2026-11-02: a daily-quota 429 ends Inspect's retries of this request; every other decision stays Inspect's
+                return False if daily_quota_violation(ex) else inspect_should_retry(ex)
+            self._model.should_retry = should_retry  # this judge's own model instance only
         if self._timeout_s is not None:  # V1.3: the cap covers the request, Inspect's retries and their backoff
             return asyncio.run(asyncio.wait_for(self._model.generate(messages), timeout=self._timeout_s))
         return asyncio.run(self._model.generate(messages))
@@ -832,6 +840,9 @@ class ProviderJudge:
             if isinstance(ex, (asyncio.TimeoutError, TimeoutError)) and self._timeout_s is not None and time.monotonic() - t0 >= self._timeout_s - 1:
                 detail.update({"timed_out": True, "wall_clock_cap_s": self.item_wall_clock_cap_s, "failure_class": "retryable", "recoverability": "recoverable",
                                "message": f"item wall-clock cap of {self.item_wall_clock_cap_s:.0f} s reached (request, retries and backoff); cancelled"})
+            dq = daily_quota_violation(detail)
+            if dq:
+                detail["daily_quota"] = dq
             rec.update({"status": "provider_error", "error": detail, "raw_response": None, "usage": None, "usage_status": "uncertain", "seconds": round(time.monotonic() - t0, 3)})
             self._last_end = time.monotonic()
             if detail["recoverability"] in ("recoverable", "item_permanent") and self.provider_error_stop_items:
@@ -844,6 +855,9 @@ class ProviderJudge:
                 self.usage_incomplete = True
                 if self.stop_on_uncertain_usage or detail["recoverability"] == "unrecoverable":
                     self.halted = f"call for {unit['unit_id']} failed with {type(ex).__name__} ({detail['recoverability']}: HTTP {detail.get('http_status')} {detail.get('provider_status')}); its cost is unknown"
+            if dq:  # no further request in this batch: the later units are not_attempted, first evaluations after the reset
+                self.daily_quota = {**dq, "item": unit["item"], "unit_id": unit["unit_id"], "at": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds")}
+                self.halted = f"daily quota exhausted ({dq.get('quota_id')}, value {dq.get('quota_value')}); paused until the provider's reset"
             self._persist({"phase": "finished", **{k: rec[k] for k in ("unit_id", "item", "attempt_id", "status", "error", "raw_response", "usage", "usage_status", "seconds")}})
             self.calls.append(rec)
             return rec
@@ -892,6 +906,23 @@ class ProviderJudge:
                 "calls_usage_missing_or_uncertain": sum(1 for c in self.calls if c.get("usage_status") in ("missing", "uncertain")), "halted": self.halted,
                 "note": f"{len(self.calls)} judge call(s): {statuses.count('ok')} ok, {statuses.count('provider_error')} provider_error, {statuses.count('not_attempted')} not_attempted, "
                         f"{sum(1 for c in self.calls if c.get('usage_status') in ('missing', 'uncertain'))} with missing/uncertain usage"}
+
+
+def daily_quota_violation(error) -> dict | None:
+    """The per-day quota a provider error reports as exhausted (HTTP 429 with a google.rpc.QuotaFailure whose quota id or
+    metric is per day, e.g. GenerateRequestsPerDayPerProjectPerModel), or None. Approved 2026-11-02: such an error is not
+    retried within the item (it cannot clear before the provider's daily reset); the pass is checkpointed and paused, and
+    resumes after the reset as one logical pass. ``error`` is an exception or a provider_error_detail record."""
+    if isinstance(error, BaseException):
+        error = provider_error_detail(error)  # unwraps a tenacity RetryError to its last attempt
+    if not isinstance(error, dict) or error.get("http_status") != 429:
+        return None
+    for q in error.get("quota") or []:
+        key = f"{q.get('quotaId') or ''} {q.get('quotaMetric') or ''}".upper().replace("_", "").replace("-", "")
+        if "PERDAY" in key:
+            return {"quota_id": q.get("quotaId"), "quota_metric": q.get("quotaMetric"), "quota_value": q.get("quotaValue"), "quota_dimensions": q.get("quotaDimensions"),
+                    "retry_delay": error.get("retry_delay")}
+    return None
 
 
 def inferred_buffer_calls(failures: list[dict], max_retries) -> int:

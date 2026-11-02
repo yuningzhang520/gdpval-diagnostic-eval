@@ -843,7 +843,7 @@
     "task_grader_versions": {
       "1137e2bb-bdf9-4876-b572-f29b7de5e595": "1137e2bb-2026-11-01.3",
       "7d7fc9a7-21a7-4b83-906f-416dea5ad04f": "7d7fc9a7-2026-11-01.7",
-      "2ea2e5b5-257f-42e6-a7dc-93763f28b19d": "2ea2e5b5-2026-11-01.5",
+      "2ea2e5b5-257f-42e6-a7dc-93763f28b19d": "2ea2e5b5-2026-11-02.6",
       "a45bc83b-22f9-4def-8d89-9c5661b2b86f": "a45bc83b-2026-11-01.3",
       "b5d2e6f1-62a2-433a-bcdd-95b260cdd860": "b5d2e6f1-2026-11-01.2",
       "f841ddcf-2a28-4f6d-bac3-61b607219d3e": "f841ddcf-2026-11-01.2",
@@ -1212,7 +1212,7 @@
       "samples_per_task": 1,
       "units_total": 20,
       "budget_ceiling_usd": "150",
-      "budget_decision": "SET by the human 2026-11-01: formal generation ceiling 150 USD for the 20 runs (10 tasks x 2 candidates); reservations Opus 8 USD and GPT 5 USD per sample (forecast start gates, released to actual cost at settlement); per-sample Inspect cost limit 20 USD (generation.cost_limit_usd, inherited); never raised silently; separate from the formal judge ledger (judge.formal)",
+      "budget_decision": "SET by the human 2026-11-01, clarified 2026-11-02: 150 USD is the generation ADMISSION threshold for the 20 runs (10 tasks x 2 candidates), not a guarantee of realized spend: a sample starts only when the remaining budget covers its reservation (Opus 8 USD, GPT 5 USD per sample, released to actual cost at settlement) and nothing intercepts a running sample, whose Inspect cost limit is 20 USD (generation.cost_limit_usd, inherited); the documented theoretical worst case of the current scheduler is therefore 165 USD (150 - the last 5 USD reservation + 20 USD), conditional on those per-sample limits, and the human approved generation spending up to 165 USD under those assumptions (no new admission control). Separate from the 30 USD Formal judge ledger (judge.formal) and the 15 USD Judge Validation ledger. Nominal Formal budget 180 USD (150 + 30); worst-case authorized Formal spending 195 USD (165 + 30). Never raised silently.",
       "reservation_usd_by_model": {
         "anthropic/claude-opus-5-5": "8.00",
         "openai/gpt-6.1-sol": "5.00"
@@ -1271,6 +1271,8 @@
     "formal": {
       "status": "APPROVED IN ADVANCE by the human 2026-11-01; executes only after the human's explicit Formal launch authorization (which also authorizes this pass) and freeze-v1: one judge pass over the 20 formal outputs with the frozen judge configuration, identically for both candidates; each output judged as soon as its run is finalized (outcome recorded, collection complete) while generation continues; never a partially written output",
       "ceiling_usd": 30,
+      "credential_env": "GOOGLE_API_KEY_VALIDATION",
+      "project_rule": "APPROVED by the human 2026-11-02: one Google project per workload, never split within one workload to bypass a quota; Judge Validation stays on the Dev project (GOOGLE_API_KEY), the Formal judge pass runs on the second project (GOOGLE_API_KEY_VALIDATION); on an exhausted daily quota the pass is checkpointed, paused and resumed after the provider's reset as one logical pass, never re-judging a completed item",
       "ledger": "~/turing-eval-runs/judge_formal/ledger.json",
       "concurrency": 1,
       "passes": 1,

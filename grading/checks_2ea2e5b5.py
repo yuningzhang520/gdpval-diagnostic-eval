@@ -24,7 +24,8 @@ from decimal import ROUND_HALF_UP, Decimal, InvalidOperation
 from .engine.decision import Decision, Result
 
 TASK = "2ea2e5b5-257f-42e6-a7dc-93763f28b19d"
-VERSION = "2ea2e5b5-2026-11-01.5"  # .5 (V1.3 correction, approved 2026-11-01; found by held-out Validation item 45, which stays a V1 result): the study's own name "work-time" is not a time-section keyword, and a section is never confirmed absent while another section is ambiguous
+VERSION = "2ea2e5b5-2026-11-02.6"  # .6 (V1.3.1 correction, approved 2026-11-02; found in the V1.3 regression evidence, the held-out Validation result unchanged): item 27 requires the literal phrase "Margin Impact" in a header or group row, as confirmed 2026-11-01; "Margin Segment / Activity" no longer passes
+# previous version: "2ea2e5b5-2026-11-01.5"  # .5 (V1.3 correction, approved 2026-11-01; found by held-out Validation item 45, which stays a V1 result): the study's own name "work-time" is not a time-section keyword, and a section is never confirmed absent while another section is ambiguous
 # previous version: "2ea2e5b5-2026-11-01.4"  # .4 (V1.1, 2026-11-01): picture-chart unassessable entries carry visual_review='picture_chart' (Formal: human visual judgment before a critical status is reported); verdicts unchanged
 # previous version: "2ea2e5b5-2026-11-01.3"  # .2: item 10 removed from C2 (A-21 precedent, approved 2026-11-01); its verdict unchanged
 # .3 (Dev calibration 2026-11-01): a slide without a title placeholder takes its heading from its topmost text shape;
@@ -32,7 +33,8 @@ VERSION = "2ea2e5b5-2026-11-01.5"  # .5 (V1.3 correction, approved 2026-11-01; f
 # as group rows label the categories below them; with several % columns the one naming the total is the % of total
 # hours; a total row naming no segment level is the table's grand total (A-9).
 HEADING_BAND = 0.25  # .3: the fallback heading must start in the top quarter of the slide
-STUDY_NAME = re.compile(r"work[\s\-\u2013]*time")  # .5: the task's own name ("Work-Time Study") in a heading is no section keyword
+STUDY_NAME = re.compile(r"work[\s\-\u2013]*time")
+MARGIN_IMPACT = re.compile(r"\bmargin\s*impact\b")  # .6: item 27's literal label (headers and group rows are normalised: lower case, single spaces)  # .5: the task's own name ("Work-Time Study") in a heading is no section keyword
 SHARE_TOLERANCE_FOR_DERIVATION = 0.20  # A-9: printed shares must agree with the source shares over the covered categories
 GRAND_TOTAL = re.compile(r"(grand\s+)?total(\s+hours)?|overall(\s+total)?|all\s+activities")
 CATEGORIES = ["Audit/Compliance", "Automation", "Break/Fix", "Change Management Meeting", "Deployment of Upgrades", "Develop/Integrate Tooling",
@@ -501,7 +503,7 @@ def run_checks(extraction: dict, reference: dict, rubric: list[dict], integrity:
                     d = Decision(27, {**ev, "headers": t["headers"], "group_rows": group_labels})
                     if seg_col is None and not t["groups"]:
                         d.violation("no_margin_column", "no 'Margin Impact' column or row in the table")
-                    elif "margin" not in " ".join(norm(h) for h in t["headers"] + group_labels):  # the rubric names the label 'Margin Impact' (column or row)
+                    elif not any(MARGIN_IMPACT.search(norm(h)) for h in t["headers"] + group_labels):  # .6: the rubric's label 'Margin Impact' (column or row), literally
                         d.violation("no_margin_column", f"no column or row labeled 'Margin Impact' (headers {t['headers']}; group rows {group_labels})")
                     else:
                         bad = [x["segment"] for x in t["rows"] if x["segment"] not in levels]
