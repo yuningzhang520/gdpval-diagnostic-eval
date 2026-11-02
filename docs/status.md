@@ -1,6 +1,15 @@
 # Status
 
-Current stage: **Two-stage freeze (2026-11-02): formal GENERATION frozen (`freeze-v1-generation`, code baseline `b33cc37`) and the formal generation batch authorized; the Codex delta review of `b33cc37` returned BLOCKED (D1-D3, N1), corrections in progress for `freeze-v1-grading`; no grader or judge runs on a Formal output before that tag.** Earlier header, kept for the record: **Freeze preparation (2026-11-02): Codex Review 2 BLOCKED at `5121e1a`; its five Blocking findings corrected (V1.4, engine .10, tag `v1.4-review2-corrections`), awaiting the narrow delta review; Formal measurement readiness BLOCKED until then. Earlier in the day:** V1.3 corrections and judge-runner reliability (engine .9) implemented and tested, tag `v1.3-corrections`; Formal generation (150 USD) and the Formal judge pass (30 USD, separate ledger) configured, the pass prepared and gated, not run; Judge Validation in progress; `freeze-v1` not tagged, `config.json` still DRAFT; no Formal call.** Earlier header, kept for the record: Evaluation architecture implementation on baseline `f37f1e829af2efd5daf81e3a680ea691b16fcfbe`
+Current stage: **Formal judging and the blind-label workflow (2026-11-02)**:
+- Formal generation: complete, 20/20.
+- Freeze: `freeze-v1-grading` = `cc684ef`.
+- Formal judge pass: running under the deadline exception, results sealed and provisional.
+- Judge Validation: resumed on the third project.
+- 20 blind packets: built, awaiting the human's labels.
+- Report drafts: in `report/`.
+- The V1.9 recheck by Codex is outstanding.
+
+Earlier header, kept for the record: **Freeze preparation (2026-11-02): Codex Review 2 BLOCKED at `5121e1a`; its five Blocking findings corrected (V1.4, engine .10, tag `v1.4-review2-corrections`), awaiting the narrow delta review; Formal measurement readiness BLOCKED until then. Earlier in the day:** V1.3 corrections and judge-runner reliability (engine .9) implemented and tested, tag `v1.3-corrections`; Formal generation (150 USD) and the Formal judge pass (30 USD, separate ledger) configured, the pass prepared and gated, not run; Judge Validation in progress; `freeze-v1` not tagged, `config.json` still DRAFT; no Formal call.** Earlier header, kept for the record: Evaluation architecture implementation on baseline `f37f1e829af2efd5daf81e3a680ea691b16fcfbe`
 (2026-11-01): Task 1 (`1137e2bb…`) gold-first verification done and Grader v0 tagged; run classes (dev /
 validation / compat / formal), batch runner, artifact manifests, run inventory, engine + task grader versions,
 development model (`google/gemini-3.8-flash`) and compatibility task (`87da214f…`) implemented and dry-run
@@ -5481,6 +5490,25 @@ Formal judge (deadline exception, preregistration 1.25):
   to that gate. The formal judge verdicts are provisional until both that agreement and the independent recheck of
   V1.9 exist.
 - All formal results stay sealed until the human's 20 formal blind labels are saved.
+
+## Report drafts; Judge Validation debug-set exclusion (2026-11-02)
+
+Report drafts:
+- `report/REPORT.md` and `report/dataset_proposal.md` were drafted from non-Formal sources only, with placeholders for
+  every Formal result.
+- The drafting pass listed source conflicts, kept as open items:
+  - `README.md` limitations and architecture table are stale;
+  - "DRAFT" wording remains in `preregistration.md`'s title and in `config.json` text fields;
+  - `PLAN.md` says two to four critical criteria per task, but `f841ddcf…` has five, and lists judge `max_retries` 3
+    where the frozen value is 10;
+  - no approval record was found for the capability map.
+
+Judge Validation agreement, debug-set exclusion:
+- The queue v4 Validation sample for `1137e2bb…` is item 28, a judge-only item.
+- `grading/debug_set.json` lists `1137e2bb…` items 11, 23, 24, 27, 28, 29 and 30: stub-judge debugging of unit assembly
+  and parsing, 2026-10-30, "exclude from judge validation".
+- Under the rule that items used to debug the judge are never reused to validate it, item 28 is excluded from the
+  judge-human agreement. It is reported separately.
 
 ## Known issues and findings (material check)
 
