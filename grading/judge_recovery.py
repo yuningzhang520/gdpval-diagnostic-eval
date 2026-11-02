@@ -111,6 +111,8 @@ def recovery_plan(out_dir: str, run_uuid: str, base_pass: str, items: list[int])
         status = _item_status(row) if row else None
         if row is None or row.get("source") != "J" or i not in units:
             decision[i] = {"eligible": False, "reason": "not a judge item of the base pass"}
+        elif status == "provider_error" and (row.get("provider_error") or {}).get("recoverability") == "item_permanent":
+            decision[i] = {"eligible": False, "reason": f"permanent request failure (HTTP {(row.get('provider_error') or {}).get('http_status')}): the identical request would fail again"}
         elif status not in RECOVERABLE:
             decision[i] = {"eligible": False, "reason": f"state {row.get('error_class')!r} / call {row.get('call_status')!r}: only {sorted(RECOVERABLE)} are recoverable "
                                                          "(a schema-valid completed call is never re-judged)"}
@@ -154,12 +156,14 @@ def recovery_pass(out_dir: str, run_uuid: str, task_id: str, base_pass: str, ite
             row.update({"verdict": judge_row_verdict(v), "evidence": v.get("evidence", []), "rationale": v.get("rationale", ""), "judge_id": v.get("judge_id"),
                         "parse_error": v.get("parse_error"), "error_class": ec, "call_status": v.get("call_status"),
                         "usage_status": v.get("usage_status"), **({"schema_attempts": v["schema_attempts"]} if v.get("schema_attempts") else {}),
+                        **({"provider_error": {k: (v.get("error") or {}).get(k) for k in ("http_status", "provider_status", "inner_class", "recoverability", "failure_class", "attempts", "timed_out", "retry_delay")}}
+                           if ec == "provider_error" and isinstance(v.get("error"), dict) else {}),
                         "recovery": {"base_pass": base_pass, "base_call_status": d["base_call_status"], "rule": d["rule"], "attempt": 1, "recovery_pass": gp,
                                      "engine_version": ENGINE_VERSION, "judge_unit": getattr(judge, "judge_unit", None)}})
             same = c.get("request_sha256") == d["base_request_sha256"] if d["base_request_sha256"] else None
             attempts[r["item"]] = ({"item": r["item"], "base_call_status": d["base_call_status"], "rule": d["rule"], "attempt": 1, "status": c.get("status"),
                              "request_sha256": c.get("request_sha256"), "same_request_as_base": same, "usage": c.get("usage"), "usage_status": c.get("usage_status"),
-                             "error": c.get("error"), "response_schema_valid": c.get("status") == "ok" and ec not in ("judge_parse_error", "invalid_judge_output"),
+                             "error": c.get("error"), "runner_version": c.get("runner_version"), "seconds": c.get("seconds"), "response_schema_valid": c.get("status") == "ok" and ec not in ("judge_parse_error", "invalid_judge_output"),
                              "schema_attempts": len(v.get("schema_attempts") or []), "outcome": row["verdict"]})
         rows.append(row)
     attempts = [attempts[i] for i in order if i in attempts]  # in the order the calls were sent

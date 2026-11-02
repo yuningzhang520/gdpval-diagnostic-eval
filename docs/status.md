@@ -1,6 +1,6 @@
 # Status
 
-Current stage: **Evaluation architecture implementation on baseline `f37f1e829af2efd5daf81e3a680ea691b16fcfbe`
+Current stage: **Freeze preparation (2026-11-02): V1.3 corrections and judge-runner reliability (engine .9) implemented and tested, tag `v1.3-corrections`; Formal generation (150 USD) and the Formal judge pass (30 USD, separate ledger) configured, the pass prepared and gated, not run; Judge Validation in progress; `freeze-v1` not tagged, `config.json` still DRAFT; no Formal call.** Earlier header, kept for the record: Evaluation architecture implementation on baseline `f37f1e829af2efd5daf81e3a680ea691b16fcfbe`
 (2026-11-01): Task 1 (`1137e2bb…`) gold-first verification done and Grader v0 tagged; run classes (dev /
 validation / compat / formal), batch runner, artifact manifests, run inventory, engine + task grader versions,
 development model (`google/gemini-3.8-flash`) and compatibility task (`87da214f…`) implemented and dry-run
@@ -4565,6 +4565,109 @@ Formal preflight at V1.2 (`abb6dd6`, clean): launcher `--dry-run` for all 20 uni
 - No credential missing.
 - Scratch ledger `formal/preflight-20261101T233332Z/`.
 
+## V1.3 corrections, judge-runner reliability, Formal budgets and judge pass prepared (2026-11-02)
+
+Decisions by the human (chat, 2026-11-01), implemented here:
+- the two Validation false fails corrected as V1.3, after `v1-calibration-freeze` and before `freeze-v1`;
+- judge-runner reliability: retryable / permanent classification and a 10-minute cap per judge item;
+- Formal generation budget and the Formal judge pass, approved in advance;
+- Codex Review 2 continues on `5121e1a`, unaffected.
+
+V1.3 grader corrections (records: preregistration 1.21):
+- `2ea2e5b5…` grader .5 (Validation item 45):
+  - the study's name "work-time" is no section keyword;
+  - an ambiguous section never confirms another one absent;
+  - trailing "SUBTOTAL: <level>" rows label their categories;
+  - a description column whose cells hold no level is no segment column.
+- `c3525d4d…` grader .6 (Validation item 32): a store-id column ends at the next table's title or header; blank rows
+  inside a list do not end it.
+- **The held-out Validation result stays as recorded: deterministic 4/6 against grader V1.** Re-grades under V1.3 are
+  regression evidence only (next entry).
+- Regression tests:
+  - `V13CorrectionTests` in `test_gold_2ea2e5b5.py` (3 tests) and `test_gold_c3525d4d.py` (2 tests);
+  - each test reproduces the V1 false fail and carries out-of-scope cases (a real segment column, leading level rows,
+    a subtotal naming no level or two levels, a fully identified deck still failing a missing section, a single list
+    with blank rows).
+- Both corrections apply identically to both candidates.
+- The `c3525d4d…` item-48 judge excerpt reads the chosen list's header row. On a tab with two tables it can change.
+  The judge request surface (prompt and request construction) is unchanged.
+
+Judge runner (engine .9, `JUDGE_RUNNER_VERSION` `judge-runner-v1.3`; infrastructure only):
+- Root cause of the stalls:
+  - Inspect retries a Google 408, 429 or 5xx with exponential backoff (`wait_exponential_jitter`, up to 30 minutes per
+    wait). Its `timeout` is checked only between attempts, so with `max_retries` 10 one item could wait for hours.
+  - Earlier halts (`a45bc83b…` 69, `c357f0e2…` 12) were 429s retried the same way.
+- `a45bc83b…` schema recovery (items 18, 19, 20, 64; started 23:18:15Z under V1.2, not interrupted):
+  - finished 05:36:31Z: 4 calls, 3 ok, 1 `provider_error` (item 20), metered 0.059646 USD;
+  - item 20 failed after 3,092.8 s: HTTP 429 `RESOURCE_EXHAUSTED`, quota `GenerateRequestsPerDayPerProjectPerModel`
+    = **250 requests per day** for `gemini-3.1-pro`, retry guidance 28,178 s.
+  - Most of the 22,698 s wall time was the Mac asleep. It entered clamshell sleep on battery at 00:12:56Z, during
+    item 64's call (793 s monotonic), and woke at about 05:36Z. That call was not a provider stall.
+  - Its record carries `code_tag` `v1.2-judge-infrastructure`. The Validation ledger is clear: settled 1.241102 USD,
+    nothing reserved, no hold, 13.758898 USD remaining.
+- Fixes:
+  - classification by HTTP status and provider status / reason (`provider_error_detail`):
+    - retryable: 408, 429, 5xx and rate-limit or quota reasons, including a 403 rate limit;
+    - `item_permanent`: other 400s and 413. Recorded with no backoff and never recovered, and the batch continues;
+    - fatal: 401, 404, 403 permission denied, API key or billing. The batch stops and the ledger is held.
+  - the 600 s per-item cap wraps every request (`asyncio.wait_for`) and covers Inspect's retries, its backoff and the
+    schema retry. At the cap the item is `provider_error` (`timed_out`, `WallClockCap`) and the batch continues.
+  - attempts, elapsed seconds, failure class and runner version are recorded per call, never credentials.
+  - the inferred buffer uses known attempts.
+  - `provider_error` stays an infrastructure verdict, never a rubric fail.
+- The cap is measured with `time.monotonic`, which on macOS stops while the machine sleeps. Formal runs need AC power
+  and `caffeinate`.
+- **Feasibility finding:** the Formal pass needs 332 judge items (166 per candidate) before any schema or Inspect retry,
+  above the 250-per-day quota. Under the V1.3 rules, a daily-quota 429 costs at most 10 minutes per item, and three
+  such items stop the pass with partial state kept. The pass cannot finish within one quota day without a human
+  decision (options in the chat report).
+
+Formal budgets (`config.json`):
+- Generation (`batches.formal`):
+  - ceiling 150 USD for the 20 runs;
+  - reservation 8 USD per Opus sample and 5 USD per GPT sample, released to the actual cost at settlement (test
+    `test_formal_generation_reservations_release_unused_amounts_within_the_150_ceiling`);
+  - per-sample Inspect cost limit 20 USD (inherited `generation.cost_limit_usd`);
+  - ledger `~/turing-eval-runs/formal/ledger.json`.
+- Judge (`judge.formal`): ceiling 30 USD, its own ledger `~/turing-eval-runs/judge_formal/ledger.json`, concurrency 1,
+  one pass, no repeats.
+
+Formal judge pass prepared, not run (`grading/judge_formal.py`; tests `grading/tests/test_judge_formal.py`, 8):
+- Fail-closed gates:
+  - the `freeze-v1` tag exists, frozen paths are identical to it and committed, and its freeze record verifies;
+  - `config.json` `_status` is FROZEN;
+  - `judge.formal` holds 30 USD, concurrency 1 and one pass;
+  - `run` restates the human's Formal launch authorization (`--authorized-by`, `--authorization-ref`) and the scope
+    (`--confirm 'judge-formal|<model>|30'`).
+- Only canonical runs whose `run_outcome.json` is final and whose eval log exists are judged, each as soon as it is
+  finalized. `run_grading`'s outcome gate re-validates finality and integrity.
+- Exactly one pass: a second `run` refuses. One bounded per-item recovery runs within the pass.
+- Stops (budget below one worst-case call, ledger hold, judge halt, grading error) keep the partial state and are never
+  retried.
+- Grades, verdicts and grading logs go only to `~/turing-eval-runs/formal/grading_sealed/` (mode 700). The registry and
+  `status` carry counts and costs only.
+- `check` now: `freeze_tag` false, `config_frozen` false, `judge_formal_config` true, 0 finalized runs.
+
+Tests (logs `logs/v1.3-20261102/`, `logs/docker-gated-v1.3-001053Z/`):
+
+| Suite | Result | Wall time |
+|---|---|---|
+| Grading discover | 462 tests, 5 skipped, OK | 122.53 s |
+| Harness, 14 modules via `run_isolated.sh` | 202 tests, OK | 52 s |
+| Docker: `7d7fc9a7…` `GoldRecalcDockerTests` | 3/3 | 7.14 s |
+| Docker: `1137e2bb…` `GoldRecalcDockerTests` | 2/2 | 9.45 s |
+| Docker: `regress_recalc_docker` | 16 PASS (first invocation omitted `--output-root`, usage exit 2, nothing ran) | 4.03 s |
+| Docker: `regress_grading_cli` | 61 PASS (same first-invocation usage error) | 7.41 s |
+| `V13CorrectionTests` (2ea2e5b5) after adding two out-of-scope assertions | 3/3 | 1.35 s |
+
+`judge-surface v1-calibration-freeze --request-only` and `judge-surface v1.2-judge-infrastructure --request-only`:
+identical. The four new constants (`JUDGE_RUNNER_VERSION`, `RETRYABLE_HTTP`, `RATE_LIMIT_MARKERS`, `FATAL_HTTP`) are
+call handling. The unused V1.2 constants `UNRECOVERABLE_HTTP` and `UNRECOVERABLE_STATUS` are removed.
+
+Narrow Codex delta review (after Review 2):
+`git diff 5121e1a <V1.3 commit> -- grading harness config.json preregistration.md`. The commits between them on
+these paths are docs only.
+
 ## Known issues and findings (material check)
 
 - `rubric_json.form_content`: 8,036 items hold `null`, 2,417 items lack the key, zero
@@ -4967,7 +5070,8 @@ Formal preflight at V1.2 (`abb6dd6`, clean): launcher `--dry-run` for all 20 uni
 - 2026-11-01 · Formal preflight dry-run (20 units, no provider call) and backup inventory · 6b6eaeb
 - 2026-11-01 · V1.2 judge infrastructure (engine .8): provider error detail, max_retries 10, pacing, continuation with a 3-item stop, schema retry, invalid_judge_output, inferred buffer; tag `v1.2-judge-infrastructure` · 5121e1a
 - 2026-11-01 · Validation labels checkpointed 10/10; `c357f0e2…` inferred settlement; Codex package re-pinned to `5121e1a` · 7890cec
-- 2026-11-01 · Validation deterministic comparison 4/6, two V1 false fails diagnosed (not fixed), private backup pushed (main `abb6dd6`, 18 tags), Formal preflight at V1.2 · (this commit; local)
+- 2026-11-01 · Validation deterministic comparison 4/6, two V1 false fails diagnosed (not fixed), private backup pushed (main `abb6dd6`, 18 tags), Formal preflight at V1.2 · 4b3474e (local)
+- 2026-11-02 · V1.3 corrections (`2ea2e5b5…` .5, `c3525d4d…` .6), judge runner V1.3 (engine .9: classification, 600 s item cap), Formal budgets (150 USD generation, 30 USD judge, separate ledgers), Formal judge pass prepared and gated; tag `v1.3-corrections` · (this commit; local)
 
 ## Next stage (not started)
 

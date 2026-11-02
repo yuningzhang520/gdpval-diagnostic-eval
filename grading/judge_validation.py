@@ -45,7 +45,8 @@ FREEZE_TAG = "v1-calibration-freeze"
 # resolutions, provider_error / not_run judge verdicts, picture-chart visual-review flags; judge prompt, model, settings
 # and evidence builders byte-identical to V1 (checked by grading.freeze_manifest judge-surface).
 VERSION_TAGS = ((FREEZE_TAG, MANIFEST), ("v1.1-judge-item-recovery", os.path.join(ROOT, "grading", "freeze", "v1.1_manifest.json")),
-                ("v1.2-judge-infrastructure", os.path.join(ROOT, "grading", "freeze", "v1.2_manifest.json")))  # V1.2: engine .8 judge infrastructure (approved 2026-11-01)
+                ("v1.2-judge-infrastructure", os.path.join(ROOT, "grading", "freeze", "v1.2_manifest.json")),  # V1.2: engine .8 judge infrastructure (approved 2026-11-01)
+                ("v1.3-corrections", os.path.join(ROOT, "grading", "freeze", "v1.3_manifest.json")))  # V1.3: engine .9 grader corrections and judge-runner reliability (approved 2026-11-01)
 PASS_ID = "judge-validation-pass-1"
 FROZEN_PATHS = ("grading", "harness", "config.json")
 AUTH_REF = "docs/status.md decision 2026-11-01: Judge Validation authorized (one pass, frozen judge, separate ledger, 15 USD, concurrency 1, Dev project key)"
@@ -165,7 +166,7 @@ def grade_run(spec: dict, r: dict, log, extra_argv: list | None = None) -> dict:
 
         def factory(model, cfgd):
             j = ProviderJudge(model, temperature=c["temperature"], max_tokens=c["max_tokens"], max_retries=c["max_retries"], reasoning_effort=c["reasoning_effort"],
-                              pacing_pause_s=c.get("pacing_pause_s", 0.0), provider_error_stop_items=c.get("provider_error_stop_items"),
+                              pacing_pause_s=c.get("pacing_pause_s", 0.0), provider_error_stop_items=c.get("provider_error_stop_items"), item_wall_clock_cap_s=c.get("item_wall_clock_cap_s"),
                               cost_guard=make_guard(holder, c["max_tokens"], base, ceiling))
             holder["judge"] = j
             return j

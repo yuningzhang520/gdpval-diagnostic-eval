@@ -390,7 +390,7 @@ def main(argv=None, *, judge_factory=None, environ: dict | None = None) -> int:
         stamp = dt.datetime.now(dt.timezone.utc).strftime("%Y%m%dT%H%M%S%fZ") + "-" + os.urandom(2).hex()  # unique even for two passes within one second
         judge_unit = f"{sample.uuid}:judge:{stamp}"
         log_path = judge_log_path(judge_ledger.path, sample.uuid, judge_unit)
-        judge_params = {k: v for k, v in (cfg.get("judge") or {}).items() if k in ("temperature", "max_tokens", "max_retries", "timeout", "reasoning_effort", "pacing_pause_s", "provider_error_stop_items")}
+        judge_params = {k: v for k, v in (cfg.get("judge") or {}).items() if k in ("temperature", "max_tokens", "max_retries", "timeout", "reasoning_effort", "pacing_pause_s", "provider_error_stop_items", "item_wall_clock_cap_s")}
         judge = judge_factory(args.judge_model, cfg) if judge_factory else ProviderJudge(args.judge_model, **judge_params)
         if getattr(judge, "is_stub", False):
             raise GradingCliError("a stub judge is never a judged pass")

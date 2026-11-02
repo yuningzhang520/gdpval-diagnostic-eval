@@ -94,6 +94,16 @@ class RecoveryTests(unittest.TestCase):
         self.assertEqual((new[71]["verdict"], new[69]["verdict"], rec["judge_completeness"]), ("provider_error", "pass", "partial"))
         self.assertEqual(rec["score"]["judge_infrastructure"], {"provider_error": [71], "not_run": [], "invalid_judge_output": []})
 
+    def test_a_permanent_request_failure_is_never_recovered(self):
+        rows = [json.loads(l) for l in open(os.path.join(self.out, "grades.jsonl"))]
+        for r in rows:
+            if r["item"] == 69:
+                r["provider_error"] = {"http_status": 413, "recoverability": "item_permanent", "failure_class": "permanent_request"}
+        open(os.path.join(self.out, "grades.jsonl"), "w").write("".join(json.dumps(r) + "\n" for r in rows))
+        d = JR.recovery_plan(self.out, RUN, BASE, [69, 71])["decision"]
+        self.assertEqual((d[69]["eligible"], d[71]["eligible"]), (False, True))
+        self.assertIn("would fail again", d[69]["reason"])
+
     def test_changed_evidence_is_refused_before_any_call(self):
         units = json.load(open(os.path.join(self.out, f"judge_units_{RUN}_{BASE}.json")))
         units["units"][1]["deliverable_excerpt"] = "edited"

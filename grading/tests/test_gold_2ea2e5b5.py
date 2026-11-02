@@ -186,6 +186,50 @@ class V1LayoutTests(unittest.TestCase):
         self.assertEqual((nat[4]["verdict"], nat[25]["verdict"]), ("fail", "fail"))  # out of scope: a native chart that is not a pie is a confirmed violation
 
 
+class V13CorrectionTests(unittest.TestCase):
+    """V1.3 correction .5 (approved 2026-11-01; found by held-out Validation item 45, which stays a V1 result): the study's
+    own name is no section keyword, an ambiguous section never confirms another one absent, levels shown by trailing
+    subtotal rows label their categories, and a description column naming the section is no segment column."""
+    H, tb, slide, pic, table_shape = V1LayoutTests.H, V1LayoutTests.tb, V1LayoutTests.slide, V1LayoutTests.pic, V1LayoutTests.table_shape
+
+    def test_work_time_study_headings_locate_each_section_once(self):
+        heads = {2: "WORK-TIME STUDY | BASELINE ACTIVITY ALLOCATION", 3: "WORK-TIME STUDY | SEGMENT 1.A: MARGIN IMPACT ANALYSIS",
+                 4: "WORK-TIME STUDY | SEGMENT 1.B: TIME SENSITIVITY ANALYSIS", 5: "WORK-TIME STUDY | SEGMENT 1.C: STRATEGIC ALIGNMENT ANALYSIS"}
+        slides = [self.slide(i, [self.tb("TextBox 1", 300000, [h]), self.pic()]) for i, h in heads.items()]
+        sec = CK.locate_sections(slides, self.H)
+        self.assertEqual({k: v["slides"] for k, v in sec.items()}, {"activity": [2], "margin": [3], "time": [4], "strategic": [5]})  # V1: time took 2, 4 and 5
+
+    def test_trailing_subtotals_label_their_categories_and_description_columns_are_not_segments(self):
+        rows = [["Strategic Tier / Activity", "Strategic Value & Long-Term Contribution", "Hours", "% Hrs"],
+                ["Problem Management", "Eliminates recurring failures", "4,910.3", "11.1%"], ["Automation", "Replaces manual toil", "3,717.3", "8.4%"],
+                ["Process Improvement", "Optimizes flow", "2,671.0", "6.0%"], ["SUBTOTAL: HIGH STRATEGIC", "3 Categories", "11,298.5", "25.5%"],
+                ["Training", "Builds capabilities", "1,697.9", "3.8%"], ["SUBTOTAL: MEDIUM STRATEGIC", "1 Category", "1,697.9", "3.8%"],
+                ["Break/Fix", "Firefighting", "5,155.0", "11.6%"], ["SUBTOTAL: LOW STRATEGIC", "1 Category", "5,155.0", "11.6%"],
+                ["TOTAL IT DEPARTMENT EFFORT", "Combined", "44,258.7", "100.0%"]]
+        t = CK.parse_table(rows, CK.SECTION_HEADER["strategic"], tuple(CK.SEGMENTS["strategic"]))
+        self.assertEqual(t.get("segment_column_rejected"), "Strategic Value & Long-Term Contribution")
+        self.assertEqual({x["category"]: x["segment"] for x in t["rows"]}, {"Problem Management": "High", "Automation": "High", "Process Improvement": "High", "Training": "Medium", "Break/Fix": "Low"})
+        self.assertEqual([g["level"] for g in t["groups"]], ["High", "Medium", "Low"])
+        self.assertTrue(CK.is_grand_total(t["totals"][-1])); self.assertFalse(CK.is_grand_total(t["totals"][0]))  # a level subtotal is not the grand total
+        real = CK.parse_table([["Strategic Level", "Activity", "Total Hours"], ["High", "Automation", "1"]], CK.SECTION_HEADER["strategic"], tuple(CK.SEGMENTS["strategic"]))
+        self.assertEqual(real["columns"]["segment"], 0)  # out of scope: a real level column is kept
+        plain = CK.parse_table([["Activity Category", "Hours"], ["Automation", "1"], ["Subtotal", "1"]], None, ())
+        self.assertEqual([o["label"] for o in plain["others"]], ["Subtotal"])  # out of scope: a subtotal naming no level keeps its V1 reading
+        two = CK.parse_table([rows[0], rows[1], ["SUBTOTAL: HIGH AND MEDIUM", "", "1", "1%"]], CK.SECTION_HEADER["strategic"], tuple(CK.SEGMENTS["strategic"]))
+        self.assertEqual(([x["segment"] for x in two["rows"]], two["groups"]), ([None], []))  # out of scope: a subtotal naming two levels labels nothing
+
+    def test_an_ambiguous_section_never_confirms_another_one_absent(self):
+        act = [["Activity Category", "Hours", "% Total IT"]] + [[c, "1", f"{p:.2f}%"] for c, p in REFERENCE["pct"].items()]
+        shapes = lambda h: [self.tb("TextBox 2", 300000, [h]), self.table_shape(act), self.pic()]
+        deck = {"inventory": [{"path": "d.pptx", "kind": "pptx"}], "pptx": {"d.pptx": {"slide_count": 3, "slide_height": self.H, "slides": [
+            self.slide(1, shapes("TIME SENSITIVITY A")), self.slide(2, shapes("TIME SENSITIVITY B")), self.slide(3, shapes("MARGIN IMPACT"))]}}}
+        items = CK.run_checks(deck, REFERENCE, RUBRIC)["items"]
+        self.assertEqual(items[45]["verdict"], "cannot_assess")  # V1: fail ("every slide is identified as another part")
+        deck["pptx"]["d.pptx"]["slides"] = [self.slide(1, shapes("TIME SENSITIVITY")), self.slide(2, shapes("MARGIN IMPACT"))]
+        deck["pptx"]["d.pptx"]["slide_count"] = 2
+        self.assertEqual(CK.run_checks(deck, REFERENCE, RUBRIC)["items"][45]["verdict"], "fail")  # out of scope: every slide identified, the absence is confirmed
+
+
 class GoldVariantTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):

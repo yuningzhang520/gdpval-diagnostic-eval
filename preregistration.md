@@ -430,6 +430,64 @@ member that is `cannot_assess` for this reason receives the human's visual judgm
 reported (`score.critical.<C>.visual_review_required`). Every other human-authoritative visual criterion is unchanged.
 The same rules apply to both candidates.
 
+### 1.21 V1.3 corrections (approved by the human 2026-11-01; after `v1-calibration-freeze`, before `freeze-v1`)
+Two grader implementation defects, found by held-out Validation items, are corrected for Formal. The held-out result
+stays as first recorded (deterministic 4/6, against grader V1). Re-grades under V1.3 are regression evidence only, never
+a Validation result. The corrections apply identically to both candidates.
+
+`2ea2e5b5…` grader .5 (rubric 45: "Only the following categories are labeled High in the Strategic Level table").
+- Old rule:
+  - a slide whose heading matched the time-section keyword `time` was the time section;
+  - a section with no slide was a confirmed absence (fail) unless some slide was unidentified;
+  - category levels came only from a segment column or from level rows above their categories.
+- Evidence: in Validation item 45, every heading begins "WORK-TIME STUDY |".
+  - Three slides located as the time section, and the strategic section found none. It failed as "every slide is
+    identified" although the time section was ambiguous.
+  - With that fixed, the strategic table still failed:
+    - its levels are closing rows ("SUBTOTAL: HIGH …") below their categories;
+    - its description column "Strategic Value & Long-Term Contribution" was read as the segment column.
+- New rule:
+  - the study's own name ("work-time", "work time") in a heading is not a section keyword;
+  - a section with no slide is `cannot_assess` (extraction) while another section matches several slides;
+  - a subtotal row naming exactly one level labels the category rows since the previous one, when the table has no
+    segment column and no leading level rows;
+  - a candidate segment column none of whose cells starts with a level is not a segment column.
+- Out-of-scope regressions:
+  - a heading naming the time section is still the time section;
+  - a deck with every slide identified still fails a missing section;
+  - a real segment column and leading level rows are read as before;
+  - a "Subtotal" row naming two levels labels nothing.
+
+`c3525d4d…` grader .6 (rubric 32: "Tab 2 contains exactly the set of store IDs in 'Holiday Matrix final count.xlsx'").
+- Old rule: a store-id column ran from its header to the end of the sheet. Every cell that normalised to an id was
+  part of the list, and the longest such column was the list.
+- Evidence: in Validation item 32, the final tab holds a removed-stores table ("Store #" in column B, rows 10–12) above
+  the final matrix ("Seq #" in B, "Store #" in C from row 15). Column B ran into the sequence numbers and was preferred
+  as the longer column: 477 missing and 477 extra ids.
+- New rule:
+  - a store-id column ends at the first non-empty cell below its ids that is not a store id (the next table's title
+    or header);
+  - blank separator rows do not end it.
+- Out-of-scope regressions: a single list with blank rows between blocks keeps every id; the gold and Dev lists are
+  unchanged.
+- The item-48 judge excerpt shows the final tab up to that list's header row. On a tab with two tables, the list
+  chosen and so the excerpt can change. The judge prompt and request construction are unchanged.
+
+Judge runner V1.3 (engine .9; infrastructure only; `judge-surface v1-calibration-freeze --request-only` identical).
+The stall it fixes: Inspect retries a provider 408, 429 or 5xx with exponential backoff of up to 30 minutes per wait,
+and its timeout is checked only between attempts. One Validation item (`a45bc83b…` item 20) has run for over 45 minutes
+under V1.2.
+- Classification by HTTP status and provider status or reason:
+  - retryable: 408, 429, 5xx, and any status whose reason marks a rate limit or quota, including a 403 rate limit;
+  - item-permanent: other 400, 413 and similar invalid requests. That item is `provider_error`, with no backoff and
+    no recovery (it would fail again), and the batch continues;
+  - fatal: 401, 404, 403 permission denied, and API-key or billing errors. The batch stops and the ledger is held.
+- A 600 s wall-clock cap per judge item covers its requests, Inspect's retries and backoff, and the schema retry. At
+  the cap the item is `provider_error` (`timed_out`) and the batch continues.
+- Each record carries the runner version, attempts and elapsed time; never credentials.
+- `provider_error` is never a rubric fail.
+- An item in flight when the runner changed keeps its own runner version in its record.
+
 ---
 
 ## 2. Task selection and exclusions

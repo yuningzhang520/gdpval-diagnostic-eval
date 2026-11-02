@@ -625,8 +625,12 @@ def usage_dict(usage) -> dict | None:
     return model_usage_to_dict(usage)
 
 
-UNRECOVERABLE_HTTP = (400, 401, 403, 404)
-UNRECOVERABLE_STATUS = ("UNAUTHENTICATED", "PERMISSION_DENIED", "INVALID_ARGUMENT", "NOT_FOUND", "FAILED_PRECONDITION")
+# V1.3 (approved 2026-11-01): retryable vs permanent by HTTP status AND provider status / reason (replaces V1.2's
+# UNRECOVERABLE_HTTP / UNRECOVERABLE_STATUS, which stopped on every 400 and 403)
+JUDGE_RUNNER_VERSION = "judge-runner-v1.3"
+RETRYABLE_HTTP = (408, 429)
+RATE_LIMIT_MARKERS = ("RESOURCE_EXHAUSTED", "RATE_LIMIT", "RATELIMIT", "QUOTA")
+FATAL_HTTP = (401, 403, 404)
 
 
 def provider_error_detail(ex: BaseException) -> dict:
@@ -675,11 +679,26 @@ def provider_error_detail(ex: BaseException) -> dict:
                 out["retry_after"] = str(ra)[:40]
         except Exception:
             pass
+    la = getattr(ex, "last_attempt", None)
+    out["attempts"] = getattr(la, "attempt_number", None) if la is not None else (None if isinstance(ex, (asyncio.TimeoutError, TimeoutError)) else 1)
     text = f"{out['message']} {out.get('reason') or ''}".lower()
-    if (out["http_status"] in UNRECOVERABLE_HTTP or status in UNRECOVERABLE_STATUS or "billing" in text or "api key" in text) and out["http_status"] != 429:
-        out["recoverability"] = "unrecoverable"
+    marks = f"{status or ''} {out.get('reason') or ''}".upper()
+    code = out["http_status"]
+    # V1.3: classes by status AND reason
+    #   retryable: 408, 429, 5xx, transport and time-outs (no status), and a rate-limit / quota signal under any status
+    #     (some providers report rate limits as 403);
+    #   fatal (stops the batch): authentication, permission, billing, an invalid key or a missing model (configuration);
+    #   permanent_request (this item only, never retried): any other 4xx, e.g. 400 invalid request or 413 oversized.
+    rate_limited = any(m in marks or m in marks.replace("_", "") for m in RATE_LIMIT_MARKERS) or "rate limit" in text
+    if code in RETRYABLE_HTTP or (code is not None and 500 <= code < 600) or rate_limited:
+        out["failure_class"] = "retryable"
+    elif code in FATAL_HTTP or status in ("UNAUTHENTICATED", "PERMISSION_DENIED", "NOT_FOUND", "FAILED_PRECONDITION") or "billing" in text or "api key" in text:
+        out["failure_class"] = "fatal"
+    elif code is None:
+        out["failure_class"] = "retryable"  # transport failures and time-outs carry no status
     else:
-        out["recoverability"] = "recoverable"
+        out["failure_class"] = "permanent_request"
+    out["recoverability"] = {"retryable": "recoverable", "permanent_request": "item_permanent", "fatal": "unrecoverable"}[out["failure_class"]]
     return out
 
 
@@ -699,7 +718,7 @@ class ProviderJudge:
     def __init__(self, model_name: str, *, temperature: float = 0.0, max_tokens: int = 1024, max_retries: int | None = None, timeout: int | None = None,
                  reasoning_effort: str | None = None, generate=None, judge_id: str | None = None, log_path: str | None = None, run_uuid: str | None = None,
                  judge_unit: str | None = None, stop_on_uncertain_usage: bool = True, cost_guard=None, pacing_pause_s: float = 0.0,
-                 provider_error_stop_items: int | None = None, **model_args):
+                 provider_error_stop_items: int | None = None, item_wall_clock_cap_s: float | None = None, **model_args):
         self.model_name = model_name
         self.judge_id = judge_id or f"{model_name}@{dt.datetime.now(dt.timezone.utc).strftime('%Y-%m-%d')}"
         # reasoning_effort is an Inspect GenerateConfig field (Gemini 3: mapped by Inspect's Google adapter to ThinkingConfig(thinking_level));
@@ -730,6 +749,11 @@ class ProviderJudge:
         self.provider_error_stop_items = provider_error_stop_items
         self.recoverable_failures: list[dict] = []
         self._last_end: float | None = None
+        # V1.3 (approved 2026-11-01): a wall-clock cap per judge item over its requests, Inspect's retries and backoff
+        # (and its schema retry); at the cap the request is cancelled and the item is provider_error; the batch goes on
+        self.item_wall_clock_cap_s = float(item_wall_clock_cap_s) if item_wall_clock_cap_s else None
+        self._item_started: dict = {}
+        self._timeout_s: float | None = None
 
     def _persist(self, event: dict) -> None:
         """Append one JSON line and fsync. A failure here must stop the request from being sent."""
@@ -744,19 +768,25 @@ class ProviderJudge:
             os.fsync(f.fileno())
 
     def _call(self, messages):
-        if self._generate is not None:
+        if self._generate is not None:  # test hook: an async hook runs under the same cap
+            if asyncio.iscoroutinefunction(self._generate):
+                coro = self._generate(messages)
+                return asyncio.run(asyncio.wait_for(coro, timeout=self._timeout_s) if self._timeout_s is not None else coro)
             return self._generate(messages)
         from inspect_ai.model import GenerateConfig, get_model
         if self._model is None:
             cfg = GenerateConfig(**{k: v for k, v in self.generate_params.items() if v is not None})
             self._model = get_model(self.model_name, config=cfg, **self._model_args)
+        if self._timeout_s is not None:  # V1.3: the cap covers the request, Inspect's retries and their backoff
+            return asyncio.run(asyncio.wait_for(self._model.generate(messages), timeout=self._timeout_s))
         return asyncio.run(self._model.generate(messages))
 
     def __call__(self, unit: dict) -> dict:
         from inspect_ai.model import ChatMessageSystem, ChatMessageUser
         user = render_unit(unit)
         messages = [ChatMessageSystem(content=JUDGE_SYSTEM_PROMPT), ChatMessageUser(content=user)]
-        rec = {"unit_id": unit["unit_id"], "item": unit["item"], "model": self.model_name, "judge_id": self.judge_id, "started_at": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
+        rec = {"unit_id": unit["unit_id"], "item": unit["item"], "model": self.model_name, "judge_id": self.judge_id, "runner_version": JUDGE_RUNNER_VERSION,
+               "started_at": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
                "request_sha256": hashlib.sha256((JUDGE_SYSTEM_PROMPT + "\n" + user).encode("utf-8")).hexdigest(), "request_chars": len(JUDGE_SYSTEM_PROMPT) + len(user),
                "prompt_sha256": self.prompt_sha256, "generate_params": dict(self.generate_params), "evidence_builder": unit.get("evidence_builder")}
         if not self.halted and self.cost_guard is not None:
@@ -773,16 +803,32 @@ class ProviderJudge:
             wait = self.pacing_pause_s - (time.monotonic() - self._last_end)
             if wait > 0:
                 time.sleep(wait)
-        self._persist({"phase": "started", **{k: rec[k] for k in ("unit_id", "item", "request_sha256", "request_chars", "started_at")}})  # raises -> request never sent
+        self._timeout_s = None
+        if self.item_wall_clock_cap_s:
+            first = self._item_started.setdefault(unit["item"], time.monotonic())
+            self._timeout_s = self.item_wall_clock_cap_s - (time.monotonic() - first)
+            if self._timeout_s <= 0:  # the item's cap is spent (e.g. by its first attempt): no further request
+                detail = {"class": "WallClockCap", "inner_class": "WallClockCap", "chain": [], "http_status": None, "provider_status": None, "attempts": 0,
+                          "message": f"item wall-clock cap of {self.item_wall_clock_cap_s:.0f} s already reached; not sent", "failure_class": "retryable", "recoverability": "recoverable",
+                          "wall_clock_cap_s": self.item_wall_clock_cap_s, "timed_out": True}
+                rec.update({"status": "provider_error", "error": detail, "raw_response": None, "usage": None, "usage_status": "not_attempted", "seconds": 0.0})
+                self._persist({"phase": "not_attempted", **{k: rec[k] for k in ("unit_id", "item", "request_sha256", "error")}})
+                self.calls.append(rec)
+                return rec
+        self._persist({"phase": "started", **{k: rec[k] for k in ("unit_id", "item", "request_sha256", "request_chars", "started_at", "runner_version")}})  # raises -> request never sent
         t0 = time.monotonic()
         try:
             out = self._call(messages)
         except Exception as ex:
             detail = provider_error_detail(ex)
+            if isinstance(ex, (asyncio.TimeoutError, TimeoutError)) and self._timeout_s is not None and time.monotonic() - t0 >= self._timeout_s - 1:
+                detail.update({"timed_out": True, "wall_clock_cap_s": self.item_wall_clock_cap_s, "failure_class": "retryable", "recoverability": "recoverable",
+                               "message": f"item wall-clock cap of {self.item_wall_clock_cap_s:.0f} s reached (request, retries and backoff); cancelled"})
             rec.update({"status": "provider_error", "error": detail, "raw_response": None, "usage": None, "usage_status": "uncertain", "seconds": round(time.monotonic() - t0, 3)})
             self._last_end = time.monotonic()
-            if detail["recoverability"] == "recoverable" and self.provider_error_stop_items:
-                self.recoverable_failures.append({"item": unit["item"], "unit_id": unit["unit_id"], "http_status": detail.get("http_status"), "provider_status": detail.get("provider_status")})
+            if detail["recoverability"] in ("recoverable", "item_permanent") and self.provider_error_stop_items:
+                self.recoverable_failures.append({"item": unit["item"], "unit_id": unit["unit_id"], "http_status": detail.get("http_status"), "provider_status": detail.get("provider_status"),
+                                                  "failure_class": detail.get("failure_class"), "attempts": detail.get("attempts"), "seconds": rec["seconds"], "timed_out": bool(detail.get("timed_out"))})
                 failed = {f["item"] for f in self.recoverable_failures}
                 if len(failed) >= self.provider_error_stop_items:
                     self.halted = f"{len(failed)} distinct items failed with recoverable provider errors in this pass; no further request is sent"
@@ -827,8 +873,10 @@ class ProviderJudge:
         if self.recoverable_failures:
             if per_call:  # engine .8: unknown usage of recoverable failures -> inferred buffer of (1 + max_retries) average metered calls per failed request
                 attempts = 1 + int(self.generate_params.get("max_retries") or 0)
-                recovered = {"recovered": len(self.recoverable_failures), "buffer_calls": attempts * len(self.recoverable_failures), "attempts_per_failed_request": attempts,
-                             "failures": self.recoverable_failures, "source": "judge batch: recoverable provider failures without usage"}
+                # V1.3: the recorded attempt count where the provider layer reports it, else the upper bound 1 + max_retries
+                buffer = sum(int(f["attempts"]) if isinstance(f.get("attempts"), int) and f["attempts"] > 0 else attempts for f in self.recoverable_failures)
+                recovered = {"recovered": len(self.recoverable_failures), "buffer_calls": buffer, "attempts_per_failed_request": attempts,
+                             "failures": self.recoverable_failures, "source": "judge batch: provider failures without usage"}
             else:  # nothing metered to infer from: the conservative settlement with a hold applies
                 incomplete = True
         return {"usage": self.usage_by_model, "retries": self.retries_by_model, "usage_incomplete": incomplete, "calls": len(self.calls), "recovered": recovered,

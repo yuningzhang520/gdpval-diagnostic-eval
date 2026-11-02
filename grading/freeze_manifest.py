@@ -25,8 +25,10 @@ def _sources() -> list[str]:
 
 JUDGE_SURFACE_FUNCTIONS = ("render_unit", "unit_id", "parse_judge_response", "judge_units", "_verdict_of")
 # How a request is sent and its answer read (changed on purpose in V1.2, engine .8: error detail, pacing, continuation,
-# schema retry); everything else in the surface defines WHAT the judge receives and must not change after the freeze.
-CALL_HANDLING = ("ProviderJudge.__call__", "ProviderJudge._call", "judge_units", "parse_judge_response", "_verdict_of", "UNRECOVERABLE_HTTP", "UNRECOVERABLE_STATUS")
+# schema retry; and in V1.3, engine .9: retryable / permanent classification, the per-item wall-clock cap, the runner
+# version); everything else in the surface defines WHAT the judge receives and must not change after the freeze.
+CALL_HANDLING = ("ProviderJudge.__call__", "ProviderJudge._call", "judge_units", "parse_judge_response", "_verdict_of", "UNRECOVERABLE_HTTP", "UNRECOVERABLE_STATUS",
+                 "JUDGE_RUNNER_VERSION", "RETRYABLE_HTTP", "RATE_LIMIT_MARKERS", "FATAL_HTTP")
 
 
 def judge_surface(source: str) -> dict:

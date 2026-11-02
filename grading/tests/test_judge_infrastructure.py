@@ -47,6 +47,30 @@ class ErrorDetailTests(unittest.TestCase):
         self.assertEqual(J.provider_error_detail(TimeoutError("read timed out"))["recoverability"], "recoverable")
 
 
+class FailureClassTests(unittest.TestCase):
+    """V1.3 (approved 2026-11-01): classes by HTTP status and provider status / reason."""
+
+    def cls(self, code, status=None, reason=None, message="x"):
+        err = {"code": code, "message": message, **({"status": status} if status else {})}
+        if reason:
+            err["details"] = [{"@type": "type.googleapis.com/google.rpc.ErrorInfo", "reason": reason}]
+        return J.provider_error_detail(ClientError(code, {"error": err}))
+
+    def test_permanent_transient_and_provider_specific_classes(self):
+        self.assertEqual(self.cls(400, "INVALID_ARGUMENT", message="Request contains an invalid argument.")["failure_class"], "permanent_request")
+        self.assertEqual(self.cls(413, None, message="Request payload size exceeds the limit")["failure_class"], "permanent_request")
+        self.assertEqual(self.cls(429, "RESOURCE_EXHAUSTED")["failure_class"], "retryable")
+        self.assertEqual(self.cls(408)["failure_class"], "retryable")
+        self.assertEqual(J.provider_error_detail(retry_error(503, {"error": {"code": 503, "message": "overloaded", "status": "UNAVAILABLE"}}))["failure_class"], "retryable")
+        self.assertEqual(self.cls(403, "PERMISSION_DENIED", reason="RATE_LIMIT_EXCEEDED")["failure_class"], "retryable")  # a rate limit reported as 403
+        self.assertEqual(self.cls(403, "PERMISSION_DENIED", message="The caller does not have permission (quota project)")["failure_class"], "fatal")
+        self.assertEqual(self.cls(401, "UNAUTHENTICATED")["failure_class"], "fatal")
+        self.assertEqual(self.cls(400, "INVALID_ARGUMENT", message="API key not valid. Please pass a valid API key.")["failure_class"], "fatal")
+        self.assertEqual(self.cls(404, "NOT_FOUND", message="models/x is not found")["failure_class"], "fatal")
+        self.assertEqual(J.provider_error_detail(retry_error(429, QUOTA_429))["attempts"], None)  # a fake future: the count is unknown
+        self.assertEqual(self.cls(400, "INVALID_ARGUMENT")["attempts"], 1)  # raised without retry
+
+
 class ContinuationTests(unittest.TestCase):
     def judge(self, plan, **kw):
         it = iter(plan)
@@ -84,6 +108,41 @@ class ContinuationTests(unittest.TestCase):
         j = J.ProviderJudge("google/m", generate=lambda m: (_ for _ in ()).throw(retry_error(429, QUOTA_429)))
         v = J.judge_units([unit(1), unit(2)], j)
         self.assertEqual([x["error_class"] for x in v], ["provider_error", "not_attempted"])  # out of scope: Judge Dev style adapters keep halting
+
+    def test_a_permanent_request_failure_is_provider_error_at_once_and_the_batch_goes_on(self):
+        j = self.judge([ClientError(413, {"error": {"code": 413, "message": "Request payload size exceeds the limit"}}), VALID])
+        v = J.judge_units([unit(1), unit(2)], j)
+        self.assertEqual([x["error_class"] for x in v], ["provider_error", None])
+        self.assertEqual((j.calls[0]["error"]["failure_class"], j.calls[0]["error"]["attempts"], j.calls[0]["runner_version"]), ("permanent_request", 1, J.JUDGE_RUNNER_VERSION))
+        self.assertIsNone(j.halted)
+        self.assertEqual(j.batch_result()["recovered"]["buffer_calls"], 1)  # one request was sent, not 1 + max_retries
+
+    def test_the_item_wall_clock_cap_cancels_a_hanging_request_and_the_batch_goes_on(self):
+        import asyncio
+        answers = iter(["hang", VALID])
+
+        async def gen(messages):
+            x = next(answers)
+            if x == "hang":
+                await asyncio.sleep(5)
+            return answer(VALID)
+        j = J.ProviderJudge("google/m", max_retries=10, generate=gen, provider_error_stop_items=3, item_wall_clock_cap_s=0.3)
+        v = J.judge_units([unit(1), unit(2)], j)
+        self.assertEqual([x["error_class"] for x in v], ["provider_error", None])
+        e = j.calls[0]["error"]
+        self.assertEqual((e["timed_out"], e["failure_class"], e["wall_clock_cap_s"]), (True, "retryable", 0.3))
+        self.assertLess(j.calls[0]["seconds"], 2)
+        self.assertEqual(G.judge_row_verdict(v[0]), "provider_error")  # never a rubric fail
+
+    def test_the_cap_covers_the_schema_retry_of_the_same_item(self):
+        import time
+        def slow_invalid(messages):
+            time.sleep(0.25)
+            return answer(NO_EVIDENCE)
+        j = J.ProviderJudge("google/m", generate=slow_invalid, provider_error_stop_items=3, item_wall_clock_cap_s=0.2)
+        v = J.judge_units([unit(1)], j)[0]
+        self.assertEqual((len(j.calls), j.calls[1]["status"], j.calls[1]["error"]["class"]), (2, "provider_error", "WallClockCap"))  # the retry is not sent: the item's cap is spent
+        self.assertEqual(v["error_class"], "provider_error")
 
     def test_pacing_pauses_between_requests(self):
         import time

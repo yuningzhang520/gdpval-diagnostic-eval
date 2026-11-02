@@ -228,5 +228,35 @@ class V1DecisionTests(unittest.TestCase):
         self.assertEqual(self.run_over(["24672.80"]).verdict, "fail")  # out of scope: a single candidate is decided as before
 
 
+class V13CorrectionTests(unittest.TestCase):
+    """V1.3 correction .6 (approved 2026-11-01; found by held-out Validation item 32, which stays a V1 result): a store-id
+    column ends at its own table, so a removed-stores table above the final matrix never lends it the matrix's
+    sequence numbers."""
+
+    def wb(self, rows):
+        import openpyxl
+        d = tempfile.mkdtemp(prefix="v13c35_")
+        self.addCleanup(shutil.rmtree, d, True)
+        wb = openpyxl.Workbook(); ws = wb.active; ws.title = "Final Approved Store List"
+        for r, row in enumerate(rows, 1):
+            for c, v in enumerate(row, 1):
+                if v is not None:
+                    ws.cell(r, c, v)
+        p = os.path.join(d, "w.xlsx"); wb.save(p)
+        return X.extract_xlsx(p)
+
+    def test_two_tables_on_one_tab_keep_their_own_store_columns(self):
+        final = [f"{1000 + i:04d}" for i in range(60)]
+        rows = [[None, "CONFIRMED REMOVED STORES"], [None, "Store #", "Original List Row", "Status"], [None, "4099", "Row 6", "REMOVED"], [None, "3737", "Row 7", "REMOVED"], [],
+                [None, "FINAL APPROVED STORE DISTRIBUTION MATRIX"], [None, "Seq #", "Store #", "Program Status"]] + [[None, i + 1, sid, "CONTINUING"] for i, sid in enumerate(final)]
+        lst = CK.store_lists(self.wb(rows))
+        self.assertEqual([(l["header_row"], l["id_col"], len(l["ids"])) for l in lst], [(7, 3, 60)])  # V1 read column B into the matrix: 2 removed ids + 60 sequence numbers
+        self.assertEqual([i for _, i in lst[0]["ids"]][:2], ["1000", "1001"])
+
+    def test_blank_separator_rows_inside_one_list_do_not_end_it(self):
+        rows = [["Store #"]] + [[str(2000 + i)] for i in range(30)] + [[None]] + [[str(3000 + i)] for i in range(30)]  # out of scope: a blank row is no table boundary
+        self.assertEqual(len(CK.store_lists(self.wb(rows))[0]["ids"]), 60)
+
+
 if __name__ == "__main__":
     unittest.main()

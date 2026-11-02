@@ -839,16 +839,16 @@
   },
   "grading": {
     "preregistration": "preregistration.md (draft; frozen at freeze-v1)",
-    "engine_version": "engine-2026-11-01.8",
+    "engine_version": "engine-2026-11-01.9",
     "task_grader_versions": {
       "1137e2bb-bdf9-4876-b572-f29b7de5e595": "1137e2bb-2026-11-01.3",
       "7d7fc9a7-21a7-4b83-906f-416dea5ad04f": "7d7fc9a7-2026-11-01.7",
-      "2ea2e5b5-257f-42e6-a7dc-93763f28b19d": "2ea2e5b5-2026-11-01.4",
+      "2ea2e5b5-257f-42e6-a7dc-93763f28b19d": "2ea2e5b5-2026-11-01.5",
       "a45bc83b-22f9-4def-8d89-9c5661b2b86f": "a45bc83b-2026-11-01.3",
       "b5d2e6f1-62a2-433a-bcdd-95b260cdd860": "b5d2e6f1-2026-11-01.2",
       "f841ddcf-2a28-4f6d-bac3-61b607219d3e": "f841ddcf-2026-11-01.2",
       "47ef842d-8eac-4b90-bda8-dd934c228c96": "47ef842d-2026-11-01.3",
-      "c3525d4d-2012-45df-853e-2d2a0e902991": "c3525d4d-2026-11-01.5",
+      "c3525d4d-2012-45df-853e-2d2a0e902991": "c3525d4d-2026-11-01.6",
       "7b08cd4d-df60-41ae-9102-8aaa49306ba2": "7b08cd4d-2026-11-01.3",
       "c357f0e2-963d-4eb7-a6fa-3078fe55b3ba": "c357f0e2-2026-11-01.3"
     },
@@ -1211,7 +1211,8 @@
       ],
       "samples_per_task": 1,
       "units_total": 20,
-      "budget_ceiling_usd": "PLACEHOLDER (fixed at freeze-v1 from the compat and dev cost reports)",
+      "budget_ceiling_usd": "150",
+      "budget_decision": "SET by the human 2026-11-01: formal generation ceiling 150 USD for the 20 runs (10 tasks x 2 candidates); reservations Opus 8 USD and GPT 5 USD per sample (forecast start gates, released to actual cost at settlement); per-sample Inspect cost limit 20 USD (generation.cost_limit_usd, inherited); never raised silently; separate from the formal judge ledger (judge.formal)",
       "reservation_usd_by_model": {
         "anthropic/claude-opus-5-5": "8.00",
         "openai/gpt-6.1-sol": "5.00"
@@ -1261,9 +1262,23 @@
     "reasoning_effort": "high",
     "pacing_pause_s": 2.0,
     "provider_error_stop_items": 3,
+    "item_wall_clock_cap_s": 600,
+    "infrastructure_change_v1_3": "APPROVED by the human 2026-11-01 (V1.3, engine-2026-11-01.9; infrastructure only, not model-visible): a 600 s wall-clock cap per judge item over its requests, Inspect's retries and backoff (and its schema retry), after which the item is provider_error and the batch continues; failures classified by HTTP status and provider status / reason: 408, 429, 5xx and rate-limit / quota signals (including those reported as 403) retryable, authentication, permission, billing, invalid key and missing model fatal (stop the batch), other 4xx such as 400 invalid request and 413 oversized permanent for the item (provider_error without backoff, batch continues); attempts, elapsed time and runner version recorded",
     "infrastructure_change_2026_11_01": "APPROVED by the human 2026-11-01 (V1.2, engine-2026-11-01.8; infrastructure only, not model-visible): Inspect max_retries 3 -> 10 (Inspect's own retry; no other retry or backoff layer), a 2.0 s pause between judge requests, a recoverable provider failure no longer stops the batch (new requests stop after 3 distinct failed items; authentication, billing and invalid-configuration errors stop at once), one schema retry of a schema-invalid response with the identical request (invalid_judge_output when both are invalid), provider error detail recorded; prompt, model, temperature, max_tokens and reasoning_effort unchanged",
     "prompt_sha256": "1de955e607e16bd8d236469603bde099b3d309a885be170c21d7e759c57487b5",
     "status": "FROZEN 2026-11-01 (shared judge freeze, tag v1-calibration-freeze; before the first Validation output was revealed): model google/gemini-3.1-pro-preview, thinking HIGH (Inspect reasoning_effort 'high' -> ThinkingConfig(thinking_level=HIGH)), temperature 1.0, max_tokens 16,384 including thinking, Inspect max_retries 3, no other retry or backoff layer; nothing forwarded to google.genai; the prompt is grading.judge.JUDGE_SYSTEM_PROMPT (prompt_sha256 below), unchanged since Judge Dev Pass 1. Earlier status: APPROVED 2026-11-01 for Judge Dev calibration only (Dev outputs, Dev project key). Validation: see 'validation'. Formal: not authorized",
+    "formal": {
+      "status": "APPROVED IN ADVANCE by the human 2026-11-01; executes only after the human's explicit Formal launch authorization (which also authorizes this pass) and freeze-v1: one judge pass over the 20 formal outputs with the frozen judge configuration, identically for both candidates; each output judged as soon as its run is finalized (outcome recorded, collection complete) while generation continues; never a partially written output",
+      "ceiling_usd": 30,
+      "ledger": "~/turing-eval-runs/judge_formal/ledger.json",
+      "concurrency": 1,
+      "passes": 1,
+      "repeats": 0,
+      "recovery": "within the one pass: Inspect retries for transient failures and the bounded per-item recovery of provider_error / not_run items (engine .8/.9 policy); no repeat pass, no re-judging of a completed schema-valid item",
+      "sealed_output": "~/turing-eval-runs/formal/grading_sealed/ (mode 700): grades, judge verdicts, scores and every judge-derived summary stay there until the human's 20 formal blind labels are checkpointed; progress reports carry counts and costs only",
+      "on_failure": "budget exhausted, persistent provider error or a missing output: partial state kept and reported without verdicts; no silent rerun, no ceiling increase, a missing verdict is never a fail",
+      "runner": "grading.judge_formal"
+    },
     "validation": {
       "status": "APPROVED 2026-11-01 by the human (chat): one full pass over the ten Validation outputs with the frozen shared prompt and this configuration, executed only after the shared judge freeze and each task's V1 freeze; separate Judge Validation ledger; hard ceiling 15 USD; concurrency 1; no repeat pass or automatic whole-sample rerun; the Paid Tier Dev project key (GOOGLE_API_KEY); Validation judge verdicts hidden from the human until the corresponding Validation labels are saved",
       "ceiling_usd": 15,

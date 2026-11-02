@@ -24,13 +24,15 @@ from decimal import ROUND_HALF_UP, Decimal, InvalidOperation
 from .engine.decision import Decision, Result
 
 TASK = "2ea2e5b5-257f-42e6-a7dc-93763f28b19d"
-VERSION = "2ea2e5b5-2026-11-01.4"  # .4 (V1.1, 2026-11-01): picture-chart unassessable entries carry visual_review='picture_chart' (Formal: human visual judgment before a critical status is reported); verdicts unchanged
+VERSION = "2ea2e5b5-2026-11-01.5"  # .5 (V1.3 correction, approved 2026-11-01; found by held-out Validation item 45, which stays a V1 result): the study's own name "work-time" is not a time-section keyword, and a section is never confirmed absent while another section is ambiguous
+# previous version: "2ea2e5b5-2026-11-01.4"  # .4 (V1.1, 2026-11-01): picture-chart unassessable entries carry visual_review='picture_chart' (Formal: human visual judgment before a critical status is reported); verdicts unchanged
 # previous version: "2ea2e5b5-2026-11-01.3"  # .2: item 10 removed from C2 (A-21 precedent, approved 2026-11-01); its verdict unchanged
 # .3 (Dev calibration 2026-11-01): a slide without a title placeholder takes its heading from its topmost text shape;
 # a pie chart delivered only as a picture is not assessable (visual review), never "no pie chart"; segment levels shown
 # as group rows label the categories below them; with several % columns the one naming the total is the % of total
 # hours; a total row naming no segment level is the table's grand total (A-9).
 HEADING_BAND = 0.25  # .3: the fallback heading must start in the top quarter of the slide
+STUDY_NAME = re.compile(r"work[\s\-\u2013]*time")  # .5: the task's own name ("Work-Time Study") in a heading is no section keyword
 SHARE_TOLERANCE_FOR_DERIVATION = 0.20  # A-9: printed shares must agree with the source shares over the covered categories
 GRAND_TOTAL = re.compile(r"(grand\s+)?total(\s+hours)?|overall(\s+total)?|all\s+activities")
 CATEGORIES = ["Audit/Compliance", "Automation", "Break/Fix", "Change Management Meeting", "Deployment of Upgrades", "Develop/Integrate Tooling",
@@ -134,7 +136,7 @@ def locate_sections(slides: list[dict], slide_height=None) -> dict:
         hd = slide_heading(sl, slide_height)
         if hd["basis"] != "title placeholder" and not (slide_tables(sl) or slide_charts(sl) or slide_pictures(sl)):
             continue
-        t = norm(hd["first_line"])
+        t = STUDY_NAME.sub(" ", norm(hd["first_line"])).strip()
         hit = next((k for k in ("margin", "time", "strategic") if t and re.search(SECTION_TITLE[k], t)), None)
         if hit is None and t and re.search(SECTION_TITLE["activity"], t) and (slide_tables(sl) or slide_charts(sl) or slide_pictures(sl)):
             hit = "activity"
@@ -172,6 +174,13 @@ def parse_table(table: list[list[str]], segment_rx: str | None, levels=()) -> di
     rows, others, totals, groups = [], [], [], []
     current_segment = None
     level_rx = {lv: re.compile(rf"^{re.escape(norm(lv))}\b") for lv in levels}
+    level_any = {lv: re.compile(rf"\b{re.escape(norm(lv))}\b") for lv in levels}
+    trailing, pending = [], []  # .5 (V1.3): a "SUBTOTAL: <level>" row closing the category rows above it
+    rejected_segment = None
+    if col["segment"] is not None and levels:  # .5: a segment column holds level values; a description column whose header names the section does not
+        vals = [norm(r[col["segment"]]) for r in table[1:] if col["segment"] < len(r) and str(r[col["segment"]] or "").strip()]
+        if not any(rx.search(v) for v in vals for rx in level_rx.values()):
+            rejected_segment, col["segment"] = table[0][col["segment"]], None
     for i, r in enumerate(table[1:], start=1):
         cells = [str(c or "").replace("\xa0", " ").strip() for c in r] + [""] * (len(hdr) - len(r))
         label = cells[col["activity"]] if col["activity"] is not None else ""
@@ -185,9 +194,21 @@ def parse_table(table: list[list[str]], segment_rx: str | None, levels=()) -> di
             current_segment = group
             groups.append({"row": i, "label": label, "level": group, "hours_text": figures.get("hours"), "percent": percent(figures.get("percent"))})
             continue
+        if label and not cat and col["segment"] is None and not groups and re.match(r"sub[-\s]?total\b", norm(label)):
+            named = [lv for lv, rx in level_any.items() if rx.search(norm(label))]
+            if len(named) == 1:  # .5: the trailing subtotal of exactly one level labels the category rows since the previous one
+                for x in pending:
+                    x["segment"], x["segment_basis"] = named[0], "trailing subtotal row"
+                trailing.append({"row": i, "label": label, "level": named[0], "members": [x["category"] for x in pending], "hours_text": figures.get("hours"),
+                                 "percent": percent(figures.get("percent"))})
+                totals.append({"row": i, "label": label, "hours": number(figures.get("hours")), "hours_text": figures.get("hours"), "percent": percent(figures.get("percent")), "segment_cell": named[0]})
+                pending = []
+                continue
         if cat:
             rows.append({"row": i, "label": label, "category": cat, "segment": current_segment, "segment_shown": bool(seg_raw), "hours": number(figures.get("hours")), "hours_text": figures.get("hours"),
                          "percent": percent(figures.get("percent")), "percent_text": figures.get("percent")})
+            if col["segment"] is None and not groups:
+                pending.append(rows[-1])
         elif label and re.search(r"\btotal\b|grand", norm(label)):
             totals.append({"row": i, "label": label, "hours": number(figures.get("hours")), "hours_text": figures.get("hours"), "percent": percent(figures.get("percent")), "segment_cell": seg_raw})
         elif label:
@@ -200,8 +221,11 @@ def parse_table(table: list[list[str]], segment_rx: str | None, levels=()) -> di
         for x in rows:
             if x["percent"] is not None:
                 x["percent"] *= 100
+    if trailing and not groups:
+        groups = trailing  # .5: the levels came from trailing subtotal rows
     return {"columns": col, "headers": table[0], "rows": rows, "others": others, "totals": totals, "fraction_scale": fraction_scale, "groups": groups,
-            "percent_ambiguous": percent_ambiguous, "percent_header": table[0][col["percent"]] if col["percent"] is not None else None}
+            "percent_ambiguous": percent_ambiguous, "percent_header": table[0][col["percent"]] if col["percent"] is not None else None,
+            **({"segment_column_rejected": rejected_segment} if rejected_segment else {})}
 
 
 def chart_shares(chart: dict) -> dict:
@@ -345,8 +369,12 @@ def run_checks(extraction: dict, reference: dict, rubric: list[dict], integrity:
                 fill(SECTION_ITEMS[key], "cannot_assess", f"extraction_failed: {len(sec['slides'])} slides match the {key} section ({sec['slides']})", "grader_extraction", ev)
                 continue
             if not sec["slides"]:
+                ambiguous = sorted(k for k, v in sections.items() if len(v["slides"]) > 1)
                 if unidentified:
                     fill(SECTION_ITEMS[key], "cannot_assess", f"extraction_failed: no slide identified as the {key} section; unidentified slides {unidentified}", "grader_extraction", ev)
+                elif ambiguous:  # .5: a slide claimed by an ambiguous section may be this one; absence is not established
+                    fill(SECTION_ITEMS[key], "cannot_assess", f"extraction_failed: no slide identified as the {key} section while {ambiguous} match several slides "
+                                                              f"({ {k: sections[k]['slides'] for k in ambiguous} })", "grader_extraction", ev)
                 else:
                     fill(SECTION_ITEMS[key], "fail", f"no slide dedicated to the {key} section (every slide is identified as another part of the deck)", "model_caused_missing", ev)
                 continue

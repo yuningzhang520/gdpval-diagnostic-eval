@@ -376,6 +376,28 @@ class ManualResolutionTests(unittest.TestCase):
         with self.assertRaises(b.LedgerConflict):
             lg.resolve_manually("held", resolution="settled_amount", by="reviewer", basis="twice", amount_usd="0.70")
 
+    def test_formal_generation_reservations_release_unused_amounts_within_the_150_ceiling(self):
+        """Formal arithmetic (2026-11-01): 10 x 8 + 10 x 5 USD reservations fit the 150 USD ceiling one at a time, each
+        settlement replaces its reservation by the actual cost (the unused part is released), and a reservation that the
+        remaining budget cannot cover is refused before the run starts."""
+        prices = {"m/x": {"input": 1, "output": 0}}
+        lg = b.BudgetLedger(self.path, 150, prices, label="formal")
+        actual = Decimal(0)
+        for i in range(20):
+            est = 8 if i % 2 == 0 else 5
+            lg.reserve(f"u{i}", "sample", est, {"model": "m/x", "task": f"t{i // 2}"})
+            self.assertEqual(Decimal(lg.snapshot()["reserved_usd"]), Decimal(est))
+            st = lg.settle(f"u{i}", {"m/x": {"input_tokens": 3_000_000, "output_tokens": 0}})  # 3 USD actual
+            actual += Decimal(st["cost_usd"])
+            self.assertEqual(Decimal(lg.snapshot()["reserved_usd"]), Decimal(0))  # released at settlement
+        snap = lg.snapshot()
+        self.assertEqual((Decimal(snap["settled_usd"]), Decimal(snap["remaining_usd"])), (actual, Decimal(150) - actual))
+        tight = b.BudgetLedger(os.path.join(os.path.dirname(self.path), "tight.json"), 150, prices, label="formal")
+        tight.reserve("big", "sample", 146, {"model": "m/x", "task": "t"})
+        tight.settle("big", {"m/x": {"input_tokens": 145_000_000, "output_tokens": 0}})
+        with self.assertRaises(b.BudgetExhausted):
+            tight.reserve("next", "sample", 8, {"model": "m/x", "task": "t2"})  # 5 USD left cannot cover an 8 USD reservation
+
     def test_inferred_settled_amount_lifts_the_hold_but_stays_an_estimate(self):
         """Approved 2026-11-01 (Judge Validation recovery): an inferred amount (known metered usage plus a buffer, not
         provider-confirmed) replaces the reservation-level settlement, lifts that unit's hold, stays estimated and
