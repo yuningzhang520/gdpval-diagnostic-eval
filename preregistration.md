@@ -470,8 +470,9 @@ a Validation result. The corrections apply identically to both candidates.
   - blank separator rows do not end it.
 - Out-of-scope regressions: a single list with blank rows between blocks keeps every id; the gold and Dev lists are
   unchanged.
-- The item-48 judge excerpt shows the final tab up to that list's header row. On a tab with two tables, the list
-  chosen and so the excerpt can change. The judge prompt and request construction are unchanged.
+- Judge evidence: the item-48 excerpt reads only lists on other tabs, so this correction does not reach it. Measured on
+  the Dev and Validation outputs of both corrected tasks, every judge unit is identical in content under V1.2 and V1.3.
+  Only the builder version and the assembly time differ.
 
 Judge runner V1.3 (engine .9; infrastructure only; `judge-surface v1-calibration-freeze --request-only` identical).
 The stall it fixes: Inspect retries a provider 408, 429 or 5xx with exponential backoff of up to 30 minutes per wait,

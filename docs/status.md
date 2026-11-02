@@ -4589,8 +4589,8 @@ V1.3 grader corrections (records: preregistration 1.21):
     a subtotal naming no level or two levels, a fully identified deck still failing a missing section, a single list
     with blank rows).
 - Both corrections apply identically to both candidates.
-- The `c3525d4d…` item-48 judge excerpt reads the chosen list's header row. On a tab with two tables it can change.
-  The judge request surface (prompt and request construction) is unchanged.
+- Judge evidence is unchanged by both corrections (measured; next entry). The judge request surface (prompt and
+  request construction) is unchanged.
 
 Judge runner (engine .9, `JUDGE_RUNNER_VERSION` `judge-runner-v1.3`; infrastructure only):
 - Root cause of the stalls:
@@ -4667,6 +4667,103 @@ call handling. The unused V1.2 constants `UNRECOVERABLE_HTTP` and `UNRECOVERABLE
 Narrow Codex delta review (after Review 2):
 `git diff 5121e1a <V1.3 commit> -- grading harness config.json preregistration.md`. The commits between them on
 these paths are docs only.
+
+## V1.3 regression evidence, Formal preflight at V1.3, freeze-v1 checklist (2026-11-02; code `be84ff6`)
+
+V1.3 deterministic re-grades:
+- Re-grades of the Dev and Validation runs of the two corrected tasks, written to `dev/grading_v1.3/<run>/` and
+  `validation/grading_v1.3/<run>/`. The held-out `validation/grading/` passes are untouched, and these re-grades are
+  regression evidence only.
+- No ledger and no judge.
+- The capture script, outside the repository, also saved each run's verdict-free judge units.
+
+| Run | Baseline | D/V items | Changed under V1.3 |
+|---|---|---|---|
+| Dev `2ea2e5b5…` `PTD5aFkm…` | `dev/grading_v1/` V1 (.3) | 56 | none |
+| Dev `c3525d4d…` `UzC6bRkv…` | `dev/grading_v1/` V1 (.5) | 47 | none |
+| Validation `c3525d4d…` `EqobVyTH…` | held-out first pass (.5) | 47 | 32 fail→pass; 7, 33 fail→`cannot_assess` |
+| Validation `2ea2e5b5…` `oGwLGtgq…` | held-out first pass (.3) | 56 | 41 items (below) |
+
+- Validation `c3525d4d…`: 32 now passes ("exactly the final store set").
+  - 7 and 33 are now `cannot_assess`, because the status text and the highlight style overlap without matching (the
+    approved .2 rule for conflicting indicators).
+  - Their V1 fails rested on the misread id column.
+- Validation `2ea2e5b5…`: every heading begins "WORK-TIME STUDY |". Under V1 slide 2 (activity) and slide 5
+  (strategic) were also taken as the time section, so the activity and strategic sections were "absent". All 41
+  changes follow from that one misidentification:
+  - 45–48, 8, 10, 27–29, 34–37, 55, 56 pass;
+  - the chart-dependent items 4, 7, 9, 11–26 and 50–54 are `cannot_assess` (picture chart, visual review);
+  - 49 is `cannot_assess` because the table has two % columns ("% Hrs", "% Ent") and neither names the total;
+  - 38 changes from `cannot_assess` to **fail**: the time table has "Sensitivity Tier / Activity" and "SUBTOTAL: HIGH
+    SENSITIVITY" rows, and no column or row is labeled "Time Sensitivity" (the literal rule, as written).
+- Judge units: identical in content under V1.2 (code exported from tag `v1.2-judge-infrastructure`) and V1.3 for all
+  four outputs: `c3525d4d…` 2, 40, 48, 50, 51 and `2ea2e5b5…` 57–60. Only `evidence_builder` and `assembled_at` differ.
+
+**Finding (not fixed; the human's decision): `2ea2e5b5…` item 27 is implemented more loosely than the confirmed rule.**
+- Preregistration 2.8, confirmed by the human, enforces the literal label "Margin Impact" (header or group row).
+- `checks_2ea2e5b5.py` (item 27) only requires the word `margin` in a header or group row. Item 38 requires both words
+  (`time\s*sensitiv`).
+- Dev is unaffected: no "margin" appears, and 27 fails under both readings.
+- The Validation deck has "Margin Segment / Activity" with "SUBTOTAL: COST IMPACT" rows. It passes 27 under the code
+  and would fail under the confirmed literal rule.
+- Same defect in V1 and V1.3. Proposed narrow correction: require `margin\s*impact`, the form item 38 uses, applied to
+  both candidates.
+
+Judge Validation state:
+- `a45bc83b…` item 20 is not eligible for another recovery ("already recovered once"). Its Validation status stays
+  `provider_error`, an infrastructure failure; it is not a labeled item.
+- `c357f0e2…`: 54 items are eligible (item 12 retried once, 53 never attempted); this includes labeled judge item 24.
+- 7 runs (52 judge items) are not started. They resume under V1.3 after the daily quota resets (00:00 Pacific).
+
+Formal preflight at V1.3:
+- Clean tree at `be84ff6`. Launcher `--dry-run` for all 20 units (10 tasks × 2 candidates) against the real
+  `config.json` (ceiling 150 USD), scratch root `formal/preflight-20261102T054608Z/`: all rc 0, 22 s.
+- Code commit `be84ff6`, not dirty. `config.json` SHA-256 `7422fa1f…`, status DRAFT.
+- Shared prompt `harness/system_prompt_draft.txt`, SHA-256 `6b539cf9…` (stripped text), the same for both
+  candidates.
+- Image `sha256:18cde712cde1867c94b8f23ae1f4066b0aa3146fdbd8deac70d1b4aa043ea9ee`.
+- Staged files verified per task.
+- Reservations 8.00 USD (Opus) and 5.00 USD (GPT). The scratch ledger shows 20 reservation and void pairs, nothing
+  spent.
+- Credential names present; values never printed.
+- Effective eval settings, resolved offline (`eval_kwargs`): `cost_limit` 20.0, epochs 1, `task_retry_attempts` 0,
+  one sample and one task at a time, message limit 200, Inspect `max_retries` 3.
+- Spend bound: a sample starts only if the ledger covers its reservation, and nothing intercepts per request. So the
+  worst-case total is the ceiling minus the last reservation plus the 20 USD per-sample limit (at most 165 USD), not
+  150. This is a bound, not a forecast.
+
+freeze-v1 checklist. Nothing is marked FROZEN and no tag is created until every gate holds.
+
+| Gate | State |
+|---|---|
+| V1.3 and runner patches committed and regression-tested | done: `be84ff6`, tag `v1.3-corrections` (tests in the previous entry) |
+| Codex Review 2 (pinned `5121e1a`): no unresolved Blocking finding | in progress (read-only under Codex's `/tmp/codex-r2/`); no findings received |
+| Narrow delta review: `git diff 5121e1a <final> -- grading harness config.json preregistration.md` | not started (after Review 2) |
+| Accepted Non-blocking findings documented | pending the reviews |
+| `2ea2e5b5…` item-27 implementation (finding above) | the human's decision |
+| Formal judge pass against the 250-requests-per-day judge quota (332 items) | the human's decision |
+| Final commit, config, prompt, grader versions and hashes verified and recorded | at freeze |
+
+Values to record at `freeze-v1`, re-verified on the freeze commit; the commit itself goes in each run's metadata:
+- `config.json`:
+  - `_status` FROZEN;
+  - SHA-256 after that edit;
+  - `sandbox.image_digest` set to the image ID above (today a placeholder: a local build has no repository digest).
+- Shared prompt: file and SHA-256 `6b539cf9…`, if unchanged.
+- Image ID `sha256:18cde712…`.
+- Grader versions: engine `engine-2026-11-01.9` and the per-task versions in `config.json`
+  `grading.task_grader_versions` (`2ea2e5b5…` .5, `c3525d4d…` .6, the others as in `v1.2`).
+- Judge:
+  - `google/gemini-3.1-pro-preview`, thinking high, temperature 1.0, max_tokens 16,384, max_retries 10;
+  - prompt SHA-256 `1de955e6…`;
+  - `judge-runner-v1.3`, a 600 s item cap.
+- Freeze record `grading/freeze/freeze-v1_manifest.json`, written by `grading.freeze_manifest write`. `verify` and
+  `judge-surface v1-calibration-freeze --request-only` must report identical.
+- Budgets:
+  - generation: ceiling 150, reservations 8 / 5, per-sample limit 20;
+  - judge: ceiling 30, its own ledger, one pass.
+- Operations: AC power and `caffeinate` for every Formal process. The item cap uses `time.monotonic`, which stops while
+  macOS sleeps.
 
 ## Known issues and findings (material check)
 
@@ -5071,7 +5168,8 @@ these paths are docs only.
 - 2026-11-01 · V1.2 judge infrastructure (engine .8): provider error detail, max_retries 10, pacing, continuation with a 3-item stop, schema retry, invalid_judge_output, inferred buffer; tag `v1.2-judge-infrastructure` · 5121e1a
 - 2026-11-01 · Validation labels checkpointed 10/10; `c357f0e2…` inferred settlement; Codex package re-pinned to `5121e1a` · 7890cec
 - 2026-11-01 · Validation deterministic comparison 4/6, two V1 false fails diagnosed (not fixed), private backup pushed (main `abb6dd6`, 18 tags), Formal preflight at V1.2 · 4b3474e (local)
-- 2026-11-02 · V1.3 corrections (`2ea2e5b5…` .5, `c3525d4d…` .6), judge runner V1.3 (engine .9: classification, 600 s item cap), Formal budgets (150 USD generation, 30 USD judge, separate ledgers), Formal judge pass prepared and gated; tag `v1.3-corrections` · (this commit; local)
+- 2026-11-02 · V1.3 corrections (`2ea2e5b5…` .5, `c3525d4d…` .6), judge runner V1.3 (engine .9: classification, 600 s item cap), Formal budgets (150 USD generation, 30 USD judge, separate ledgers), Formal judge pass prepared and gated; tag `v1.3-corrections` · be84ff6 (local)
+- 2026-11-02 · V1.3 regression evidence, Formal preflight at V1.3 (150 USD), freeze-v1 checklist; `2ea2e5b5…` item-27 implementation finding (not fixed, awaiting the human) · (this commit; local)
 
 ## Next stage (not started)
 
