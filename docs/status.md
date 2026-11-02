@@ -5439,6 +5439,49 @@ Dev key of Judge Validation and the fixed second project of the formal judge.
 - The Docker run on `e081f6d` (`logs/docker-gated-e081f6d-20261102T114254Z/`, 13/13 rc 0) overlapped these working-tree
   edits (`porcelain_after 2`). It is not clean commit evidence and is superseded by the run on the freeze commit.
 
+## Grading freeze `freeze-v1-grading` = `cc684ef`; Judge Validation handoff; formal judge launched (2026-11-02)
+
+Freeze:
+- `freeze-v1-grading` points at `cc684ef` (V1.9: D2 terminal stops, formal stop result and task-order judging,
+  explicit judge projects).
+- Tests:
+  - grading 540 tests, 5 skipped, OK (134.9 s);
+  - harness 218/219, the pre-existing stale placeholder test;
+  - Docker-gated 13/13 on `cc684ef` (`logs/docker-gated-cc684ef-20261102T115227Z/`), clean tree before and after,
+    no container left running.
+- The manifest `grading/freeze/freeze-v1-grading_manifest.json` verifies. The judge request surface is identical to
+  `v1-calibration-freeze`, and the deterministic scoring modules are unchanged since `freeze-v1-grading-deterministic`.
+- `freeze-v1-generation` (`dda234f`) and `freeze-v1-grading-deterministic` (`ef53050`) are unchanged.
+- Both judge runners run from the clean worktree `/Users/yuning/turing-th-judge` at the tag, not from live code. Its
+  host materials and `.env` are symlinked; it has no uncommitted or untracked file. All formal judge gates hold there,
+  and the Validation freeze gate resolves to `freeze-v1-grading`.
+
+Judge Validation handoff to the third project:
+- Read-only pre-check: no history blocked, no terminal stop.
+  - `c357f0e2…`: recovery base established, 52 eligible items.
+  - `a45bc83b…`: 0 eligible; item 20 stays `provider_error`, exhausted.
+  - Seven runs not yet judged (52 items).
+  - One `c357f0e2…` item (the request that hit the Dev quota inside the recovery) is exhausted and stays
+    `provider_error`.
+- At 11:56Z the old watcher and the old worker (PID 50148, `df4a560`) were stopped. The worker was sleeping in the Dev
+  project's quota pause with no open request in the WAL. A `worker_handoff` event records it.
+- At 11:57:05Z the same pass resumed on `GOOGLE_API_KEY_JUDGE` from `freeze-v1-grading`: `resume_start` (project
+  recorded), then `project_switch` (from `GOOGLE_API_KEY`, closing the Dev pause), then the `c357f0e2…` recovery of 52
+  items (code tag `freeze-v1-grading`).
+- Same pass identity, registry, WAL and ledger (15 USD); only unfinished items; one worker.
+- Log: `~/turing-eval-runs/judge_validation/resume_judge-project_20261102T115704Z.log`.
+
+Formal judge (deadline exception, preregistration 1.25):
+- Launched at 11:57:25Z from `freeze-v1-grading` on `GOOGLE_API_KEY_VALIDATION`: `pass_start` with freeze commit
+  `cc684ef`, one worker, 30 USD ledger `~/turing-eval-runs/judge_formal/ledger.json`.
+- 20 canonical runs in task order with both candidates adjacent, 332 judge items.
+- Plan: when the second project's daily quota is exhausted and Judge Validation has finished with the third project,
+  the same pass continues there (`resume --credential-env GOOGLE_API_KEY_JUDGE`), one worker at a time.
+- The Judge Validation agreement was not measured before the formal judge started, so the deadline exception applies
+  to that gate. The formal judge verdicts are provisional until both that agreement and the independent recheck of
+  V1.9 exist.
+- All formal results stay sealed until the human's 20 formal blind labels are saved.
+
 ## Known issues and findings (material check)
 
 - `rubric_json.form_content`: 8,036 items hold `null`, 2,417 items lack the key, zero
@@ -5856,7 +5899,8 @@ Dev key of Judge Validation and the fixed second project of the formal judge.
 - 2026-11-02 · The formal judge reads the three formal runs roots, each with its own generation ledger; tag `v1.8-formal-roots` · b7ce2db (pushed)
 - 2026-11-02 · Formal generation complete (20/20, 17.979211 USD, no hold or stop); 20 deterministic passes sealed; 20 blind packets; Docker 13/13 on `b7ce2db` · caecfc3 (pushed)
 - 2026-11-02 · V1.9: D2 terminal stops persisted from standalone recover/run; formal runner stop result and task-order judging; config grading-frozen · e081f6d (local)
-- 2026-11-02 · V1.9: explicit judge projects (`--credential-env`), project switch on another project's quota pause; tag `freeze-v1-grading` · (this commit)
+- 2026-11-02 · V1.9: explicit judge projects (`--credential-env`), project switch on another project's quota pause; tag `freeze-v1-grading` · cc684ef (pushed)
+- 2026-11-02 · Judge Validation handed off to the third project (same pass); formal judge launched at `freeze-v1-grading` on the second project under the deadline exception · (this commit; local)
 
 ## Next stage (not started)
 
