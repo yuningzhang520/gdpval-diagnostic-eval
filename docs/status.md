@@ -1,13 +1,38 @@
 # Status
 
-Current stage: **Formal judging and the blind-label workflow (2026-11-02)**:
-- Formal generation: complete, 20/20.
-- Freeze: `freeze-v1-grading` = `cc684ef`.
-- Formal judge pass: running under the deadline exception, results sealed and provisional.
-- Judge Validation: resumed on the third project.
-- 20 blind packets: built, awaiting the human's labels.
-- Report drafts: in `report/`.
-- The V1.9 recheck by Codex is outstanding.
+Current stage: **Deliverables: page v5.3 clarity round, built final (2026-11-03), awaiting "commit"** (entry "Site
+v5.3: clarity round"). Not committed, not deployed.
+
+Earlier header, kept for the record: **Deliverables: page v5.2 after a second external review, built final
+(2026-11-03), awaiting "commit"** (entry "Site v5.2: second review").
+
+Earlier header, kept for the record: **Deliverables: page v5.1 approved and built final (2026-11-03), awaiting
+"commit"**: the author approved the v5.1 copy and every requirement-source tag with final edits (entry "Site v5.1
+final"); `site/build.py --final` passed.
+
+Earlier header, kept for the record: **Deliverables: page v5.1 revision after the author's review round (2026-11-03),
+draft awaiting the author's approval**: title and findings by requirement source, card C replaced by M7, worked
+example corrected, pilot size and cost added, the author-review chart moved to Method (entry "Site v5.1 revision").
+
+Earlier header, kept for the record: **Deliverables: submission page v5 and report alignment (2026-11-03)**:
+- Formal generation and the formal judge pass: complete. The provisional label on the judge verdicts was lifted under
+  preregistration 1.25: the Judge Validation agreement and the independent recheck of V1.9 are both recorded.
+- Freeze: `freeze-v1-grading` = `cc684ef`; nothing frozen has changed.
+- Human layers on the formal results: 12 visual verdicts; the adjudication layer holds 183 unique items in 197 records
+  (latest batch 2026-11-03T02:34:11Z). The author decided all 170 worksheet rows: 40 confirmed failures, 67 grader false
+  fails, 21 verified pass, 42 left as grader read limits (`leave`). No critical criterion remains not confirmed.
+- Results after review: tasks passed Opus 5.5 7/10, GPT-6.1 Sol 3/10; critical criteria 31/4/0 and 26/9/0.
+- Codex failure review: filed as a draft second opinion; the taxonomy rests only on the author's decisions.
+- Report: results sections filled; section 1 leads with the task-level result and maps the page's terms to the
+  report's; sections 5.6 (design choices) and 7.5 (categories A–D, data opportunity) aligned with the page.
+- Submission site: v5 final build in `site/` (`"build": "final"`), not committed, not deployed (superseded by the v5.1
+  draft build).
+
+Earlier header, kept for the record: **Human adjudication of the formal results and the deliverables (2026-11-02)**:
+formal generation and judge complete; 12 visual verdicts and 3 adjudications; the critical adjudication worksheet
+awaiting the human's decisions; report sections 7.5 and the headline findings awaiting verification; site draft build.
+
+Earlier header, kept for the record: **Formal judging and the blind-label workflow (2026-11-02)**: formal generation complete 20/20; freeze `freeze-v1-grading` = `cc684ef`; formal judge pass running under the deadline exception; Judge Validation resumed on the third project; 20 blind packets awaiting labels; report drafts in `report/`; the V1.9 recheck by Codex outstanding.
 
 Earlier header, kept for the record: **Freeze preparation (2026-11-02): Codex Review 2 BLOCKED at `5121e1a`; its five Blocking findings corrected (V1.4, engine .10, tag `v1.4-review2-corrections`), awaiting the narrow delta review; Formal measurement readiness BLOCKED until then. Earlier in the day:** V1.3 corrections and judge-runner reliability (engine .9) implemented and tested, tag `v1.3-corrections`; Formal generation (150 USD) and the Formal judge pass (30 USD, separate ledger) configured, the pass prepared and gated, not run; Judge Validation in progress; `freeze-v1` not tagged, `config.json` still DRAFT; no Formal call.** Earlier header, kept for the record: Evaluation architecture implementation on baseline `f37f1e829af2efd5daf81e3a680ea691b16fcfbe`
 (2026-11-01): Task 1 (`1137e2bb…`) gold-first verification done and Grader v0 tagged; run classes (dev /
@@ -305,8 +330,8 @@ guards are for smoke tests only and are lifted for the pilot (the pilot runner m
      operation through `sandbox().exec()` / `sandbox().read_file()` and never opens a host
      path (static check: no `open()` in the module; the `os.path` calls are inside the
      script string executed in the sandbox). Runtime check through the Inspect tool
-     dispatch: `view_image("/Users/yuning/turing-th/harness/fixtures/sample.png")` and
-     `render_document("/Users/yuning/turing-th/README.md")` return "no such file in the
+     dispatch: `view_image("<repo>/harness/fixtures/sample.png")` and
+     `render_document("<repo>/README.md")` return "no such file in the
      sandbox" / "not a file" although both files exist on the host, and
      `view_image("/workspace/private/secret.png")` fails the same way. The collector
      (`harness/collect.py`) opens host paths only to write collected copies under
@@ -714,8 +739,8 @@ Final regression results (exit code 0 unless explicitly noted above):
 | `closeout_bridge normal` → `smoke.run(normal)` | 13 ToolEvents, 3 original files, complete collection, valid eligible final outcome |
 
 The external supervisor command prefix was
-`.venv/bin/python -B /private/tmp/stage2-closeout-g5mk9l3i/launch.py`; it invokes
-`/bin/bash /Users/yuning/turing-th/harness/tests/run_isolated.sh /Users/yuning/turing-th`
+`.venv/bin/python -B <tmp>/stage2-closeout-g5mk9l3i/launch.py`; it invokes
+`/bin/bash <repo>/harness/tests/run_isolated.sh <repo>`
 with the module/arguments above. `closeout_bridge.py` is an external adapter that
 pins the existing image ID/Compose file, enforces `sandbox_prebuilt=True`, redirects
 all logs into the new ignored directory, and uses concurrency 1 and zero task retries.
@@ -1741,7 +1766,7 @@ rebuilt; no container was left behind; no dependency was installed.
 
 ### Regressions (2026-10-31; `run_isolated.sh`, `INSPECT_DISABLE_MODEL_API=1`, mockllm, prebuilt image; logs under `logs/pilot-a-remediation-20261031T002107Z/`)
 
-| Suite | Command (via `harness/tests/run_isolated.sh /Users/yuning/turing-th …`) | Exit | Result | Class |
+| Suite | Command (via `harness/tests/run_isolated.sh <repo> …`) | Exit | Result | Class |
 |---|---|---|---|---|
 | grading chain (B2, I1, I2, transfer integrity) | `grading.tests.test_grading_chain -v` | 0 | 19/19 OK | synthetic (fake completed logs, real collector) |
 | layout / integrity / row set / Word counts / recalc path (B3, B4, B5) | `grading.tests.test_layout_regressions -v` | 0 | 22/22 OK | synthetic fixtures, fake converter |
@@ -2132,7 +2157,7 @@ reason.
 
 Evidence reviewed first: `logs/extraction-review-0r3d__40/` (70 files, hashes unchanged against
 its `final-audit.json` after this round) and the probe code outside the repository
-(`/private/tmp/extraction-review-0r3d__40/work/`). Every counter-example was reproduced on the
+(`<tmp>/extraction-review-0r3d__40/work/`). Every counter-example was reproduced on the
 unchanged code before any fix (`logs/extraction-remediation-20261031T193444Z/probe-summary.json`
 holds the after-state of 34 probes; the before-state is Codex's `independent-summary.json`,
 `additional-summary.json` and `followup-summary.json`). Boundary kept: every active test through
@@ -4368,12 +4393,12 @@ Private GitHub backup security gate (read-only checks; **no push made**):
   outside `~/turing-eval-runs/`:
   - `docs/status.md:2733`: the retired run root `~/turing-th-runs/` (introduced in `a172980`, carried in every later
     version; no run identifiers);
-  - absolute repository paths `/Users/yuning/turing-th/...` (`docs/status.md`, `docs/codex_review_2.md`,
+  - absolute repository paths `<repo>/...` (`docs/status.md`, `docs/codex_review_2.md`,
     `harness/smoke.py:63`, `scripts/run_authorized_batches_2026-11-01.sh`);
   - local evidence folders `logs/...` (`docs/status.md` 88 lines, `README.md`, `docs/codex_review_*.md`, tests,
     `grading/validation/*/gold_transitions_observed.json`, `tag_provenance.json`);
-  - temporary review folders `/private/tmp/stage2-closeout-g5mk9l3i/` (`docs/status.md:708`) and
-    `/private/tmp/extraction-review-0r3d__40/` (`docs/status.md:2126`);
+  - temporary review folders `<tmp>/stage2-closeout-g5mk9l3i/` (`docs/status.md:708`) and
+    `<tmp>/extraction-review-0r3d__40/` (`docs/status.md:2126`);
   - synthetic test paths `/Users/someuser/...` (`grading/tests/test_grading_chain.py:317`,
     `harness/tests/test_launcher_regressions.py:456`).
   - Commit messages hold none.
@@ -4383,7 +4408,7 @@ Private GitHub backup security gate (read-only checks; **no push made**):
 ## Formal preflight (offline dry-run, no provider call) and backup inventory (2026-11-01; code `eb781fd`)
 
 Launcher `--dry-run` for all 20 Formal units (10 tasks x 2 candidates), 19 s, all rc 0. It used a scratch run root and
-ledger, `/Users/yuning/turing-eval-runs/formal/preflight-20261101T222421Z`, and a config copy whose only change is a preflight-only Formal ceiling of 40 USD; the real ceiling is
+ledger, `~/turing-eval-runs/formal/preflight-20261101T222421Z`, and a config copy whose only change is a preflight-only Formal ceiling of 40 USD; the real ceiling is
 fixed at `freeze-v1`, and the launcher refuses the placeholder by design.
 - Code clean at `eb781fd`.
 - Shared prompt `harness/system_prompt_draft.txt`, SHA-256 `6b539cf9…`, identical for both candidates.
@@ -4776,7 +4801,7 @@ Values to record at `freeze-v1`, re-verified on the freeze commit; the commit it
 
 ## Codex Review 2 Blocking corrections R2-B1–B5 (V1.4, engine .10; 2026-11-02)
 
-Codex Review 2 (pinned `5121e1a`; report `/private/tmp/codex-r2/review-42FFBH0Q/REVIEW.md`, probes
+Codex Review 2 (pinned `5121e1a`; report `<tmp>/codex-r2/review-42FFBH0Q/REVIEW.md`, probes
 `evidence/unittest-probe-results.json`) returned BLOCKED with five Blocking findings. The human authorized diagnosis and
 minimal corrections of all five (chat, 2026-11-02). Codex's snapshot, report and evidence are untouched.
 - Reproduction: Codex's probe logic, adapted only in its paths (`logs/r2-fixes/codex_probe_adapted.py`), reproduced all
@@ -5046,8 +5071,8 @@ Private GitHub backup readiness (checked, not pushed):
 - A push needs the human's authorization.
 
 Worktrees:
-- `/Users/yuning/turing-th` (main, clean).
-- `/Users/yuning/turing-th-jv`: detached at `df4a560`; the Judge Validation worker's checkout, with symlinks to
+- `<repo>` (main, clean).
+- `<repo>-jv`: detached at `df4a560`; the Judge Validation worker's checkout, with symlinks to
   `private/` and the ignored `data/` inputs, excluded locally in `.git/info/exclude`; provenance clean. Removed when
   the worker ends.
 
@@ -5186,7 +5211,7 @@ throttle (concurrency 2 -> 1) does not apply at concurrency 1.
 
 ## Formal generation launch arrangements (2026-11-02; `freeze-v1-generation` = `dda234f`)
 
-- Clean checkout: `/Users/yuning/turing-th-gen` (git worktree, detached at `dda234f`, no uncommitted or untracked
+- Clean checkout: `<repo>-gen` (git worktree, detached at `dda234f`, no uncommitted or untracked
   file). `data/inputs`, `data/prompts` and `data/resources` are real copies, because staging refuses symlinked
   sources. They and `config.json` are read-only. `private` is a symlink; it is read on the host only, for the unit
   gate's expected file types.
@@ -5461,7 +5486,7 @@ Freeze:
 - The manifest `grading/freeze/freeze-v1-grading_manifest.json` verifies. The judge request surface is identical to
   `v1-calibration-freeze`, and the deterministic scoring modules are unchanged since `freeze-v1-grading-deterministic`.
 - `freeze-v1-generation` (`dda234f`) and `freeze-v1-grading-deterministic` (`ef53050`) are unchanged.
-- Both judge runners run from the clean worktree `/Users/yuning/turing-th-judge` at the tag, not from live code. Its
+- Both judge runners run from the clean worktree `<repo>-judge` at the tag, not from live code. Its
   host materials and `.env` are symlinked; it has no uncommitted or untracked file. All formal judge gates hold there,
   and the Validation freeze gate resolves to `freeze-v1-grading`.
 
@@ -5544,7 +5569,7 @@ Deadline exception:
 
 ## Codex recheck 2 of V1.9 closed as known limitations; formal judge on the third project (2026-11-02)
 
-- Codex recheck 2 (`/private/tmp/codex-recheck2/review-UaziWR8v/REVIEW.md`): BLOCKED (B1-B3) plus N1. The human
+- Codex recheck 2 (`<tmp>/codex-recheck2/review-UaziWR8v/REVIEW.md`): BLOCKED (B1-B3) plus N1. The human
   closed it as known limitations: no code change, refreeze, Docker rerun or further round before submission. Details
   in `report/REPORT.md` 8.2.
 - Checks run with booleans only:
@@ -5594,6 +5619,556 @@ from it.
 - Totals: Opus P/E 0.874 at E/W 0.873; GPT P/E 0.830 at E/W 0.856.
 - Low-coverage runs are grader extraction limits: Opus `7d7fc9a7…` vendor columns, GPT `2ea2e5b5…` slide sections.
 - Failure-taxonomy conclusions wait for the human's verification of the critical FAILs.
+
+## Human layers, Codex review filed, adjudication worksheet, report sections, site draft (2026-11-02)
+
+Human layers on the formal results (`formal/tooling/formal_human_layers.py`; the frozen verdicts and ledgers unchanged):
+- Visual layer: the human's 12 verdicts on `a45bc83b…` C3 Diagram (items 4, 26-30, both candidates, all pass, page 1)
+  recorded in `formal/human_review/visual_20261102T133023Z.jsonl`. C3 and the task's critical overall become pass for
+  both candidates.
+- Adjudication layer: `c3525d4d…` item 27 `grader_false_fail` for both candidates (labels F15 / F16;
+  `adjudication_20261102T133050Z.jsonl`). The sibling items 16-20, 26, 31 and 49 fail for the same grader reason and
+  are not adjudicated (the human will verify them); C2 stays fail.
+- New class `grader_false_pass` (the human's instruction of 2026-11-02): a human verification that overturns an automated
+  pass; it maps to fail in the adjudicated status and is accepted only for an automated pass. GPT `1137e2bb…` item 23
+  recorded from label F06 (`adjudication_20261102T185621Z.jsonl`, 18:56:21Z): the Word summary never states that CASE
+  quantities must be whole multiples of the case pack. GPT `1137e2bb…` C3 becomes fail as adjudicated.
+- Status recomputed with the frozen `score_rows` (`formal/human_layers_summary.json`, 18:56:22Z). Critical criteria,
+  pass / fail / not_confirmed: as graded (frozen + visual) Opus 25 / 7 / 3, GPT 16 / 14 / 5; as adjudicated Opus
+  25 / 7 / 3, GPT 16 / 15 / 4.
+- False passes were searched only within the 20-item blind sample: 1 found (judge layer), 0 deterministic; others are
+  not ruled out. Recorded in report 7.6 and 8.2.
+
+Capability map: `grading/capability_map.json` (`capability-map-2026-11-01.1`) approved by the human as-is on
+2026-11-02, after the reveal. It was committed once in `9b1df11` (2026-11-01T11:22:58Z) and is unchanged through
+`freeze-v1-generation` and the reveal. Report 7.4 is filled from it (per-capability counts joined with the formal
+verdicts); 4.7 records the approval.
+
+Codex failure review: the human placed Codex's static review of the read-only bundle in
+`analysis/codex_failure_review/` (`analysis.md`, `diagnosis.csv`). Absolute bundle paths rewritten to paths relative
+to the bundle root (27 occurrences; no other content change); a README states it is an AI-generated draft second
+opinion, not human adjudication, covering 239 of the 265 non-pass items (the other 26: 24 pending non-critical visual
+items, 2 invalid judge outputs). Draft distribution: 33 `model_error`, 2 `model_format_deviation`, 92
+`grader_false_fail`, 77 `grader_read_failure`, 35 `rubric_ambiguous` (report 7.7).
+
+Critical adjudication worksheet (`~/turing-eval-runs/analysis/critical_adjudication.md` and `.csv`, built by a
+read-only script from the bundle, the Codex draft, the human layers and the frozen critical definitions):
+- Section 1: the 29 critical criteria that are fail or not_confirmed as graded (Opus 10, GPT 19), 145 member rows,
+  each with graded status, human-adjudicated status, Codex-projected status, the member rows' class, confidence,
+  root-cause id, evidence and the frozen rule where one exists, and the deciding check per criterion.
+- Projection rule (the human's): a supported `model_error` projects FAIL; otherwise unresolved unless every member is
+  resolved; PASS never inferred from `grader_read_failure`, `rubric_ambiguous` or `cannot_assess`.
+- Policy (the human, 2026-11-02): GPT `7d7fc9a7…` items 21 / 39 are judged under R-2.7-21 (per-line additions never
+  inferred; decided 2026-11-01, grader `7d7fc9a7-2026-11-01.7`, frozen before generation), treated as binding; a
+  sensitivity line is in report 7.3 (C2 / C3 stay fail on items 22 / 40 as graded either way).
+- Codex-projected, policy binding: Opus pass 28 / fail 2 / unresolved 5; GPT pass 22 / fail 7 / unresolved 6 (without
+  the policy GPT fail 5 / unresolved 8). Projected passes are still FAIL in the frozen scores until adjudicated.
+- Section 2: 24 taxonomy rows (every `model_error` / `model_format_deviation` row not in Section 1, by cluster M1-M6
+  and R03) plus F06 prepopulated as `grader_false_pass` with its cluster to assign. Appendix: 31 non-critical
+  `rubric_ambiguous` rows, each with the controlling frozen rule or "no controlling rule found". 67 deduplicated
+  checks at the top, sorted by the number of criteria they change.
+
+Report: 4.7 (map approval), 7.3 (adjudication classes, counts, policy and sensitivity), 7.4 (capability profile),
+7.6 (F06 as a false pass, false-pass search scope), 7.7 (triage paragraph), 8.2 (false passes). 7.5 and the headline
+findings remain placeholders until the human verifies the critical FAILs.
+
+Submission site (`site/`, not deployed):
+- `site/build.py` generates `index.html` and `data/metrics.json` from the canonical sources (results summary, human
+  layers, adjudication records, `diagnosis.csv`, `analysis/human_taxonomy.json`, the reveal summary, the formal
+  generation and judge ledgers); every metric carries its source and verification status. Narrative blocks in
+  `site/content.json` are gated by status; the default build is a draft with a visible banner, and `--final` refuses
+  while any block is unapproved, a taxonomy item lacks an adjudication record, or the gap cards lack 2-3 featured
+  verified clusters. `analysis/human_taxonomy.json` holds the human-confirmed failures by cluster (F06, unassigned).
+- Draft build: 7 pending blocks; primary narrative 564 words against the 350-500 target (the dataset chain and the
+  methods are the largest blocks). Rendering checked with headless Chrome at 1200 px and at 390 px through an iframe
+  (the Chrome extension was not connected): no horizontal overflow, tiles reflow, the stacked bar is four flex
+  segments with 2 px gaps and the validated four-slot palette (light and dark pass the dataviz validator).
+- Costs on the page: formal generation 17.979211 + formal judge 12.079453 = 30.058664 USD, ledger settlements.
+- Deployment: `.github/workflows/pages.yml` publishes `site/` on a manual trigger only and refuses a draft build.
+  Publication checks run on 2026-11-02: no `private/`, `plan/`, `.env`, parquet, inputs or labeling paths tracked or in
+  history; the only key-pattern matches in the tree and history are the two synthetic test markers; no local paths or
+  secrets in the site output; the evidence links point at the repository (private at the moment) and the page's own
+  `data/metrics.json`.
+
+## Combined projection, false-pass denominators, citation check, blind defect review (2026-11-02)
+
+The human's instruction: the worksheet `critical_adjudication.md` / `.csv` is being filled by the human and is untouched;
+the new outputs are `~/turing-eval-runs/analysis/critical_adjudication_checks.md` / `.csv`.
+
+- Projections (`formal/tooling/build_projection.py` → `~/turing-eval-runs/analysis/projection.json`): the Codex-only projection is kept
+  as a historical column; a combined projection lets effective human adjudications override the draft (`confirmed_fail`
+  or `grader_false_pass` on any member → FAIL, so GPT `1137e2bb…` C3 is fail via F06, never unresolved). Computed from
+  the records: Opus 28 pass / 2 fail / 5 unresolved in every variant; GPT combined 22 / 8 / 5 with R-2.7-21 binding and
+  22 / 6 / 7 without (Codex-only 22 / 7 / 6 and 22 / 5 / 8). The combined projection is what report 7.7 and the site
+  show, labelled a projection, not a score.
+- False-pass denominators (report 7.6, 8.2, the site): the sampled items originally graded pass, per layer, from the
+  reveal packets of the `formal-v4-checkpoint` sample: deterministic 0 of 8 (F15 / F16 were graded fail), judge 1 of 10;
+  1 of 18 overall, as a count; no rate.
+- Site: the dataset chain and the train / eval separation moved into an expandable; the primary narrative keeps the
+  targeted failure and the hypothesis. Primary narrative 412 words. The repository stays private until submission.
+- Citation check (`formal/tooling/check_citations.py` → `~/turing-eval-runs/analysis/citations.csv`, `citations_summary.json`): every row
+  of `diagnosis.csv` (239 of 239) parsed into citations, each checked separately against the bundle (files, zip parts,
+  sheets, ranges, cell values and formulas against cached values, slides and shape names, paragraph and table indices,
+  quoted strings, grader files / lines / symbols, the quoted rubric text, cross-references). 2,341 citations: 1,567
+  verified (159 through a resolution noted in the record, e.g. a sheet found in the reference workbook rather than the
+  deliverable, or a quote found in the rubric text), 0 mismatched, 774 not mechanically checkable (395 values not bound
+  to a cited cell, 349 judgment claims, 30 cells or values without a usable context). Three parser passes were needed;
+  the mismatches of the first pass were parser artefacts (possessive apostrophes read as quotes, digit truncation,
+  sheet references bound to the wrong workbook, '/G18' read as a divisor) and are documented in the script. No
+  deliverable was recalculated: a formula cell saved without a cached value is not checkable (both Opus workbooks of
+  `7b08cd4d…` and `c3525d4d…` have none).
+- Defect representatives (`formal/tooling/blind_stage.py`, `build_checks.py`): one per D01-D24 by rule (outside Sections
+  1-2 where possible, a fail over a cannot_assess, confidence, lowest item; D08 included). Blind stage: three fresh
+  subagents, each briefed only with staged copies (task prompt, inputs, expert reference with the source-governs rule,
+  the candidate's deliverable, the item key and the rubric text; no defect ids, verdicts, grader code or review files),
+  wrote `blind_review/verdicts_A|B|C.jsonl`: 22 satisfied, 2 rubric ambiguous (GPT `7d7fc9a7…` 22: the labelled
+  rounding line; GPT `f841ddcf…` 38: the literal date format). Unblinded diagnoses (`blind_review/diagnoses.json`) from
+  the grader code and the grading records: 24 of 24 causes confirmed, all matching the D-entries; 6 are read failures
+  where the grader declined (D01, D02, D09, D17, D22, D24), 18 mis-reads or mis-scores that produced a fail.
+  Disagreements for the human: D11 and D23 (blind rubric-ambiguous vs Codex false fail), D07 (the fail follows the frozen
+  label rule of 2.2) and D18 ('directly referencing' interpretation), plus D08 by request. Author verification is
+  pending on every row; the report says so (7.7) and claims no human-verified defect.
+
+## Adjudication complete: final critical status, taxonomy, report sections, site proposals (2026-11-02)
+
+The human filled `critical_adjudication.csv` (decision + evidence on all 170 Section 1-2 rows) and
+`critical_adjudication_checks.csv` (author verification on D07, D08, D11, D18, D23). Frozen verdicts and ledgers unchanged.
+
+- Recorded as adjudication batch `formal/human_review/adjudication_20261102T220501Z.jsonl`: 167 records
+  (`formal/tooling/worksheet_to_batch.py`; matched by item key; the three already-recorded items, `c3525d4d…` 27 on
+  both candidates and F06, were not duplicated). Classes extended in the tooling: `verified_pass` / `verified_fail` /
+  `leave` for `cannot_assess` items, `confirmed_pass`; item mapping grader_false_fail, verified_pass → pass;
+  confirmed_fail, verified_fail, grader_false_pass → fail; leave / cannot_verify → unresolved. Latest record per item:
+  67 grader_false_fail, 16 verified_pass, 33 confirmed_fail, 2 verified_fail, 1 grader_false_pass, 51 leave.
+- Final critical status (frozen `score_rows` on copies; `formal/human_layers_summary.json`): as graded Opus 25 / 7 / 3,
+  GPT 16 / 14 / 5; as adjudicated Opus 30 pass / 2 fail / 3 not_confirmed, GPT 26 / 8 / 1. The preregistered
+  `2ea2e5b5…` definition gives the same statuses. Sensitivity (R-2.7-21 not binding, computed): GPT `7d7fc9a7…` C2 / C3
+  become not_confirmed, GPT 26 / 6 / 3. Remaining fails and not_confirmed criteria with their deciding items: report 7.3.
+- Taxonomy (`formal/tooling/build_taxonomy.py` → `analysis/human_taxonomy.json`): 36 human-confirmed items in 8
+  clusters, M1-M6 as drafted, M7 new (F06), R03 kept; `c357f0e2…` 12 → M2, `7d7fc9a7…` 21 / 39 → M1 (R-2.7-21
+  footnote). M1 13 items / 4 tasks / 7 critical (GPT only); M2 8 / 4 / 5; M3 4 / 2; M4 4 / 1 (one strategy); M5 3 / 1 / 2;
+  M6 1; M7 1 / 1 / 1; R03 2. Severities are the author's proposals.
+- Report: 1 (headline findings), 5.5 (post-run adjudication policies), 6.5 (class table, exemplars, overturned
+  verdicts), 7.3 (final table with deciding items, counts, sensitivity), 7.5 (taxonomy and gaps), 7.6 (verification
+  scope, exact wording), 7.7 (170-row breakdown; citation and blind-review verification wording), 8.1 (judge cost),
+  8.2 (coverage gaps, policies), 4.7 (open items closed).
+- Site regenerated from the records (primary narrative 412 words before the proposals). Proposals for the human's
+  choice, all status draft / card_status proposed, so the final build still refuses: two headline options, the primary
+  finding (M1), cards M1 / M3 / M5 (ranked by severity, affected tasks and business impact; M2 the alternative), the
+  M1-grounded dataset example (the F06 version kept as an alternative). Not published, not deployed.
+
+## Re-grades synced, four baselines, final taxonomy, site content pass (2026-11-02)
+
+The human re-graded four worksheet rows after a consistency review (leave → verified_fail: Opus `7d7fc9a7…` 21 / 39, GPT
+`2ea2e5b5…` 27 / 38) and corrected evidence wording on rows 94 and 166 and on D18; frozen verdicts and ledgers unchanged.
+
+- Recording (`formal/tooling/worksheet_to_batch.py`, rewritten to compare each Section 1-2 row with the latest record by
+  item key, decision and evidence; stale worksheet columns never consulted): 12 superseding or new records in
+  `adjudication_20261102T224529Z.jsonl` (4 re-grades, 5 evidence corrections incl. the two already-recorded `c3525d4d…`
+  27 rows and F06, and the author decisions on D07 / D08 / D23 imported from the checks file as grader false fails;
+  D11 / D18 already represented by worksheet rows 97 / 94). The layer holds 173 unique items: 70 grader_false_fail, 33
+  confirmed_fail, 16 verified_pass, 6 verified_fail, 1 grader_false_pass, 47 leave; the 170-row worksheet breakdown
+  (67 / 33 / 16 / 6 / 1 / 47) is kept separate.
+- Four baselines (frozen `score_rows` on copies; the non-frozen sensitivity helper now covers both models): pure
+  automated Opus 24 / 7 / 4, GPT 15 / 14 / 6; as graded (plus the preregistered visual layer) 25 / 7 / 3, 16 / 14 / 5;
+  adjudicated (final) Opus 30 / 4 / 1, GPT 26 / 9 / 0; R-2.7-21 sensitivity Opus 30 / 2 / 3, GPT 26 / 7 / 2. All four
+  match the human's expected values. Failed critical criteria: Opus 4, GPT 9, 13 in all.
+- Coverage: the 47 leave items remain item-level gaps even inside failing criteria; an explicit item-key comparison
+  found no confirmed counterpart on the other candidate for any of them.
+- Taxonomy rebuilt from the whole layer: 40 confirmed items in 9 clusters (M1 GPT 11 / 3 tasks, Opus 0; M2 Opus 3 / 2,
+  GPT 7 / 4; M3 4; M4 4; M5 3; M6 1; M7 1; R03 2; new mutually exclusive line ADDS "per-line additions column absent
+  (both models; depends on R-2.7-21)" 2 / 1 each); critical rubric items recomputed per cluster (19); M1's severity
+  basis corrected (5 of 11 critical). Expected figures matched; the total is reconciled against the layer's unique
+  confirmed keys.
+- Report: 1, 3.2 (W recomputed, identical), 4.4 (Validation agreement), 4.5 (recheck outcome), 6.5, 7.1 (deliverables
+  present / required and wall times from the run inventory), 7.3 (four-baseline table and counts, remaining fails and
+  the one not_confirmed, sensitivity for both models), 7.5 (table with the ADDS line, critical rubric items, failed
+  criteria per model), 7.6 (verification scope: 5 author-verified representatives, 10 author-decided items without a
+  diagnosis verification, 9 neither), 7.7, 8.1 (Judge Validation 4.847818 settled of which 0.913046 inferred; human
+  review ≈ 1.5 h author-reported with its scope; subtotal 88.329792), 8.2 (coverage gaps; packet metadata check).
+  Placeholders left that no record fills: 3.3 (PLAN.md's two-to-four criteria per task vs five on `f841ddcf…`,
+  editorial), 4.2 (the Validation judge-only stratum notes), 8.4 (CLI documentation of `run` / `resume` / `status`);
+  none affects a number on the site.
+- Site: content pass per the human's text (headline, subtitle, M1 finding with the `7b08cd4d…` qualification; cards
+  M1, M2, M3 + M5 merged, worded as documents omitting specified controls; M7 stays in the taxonomy and section 3; the
+  M1-grounded dataset example, F06 alternative dropped; verification wording from the files); four baselines and the
+  leave comparison in the results expandable; `--preview` renders a banner-free page outside `site/` without touching
+  the gate. Every block and card still carries draft / proposed status, so `--final` refuses and nothing is deployed.
+
+## Confirmed passes behind the Opus claim, item-12 re-grade, editorial placeholders (2026-11-02)
+
+- Ten `confirmed_pass` records (`adjudication_20261102T232302Z.jsonl`), author-verified with evidence, for the Opus
+  5.5 automated passes behind the finding's "verified" claim: `b5d2e6f1…` 12, 16, 25, 26 (an Excel PivotTable with a
+  labelled total for each of the 39 stores, e.g. row 13 "Store 1 Total") and `47ef842d…` 28, 35, 42, 49, 56, 57 (Table 1
+  has Daily Units Sold (L4W avg) for all five UPCs). `7b08cd4d…` 16 / 17 were frozen fails already recorded
+  `grader_false_fail` on Revenue Detail L7:M13, so no `confirmed_pass` applies; they back the claim as recorded. The
+  site build now refuses the claim without these records (`opus_levels_verified`).
+- GPT `b5d2e6f1…` item 12 re-recorded `leave` → `verified_pass` from the worksheet (the Sales by Store PivotTable
+  confirmed in Excel; `adjudication_20261102T232303Z.jsonl`). Worksheet breakdown 67 / 33 / 17 / 6 / 1 / 46; the layer
+  holds 183 items (173 decisions plus the ten confirmed passes); critical statuses unchanged (Opus 30 / 4 / 1, GPT
+  26 / 9 / 0); 46 leave items, still none with a confirmed counterpart.
+- Deliverable-integrity observation recorded in report 7.2 and 8.2 (not a rubric result): GPT's
+  `Weekly Sales Analysis.xlsx` opens in Excel for Mac only after the repair prompt ("[Repaired]"); Numbers and
+  openpyxl open it without repair; the PivotTables survive the repair.
+- Human review time: about 3 hours in total (author estimate) covering the 20 blind labels, 12 visual verdicts, 170
+  worksheet decisions and 5 representative verifications, excluding the reading of AI drafts (report 8.1).
+- Editorial placeholders filled: 3.3 (the five-criteria deviation on `f841ddcf…` documented against `PLAN.md`), 4.2
+  (Validation judge-only stratum 4/4 pass, 3/3 with the debug-set item excluded), 8.4 (judge runner commands from the
+  module docstrings). No `{{...}}` placeholder remains in the report.
+- Site: severities labelled author ratings; review time and the integrity observation in the methods expandable;
+  banner-free preview written to `~/turing-eval-runs/analysis/site_preview.html` (outside the repository). All blocks
+  and cards still gated; nothing deployed.
+
+## Site design pass, four content fixes, editorial approval, final build (2026-11-02)
+
+- Content fixes (the human's): a severity-definition line above the cards (author judgement, kept separate from the
+  preregistered "critical" weight); an inline SVG pipeline in Methods (10 tasks → 2 models, frozen prompt →
+  deterministic checks / Gemini judge / human visual → 20 blind labels → reveal → judge validated on the held-out set →
+  author adjudication, 170 rows; a stacked variant below 40 rem) with the measured Judge Validation agreement (3/3,
+  parsed from the `docs/status.md` record) and why the verdicts stay labelled provisional; composition and contrastive
+  training-use lines in the dataset expandable; card 2 "Low business severity, high rubric leverage".
+- Design pass: serif heading face (Iowan Old Style / Palatino / Georgia fallbacks) with a system sans body and a fixed
+  type scale; tabular figures on tiles, counts and tables; one accent colour (the model-error share of the
+  signal-vs-noise bar, arrows, links) with the three noise segments in receding greys; semantic colours only for
+  severity badges and pass / fail / not-confirmed dots; shared anatomy for tiles, cards and expandable rows; no
+  animation or imagery; light and dark tokens; the critical pass / fail / not-confirmed counts per model are visible
+  under the tiles. Nav wraps and the pipeline stacks at 390 px (no horizontal scroll).
+- Reading budget: 600 visible words at the production rendering (cards and expandable summaries included; the narrow
+  pipeline variant counted once); 3,296 expanded. To fit the mandated additions (~170 words) the hypothesis sentence
+  moved into the dataset expandable, the finding paragraph was shortened and its worst-case example and the
+  `7b08cd4d…` qualification live in the M1 card; no number changed.
+- Every block and card approved by the human (status / card_status `approved`); `site/build.py --final` built
+  `site/index.html` and `site/data/metrics.json` (`"build": "final"`, no pending, no warnings). Publication checks
+  rerun: no forbidden paths tracked or in history, no key patterns beyond the synthetic markers, no local paths or
+  draft banner in the page. The repository is private: the GitHub and report links answer HTTP 404 to anyone without
+  access (verified anonymously); `data/metrics.json` is a relative link that resolves on the deployed site. Renders:
+  `~/turing-eval-runs/analysis/site_final_1200.png`, `site_final_390.png`. Not committed, not deployed.
+
+## Site: eleven content fixes within the 600-word budget (2026-11-02)
+
+- The human's eleven fixes applied verbatim (severity roll-up sentence; card 3 Observed; card 1 Why; card 2 Data
+  verifier wording; the 170-item adjudicated line under the bar, with the 183-item layer composition in the
+  expandable; cost tile sub-label; tasks tile sub-label; "of 35 critical criteria each" and the fails note; the two
+  dataset sentences; the results column label). All verified present in the built page by string match.
+- All-recorded-paid-workloads total on the cost tile: 88.329792 USD, the sum of `harness.ledger_admin status` settled
+  amounts over the nine paid ledgers (dev 22.255219, validation 17.488478, compat 2.043342, judge_dev 11.636271,
+  judge_validation 4.847818, formal 1.795593 + opus 13.407464 + gpt 2.776154, judge_formal 12.079453); equal to the
+  report 8.1 recorded subtotal. Computed at build time (`cost_all_workloads_usd` in `site/data/metrics.json`).
+- Budget: 600 visible words (all default-visible text: nav, tiles, labels, captions, card text, pipeline labels,
+  expandable summaries, footer). Room made by consolidating repeated copy, not by hiding or shrinking: the finding
+  paragraph folded into the subtitle and card 1 (levels, the 39-store example, Opus verified; the tour P&L
+  reference-vs-rubric note stays visible in card 1's evidence); the separate false-pass line merged into the
+  adjudicated line; the masthead label, three tile sub-labels and the dataset "targets" sentence dropped (each is
+  stated elsewhere on the page); the methods note and limits line shortened; expandable summaries shortened. No number
+  changed. Tile sub-labels use non-breaking phrases so they do not wrap mid-phrase.
+- Rebuilt `--final` (no pending, no warnings); publication checks rerun clean. Renders at 1200 px light and dark and at
+  390 px: `~/turing-eval-runs/analysis/site_final_1200.png`, `site_final_1200_dark.png`, `site_final_390.png`. Not
+  committed, not deployed.
+
+## Site: restored qualifications and the visual pass with five charts (2026-11-02)
+
+- Restored: the three methods tile sub-labels ("20-item sample", "provisional", "2 invalid"); critical counts per model on
+  every gap card ("11 items · 3 tasks · 5 critical" on card 1); "one run each" is visible on the models tile.
+- metrics.json carries no path outside the repository: sources are a list of descriptive provenance entries ("local run
+  store, not in repo; see report §…") with SHA-256, and the build refuses to write metrics.json if a local path appears.
+  The nine paid-workload ledgers are listed with settled amounts (none at $0); total 88.329792 USD, equal to the report
+  §8.1 recorded subtotal; formal run 30.058664 USD.
+- Charts (inline SVG, CSS tokens, every value labelled, role="img" with an aria-label; numbers only from metrics.json
+  key `charts`):
+  - A, under the hero tiles: per model, "As graded (automated + visual check)" and "Adjudicated" bars over the 35
+    critical criteria (Opus 25/7/3 → 30/4/1, 30/35 (86%); GPT 16/14/5 → 26/9/0, 26/35 (74%)), third state named
+    "cannot assess" / "not confirmed", an explicit "0 not confirmed" label, and the note "Pass gains include resolved
+    cannot-assess items, not only corrected false fails." The pure-automated baseline and the R-2.7-21 sensitivity
+    stay in the results expandable.
+  - B, results expandable only: 10 tasks × 2 models adjudicated status grid with text in every cell.
+  - C, card 1: store-subtotal schematic read from both Sales by Store sheets at build time (39 stores, 8 brand rows
+    in every store, Opus 39 "Store N Total" rows, GPT none; GPT grand total correct per the frozen verdict of item
+    17), dashed "subtotal missing" slot; caption merges the "Opus: 39 store totals" line.
+  - D, Signal vs noise: two separate full-width bars, AI draft (n = 239 of 265) and author adjudication (n = 170), each
+    with its own denominator and percentages; note "Different review sets; percentages describe each set
+    separately." No connecting marks.
+  - E, gap cards: items per model on one shared scale (max 11), tasks and critical items printed beside each bar, an
+    explicit "0" with no bar for Opus on card 1.
+- A and D have wide and narrow variants (below 52rem). Narrow-segment labels sit outside the bar with short leaders;
+  in narrow D the counts sit inside the segments and a legend lists each class with count and percentage. Tiles switch
+  to one column with the value beside the label below 30rem; expandable summaries and tile sub-labels wrap only
+  between phrases; the nav is sticky. Dark-mode greys stepped so all three noise segments clear the surface.
+- Visible words: 759 at desktop width (767 on a phone, where the D legend repeats the counts), against the soft target
+  of about 700; 189 of them are chart labels (A 50, D 49, C 29, E 37, pipeline 24). Expanded 3,439.
+- Selection line visible in Methods; tasks tile sub-label and the as-graded item-score column confirmed.
+- Rebuilt `--final` (no pending, no warnings); publication checks clean. Screenshots:
+  `~/turing-eval-runs/analysis/site_1200_light.png`, `site_1200_dark.png`, `site_390_light.png`, `site_390_dark.png`.
+  Not committed, not deployed.
+
+## Four `7d7fc9a7…` C1 decisions; report updated; site v3.1 (2026-11-02)
+
+Decisions (the author, 2026-11-02 local time; invoice-by-invoice reconciliation extracted by Claude, spot-checked by
+the author on INFOR 179361, Punchout2Go 844922, Good Insurance 1116 and BCBS 5731):
+- Opus `7d7fc9a7…` C1 items 13, 14, 33, 34: `leave` → `verified_pass`. All 41 services invoices appear on Prepaid
+  Expenses 1250 with their source amounts (total 1,087,156.21); all 25 insurance invoices (21 Good Insurance, 4 BCBS)
+  on Prepaid Insurance 1251 (total 568,698.22). The workbook side was re-read and matches.
+- Recorded as a new read-only batch `formal/human_review/adjudication_20261103T023411Z.jsonl` (4 records, frozen
+  verdict `cannot_assess`; earlier records kept). The four rows of `critical_adjudication.csv` were updated in their
+  decision and evidence cells only; the worksheet sync found exactly these four changes.
+- Recomputed with the frozen `grading.grade.score_rows` on copies: Opus adjudicated 30/4/1 → 31/4/0, sensitivity
+  30/2/3 → 31/2/2; GPT unchanged (26/9/0, 26/7/2); verified pass 17 → 21, leave 46 → 42; 183 unique items, records
+  193 → 197. Opus `7d7fc9a7…` stays fail overall (C2, C3). All 42 remaining `leave` items sit in criteria that fail on
+  a confirmed item (Opus `7d7fc9a7…` C2 6, C3 8; GPT `2ea2e5b5…` C3 28).
+
+Report (`report/REPORT.md`): §1, §6.5, §7.3 (batch note with the 2026-11-03T02:34:11Z timestamp, C1 row, counts, no
+remaining not_confirmed), §7.6 verification scope (the author's wording with 42, C2-C3 and the added sentence), §7.7
+and §8.2 updated; stale text fixed: GPT `b5d2e6f1…` item 12 (a verified pass) in §7.3 and the "three adjudications"
+note in §7.4. Review time kept at about 3 hours.
+
+Site v3.1 (`~/turing-eval-runs/analysis/site_v3_1_spec.md`): rebuilt as Findings · Results · Failures · Data · Method ·
+Limits with the author's VISIBLE copy verbatim (checked fragment by fragment against the spec).
+- VERIFY results: the criterion-status rule matches `grading.grade._score` at `cc684ef`; required checks are a
+  criterion's items plus its declared `extra` checks (`b5d2e6f1…` C1 `c1_columns`, C2 `c2_source_totals`; one on
+  `1137e2bb…`); step 1 holds (Dev calibration; held-out Validation of the code checks on 2026-11-01; generation freeze
+  09:52:54Z before generation 09:57:12Z; no task grader or critical definition changed after it; judge agreement
+  measured about 12:17Z during formal judging 11:57:25Z to 12:55:28Z); all 20 formal Inspect logs show reasoning
+  effort high, 32,000 output tokens, 3 retries, 2,700 s / 900 s timeouts, 7,200 s time and working limits; the
+  frozen config hash matches the freeze record; the card claims, the category cells and the review-scope counts match
+  the records.
+- Judge status: both conditions of preregistration 1.25 are recorded (the Judge Validation agreement 3/3 and Codex
+  recheck 2 of V1.9, BLOCKED and closed as known limitations). Under the spec's rule the site drops "provisional" from
+  the tile and Limits and says why in the method note; the note is a draft awaiting the author. The report (§7 status
+  note, §7.6, §8.2) and this file's header still call the judge verdicts provisional.
+- Card A crops: `site/render_crops.py` and `site/render_crops_uno.py` render both "Sales by Store" sheets with
+  LibreOffice in the sandbox image (no network) from copies whose PivotTable relationship is removed, because
+  LibreOffice rebuilds the PivotTable on load (rows shift by one and "Store 1 Total" becomes "Store 1 Result").
+  Deliverable hashes are checked against the artifact manifests and every shown cell text against the rendering.
+- Draft blocks awaiting the author: `results_fill`, `categories_fill`, `cards_fill`, `method_fill`. The default build
+  (banner) is in `site/`; `--final` refuses until they are approved.
+- Visible words 1,068 at desktop width and 1,104 on a phone, plus 81 words of cell text in the crops, against the
+  893-word copy base. Not committed, not deployed.
+
+## Site v3.1 fixes, judge label lifted, final build (2026-11-02)
+
+- Judge status: the author's decision, under preregistration 1.25 (both conditions recorded). No provisional label
+  remains on the site, in the report (sections 1, 5.5, 7, 7.5, 7.6 and 8.2) or in this file's header. The method note
+  now reads "the held-out judge agreement (3/3, all passes, so failure detection is untested)".
+- Report section 7, "Status of these numbers": the stale bullet on critical FAILs awaiting verification now reads
+  "Every failed critical criterion in the adjudicated results is author-confirmed; the as-graded results preserve the
+  original verdicts."
+- Site wording: the review-scope parenthetical says "the only non-pass items that can change a critical status"; the
+  chart A subtitle says "every failing or cannot-assess critical item"; a tasks line sits under the method subtitle;
+  card B's expandable is titled "Data"; the crop captions give model, sheet and cell range only.
+- The author approved the blocks written by Claude (criteria-selection line, configuration details, retry policy, run
+  dates and versions, crop captions). Numbers unchanged: Opus 31/4/0, GPT 26/9/0, 21 verified pass, 42 unresolved,
+  183 unique items, 197 records. Built with `--final`. Not committed, not deployed.
+
+## Site v5 and report alignment (2026-11-03)
+
+- Page: implements the author's approved preview v4.11 (`~/turing-eval-runs/analysis/site_v5_spec.md`), copy verbatim
+  (every text node of the preview appears in the build). Sections: findings, results (task-verdict grid with failure
+  labels; critical requirements before and after review), failures (author-review bar, categories A–D, the nine
+  failure types, cards A–C), data opportunity, method and limits. The placeholders hold the existing taxonomy regrouped
+  under A–D, the existing worked example, card A's crops, and new crops for card B (both "Summary" out-of-stock charts,
+  category axis visible) and card C (GPT-6.1 Sol "UAT Test Plan" row 91, columns A / E / G), rendered by
+  `site/render_crops.py` from the saved deliverables (hashes checked against the run manifests; category labels, the
+  absence of UPCs, and every shown cell token checked in the rendering).
+- New metrics computed by the build: task verdicts per task and model with the failure label of each failing cell
+  (checked against the failure types of the confirmed items in the failing critical criteria): Opus 5.5 7 pass / 3 fail,
+  GPT-6.1 Sol 3 / 7; without R-2.7-21 7 / 2 / 1 and 3 / 6 / 1; rubric items 580 per model, 320 in the 35 critical
+  criteria, 3 to 5 per task; category counts and "seen here" values (10 and 30; 5 and 14 critical); the limits reached
+  by the formal runs; a term check on the page.
+- VERIFY: task grid, "2 of Opus 5.5's 3 failures are only an exact label", the † counts, 580 / 320 / 35, the bars
+  25/7/3, 16/14/5, 31/4/0, 26/9/0, the run configuration and dates all match the records. No formal run reached a
+  limit: no sample limit, no `max_tokens` stop, largest single response 23,598 output tokens of 32,000, longest run
+  1,039 s of 7,200, at most 100 of 200 messages, no request retries (20 formal Inspect logs).
+- Flagged to the author and decided by the author (2026-11-03): "Store view correct" (recorded name "PivotTable", C3)
+  became "the store view requirement"; the rubric-item example now quotes item 16 verbatim with an ellipsis (the build
+  checks it against the rubric) and the step-1 examples are introduced as paraphrases; the per-model line now reads
+  "GPT-6.1-sol: A first (14 failed rubric items in 5 tasks). Opus 5.5: B first (exact labels: 3 of its 5 critical
+  failed rubric items); it already delivers the required breakdowns, so the suite guards them against regression"
+  (numbers from the build; the same line in the report); "the 239 rubric items not graded pass" became "the 239 rubric
+  items graded fail or cannot assess" in all three places (the build checks 239 = graded fail + cannot assess).
+- Stale text (author's request): the report's draft-scaffold opening and placeholder conventions removed; its brief
+  map, section 6 lead, the "draft map" wording of 6.2 and the dataset-gap bullet of section 1 brought up to date;
+  `report/dataset_proposal.md` replaced by a pointer to the report's "Data opportunity" subsection (earlier version at
+  `0fcc9b5`); README limitations replaced by the page's limits; `preregistration.md` title and a FROZEN note added
+  above the original status paragraph (kept; no rule text changed); this file's "In flight" and "Next stage" brought
+  up to date. Remaining "draft" / "placeholder" hits in tracked docs are the AI draft, historical records, file names
+  or pptx title placeholders.
+- Report: section 1 leads with the task-level result, the critical criteria and the 40 confirmed failures in 4
+  categories, with the page's three findings, and adds a terms paragraph (page term = report term); section 5.6 adds
+  the page's four design choices; section 7.5 adds the A–D grouping table above the cluster table and a data
+  opportunity subsection (dataset card, why this data, gap table, three uses, pilot and proof, the worked example);
+  the sentence calling M7 "the worked example of the dataset proposal" was removed. README: headline, three findings,
+  links to the page, the report and the metrics.
+- Acceptance: `site/build.py --final` passed (no pending block, no warning, no forbidden term); screenshots at 1200 and
+  390 px, light and dark, in `~/turing-eval-runs/analysis/site_v5_*.png`. Not committed, not deployed.
+
+## Site v5.1 revision (2026-11-03)
+
+After a read-only review round (chat), the author agreed to every proposed change (translated from the chat: "Agreed to all; change it as proposed. Replace card C with M7."). No verdict, adjudication, ledger or frozen file changed; no paid call.
+- Requirement source (new, `analysis/requirement_source.json`): each of the 40 confirmed failures tagged `prompt` (the
+  prompt itself asks for the missing element), `rubric` (only the rubric's wording, form or detail, or an item beyond
+  the prompt) or `rule` (R-2.7-21). Drafted by Claude from the task prompts and adjudication evidence; status `draft`
+  until the author approves; the final build refuses until then. Counts: Opus 5.5 0 / 8 / 2, GPT-6.1 Sol 12 / 16 / 2
+  (prompt items in 4 GPT tasks); failed tasks by source Opus 0 / 2 / 1, GPT 2 / 4 / 1 (`b5d2e6f1…`, `1137e2bb…`). 12
+  tags marked debatable for the author (report 7.5): `47ef842d…` 28-57 daily figure, `7d7fc9a7…` 3 / 4 tab names,
+  `1137e2bb…` 23 (`prompt`); `7b08cd4d…` 16 / 17, `c357f0e2…` 50 (`rubric`). The build checks coverage, failure
+  types, the ADDS ↔ `rule` match and every quoted prompt fragment verbatim against the task prompt.
+- Page: title "Correct numbers, incomplete deliverables"; findings rewritten (no confirmed failure is a wrong
+  calculation; only GPT-6.1 Sol's failures include prompt-stated requirements; rubric grading needs a human pass: 67 of
+  170 grader false fails, one task decided by a judge false pass, 8 of 10 failed tasks rubric-only or rule); tiles 3–4
+  now prompt-stated items 0 / 12 and grader false fails 67/170; the duplicate "How it was measured" paragraph removed;
+  key terms add "requirement source". Results: each failed cell carries its source tag; a second total row (failed on a
+  prompt-stated requirement: 0 and 2 of 10). Failures: categories first, with a "Stated in the prompt" column and
+  severity per model where the two differ (A: GPT-6.1 Sol high, Opus 5.5 medium); category meanings say "the rubric"
+  where the rubric is the source; cards A and B state what the prompt asks and what the rubric requires.
+- Card C: replaced the UAT example (two models, two different items, one critical) by M7, `1137e2bb…` item 23 (GPT-6.1
+  Sol, critical, judge pass overturned by the blind audit, the only failure of that task). New crops of the heading and
+  paragraph that define the checks in each Word summary (`c_opus_summary.png`, `c_gpt_summary.png`), rendered by
+  `site/render_crops.py` (docx export added to `render_crops_uno.py`; every word checked in the rendering). The build
+  checks the grader record (judge pass for both models; `grader_false_pass` for GPT-6.1 Sol), that it alone fails the
+  task, and that "multiple" occurs 0 times in GPT-6.1 Sol's document and its rendering (Opus 5.5: 3). The card A and
+  B crops re-rendered byte-identical. The old UAT crop is kept outside the repository (scratchpad backup).
+- `c357f0e2…` item 50: the recorded evidence ("No row edits records in two organizations with both edits allowed") is
+  broader than the rows support: rows 68 (programs) and 75 (settings) act in both organisations, both allowed; rows
+  14, 40, 60 and 88 edit Org B records. The verdict stands under the rubric's "Idea, Proposal, or Project"; the record
+  is not edited (append-only); report 7.5 notes and the 6.5 bullet corrected. The task verdict does not depend on it
+  (C3 fails on item 15).
+- Worked example: the "acceptable layouts" line contradicted the prompt's explicit pivot table (preregistration C3);
+  replaced by a pivot-table target deliverable, a checklist excerpt with sources and a pivot-table test. Added "Why
+  verified": GDPval's expert file averages row ratios for ST% (Clinique WTD 0.2467 against 0.2309 from the totals,
+  recomputed from the input at build time) and its Data tab differs from the source in 557 cells, unexplained in the
+  audit (`docs/expert_gold_fail_audit.md`). "Rubric lineage" became "rubric text".
+- Data opportunity: thesis, quality (second expert review; tests must pass on the expert deliverable and fail on the
+  deficient variant), gap rows B and D, "Evaluate" use, pilot with a numeric acceptance rule (3 families, rotate,
+  3 runs per task, prompt-stated checklist items +10 points, numerical tests within 2 points), size and cost as an
+  estimate (60 samples; GDPval's 7 expert hours per task, arXiv:2510.04374 section 1, verified on the paper; plus 4
+  estimated hours; about 660 expert hours), per-model line revised (supersedes the 2026-11-03 "A first / B first"
+  line, which assumed category B was a model capability gap).
+- Method: the author-review chart, legend and scope moved here under grader reliability; design choices collapsed
+  into an expandable; a "Requirement source" limit added.
+- Visible words: 2,060 (v5: 1,924), after trimming card, data and legend wording.
+- Report: section 1 result and findings; terms; the dataset-gap bullet; 6.4 pointer; 7.5 category table (prompt
+  column, severity per model), notes on `c357f0e2…` 12 and 50, the M1 and M2 readings, a "Requirement source"
+  subsection with the rule, counts and the 12 judgment calls, and the Data opportunity subsection aligned with the
+  page; 8.2 adds the requirement-source limit. README: headline, findings, a limitations line. `site/README.md`:
+  sections, sources and build checks.
+- Build: draft (blocks revised in this round are `draft`; the only warning is the unapproved requirement-source tags);
+  term check clean; no local path in `metrics.json`; preview and screenshots at 1200 and 390 px, light and dark, in
+  `~/turing-eval-runs/analysis/site_v5_1_*`. Not committed, not deployed.
+
+## Site v5.3: clarity round (2026-11-03)
+
+A full read of the page with every collapsed section opened, as a reader would, raised six clarity questions (chat);
+the author approved every proposed change. No verdict, tag, adjudication, ledger or frozen file changed; no paid call.
+- One name per concept on the page: failure source with the values "in the prompt", "rubric only" and "additions
+  rule" (defined once by whether the model was told); "requirement" only inside "critical requirement" (the key term
+  "Requirement source" is now "Failure source"; tile 3 "failures on something the prompt asked for"; the grid's second
+  total "Failed on something the prompt asked for"); "undecided" for a critical requirement with no failure and an
+  item that could not be assessed (was "not confirmed", which collided with "confirmed failure"); "cannot assess → pass
+  / left" (was "grader couldn't read"); "the additions rule (ours, set before the runs)" for the five earlier names.
+  The term check now also refuses the retired names ("not confirmed", "grader couldn't read", "added rule",
+  "requirement source", "prompt-stated", "stated in the prompt"). Report 1 maps the new page terms.
+- Finding 2 rewritten around "whether the model was told"; the borderline-case range moved to a results note in plain
+  words (counting all 12 one way or the other: GPT-6.1-sol 1 to 4 failed tasks on something the prompt asked for;
+  Opus 5.5 0 either way).
+- Finding 3 and Method: the 67% is labelled as a share of fails chosen where a verdict could change, and a note
+  explains why it does not contradict the blind audit's 17 of 20 agreement (the audit samples all items, most of which
+  pass; false fails cluster, e.g. one missed "On-Hand" label made ten).
+- Card C quotes both definitions side by side (Opus 5.5: "a CASE-UOM line whose ordered units are not a whole multiple
+  of the case pack"; GPT-6.1-sol: "Case-pack errors count invalid CASE lines once; EA lines are exempt.") and states the
+  rule the prompt sets; the build checks both quotes against the rendered paragraphs.
+- Cut: run IDs from the evidence captions (they stay in the metrics); the second review chart (Method now states the
+  170-item result in one sentence, with the count flow in its expandable); the "automated only" basis, which nothing on
+  the page shows; the "inside critical requirements" column of the category table (it stays in the full taxonomy);
+  the model-configuration parentheses in the deck and tiles. M2's name no longer uses "requirements".
+- Data opportunity reordered: a two-sentence thesis; "why it has to be expert-verified" with three pieces of evidence
+  from this evaluation (67 of 100 graded fails were grader errors; 8 of 10 failed tasks turn on rubric-only wording or
+  the additions rule; GDPval's expert file fails two source checks); the sample card with Quality in short sentences;
+  what each lab gets; pilot (acceptance on the share of checklist items met, no longer limited to items in the prompt);
+  size and cost; the gap table and three uses collapsed. Mirrored in report 7.5 and `report/dataset_proposal.md`.
+- Visible words: 2,118 (v5.2: 2,264). README findings and limits updated.
+- Follow-up (author approved, 2026-11-03): finding 2 no longer says Opus 5.5 "stays at 0" under any count of the
+  borderline cases (all 12 are GPT-6.1-sol failures, so the clause carried no information; the results note now says
+  so, and the build checks it). Category table: severity always shown as Opus / GPT (— where a model has no failure),
+  the prompt column named "Model was told (in the prompt)" with a note that it marks the clearest evidence of a model
+  failure and that severity is a separate scale. Full taxonomy: the code and "found by" columns removed (the latter
+  read as if graders, not the author, found the failures); a note says every item was confirmed by the author and
+  that category C was flagged only by the LLM judge or the blind audit (the build checks it); rubric items grouped by
+  model and task. Report 1, 7.5, 8.2 and README mirrored. Visible words 2,133.
+- Final read as an interviewer, against the brief (author approved all fixes, 2026-11-03): the Tasks line stated a
+  wrong selection reason ("deliverables can be graded deterministically"); it now gives report 3.1's rule (each of the
+  five adds a different deliverable under the same two demands; candidates excluded only for missing or contradictory
+  materials). The 100 reviewed graded fails are now split by why they were reviewed (78 could change a verdict, 22
+  suspected model failures; new metric fields, checked to add up), and the Method note no longer says they were chosen
+  "where grader errors cluster". "8 of the 10 failed tasks" became "8 of the 10 task failures (3 Opus 5.5, 7
+  GPT-6.1-sol)". The units line no longer implies that all 580 rubric items sit in critical requirements (320 do).
+  Internal terms removed from the page and added to the term check: "deadline exception", "evidence pack",
+  "source-only", "formal" (now "evaluation runs"); the additions definition, M4's and M6's names and the
+  self-referential "approved by the author" reworded. Report 1, 7 (judge status in plain words), 2.7, 7.5 and README
+  mirrored. The report called the author "the human" in 22 places; on the author's go these now read "the author" (adjectival
+  uses such as "human visual verdict" and "human-confirmed" kept). Visible
+  words 2,197.
+
+## Site v5.2: second review (2026-11-03)
+
+A second external review of the v5.1 page (ten issues and a brief check) was discussed in chat; the author agreed to
+every proposed fix and decided the three open points. No verdict, adjudication, tag, ledger or frozen file changed; no
+paid call.
+- Title: "Omissions and form, not arithmetic" (the author's wording; "Omissions, not miscalculations" would leave out
+  category B). Finding 1's lead: "None of the 40 confirmed failures is a wrong calculation."
+- Sensitivity of the requirement-source tally (new metric `requirement_source_sensitivity`): with the 12 judgment calls
+  read either way, GPT-6.1 Sol's prompt-stated items range from 3 to 15 and its failed tasks on a prompt-stated
+  requirement from 1 to 4; Opus 5.5 stays at 0. On the page (finding 2, results notes), report 1, 7.5 and 8.2, README.
+- Grader false fails: 67 of the 100 reviewed graded fails (67%) replaces 67 of 170 (39%, the bar's mixed pool) in
+  finding 3 and tile 4; the bar keeps the 170 and says so. New metric `review_count_flow`, reconciled at build time
+  (239 graded fail or cannot assess = 169 reviewed + 70 not reviewed; 170 = 169 + the blind-audit pass; 96 not
+  reviewed = 70 + 24 visual items without a verdict + 2 invalid judge outputs); shown under "How the 170 were chosen,
+  and what was not reviewed" and in report 7.7. Report 7.7 corrected: "leaves out 69 non-critical draft rows" was
+  wrong (239 − 170 instead of 239 − 169); it is 70.
+- Results notes: weeks of supply fails for both models only on the chart requirement C4, whose pre-registered text asks
+  for exactly the five UPCs as categories; C1–C3 pass for both (the build checks it). "After review" now says it
+  settled every critical requirement the graders left not confirmed (the 42 left items sit in failing requirements).
+- Taxonomy note: GPT-6.1 Sol's six missing daily figures (weeks of supply) are the input to the weekly rate, which it
+  reports correctly; M1's high severity applies to the store subtotals and per-stop amounts.
+- Units: the findings note gives the ladder 10 tasks → 35 critical requirements → 580 rubric items per model.
+- Data opportunity: "The proposed fix"; judge checks for explanations, controls and test conditions, validated on the
+  complete / deficient pairs (component 4, gap C); Quality now requires each deficient variant to fail the checks of the
+  element it removes and pass all others (the earlier "fail on its deficient variant" for every test was wrong);
+  pilot split within each family (15 training, 5 held out, different source data) with leave-one-family-out transfer
+  as a separate, non-gating run, aligned with the worked example and the hypothesis; the worked example's pivot table is
+  on the Sales by Store tab, built from the Data tab (the earlier "on the Data tab" misread the prompt); per-model line
+  for Opus 5.5 (author's decision, no new tag column): of its 10, 5 professional detail the rubric adds, 3 exact
+  wording, 2 the added rule (new metric `opus_failure_split`: rubric-tagged M2 items = wording).
+- Method: a "Tooling" line (Claude Code built the harness, graders, analysis and page; OpenAI Codex reviewed read-only
+  and drafted the triage); step 4 includes the blind-audit pass.
+- Not changed (author's decision): category B's description ("form or arrangement").
+- Collapsed sections reviewed in full this round (key terms, results notes, how the critical requirements were chosen,
+  the full taxonomy, card evidence, worked example, steps, configuration, design choices, review scope).
+
+## Site v5.1 final (2026-11-03)
+
+The author approved the v5.1 revision with final edits (chat, 2026-11-03).
+- Requirement source: all twelve judgment calls approved as proposed (`47ef842d…` daily figure ×6, `7d7fc9a7…` tab
+  names ×2 and `1137e2bb…` 23 as `prompt`; `7b08cd4d…` 16 / 17 and `c357f0e2…` 50 as `rubric`); the file's status is
+  `approved`, each judgment call carries `author_decision`, and the `47ef842d…` basis reads as the author worded it
+  (the prompt defines the weekly rate as "daily inventory sold in the last 4 weeks multiplied by 7" and says "Ensure
+  to show your work"). The build refuses unless the file is approved and every judgment call has a decision. Report
+  7.5 records the approval per item.
+- Data card, Quality: the author's sentence "; where a test and the expert deliverable disagree, the case is
+  adjudicated before the sample is accepted" failed the page's term check ("adjudicated" is a report-only term); it
+  reads "; where a test and the expert deliverable disagree, a reviewer decides the case before the sample is
+  accepted" on the page, in report 7.5 and in `report/dataset_proposal.md` (reported to the author).
+- Limits: "Author choices" added before "Review" (the 35 critical requirements fixed before the runs; severity rated
+  after review); "Cost" extended with formal generation per model. The author's figures (Opus 5.5 $13.41, GPT-6.1-sol
+  $2.78) are the two worker ledgers only (9 runs each); the first unit of each model (`b5d2e6f1…`: 1.493437 and
+  0.302156 USD) is in the shared formal ledger. The build sums every settlement of the three formal generation ledgers
+  by the unit's model: Opus 5.5 14.900901 USD, GPT-6.1 Sol 3.078310 USD (equal to the ledgers' settled total
+  17.979211 and to report 8.1), shown as $14.90 and $3.08, and reported to the author. Mirrored in report 8.2 and the
+  README limitations.
+- Method strip "Limits": "one added rule decides 1 failed task per model", computed as failed tasks after review minus
+  failed tasks without the additions rule (Opus 5.5 3 − 2, GPT-6.1 Sol 7 − 6; without the rule 7 / 2 / 1 and
+  3 / 6 / 1, the task moving from fail to not confirmed; the build checks that no other change occurs).
+- Tile 3: "failed rubric items on requirements the prompt states".
+- All blocks `approved`; `site/build.py --final` passed; term check clean; screenshots re-shot at 1200 and 390 px,
+  light and dark (`~/turing-eval-runs/analysis/site_v5_1_*`). Not committed, not deployed.
 
 ## Known issues and findings (material check)
 
@@ -5647,11 +6222,13 @@ from it.
 
 ## In flight
 
-- V1.1 tagged (`v1.1-judge-item-recovery`, `57e2a25`); `v1-calibration-freeze` unchanged at `0c8efcb`.
-- Judge Validation stopped after a second provider failure (`c357f0e2…`). Hold on its unit; seven judge runs pending.
-- The human labels the 10 Validation items (`labeling/validation-v4/`).
-- Codex Review 2 package pinned to `57e2a25` (`docs/codex_review_2.md`), ready for the human's local read-only run.
-- Private GitHub backup: security checks pass; the path-reference gate fails; not pushed.
+- Nothing is running. The v5.3 page is built final; it waits for the author's "commit". Nothing since
+  `81538cb` is committed, and nothing is deployed (the repository stays private for now).
+
+Earlier list (2026-11-01), kept for the record: V1.1 tagged (`v1.1-judge-item-recovery`, `57e2a25`); Judge Validation
+stopped after a second provider failure; the human labelling the 10 Validation items; the Codex Review 2 package
+pinned to `57e2a25`; the private GitHub backup not pushed (path-reference gate failing). All of these were completed
+or superseded later (entries above).
 
 ## Decisions taken (date · what · commit)
 
@@ -6014,10 +6591,22 @@ from it.
 - 2026-11-02 · V1.9: D2 terminal stops persisted from standalone recover/run; formal runner stop result and task-order judging; config grading-frozen · e081f6d (local)
 - 2026-11-02 · V1.9: explicit judge projects (`--credential-env`), project switch on another project's quota pause; tag `freeze-v1-grading` · cc684ef (pushed)
 - 2026-11-02 · Judge Validation handed off to the third project (same pass); formal judge launched at `freeze-v1-grading` on the second project under the deadline exception · (this commit; local)
+- 2026-11-02 · Capability map approved as-is after the reveal; `grader_false_pass` adjudication class; F06 recorded (GPT `1137e2bb…` C3 fail as adjudicated); Codex failure review filed with a README; critical adjudication worksheet; R-2.7-21 binding for GPT `7d7fc9a7…` 21 / 39; report 4.7, 7.3, 7.4, 7.6, 7.7, 8.2; site draft (not deployed) · (uncommitted)
+- 2026-11-02 · Combined projection (adjudications override the draft; GPT 22 / 8 / 5 with the Adds policy); false-pass denominators 0 of 8 / 1 of 10 / 1 of 18; site dataset chain folded (412 words); citation check of all 239 draft rows (2,341 citations, 0 mismatches, 774 not checkable); blind second-model review of one representative per defect D01-D24 (22 satisfied, 2 rubric ambiguous) with unblinded diagnoses; checks worksheet · (uncommitted)
+- 2026-11-02 · Human adjudication of the 170 worksheet rows recorded (167 new records); final critical status Opus 30 / 2 / 3, GPT 26 / 8 / 1; post-run policies 5.5; taxonomy of 36 confirmed items in 8 clusters; report sections 1, 5.5, 6.5, 7.3, 7.5-7.7, 8.1-8.2; site regenerated with proposals (not deployed) · (uncommitted)
+- 2026-11-02 · Re-grades and the D07 / D08 / D23 decisions synced (12 records; layer 173 items); four critical baselines, final Opus 30 / 4 / 1, GPT 26 / 9 / 0, sensitivity 30 / 2 / 3 and 26 / 7 / 2; taxonomy 40 items in 9 clusters with the ADDS line; report placeholders filled from records; site content pass (gated, not deployed) · (uncommitted)
+- 2026-11-03 · Site v5.1 revision agreed by the author in chat (requirement-source tags, title and findings, card C on M7, worked example corrected, pilot size and cost, review chart moved to Method); revised copy and tags pending the author's approval; not committed
+- 2026-11-03 · Site v5.1 approved with final edits (all twelve requirement-source judgment calls approved; Quality adjudication rule; Author choices limit; formal generation cost per model from the ledgers, 14.90 / 3.08 USD, not the worker-ledger figures 13.41 / 2.78; 1 failed task per model under the added rule; tile 3 wording); final build passed; not committed
+- 2026-11-03 · Site v5.2 after the second external review (title "Omissions and form, not arithmetic"; tally sensitivity; 67 of 100 graded fails; count flow and report 7.7 correction 69 → 70; data-section fixes; Opus per-model line; B unchanged); final build passed; not committed
+- 2026-11-03 · Site v5.3 clarity round approved (one name per concept, enforced by the term check; card C quotes; 67% scoped; review chart cut; data section reordered); final build passed; not committed
 
 ## Next stage (not started)
 
-Under the revised architecture (2026-11-01): Task 2 `7d7fc9a7…` gold-first grader and the shared
+Deliverables hand-off, on the author's go only: commit the site, report and status (on "commit"); run the publication
+checks (no secrets, no `private/`, `plan/`, `.env`, parquet or sealed labels in the repository or its history; every
+evidence link resolves); deploy the committed `site/` only when the author decides.
+
+Earlier plan, kept for the record. Under the revised architecture (2026-11-01): Task 2 `7d7fc9a7…` gold-first grader and the shared
 spreadsheet core (then the Codex architecture review), Task 3 `2ea2e5b5…` (PPTX), the remaining task
 graders, judge evidence builders, Gemini dev/validation batches once authorized (early generate, late
 reveal), batched human labelling, sealed validation, candidate compatibility runs, judge preparation,

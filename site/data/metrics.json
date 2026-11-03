@@ -1,0 +1,2599 @@
+{
+ "generated_at": "2026-11-03T15:24:00+00:00",
+ "build": "final",
+ "pending": [],
+ "warnings": [],
+ "sources": [
+  {
+   "source": "repository: config.json",
+   "sha256": "26357b8d133591f224f3db49e7ce69e411a823a3283a9c83655ab44597441ebf"
+  },
+  {
+   "source": "repository: data/selected_tasks.json",
+   "sha256": "6a81c8df0fab30dc5e60daa71ff763542ef11413556cda74de125c6c9419d495"
+  },
+  {
+   "source": "repository: docs/status.md",
+   "sha256": "3ad398b22ccad49cb7803b7282c131bd02b32349dd25ec0cfa5785450f5d4963"
+  },
+  {
+   "source": "repository: preregistration.md",
+   "sha256": "69aa23fe5d13f16259963c8ca99933ed6701e2e851bdf3f0ea8eb023c29fee68"
+  },
+  {
+   "source": "repository: analysis/codex_failure_review/diagnosis.csv",
+   "sha256": "4cb8e9ba04468ef9181a7106f4cce1898a32bfcf9cd40fe01ce372994e142939"
+  },
+  {
+   "source": "repository: analysis/human_taxonomy.json",
+   "sha256": "59dfc13a6fbb44a35aadc5dd30d838957db621b5f75804412916cae90d7ab49b"
+  },
+  {
+   "source": "repository: analysis/requirement_source.json",
+   "sha256": "db627c8c8be8c66ab6e2aed7972ef486b2457c1818bcc52d2876b94560ac9d52"
+  },
+  {
+   "source": "repository: docs/expert_gold_fail_audit.md",
+   "sha256": "696bca5da0f0646213ccc572feed8218bb649c1ffa65d18526d60d020a61b396"
+  },
+  {
+   "source": "repository: site/img/crops.json (site/render_crops.py)",
+   "sha256": "fc1e83de8615e5382f996fc4e02822e80e4f9ebcff0c2f115911dcd35bb23f9f"
+  },
+  {
+   "source": "formal results summary, authoritative grading pass per run (local run store, not in repo); see report §7.2",
+   "sha256": "aaf16feaeb4b4c809debcbdab979063d7806ef961c35d65f640f545c0139c045"
+  },
+  {
+   "source": "human-layer status recomputed with the frozen scoring on copies (local run store, not in repo); see report §7.3",
+   "sha256": "02182bf8b7f0b645fb7962d14004f430439d58c21831048b0372a64f84f5a3e6"
+  },
+  {
+   "source": "author adjudication worksheet (local run store, not in repo); see report §7.7",
+   "sha256": "52ab3b31e55db51e08a8ecc219d93ed2a7e3842844c3943364303b434db7410d"
+  },
+  {
+   "source": "failure-analysis bundle: every graded item of the formal runs (local run store, not in repo); see report §7.7",
+   "sha256": "a0a7fdaf157e0ec31e538c3562acd31fa44b926fc6b8ef714a81667f06292162"
+  },
+  {
+   "source": "formal blind-label reveal (local run store, not in repo); see report §7.6",
+   "sha256": "3a73176d32a9ac399f4b3d0e721929f89244c17b9e02824b7fdc6101b7e6797a"
+  },
+  {
+   "source": "citation check of the AI draft (local run store, not in repo); see report §7.7",
+   "sha256": "2a6cfe2c6789f25809ddc4781057871e8876b38c8d256b61c8b30c1d3510df1b"
+  },
+  {
+   "source": "formal judge pass registry (local run store, not in repo); see report §1",
+   "sha256": "307006217cd57e5c2fd16000269396c2998d54361154dcc32409df8a1a2a01be"
+  },
+  {
+   "source": "human adjudication records (local run store, not in repo); see report §7.3 and §7.7 · batch adjudication_20261102T133050Z",
+   "sha256": "b95df770cddc74475db103b6028619291b567eb10551a4da56656f5efad666f7"
+  },
+  {
+   "source": "human adjudication records (local run store, not in repo); see report §7.3 and §7.7 · batch adjudication_20261102T185621Z",
+   "sha256": "d32737c951dd25aa4e162f1828e040b6cda5f86e90cf8fa7bcd475932262470f"
+  },
+  {
+   "source": "human adjudication records (local run store, not in repo); see report §7.3 and §7.7 · batch adjudication_20261102T220501Z",
+   "sha256": "c8e438fdac1363dbb6aac3221b360de6e7ee9e90704bc51ff7fc36a3ca26fcf1"
+  },
+  {
+   "source": "human adjudication records (local run store, not in repo); see report §7.3 and §7.7 · batch adjudication_20261102T224529Z",
+   "sha256": "dc2b08d4ad7c41d5ad0a733410f47a08b8d2514c7565b942d64e98c4ae912886"
+  },
+  {
+   "source": "human adjudication records (local run store, not in repo); see report §7.3 and §7.7 · batch adjudication_20261102T232302Z",
+   "sha256": "ebf590dea899078c48d670d89b81f330c58bed93087a4b4ddbc4726655f3127e"
+  },
+  {
+   "source": "human adjudication records (local run store, not in repo); see report §7.3 and §7.7 · batch adjudication_20261102T232303Z",
+   "sha256": "b80e8b960504da9cc1665069c9db4e676aa6bc8873f4aaf3764d61ea79dac76f"
+  },
+  {
+   "source": "human adjudication records (local run store, not in repo); see report §7.3 and §7.7 · batch adjudication_20261103T023411Z",
+   "sha256": "8f8cca6f861e51fc3e9fd9616213f08fff6259f01d233362fe8a20eadd9fea15"
+  },
+  {
+   "source": "human visual-layer records (local run store, not in repo); see report §7.3 · batch visual_20261102T133023Z",
+   "sha256": "1dd063aed4ad9c3c373f2d7e9a6090dc9bccd52096d9e2cf2db8dd5002d7af43"
+  },
+  {
+   "source": "repository: site/img/opus_A11-C15.png",
+   "sha256": "50a4bfb64798b5ed76845f3bf781f0956a52cf52ebe6f4ae29016448f1640d4e"
+  },
+  {
+   "source": "repository: site/img/opus_A354-C356.png",
+   "sha256": "a6c8f2d83abcc02c5d01281530eebc50eef9c52e6da979f0564eab955aa73d2c"
+  },
+  {
+   "source": "repository: site/img/gpt_A13-C16.png",
+   "sha256": "79ee66032edda4b4f1df80383f87a277d0486a173c6e59a4144ffc3fc1e4d77d"
+  },
+  {
+   "source": "repository: site/img/gpt_A317-C319.png",
+   "sha256": "720c461970b6381a0da9a8d81bf53ec69193bee55932ecc7cd6d56bbdb5e4cb7"
+  },
+  {
+   "source": "repository: site/img/b_opus_A19-F35.png",
+   "sha256": "304dcba73a7ad016042110cc385febc2e877f32c1019ee3c6176255ffcf55a5f"
+  },
+  {
+   "source": "repository: site/img/b_gpt_A18-E32.png",
+   "sha256": "9a9a70661334016645e28365097c8a3ebce81639d9ed61d41a6bcae9581f0969"
+  },
+  {
+   "source": "repository: site/img/c_opus_summary.png",
+   "sha256": "af5cc23eaa971682b65493a55d3df6c8b560436df9e01d239eb3c56fb1c48428"
+  },
+  {
+   "source": "repository: site/img/c_gpt_summary.png",
+   "sha256": "571e1be90d87f5697718aee23c0c4bcbc29a4d4c9cda28285f6d4ecc4591cf6b"
+  }
+ ],
+ "metrics": {
+  "tasks": {
+   "value": 10,
+   "source": "repository: data/selected_tasks.json",
+   "verification": "fixed before generation"
+  },
+  "task_groups": {
+   "value": {
+    "order_clerks": 5,
+    "accounting_and_it": 5,
+    "occupations": 3
+   },
+   "source": "repository: data/selected_tasks.json (group, occupation)",
+   "verification": "fixed before generation"
+  },
+  "models": {
+   "value": 2,
+   "source": "formal results summary, authoritative grading pass per run (local run store, not in repo); see report §7.2",
+   "verification": "fixed before generation"
+  },
+  "runs_total": {
+   "value": 20,
+   "source": "formal results summary, authoritative grading pass per run (local run store, not in repo); see report §7.2",
+   "verification": "one run per task and model"
+  },
+  "cost_formal_total_usd": {
+   "value": "30.058664",
+   "source": "paid-workload ledgers (local run store, not in repo); see report §8.1 · the four formal ledgers",
+   "verification": "ledger settlement (harness accounting from provider-reported usage, not an invoice)"
+  },
+  "cost_formal_generation_per_model_usd": {
+   "value": {
+    "opus": "14.900901",
+    "gpt": "3.078310"
+   },
+   "source": "paid-workload ledgers (local run store, not in repo); see report §8.1 · settlement entries of the three formal generation ledgers (shared units 1-2, Opus worker, GPT worker), by the unit's model",
+   "verification": "ledger settlements; the per-model sums equal the three ledgers' settled totals; generation only, judge excluded"
+  },
+  "cost_all_workloads_usd": {
+   "value": {
+    "total": "88.329792",
+    "per_ledger": {
+     "Dev generation": "22.255219",
+     "Validation generation": "17.488478",
+     "Compatibility": "2.043342",
+     "Judge Dev": "11.636271",
+     "Judge Validation": "4.847818",
+     "Formal generation, shared ledger (units 1-2)": "1.795593",
+     "Formal generation, Opus worker": "13.407464",
+     "Formal generation, GPT worker": "2.776154",
+     "Formal judge": "12.079453"
+    }
+   },
+   "source": "paid-workload ledgers (local run store, not in repo); see report §8.1 · harness ledger_admin status on every paid-workload ledger",
+   "verification": "ledger settlements after manual resolutions, inferred portions included; equals report §8.1 recorded subtotal"
+  },
+  "adjudication_layer": {
+   "value": {
+    "items": 183,
+    "records": 197,
+    "by_class": {
+     "grader_false_fail": 70,
+     "grader_false_pass": 1,
+     "verified_pass": 21,
+     "confirmed_fail": 33,
+     "verified_fail": 6,
+     "leave": 42,
+     "confirmed_pass": 10
+    },
+    "last_recorded_at": "2026-11-03T02:34:11+00:00"
+   },
+   "source": "human adjudication records (local run store, not in repo); see report §7.3 and §7.7 · latest record per item key",
+   "verification": "human decisions; 'leave' marks an unresolved item-level coverage gap, not a verdict; later records supersede earlier ones"
+  },
+  "worksheet_breakdown": {
+   "value": {
+    "rows": 170,
+    "by_class": {
+     "leave": 42,
+     "verified_pass": 21,
+     "grader_false_fail": 67,
+     "verified_fail": 6,
+     "confirmed_fail": 33,
+     "grader_false_pass": 1
+    },
+    "confirmed_failing": 40
+   },
+   "source": "author adjudication worksheet (local run store, not in repo); see report §7.7 joined with the latest adjudication records",
+   "verification": "human decisions on the reviewed items (kept separate from the adjudication layer); confirmed failure = confirmed_fail + verified_fail + grader_false_pass"
+  },
+  "leave_comparison": {
+   "value": {
+    "leave_items": 42,
+    "with_confirmed_counterpart_on_other_candidate": [],
+    "by_criterion": {
+     "opus|7d7fc9a7|C2": 6,
+     "opus|7d7fc9a7|C3": 8,
+     "gpt|2ea2e5b5|C3": 28
+    },
+    "all_in_criteria_failing_on_a_confirmed_item": true
+   },
+   "source": "human adjudication records (local run store, not in repo); see report §7.3 and §7.7 joined with human-layer status recomputed with the frozen scoring on copies (local run store, not in repo); see report §7.3",
+   "verification": "computed"
+  },
+  "review_scope": {
+   "value": {
+    "reviewed": 170,
+    "critical_members": 145,
+    "draft_suspected_model_failures": 24,
+    "false_pass_from_blind_audit": 1,
+    "reviewed_nonpass": 169,
+    "draft_class_of_verified_pass_and_unresolved": {
+     "verified_pass": {
+      "grader_read_failure": 21
+     },
+     "leave": {
+      "grader_read_failure": 42
+     }
+    },
+    "opus_7d7fc9a7_C1_verified_pass_items": [
+     13,
+     14,
+     33,
+     34
+    ],
+    "not_reviewed": {
+     "total": 96,
+     "critical": 0,
+     "fail": 60,
+     "fail_draft_classes": {
+      "rubric_ambiguous": 31,
+      "grader_false_fail": 29
+     },
+     "cannot_assess": 10,
+     "pending_visual": 24,
+     "invalid_judge_output": 2
+    }
+   },
+   "source": "author adjudication worksheet (local run store, not in repo); see report §7.7; failure-analysis bundle: every graded item of the formal runs (local run store, not in repo); see report §7.7; human adjudication records (local run store, not in repo); see report §7.3 and §7.7",
+   "verification": "computed from the reviewed item keys, the graded verdicts and the AI-draft classes"
+  },
+  "runs": {
+   "value": [
+    {
+     "task_id": "b5d2e6f1-62a2-433a-bcdd-95b260cdd860",
+     "task": "Weekly sales analysis",
+     "occupation": "Order Clerks",
+     "model": "Claude Opus 5.5",
+     "cand": "opus",
+     "run_uuid": "Mae4tizWVH2BiinB5zKQV2",
+     "pass": "pass-20261102T115725665994Z-0e9c",
+     "P": 58,
+     "E": 60,
+     "W": 65,
+     "P_over_E": 0.9666666666666667,
+     "E_over_W": 0.9230769230769231,
+     "critical": {
+      "pure_automated": "pass",
+      "as_graded": "pass",
+      "adjudicated": "pass",
+      "sensitivity": "pass"
+     }
+    },
+    {
+     "task_id": "b5d2e6f1-62a2-433a-bcdd-95b260cdd860",
+     "task": "Weekly sales analysis",
+     "occupation": "Order Clerks",
+     "model": "GPT-6.1-sol",
+     "cand": "gpt",
+     "run_uuid": "d5sypgfTdCCwfsFV9jdzLd",
+     "pass": "pass-20261102T115729995774Z-4fc2",
+     "P": 42,
+     "E": 58,
+     "W": 65,
+     "P_over_E": 0.7241379310344828,
+     "E_over_W": 0.8923076923076924,
+     "critical": {
+      "pure_automated": "fail",
+      "as_graded": "fail",
+      "adjudicated": "fail",
+      "sensitivity": "fail"
+     }
+    },
+    {
+     "task_id": "f841ddcf-2a28-4f6d-bac3-61b607219d3e",
+     "task": "June shipment recap",
+     "occupation": "Order Clerks",
+     "model": "Claude Opus 5.5",
+     "cand": "opus",
+     "run_uuid": "hdDnxUR6sUhQD6PHLnhKSm",
+     "pass": "pass-20261102T115733218914Z-a5e4",
+     "P": 82,
+     "E": 83,
+     "W": 88,
+     "P_over_E": 0.9879518072289156,
+     "E_over_W": 0.9431818181818182,
+     "critical": {
+      "pure_automated": "pass",
+      "as_graded": "pass",
+      "adjudicated": "pass",
+      "sensitivity": "pass"
+     }
+    },
+    {
+     "task_id": "f841ddcf-2a28-4f6d-bac3-61b607219d3e",
+     "task": "June shipment recap",
+     "occupation": "Order Clerks",
+     "model": "GPT-6.1-sol",
+     "cand": "gpt",
+     "run_uuid": "P8gA2U2jR7VzNWKqqdJ5SZ",
+     "pass": "pass-20261102T115847754554Z-0d8f",
+     "P": 61,
+     "E": 81,
+     "W": 88,
+     "P_over_E": 0.7530864197530864,
+     "E_over_W": 0.9204545454545454,
+     "critical": {
+      "pure_automated": "fail",
+      "as_graded": "fail",
+      "adjudicated": "pass",
+      "sensitivity": "pass"
+     }
+    },
+    {
+     "task_id": "47ef842d-8eac-4b90-bda8-dd934c228c96",
+     "task": "Weeks of supply",
+     "occupation": "Order Clerks",
+     "model": "Claude Opus 5.5",
+     "cand": "opus",
+     "run_uuid": "LVyjBBcU4iFqDKviwY2YJz",
+     "pass": "pass-20261102T120000409606Z-f47b",
+     "P": 82,
+     "E": 92,
+     "W": 99,
+     "P_over_E": 0.8913043478260869,
+     "E_over_W": 0.9292929292929293,
+     "critical": {
+      "pure_automated": "fail",
+      "as_graded": "fail",
+      "adjudicated": "fail",
+      "sensitivity": "fail"
+     }
+    },
+    {
+     "task_id": "47ef842d-8eac-4b90-bda8-dd934c228c96",
+     "task": "Weeks of supply",
+     "occupation": "Order Clerks",
+     "model": "GPT-6.1-sol",
+     "cand": "gpt",
+     "run_uuid": "dPR5yvN9wEfcMyQiAC2njB",
+     "pass": "pass-20261102T120015898362Z-9b7d",
+     "P": 76,
+     "E": 92,
+     "W": 99,
+     "P_over_E": 0.8260869565217391,
+     "E_over_W": 0.9292929292929293,
+     "critical": {
+      "pure_automated": "fail",
+      "as_graded": "fail",
+      "adjudicated": "fail",
+      "sensitivity": "fail"
+     }
+    },
+    {
+     "task_id": "1137e2bb-bdf9-4876-b572-f29b7de5e595",
+     "task": "PO entry audit",
+     "occupation": "Order Clerks",
+     "model": "Claude Opus 5.5",
+     "cand": "opus",
+     "run_uuid": "iS5pLfPvTxhxxXScg7HXVw",
+     "pass": "pass-20261102T120033449260Z-cd91",
+     "P": 60,
+     "E": 79,
+     "W": 80,
+     "P_over_E": 0.759493670886076,
+     "E_over_W": 0.9875,
+     "critical": {
+      "pure_automated": "fail",
+      "as_graded": "fail",
+      "adjudicated": "pass",
+      "sensitivity": "pass"
+     }
+    },
+    {
+     "task_id": "1137e2bb-bdf9-4876-b572-f29b7de5e595",
+     "task": "PO entry audit",
+     "occupation": "Order Clerks",
+     "model": "GPT-6.1-sol",
+     "cand": "gpt",
+     "run_uuid": "mE6xrcKcirXrQgh4ugBfbE",
+     "pass": "pass-20261102T120138543561Z-511d",
+     "P": 75,
+     "E": 77,
+     "W": 80,
+     "P_over_E": 0.974025974025974,
+     "E_over_W": 0.9625,
+     "critical": {
+      "pure_automated": "not_confirmed",
+      "as_graded": "not_confirmed",
+      "adjudicated": "fail",
+      "sensitivity": "fail"
+     }
+    },
+    {
+     "task_id": "c3525d4d-2012-45df-853e-2d2a0e902991",
+     "task": "Holiday floor-stand budget",
+     "occupation": "Order Clerks",
+     "model": "Claude Opus 5.5",
+     "cand": "opus",
+     "run_uuid": "fAFHskFwVPcLzn89SuYaxv",
+     "pass": "pass-20261102T120246281223Z-e733",
+     "P": 52,
+     "E": 75,
+     "W": 86,
+     "P_over_E": 0.6933333333333334,
+     "E_over_W": 0.872093023255814,
+     "critical": {
+      "pure_automated": "fail",
+      "as_graded": "fail",
+      "adjudicated": "pass",
+      "sensitivity": "pass"
+     }
+    },
+    {
+     "task_id": "c3525d4d-2012-45df-853e-2d2a0e902991",
+     "task": "Holiday floor-stand budget",
+     "occupation": "Order Clerks",
+     "model": "GPT-6.1-sol",
+     "cand": "gpt",
+     "run_uuid": "SJbeNCc6EYF5dHerim5UD6",
+     "pass": "pass-20261102T120327674401Z-ee13",
+     "P": 55,
+     "E": 75,
+     "W": 86,
+     "P_over_E": 0.7333333333333333,
+     "E_over_W": 0.872093023255814,
+     "critical": {
+      "pure_automated": "fail",
+      "as_graded": "fail",
+      "adjudicated": "pass",
+      "sensitivity": "pass"
+     }
+    },
+    {
+     "task_id": "7b08cd4d-df60-41ae-9102-8aaa49306ba2",
+     "task": "Tour profit and loss",
+     "occupation": "Accountants and Auditors",
+     "model": "Claude Opus 5.5",
+     "cand": "opus",
+     "run_uuid": "KU4bWmuqsWUUbkTXEu9Fpj",
+     "pass": "pass-20261102T120408339836Z-770e",
+     "P": 62,
+     "E": 83,
+     "W": 89,
+     "P_over_E": 0.7469879518072289,
+     "E_over_W": 0.9325842696629213,
+     "critical": {
+      "pure_automated": "fail",
+      "as_graded": "fail",
+      "adjudicated": "pass",
+      "sensitivity": "pass"
+     }
+    },
+    {
+     "task_id": "7b08cd4d-df60-41ae-9102-8aaa49306ba2",
+     "task": "Tour profit and loss",
+     "occupation": "Accountants and Auditors",
+     "model": "GPT-6.1-sol",
+     "cand": "gpt",
+     "run_uuid": "hX4B29t5iE2v3rFKMtqWqz",
+     "pass": "pass-20261102T120617329284Z-5da8",
+     "P": 62,
+     "E": 82,
+     "W": 89,
+     "P_over_E": 0.7560975609756098,
+     "E_over_W": 0.9213483146067416,
+     "critical": {
+      "pure_automated": "fail",
+      "as_graded": "fail",
+      "adjudicated": "fail",
+      "sensitivity": "fail"
+     }
+    },
+    {
+     "task_id": "7d7fc9a7-21a7-4b83-906f-416dea5ad04f",
+     "task": "Prepaid amortization",
+     "occupation": "Accountants and Auditors",
+     "model": "Claude Opus 5.5",
+     "cand": "opus",
+     "run_uuid": "czgd84YmwwTZzDpVKD5vhD",
+     "pass": "pass-20261102T120837825114Z-bd90",
+     "P": 36,
+     "E": 39,
+     "W": 95,
+     "P_over_E": 0.9230769230769231,
+     "E_over_W": 0.4105263157894737,
+     "critical": {
+      "pure_automated": "fail",
+      "as_graded": "fail",
+      "adjudicated": "fail",
+      "sensitivity": "not_confirmed"
+     }
+    },
+    {
+     "task_id": "7d7fc9a7-21a7-4b83-906f-416dea5ad04f",
+     "task": "Prepaid amortization",
+     "occupation": "Accountants and Auditors",
+     "model": "GPT-6.1-sol",
+     "cand": "gpt",
+     "run_uuid": "FDVJTwSvqDJFQj6JyTpkHY",
+     "pass": "pass-20261102T121133296465Z-6b7c",
+     "P": 66,
+     "E": 84,
+     "W": 95,
+     "P_over_E": 0.7857142857142857,
+     "E_over_W": 0.8842105263157894,
+     "critical": {
+      "pure_automated": "fail",
+      "as_graded": "fail",
+      "adjudicated": "fail",
+      "sensitivity": "not_confirmed"
+     }
+    },
+    {
+     "task_id": "2ea2e5b5-257f-42e6-a7dc-93763f28b19d",
+     "task": "Work-time study deck",
+     "occupation": "Computer and Information Systems Managers",
+     "model": "Claude Opus 5.5",
+     "cand": "opus",
+     "run_uuid": "SaDUDAyEP45E3gNRVZWjgp",
+     "pass": "pass-20261102T121440292802Z-cc25",
+     "P": 78,
+     "E": 85,
+     "W": 85,
+     "P_over_E": 0.9176470588235294,
+     "E_over_W": 1.0,
+     "critical": {
+      "pure_automated": "fail",
+      "as_graded": "fail",
+      "adjudicated": "fail",
+      "sensitivity": "fail"
+     }
+    },
+    {
+     "task_id": "2ea2e5b5-257f-42e6-a7dc-93763f28b19d",
+     "task": "Work-time study deck",
+     "occupation": "Computer and Information Systems Managers",
+     "model": "GPT-6.1-sol",
+     "cand": "gpt",
+     "run_uuid": "ehpELnbiUfAp5dFTeDNwt9",
+     "pass": "pass-20261102T121505538896Z-e39c",
+     "P": 28,
+     "E": 30,
+     "W": 85,
+     "P_over_E": 0.9333333333333333,
+     "E_over_W": 0.35294117647058826,
+     "critical": {
+      "pure_automated": "fail",
+      "as_graded": "fail",
+      "adjudicated": "fail",
+      "sensitivity": "fail"
+     }
+    },
+    {
+     "task_id": "c357f0e2-963d-4eb7-a6fa-3078fe55b3ba",
+     "task": "UAT test plan",
+     "occupation": "Computer and Information Systems Managers",
+     "model": "Claude Opus 5.5",
+     "cand": "opus",
+     "run_uuid": "AbudpM6dPVjwu2NSnwrZ6D",
+     "pass": "pass-20261102T121530287546Z-1e75",
+     "P": 92,
+     "E": 95,
+     "W": 101,
+     "P_over_E": 0.968421052631579,
+     "E_over_W": 0.9405940594059405,
+     "critical": {
+      "pure_automated": "fail",
+      "as_graded": "fail",
+      "adjudicated": "pass",
+      "sensitivity": "pass"
+     }
+    },
+    {
+     "task_id": "c357f0e2-963d-4eb7-a6fa-3078fe55b3ba",
+     "task": "UAT test plan",
+     "occupation": "Computer and Information Systems Managers",
+     "model": "GPT-6.1-sol",
+     "cand": "gpt",
+     "run_uuid": "4FAJ3AmGzujC6FZ67Krt9B",
+     "pass": "pass-20261102T122438506232Z-7829",
+     "P": 89,
+     "E": 96,
+     "W": 101,
+     "P_over_E": 0.9270833333333334,
+     "E_over_W": 0.9504950495049505,
+     "critical": {
+      "pure_automated": "fail",
+      "as_graded": "fail",
+      "adjudicated": "fail",
+      "sensitivity": "fail"
+     }
+    },
+    {
+     "task_id": "a45bc83b-22f9-4def-8d89-9c5661b2b86f",
+     "task": "GCP migration design",
+     "occupation": "Computer and Information Systems Managers",
+     "model": "Claude Opus 5.5",
+     "cand": "opus",
+     "run_uuid": "BVeKQk8ZWp6j2uxp9hsuGf",
+     "pass": "pass-20261102T124516281243Z-a9a6",
+     "P": 66,
+     "E": 73,
+     "W": 87,
+     "P_over_E": 0.9041095890410958,
+     "E_over_W": 0.8390804597701149,
+     "critical": {
+      "pure_automated": "not_confirmed",
+      "as_graded": "pass",
+      "adjudicated": "pass",
+      "sensitivity": "pass"
+     }
+    },
+    {
+     "task_id": "a45bc83b-22f9-4def-8d89-9c5661b2b86f",
+     "task": "GCP migration design",
+     "occupation": "Computer and Information Systems Managers",
+     "model": "GPT-6.1-sol",
+     "cand": "gpt",
+     "run_uuid": "NHSUKRMDDbYoJoGyWnpjcN",
+     "pass": "pass-20261102T124517129297Z-bcc4",
+     "P": 68,
+     "E": 74,
+     "W": 87,
+     "P_over_E": 0.918918918918919,
+     "E_over_W": 0.8505747126436781,
+     "critical": {
+      "pure_automated": "not_confirmed",
+      "as_graded": "pass",
+      "adjudicated": "pass",
+      "sensitivity": "pass"
+     }
+    }
+   ],
+   "source": "formal results summary, authoritative grading pass per run (local run store, not in repo); see report §7.2 + human-layer status recomputed with the frozen scoring on copies (local run store, not in repo); see report §7.3",
+   "verification": "item scores as graded (frozen); critical status on four bases computed with the frozen scoring on copies"
+  },
+  "critical_counts": {
+   "value": {
+    "opus|pure_automated|pass": 24,
+    "opus|pure_automated|fail": 7,
+    "opus|pure_automated|not_confirmed": 4,
+    "opus|as_graded|pass": 25,
+    "opus|as_graded|fail": 7,
+    "opus|as_graded|not_confirmed": 3,
+    "opus|adjudicated|pass": 31,
+    "opus|adjudicated|fail": 4,
+    "opus|adjudicated|not_confirmed": 0,
+    "opus|sensitivity|pass": 31,
+    "opus|sensitivity|fail": 2,
+    "opus|sensitivity|not_confirmed": 2,
+    "gpt|pure_automated|pass": 15,
+    "gpt|pure_automated|fail": 14,
+    "gpt|pure_automated|not_confirmed": 6,
+    "gpt|as_graded|pass": 16,
+    "gpt|as_graded|fail": 14,
+    "gpt|as_graded|not_confirmed": 5,
+    "gpt|adjudicated|pass": 26,
+    "gpt|adjudicated|fail": 9,
+    "gpt|adjudicated|not_confirmed": 0,
+    "gpt|sensitivity|pass": 26,
+    "gpt|sensitivity|fail": 7,
+    "gpt|sensitivity|not_confirmed": 2
+   },
+   "source": "human-layer status recomputed with the frozen scoring on copies (local run store, not in repo); see report §7.3",
+   "verification": "automated only = frozen verdicts; as graded = + preregistered visual layer; adjudicated = + human records (final); sensitivity = adjudicated with R-2.7-21 not binding (both models)"
+  },
+  "critical_criteria": {
+   "value": {
+    "per_model": 35,
+    "per_task_min": 3,
+    "per_task_max": 5,
+    "approved": "2026-10-30",
+    "revised_one": "2026-11-01",
+    "revised_definition_same_status": true
+   },
+   "source": "repository: preregistration.md (closing list, item 1) and grading task definitions via human-layer status recomputed with the frozen scoring on copies (local run store, not in repo); see report §7.3",
+   "verification": "counted from the frozen task definitions; approval date as recorded in the preregistration"
+  },
+  "rule_dependence": {
+   "value": {
+    "opus": 2,
+    "gpt": 2
+   },
+   "source": "human-layer status recomputed with the frozen scoring on copies (local run store, not in repo); see report §7.3",
+   "verification": "adjudicated fails minus sensitivity fails per model (R-2.7-21)"
+  },
+  "judge_coverage": {
+   "value": {
+    "with_verdict": 330,
+    "items": 332,
+    "invalid_judge_output": 2
+   },
+   "source": "formal results summary, authoritative grading pass per run (local run store, not in repo); see report §7.2",
+   "verification": "automated count"
+  },
+  "agreement": {
+   "value": {
+    "deterministic": [
+     8,
+     10
+    ],
+    "judge": [
+     9,
+     10
+    ],
+    "all": [
+     17,
+     20
+    ]
+   },
+   "source": "formal blind-label reveal (local run store, not in repo); see report §7.6",
+   "verification": "human blind labels vs frozen graders on the sampled formal items"
+  },
+  "false_pass_search": {
+   "value": {
+    "deterministic": [
+     0,
+     8
+    ],
+    "judge": [
+     1,
+     10
+    ],
+    "overall": [
+     1,
+     18
+    ]
+   },
+   "source": "formal blind-label reveal (local run store, not in repo); see report §7.6 · packets of the formal-v4 checkpoint sample",
+   "verification": "human blind labels on the sampled items originally graded pass, per layer; counts only"
+  },
+  "judge_validation_agreement": {
+   "value": [
+    3,
+    3
+   ],
+   "source": "repository: docs/status.md, 'Judge Validation complete; judge-human agreement' (report §4.2, §4.4)",
+   "verification": "human blind labels vs the frozen judge on the held-out Validation judge-only items; the debug-set item excluded"
+  },
+  "judge_status": {
+   "value": {
+    "provisional": false,
+    "condition_agreement_recorded": true,
+    "condition_recheck_v1_9_recorded": true,
+    "recheck_outcome": "BLOCKED (B1-B3, N1), closed by the author as known limitations (stop / pause control)"
+   },
+   "source": "repository: preregistration.md 1.25; docs/status.md 'Judge Validation complete; judge-human agreement' and 'Codex recheck 2 of V1.9 closed as known limitations'",
+   "verification": "preregistration 1.25: formal judge verdicts are provisional until both the Judge Validation agreement and the independent recheck of V1.9 exist; the label is lifted when both are recorded (site spec v3.1)"
+  },
+  "triage": {
+   "value": {
+    "reviewed": 239,
+    "nonpass_total": 265,
+    "pending_visual": 24,
+    "invalid_judge": 2,
+    "classes": {
+     "model_error": 33,
+     "grader_false_fail": 92,
+     "rubric_ambiguous": 35,
+     "model_format_deviation": 2,
+     "grader_read_failure": 77
+    }
+   },
+   "source": "repository: analysis/codex_failure_review/diagnosis.csv; failure-analysis bundle: every graded item of the formal runs (local run store, not in repo); see report §7.7",
+   "verification": "AI-assisted draft (OpenAI Codex static review), not human-adjudicated"
+  },
+  "d08_items": {
+   "value": 10,
+   "source": "repository: analysis/codex_failure_review/analysis.md, D08 affected keys",
+   "verification": "AI-draft defect diagnosis; author-verified (report §7.6); the items are adjudicated grader false fails"
+  },
+  "citations": {
+   "value": {
+    "checked": 2341,
+    "by_status": {
+     "verified": 1567,
+     "not_checkable": 774
+    },
+    "rows": 239
+   },
+   "source": "citation check of the AI draft (local run store, not in repo); see report §7.7",
+   "verification": "mechanical checks of the draft's citations; 'verified' = the check passed, not that a value or conclusion is confirmed"
+  },
+  "blind_review": {
+   "value": {
+    "representatives": 24,
+    "satisfied": 22,
+    "rubric_ambiguous": 2,
+    "author_verified": 5,
+    "author_verified_ids": [
+     "D07",
+     "D08",
+     "D11",
+     "D18",
+     "D23"
+    ],
+    "others": 19
+   },
+   "source": "defect-representative review records (local run store, not in repo); see report §7.6",
+   "verification": "second-model blind review; author verification recorded per representative"
+  },
+  "visual_verdicts": {
+   "value": 12,
+   "source": "human visual-layer records (local run store, not in repo); see report §7.3",
+   "verification": "human-authoritative (preregistered)"
+  },
+  "human_review_time": {
+   "value": "about 3 hours",
+   "source": "author estimate; report §8.1",
+   "verification": "author-reported, not measured"
+  },
+  "requirement_source": {
+   "value": {
+    "status": "approved",
+    "rule": {
+     "prompt": "The prompt itself asks for the missing element (a level, measure, tab, section or statement), so a reader of the prompt alone would expect it.",
+     "rubric": "The prompt leaves the element open: the rubric fixes its exact wording, form or detail, or adds it beyond the prompt. Where the deliverable covers what the prompt names in another form, the item is rubric.",
+     "rule": "The item fails only under a rule this evaluation added before the runs (the pre-registered additions rule)."
+    },
+    "per_model": {
+     "opus": {
+      "prompt": 0,
+      "rubric": 8,
+      "rule": 2
+     },
+     "gpt": {
+      "prompt": 12,
+      "rubric": 16,
+      "rule": 2
+     }
+    },
+    "prompt_tasks": {
+     "opus": 0,
+     "gpt": 4
+    },
+    "debatable": [
+     "gpt|47ef842d|28",
+     "gpt|47ef842d|35",
+     "gpt|47ef842d|42",
+     "gpt|47ef842d|49",
+     "gpt|47ef842d|56",
+     "gpt|47ef842d|57",
+     "gpt|7b08cd4d|16",
+     "gpt|7b08cd4d|17",
+     "gpt|7d7fc9a7|3",
+     "gpt|7d7fc9a7|4",
+     "gpt|c357f0e2|50",
+     "gpt|1137e2bb|23"
+    ],
+    "items": {
+     "gpt|47ef842d|28": "prompt",
+     "gpt|47ef842d|35": "prompt",
+     "gpt|47ef842d|42": "prompt",
+     "gpt|47ef842d|49": "prompt",
+     "gpt|47ef842d|56": "prompt",
+     "gpt|47ef842d|57": "prompt",
+     "gpt|7b08cd4d|16": "rubric",
+     "gpt|7b08cd4d|17": "rubric",
+     "gpt|b5d2e6f1|16": "prompt",
+     "gpt|b5d2e6f1|25": "prompt",
+     "gpt|b5d2e6f1|26": "prompt",
+     "gpt|2ea2e5b5|27": "rubric",
+     "opus|2ea2e5b5|27": "rubric",
+     "gpt|2ea2e5b5|38": "rubric",
+     "opus|2ea2e5b5|38": "rubric",
+     "gpt|47ef842d|13": "rubric",
+     "opus|47ef842d|13": "rubric",
+     "gpt|47ef842d|17": "rubric",
+     "gpt|7d7fc9a7|3": "prompt",
+     "gpt|7d7fc9a7|4": "prompt",
+     "gpt|c357f0e2|12": "rubric",
+     "gpt|a45bc83b|60": "rubric",
+     "opus|a45bc83b|64": "rubric",
+     "opus|a45bc83b|68": "rubric",
+     "gpt|c357f0e2|66": "rubric",
+     "gpt|7d7fc9a7|31": "rubric",
+     "gpt|7d7fc9a7|32": "rubric",
+     "gpt|7d7fc9a7|49": "rubric",
+     "gpt|7d7fc9a7|50": "rubric",
+     "gpt|c357f0e2|15": "rubric",
+     "opus|c357f0e2|34": "rubric",
+     "gpt|c357f0e2|50": "rubric",
+     "opus|1137e2bb|22": "rubric",
+     "gpt|1137e2bb|23": "prompt",
+     "gpt|1137e2bb|21": "rubric",
+     "opus|1137e2bb|21": "rubric",
+     "gpt|7d7fc9a7|21": "rule",
+     "opus|7d7fc9a7|21": "rule",
+     "gpt|7d7fc9a7|39": "rule",
+     "opus|7d7fc9a7|39": "rule"
+    }
+   },
+   "source": "repository: analysis/requirement_source.json; task prompts of the formal task inputs (local run store, not in repo)",
+   "verification": "tagged after the runs from the task prompts (Claude's draft); status and the author's decision on each judgment call as recorded in the file; every prompt quote checked verbatim against the task prompt; display only, no verdict changes"
+  },
+  "categories": {
+   "value": {
+    "rows": [
+     {
+      "id": "A",
+      "types": [
+       "M1",
+       "ADDS",
+       "R03"
+      ],
+      "per_model": {
+       "opus": {
+        "items": 3,
+        "tasks": 2,
+        "critical": 2,
+        "prompt": 0,
+        "severity": "medium"
+       },
+       "gpt": {
+        "items": 14,
+        "tasks": 5,
+        "critical": 7,
+        "prompt": 9,
+        "severity": "high"
+       }
+      },
+      "highest_severity": "high",
+      "seen_here": {
+       "opus": 3,
+       "gpt": 14
+      },
+      "inside_critical_requirements": {
+       "opus": 2,
+       "gpt": 7
+      },
+      "total_items": 17
+     },
+     {
+      "id": "B",
+      "types": [
+       "M2",
+       "M6"
+      ],
+      "per_model": {
+       "opus": {
+        "items": 4,
+        "tasks": 3,
+        "critical": 3,
+        "prompt": 0,
+        "severity": "low"
+       },
+       "gpt": {
+        "items": 7,
+        "tasks": 4,
+        "critical": 4,
+        "prompt": 2,
+        "severity": "low"
+       }
+      },
+      "highest_severity": "low",
+      "seen_here": {
+       "opus": 4,
+       "gpt": 7
+      },
+      "inside_critical_requirements": {
+       "opus": 3,
+       "gpt": 4
+      },
+      "total_items": 11
+     },
+     {
+      "id": "C",
+      "types": [
+       "M3",
+       "M5",
+       "M7"
+      ],
+      "per_model": {
+       "opus": {
+        "items": 3,
+        "tasks": 2,
+        "critical": 0,
+        "prompt": 0,
+        "severity": "medium"
+       },
+       "gpt": {
+        "items": 5,
+        "tasks": 3,
+        "critical": 3,
+        "prompt": 1,
+        "severity": "medium"
+       }
+      },
+      "highest_severity": "medium",
+      "seen_here": {
+       "opus": 3,
+       "gpt": 5
+      },
+      "inside_critical_requirements": {
+       "opus": 0,
+       "gpt": 3
+      },
+      "total_items": 8
+     },
+     {
+      "id": "D",
+      "types": [
+       "M4"
+      ],
+      "per_model": {
+       "opus": {
+        "items": 0,
+        "tasks": 0,
+        "critical": 0,
+        "prompt": 0,
+        "severity": null
+       },
+       "gpt": {
+        "items": 4,
+        "tasks": 1,
+        "critical": 0,
+        "prompt": 0,
+        "severity": "low"
+       }
+      },
+      "highest_severity": "low",
+      "seen_here": {
+       "opus": 0,
+       "gpt": 4
+      },
+      "inside_critical_requirements": {
+       "opus": 0,
+       "gpt": 0
+      },
+      "total_items": 4
+     }
+    ],
+    "totals": {
+     "opus": {
+      "items": 10,
+      "critical": 5,
+      "prompt": 0
+     },
+     "gpt": {
+      "items": 30,
+      "critical": 14,
+      "prompt": 12
+     }
+    },
+    "scale_max": 14,
+    "types_per_category": {
+     "A": 3,
+     "B": 2,
+     "C": 3,
+     "D": 1
+    }
+   },
+   "source": "repository: analysis/human_taxonomy.json grouped by site/content.json categories; critical membership from human-layer status recomputed with the frozen scoring on copies (local run store, not in repo); see report §7.3",
+   "verification": "display grouping of the existing failure types; no item changes type and no decision changes; counts are rubric items"
+  },
+  "taxonomy_types": {
+   "value": [
+    {
+     "id": "M1",
+     "name": "Required reporting levels or measures are omitted",
+     "definition": "The workbook has the underlying inputs or higher-level totals, but omits a requested measure or aggregation level from the delivered report. Likely mechanism (inference): presentation simplification was not checked against a field-by-field and level-by-level requirement list. This is not evidence of an arithmetic propagation error.",
+     "severity": "high",
+     "per_model": {
+      "opus": {
+       "items": 0,
+       "tasks": 0
+      },
+      "gpt": {
+       "items": 11,
+       "tasks": 3
+      }
+     },
+     "critical_rubric_items": 5,
+     "flagged_by": {
+      "deterministic": 10,
+      "judge": 1
+     },
+     "item_keys": [
+      "gpt|47ef842d|28",
+      "gpt|47ef842d|35",
+      "gpt|47ef842d|42",
+      "gpt|47ef842d|49",
+      "gpt|47ef842d|56",
+      "gpt|47ef842d|57",
+      "gpt|7b08cd4d|16",
+      "gpt|7b08cd4d|17",
+      "gpt|b5d2e6f1|16",
+      "gpt|b5d2e6f1|25",
+      "gpt|b5d2e6f1|26"
+     ],
+     "note": "7b08cd4d items 16 / 17 follow the expert reference's country-level approach (the rubric is stricter)"
+    },
+    {
+     "id": "M2",
+     "name": "Semantic substitutes do not meet explicit naming or display requirements",
+     "definition": "The intended information is often present, but exact required identifiers, field labels, sheet names or decimal presentation are replaced with a different form. Likely mechanism (inference): readability and inherited source labels were prioritized without a final literal-contract check. These are predominantly presentation mismatches, not missing transactions.",
+     "severity": "low",
+     "per_model": {
+      "opus": {
+       "items": 3,
+       "tasks": 2
+      },
+      "gpt": {
+       "items": 7,
+       "tasks": 4
+      }
+     },
+     "critical_rubric_items": 7,
+     "flagged_by": {
+      "deterministic": 9,
+      "judge": 1
+     },
+     "item_keys": [
+      "gpt|2ea2e5b5|27",
+      "opus|2ea2e5b5|27",
+      "gpt|2ea2e5b5|38",
+      "opus|2ea2e5b5|38",
+      "gpt|47ef842d|13",
+      "opus|47ef842d|13",
+      "gpt|47ef842d|17",
+      "gpt|7d7fc9a7|3",
+      "gpt|7d7fc9a7|4",
+      "gpt|c357f0e2|12"
+     ],
+     "note": null
+    },
+    {
+     "id": "M3",
+     "name": "An operational control or concrete validation step is left unspecified",
+     "definition": "The artifact discusses a goal or supplies functional content but omits the named operational mechanism, access decision or performance validation procedure. Likely mechanism (inference): broad design coverage was accepted without checking that each required operational step had an executable or explicit counterpart.",
+     "severity": "medium",
+     "per_model": {
+      "opus": {
+       "items": 2,
+       "tasks": 1
+      },
+      "gpt": {
+       "items": 2,
+       "tasks": 2
+      }
+     },
+     "critical_rubric_items": 0,
+     "flagged_by": {
+      "judge": 4
+     },
+     "item_keys": [
+      "gpt|a45bc83b|60",
+      "opus|a45bc83b|64",
+      "opus|a45bc83b|68",
+      "gpt|c357f0e2|66"
+     ],
+     "note": null
+    },
+    {
+     "id": "M4",
+     "name": "A disclosed rounding adjustment conflicts with a source-only accounting rule",
+     "definition": "A synthetic fractional-cent line aligns rounded invoice calculations with the full-precision account balance, creating negative amortization and a rising balance unsupported by a source invoice adjustment. Likely mechanism (inference): the model reconciled two rounding conventions by adding an explicit precision-adjustment line, without testing that line against the rubric's no-negative/no-unfunded-increase constraints.",
+     "severity": "low",
+     "per_model": {
+      "opus": {
+       "items": 0,
+       "tasks": 0
+      },
+      "gpt": {
+       "items": 4,
+       "tasks": 1
+      }
+     },
+     "critical_rubric_items": 0,
+     "flagged_by": {
+      "judge": 2,
+      "deterministic": 2
+     },
+     "item_keys": [
+      "gpt|7d7fc9a7|31",
+      "gpt|7d7fc9a7|32",
+      "gpt|7d7fc9a7|49",
+      "gpt|7d7fc9a7|50"
+     ],
+     "note": "the four items describe one rounding strategy (a labelled fractional-cent line on each schedule), not four independent mistakes"
+    },
+    {
+     "id": "M5",
+     "name": "A nearby test scenario omits the exact required condition or assertion",
+     "definition": "A test addresses the general feature but fails to instantiate the required missing-input condition, specified fields or both-organization mutation. Likely mechanism (inference): related scenarios were treated as interchangeable during coverage review; generic references to configured fields replaced concrete test data.",
+     "severity": "medium",
+     "per_model": {
+      "opus": {
+       "items": 1,
+       "tasks": 1
+      },
+      "gpt": {
+       "items": 2,
+       "tasks": 1
+      }
+     },
+     "critical_rubric_items": 2,
+     "flagged_by": {
+      "judge": 3
+     },
+     "item_keys": [
+      "gpt|c357f0e2|15",
+      "opus|c357f0e2|34",
+      "gpt|c357f0e2|50"
+     ],
+     "note": null
+    },
+    {
+     "id": "M6",
+     "name": "A grouped report lacks the requested prioritization interaction",
+     "definition": "The summary is useful for drilldown but its interleaved group structure does not offer an easy sort of SKU totals by error count. Likely mechanism (inference): the author supplied a rank column and outline groups but did not validate the requested sorting workflow.",
+     "severity": "low",
+     "per_model": {
+      "opus": {
+       "items": 1,
+       "tasks": 1
+      },
+      "gpt": {
+       "items": 0,
+       "tasks": 0
+      }
+     },
+     "critical_rubric_items": 0,
+     "flagged_by": {
+      "deterministic": 1
+     },
+     "item_keys": [
+      "opus|1137e2bb|22"
+     ],
+     "note": null
+    },
+    {
+     "id": "M7",
+     "name": "A plain-language explanation of a check omits its decisive criterion",
+     "definition": "The deliverable applies a rule correctly in the workbook but its narrative explanation of the check leaves out the condition that defines it, so a reader could not re-apply the check from the explanation alone.",
+     "severity": "medium",
+     "per_model": {
+      "opus": {
+       "items": 0,
+       "tasks": 0
+      },
+      "gpt": {
+       "items": 1,
+       "tasks": 1
+      }
+     },
+     "critical_rubric_items": 1,
+     "flagged_by": {
+      "human": 1
+     },
+     "item_keys": [
+      "gpt|1137e2bb|23"
+     ],
+     "note": null
+    },
+    {
+     "id": "R03",
+     "name": "Missing separate invalid-case-pack indicator",
+     "definition": "The workbook flags case-pack violations but carries no separate indicator for a missing or invalid case pack (rubric item 21, which goes beyond the prompt; A-21). All source case packs are positive, so no count is affected.",
+     "severity": "low",
+     "per_model": {
+      "opus": {
+       "items": 1,
+       "tasks": 1
+      },
+      "gpt": {
+       "items": 1,
+       "tasks": 1
+      }
+     },
+     "critical_rubric_items": 0,
+     "flagged_by": {
+      "deterministic": 2
+     },
+     "item_keys": [
+      "gpt|1137e2bb|21",
+      "opus|1137e2bb|21"
+     ],
+     "note": null
+    },
+    {
+     "id": "ADDS",
+     "name": "Per-line additions column absent (both models; depends on R-2.7-21)",
+     "definition": "Neither prepaid schedule presents a per-line monthly additions column; the roll-forwards are arithmetically valid, and the items fail under the binding pre-run rule R-2.7-21 (additions are never inferred). Mutually exclusive with M1.",
+     "severity": "medium",
+     "per_model": {
+      "opus": {
+       "items": 2,
+       "tasks": 1
+      },
+      "gpt": {
+       "items": 2,
+       "tasks": 1
+      }
+     },
+     "critical_rubric_items": 4,
+     "flagged_by": {
+      "deterministic": 4
+     },
+     "item_keys": [
+      "gpt|7d7fc9a7|21",
+      "opus|7d7fc9a7|21",
+      "gpt|7d7fc9a7|39",
+      "opus|7d7fc9a7|39"
+     ],
+     "note": "kept out of M1 so that M1 counts only levels and measures omitted without a rule in play; the sensitivity of R-2.7-21 is reported with the critical status"
+    }
+   ],
+   "source": "repository: analysis/human_taxonomy.json",
+   "verification": "human-confirmed items only; severity is the author's rating"
+  },
+  "failed_critical_criteria": {
+   "value": {
+    "opus": 4,
+    "gpt": 9
+   },
+   "source": "repository: analysis/human_taxonomy.json",
+   "verification": "adjudicated"
+  },
+  "m2_leverage": {
+   "value": {
+    "m2_opus_sole": 2,
+    "m2_gpt_with": 3,
+    "gpt_failed": 9,
+    "m2_gpt_m5": 1
+   },
+   "source": "repository: analysis/human_taxonomy.json (failed critical criteria by failure type)",
+   "verification": "human-verified"
+  },
+  "m1": {
+   "value": {
+    "gpt_items": 11,
+    "gpt_tasks": 3,
+    "critical": 5,
+    "opus_items": 0
+   },
+   "source": "repository: analysis/human_taxonomy.json",
+   "verification": "human-verified"
+  },
+  "opus_levels_verified": {
+   "value": {
+    "b5d2e6f1|12": "confirmed_pass",
+    "b5d2e6f1|16": "confirmed_pass",
+    "b5d2e6f1|25": "confirmed_pass",
+    "b5d2e6f1|26": "confirmed_pass",
+    "7b08cd4d|16": "grader_false_fail",
+    "7b08cd4d|17": "grader_false_fail",
+    "47ef842d|28": "confirmed_pass",
+    "47ef842d|35": "confirmed_pass",
+    "47ef842d|42": "confirmed_pass",
+    "47ef842d|49": "confirmed_pass",
+    "47ef842d|56": "confirmed_pass",
+    "47ef842d|57": "confirmed_pass"
+   },
+   "source": "human adjudication records (local run store, not in repo); see report §7.3 and §7.7 (confirmed_pass / grader_false_fail with the author's evidence)",
+   "verification": "author-verified; backs 'Opus 5.5 includes them'"
+  },
+  "cards": {
+   "value": {
+    "A": {
+     "gpt_items": [
+      16,
+      25,
+      26
+     ],
+     "gpt_store_subtotal_rows": 0,
+     "opus_store_total_rows": 39,
+     "stores": 39,
+     "grand_total_wtd_qty": {
+      "opus": "55,380",
+      "gpt": "55,380"
+     },
+     "gpt_grand_total_item17_frozen_verdict": "pass"
+    },
+    "B": {
+     "item": 13,
+     "task": "47ef842d-8eac-4b90-bda8-dd934c228c96",
+     "both_confirmed": true,
+     "required_upcs": 5,
+     "opus_failed_critical": 4,
+     "m2_sole_cause_opus": 2
+    },
+    "C": {
+     "item": 23,
+     "task": "1137e2bb-bdf9-4876-b572-f29b7de5e595",
+     "gpt_decision": "grader_false_pass",
+     "frozen_verdicts": {
+      "opus": [
+       "judge",
+       "pass"
+      ],
+      "gpt": [
+       "judge",
+       "pass"
+      ]
+     },
+     "decides_gpt_task_alone": true,
+     "document_terms": {
+      "opus": {
+       "document": {
+        "multiple": 3,
+        "divisib": 1
+       },
+       "rendered": {
+        "multiple": 3,
+        "divisib": 1
+       }
+      },
+      "gpt": {
+       "document": {
+        "multiple": 0,
+        "divisib": 1
+       },
+       "rendered": {
+        "multiple": 0,
+        "divisib": 1
+       }
+      }
+     }
+    },
+    "source_rows": 936
+   },
+   "source": "repository: analysis/human_taxonomy.json; human adjudication records (local run store, not in repo); see report §7.3 and §7.7; the candidates' deliverables and the task inputs (local run store, not in repo); see report §6.5; failure-analysis bundle: every graded item of the formal runs (local run store, not in repo); see report §7.7 (rubric text, frozen verdicts)",
+   "verification": "card items are human-confirmed failures; store and total rows read from the deliverables; card C term counts read from the Word documents and their renderings"
+  },
+  "crops": {
+   "value": [
+    {
+     "card": "A",
+     "cand": "opus",
+     "task_id": "b5d2e6f1-62a2-433a-bcdd-95b260cdd860",
+     "run_uuid": "Mae4tizWVH2BiinB5zKQV2",
+     "file": "Weekly Sales Data - Beauty Sales Analysis.xlsx",
+     "sha256": "dcc1c9e4827e7a5480228bdcb93896af86eb24adafad8c32dbea1227020cc353",
+     "sheet": "Sales by Store",
+     "range": "A11:C15",
+     "header_row": 4,
+     "kind": "store_boundary",
+     "mark": "box_row",
+     "cells": {
+      "header": [
+       "Store",
+       "Brand Name",
+       "WTD Sales Quantity"
+      ],
+      "rows": [
+       [
+        11,
+        "Store 1",
+        "Men's Treatment",
+        "242"
+       ],
+       [
+        12,
+        "Store 1",
+        "Shiseido",
+        "162"
+       ],
+       [
+        13,
+        "Store 1 Total",
+        "",
+        "1,420"
+       ],
+       [
+        14,
+        "Store 2",
+        "Clinique",
+        "181"
+       ],
+       [
+        15,
+        "Store 2",
+        "Elizabeth Arden",
+        "119"
+       ]
+      ]
+     },
+     "chart": null,
+     "text": null,
+     "page": null,
+     "clip_pt": null,
+     "png": "opus_A11-C15.png",
+     "png_px": [
+      861,
+      331
+     ]
+    },
+    {
+     "card": "A",
+     "cand": "opus",
+     "task_id": "b5d2e6f1-62a2-433a-bcdd-95b260cdd860",
+     "run_uuid": "Mae4tizWVH2BiinB5zKQV2",
+     "file": "Weekly Sales Data - Beauty Sales Analysis.xlsx",
+     "sha256": "dcc1c9e4827e7a5480228bdcb93896af86eb24adafad8c32dbea1227020cc353",
+     "sheet": "Sales by Store",
+     "range": "A354:C356",
+     "header_row": 4,
+     "kind": "grand_total",
+     "mark": null,
+     "cells": {
+      "header": [
+       "Store",
+       "Brand Name",
+       "WTD Sales Quantity"
+      ],
+      "rows": [
+       [
+        354,
+        "Store 39",
+        "Shiseido",
+        "162"
+       ],
+       [
+        355,
+        "Store 39 Total",
+        "",
+        "1,420"
+       ],
+       [
+        356,
+        "Grand Total",
+        "",
+        "55,380"
+       ]
+      ]
+     },
+     "chart": null,
+     "text": null,
+     "page": null,
+     "clip_pt": null,
+     "png": "opus_A354-C356.png",
+     "png_px": [
+      861,
+      251
+     ]
+    },
+    {
+     "card": "A",
+     "cand": "gpt",
+     "task_id": "b5d2e6f1-62a2-433a-bcdd-95b260cdd860",
+     "run_uuid": "d5sypgfTdCCwfsFV9jdzLd",
+     "file": "Weekly Sales Analysis.xlsx",
+     "sha256": "3e021dd2f4644b85466f750a19416a5b24f593018a9d6981cbd31777994c6305",
+     "sheet": "Sales by Store",
+     "range": "A13:C16",
+     "header_row": 6,
+     "kind": "store_boundary",
+     "mark": "line_before",
+     "cells": {
+      "header": [
+       "Store",
+       "Brand Name",
+       "WTD Sales Quantity"
+      ],
+      "rows": [
+       [
+        13,
+        "",
+        "Men's Treatment",
+        "242"
+       ],
+       [
+        14,
+        "",
+        "Shiseido",
+        "162"
+       ],
+       [
+        15,
+        "Store 2",
+        "Clinique",
+        "181"
+       ],
+       [
+        16,
+        "",
+        "Elizabeth Arden",
+        "119"
+       ]
+      ]
+     },
+     "chart": null,
+     "text": null,
+     "page": null,
+     "clip_pt": null,
+     "png": "gpt_A13-C16.png",
+     "png_px": [
+      903,
+      361
+     ]
+    },
+    {
+     "card": "A",
+     "cand": "gpt",
+     "task_id": "b5d2e6f1-62a2-433a-bcdd-95b260cdd860",
+     "run_uuid": "d5sypgfTdCCwfsFV9jdzLd",
+     "file": "Weekly Sales Analysis.xlsx",
+     "sha256": "3e021dd2f4644b85466f750a19416a5b24f593018a9d6981cbd31777994c6305",
+     "sheet": "Sales by Store",
+     "range": "A317:C319",
+     "header_row": 6,
+     "kind": "grand_total",
+     "mark": null,
+     "cells": {
+      "header": [
+       "Store",
+       "Brand Name",
+       "WTD Sales Quantity"
+      ],
+      "rows": [
+       [
+        317,
+        "",
+        "Men's Treatment",
+        "242"
+       ],
+       [
+        318,
+        "",
+        "Shiseido",
+        "162"
+       ],
+       [
+        319,
+        "Grand Total",
+        "",
+        "55,380"
+       ]
+      ]
+     },
+     "chart": null,
+     "text": null,
+     "page": null,
+     "clip_pt": null,
+     "png": "gpt_A317-C319.png",
+     "png_px": [
+      903,
+      337
+     ]
+    },
+    {
+     "card": "B",
+     "cand": "opus",
+     "task_id": "47ef842d-8eac-4b90-bda8-dd934c228c96",
+     "run_uuid": "LVyjBBcU4iFqDKviwY2YJz",
+     "file": "Top5_UPC_Inventory_Position_Wk28_2025.xlsx",
+     "sha256": "b8d9f3dd3dc2f415ed34606b0d7a3bb5777aa6383d644c9da16bed5bf5b40e36",
+     "sheet": "Summary",
+     "range": "A19:F35",
+     "header_row": null,
+     "kind": "chart",
+     "mark": null,
+     "cells": null,
+     "chart": {
+      "category_ref": "'Summary'!$C$48:$C$52",
+      "categories": [
+       "AC AMBER NOIR EDP SPRAY",
+       "HONEY BLISS KISS EDT",
+       "LVNC VANILLA REVERIE EDT",
+       "HONEYCREST EDP SPRAY",
+       "A DURAND CINNAMON SPARK ROLLERBALL"
+      ],
+      "chart_title": "% of Active Stores Out of Stock – Top 5 UPCs (Wk 28 2025)",
+      "upc_cells": "B48:B52",
+      "upcs": [
+       "875218534223",
+       "375301052429",
+       "567219040266",
+       "901153373247",
+       "217313054556"
+      ]
+     },
+     "text": null,
+     "page": null,
+     "clip_pt": null,
+     "png": "b_opus_A19-F35.png",
+     "png_px": [
+      1395,
+      663
+     ]
+    },
+    {
+     "card": "B",
+     "cand": "gpt",
+     "task_id": "47ef842d-8eac-4b90-bda8-dd934c228c96",
+     "run_uuid": "dPR5yvN9wEfcMyQiAC2njB",
+     "file": "Inventory_Health_Top_5_2025_W28.xlsx",
+     "sha256": "acceda689a53b986277c5d2d5d40ec008fcfe234c3903922c4d9de5edadd607e",
+     "sheet": "Summary",
+     "range": "A18:E32",
+     "header_row": null,
+     "kind": "chart",
+     "mark": null,
+     "cells": null,
+     "chart": {
+      "category_ref": "Summary!$K$11:$K$15",
+      "categories": [
+       "AC Amber Noir",
+       "Honey Bliss Kiss",
+       "LVNC Vanilla Reverie",
+       "Honeycrest",
+       "A Durand Cinnamon Spark"
+      ],
+      "chart_title": null,
+      "upc_cells": "B11:B15",
+      "upcs": [
+       "875218534223",
+       "375301052429",
+       "567219040266",
+       "901153373247",
+       "217313054556"
+      ]
+     },
+     "text": null,
+     "page": null,
+     "clip_pt": null,
+     "png": "b_gpt_A18-E32.png",
+     "png_px": [
+      1372,
+      518
+     ]
+    },
+    {
+     "card": "C",
+     "cand": "opus",
+     "task_id": "1137e2bb-bdf9-4876-b572-f29b7de5e595",
+     "run_uuid": "iS5pLfPvTxhxxXScg7HXVw",
+     "file": "PO_Audit_Error_Summary.docx",
+     "sha256": "f687de7ed5ef52ab69c590be76863b0903e24f37b9d3a72ec42252aefed05487",
+     "sheet": null,
+     "range": null,
+     "header_row": null,
+     "kind": "doc_paragraph",
+     "mark": null,
+     "cells": null,
+     "chart": null,
+     "text": {
+      "heading": "1. Summary",
+      "paragraph": "I audited all 41 PO lines in the export (10 POs, 16 SKUs, 4 ship-to locations) against two checks: Price Mismatch (entered unit price ≠ expected unit price) and Case Pack (a CASE-UOM line whose ordered units are not a whole multiple of the case pack).",
+      "document_terms": {
+       "multiple": 3,
+       "divisib": 1
+      },
+      "rendered_terms": {
+       "multiple": 3,
+       "divisib": 1
+      }
+     },
+     "page": 1,
+     "clip_pt": [
+      62.5,
+      141.4,
+      540.7,
+      204.4
+     ],
+     "png": "c_opus_summary.png",
+     "png_px": [
+      1288,
+      181
+     ]
+    },
+    {
+     "card": "C",
+     "cand": "gpt",
+     "task_id": "1137e2bb-bdf9-4876-b572-f29b7de5e595",
+     "run_uuid": "mE6xrcKcirXrQgh4ugBfbE",
+     "file": "Wholesale_Order_Audit_Summary.docx",
+     "sha256": "b798ae94af50f517ad6f9a4f2e63e04b5d1766e1e3b7e81085c69c6bc2bf0359",
+     "sheet": null,
+     "range": null,
+     "header_row": null,
+     "kind": "doc_paragraph",
+     "mark": null,
+     "cells": null,
+     "chart": null,
+     "text": {
+      "heading": "Method & workbook use",
+      "paragraph": "Price errors compare entered vs. expected unit prices at 2-decimal precision, assuming expected prices are authoritative. Case-pack errors count invalid CASE lines once; EA lines are exempt. Total errors sum the two flags. The SKU Summary tab expands via + to PO totals; filter RawData for individual ship-to lines. This is a 41-line snapshot, not a measure of invoice losses, short shipments or assessed fines; no order dates or shipment status were supplied.",
+      "document_terms": {
+       "multiple": 0,
+       "divisib": 1
+      },
+      "rendered_terms": {
+       "multiple": 0,
+       "divisib": 1
+      }
+     },
+     "page": 1,
+     "clip_pt": [
+      46.9,
+      634.7,
+      564.5,
+      724.4
+     ],
+     "png": "c_gpt_summary.png",
+     "png_px": [
+      1393,
+      252
+     ]
+    }
+   ],
+   "source": "repository: site/img/crops.json, written by site/render_crops.py from the candidates' deliverables and the task inputs (local run store, not in repo); see report §6.5",
+   "verification": "LibreOffice in the frozen sandbox image sha256:18cde712cde1…, no network; display-only preparation of copies (card A: PivotTable relationship removed so the saved cells are shown; card C: Word documents unchanged); every shown cell token (card A), every referenced category label and no UPC (card B), or every word of the heading and paragraph (card C) checked in the rendering"
+  },
+  "run_configuration": {
+   "value": {
+    "models": {
+     "opus": "anthropic/claude-opus-5-5",
+     "gpt": "openai/gpt-6.1-sol"
+    },
+    "reasoning_effort": "high",
+    "max_output_tokens": 32000,
+    "max_retries": 3,
+    "request_timeout_s": 2700,
+    "attempt_timeout_s": 900,
+    "provider_sdk_retries": 0,
+    "time_limit_s": 7200,
+    "working_limit_s": 7200,
+    "message_limit": 200,
+    "attempts": 1,
+    "generation_start": "2026-11-02T09:57:12+00:00",
+    "generation_end": "2026-11-02T11:04:32+00:00",
+    "judge_pass_start": "2026-11-02T11:57:25+00:00",
+    "judge_pass_end": "2026-11-02T12:55:28+00:00",
+    "labels_saved": "2026-11-02T12:48:10+00:00",
+    "freeze_generation_commit": "dda234f",
+    "freeze_grading_commit": "cc684ef",
+    "config_sha256": "77f765314253c2c3a2251443e952593e295652c5f947b1b2322ecab7be186e4b",
+    "judge": {
+     "model": "google/gemini-3.1-pro-preview",
+     "temperature": 1.0,
+     "max_tokens": 16384,
+     "reasoning_effort": "high",
+     "prompt_sha256": "1de955e607e16bd8d236469603bde099b3d309a885be170c21d7e759c57487b5"
+    }
+   },
+   "source": "repository: config.json at freeze-v1-generation and freeze-v1-grading, harness/freeze/freeze-v1-generation.json; Inspect logs of the 20 formal runs (local run store, not in repo); see report §2.3; formal run inventories (local run store, not in repo); see report §7.1; formal judge pass registry (local run store, not in repo); see report §1; formal blind-label reveal (local run store, not in repo); see report §7.6",
+   "verification": "frozen config cross-checked against the generate config and limits recorded in all 20 formal Inspect logs"
+  },
+  "run_limits_reached": {
+   "value": {
+    "runs": 20,
+    "sample_limit_hits": [],
+    "max_tokens_stops": 0,
+    "model_requests": 409,
+    "largest_output_tokens_one_request": 23598,
+    "longest_run_s": 1039,
+    "most_messages": 100,
+    "request_retries": 0,
+    "inventory_recovered_attempts": 0
+   },
+   "source": "Inspect logs of the 20 formal runs (local run store, not in repo); see report §2.3; formal run inventories (local run store, not in repo); see report §7.1",
+   "verification": "read from every model event of the 20 formal samples; limits: 32000 output tokens per request, 7200 s per run, 200 messages per run"
+  },
+  "rubric_items": {
+   "value": {
+    "per_model": 580,
+    "inside_critical_requirements": 320,
+    "critical_requirements": 35,
+    "critical_requirements_per_task": {
+     "b5d2e6f1": 4,
+     "f841ddcf": 5,
+     "47ef842d": 4,
+     "1137e2bb": 3,
+     "c3525d4d": 3,
+     "7b08cd4d": 3,
+     "7d7fc9a7": 4,
+     "2ea2e5b5": 3,
+     "c357f0e2": 3,
+     "a45bc83b": 3
+    }
+   },
+   "source": "failure-analysis bundle: every graded item of the formal runs (local run store, not in repo); see report §7.7; critical membership from human-layer status recomputed with the frozen scoring on copies (local run store, not in repo); see report §7.3",
+   "verification": "counted per model from the item bundle; the two models face the same rubric items"
+  },
+  "task_verdicts": {
+   "value": {
+    "rows": [
+     {
+      "task_id": "b5d2e6f1-62a2-433a-bcdd-95b260cdd860",
+      "task": "Weekly sales analysis",
+      "occupation": "Order Clerks",
+      "opus": {
+       "after_review": "pass",
+       "before_review": "pass",
+       "without_additions_rule": "pass",
+       "failed_requirements": [],
+       "confirmed_items_in_failed_requirements": [],
+       "label": null,
+       "requirement_source": null
+      },
+      "gpt": {
+       "after_review": "fail",
+       "before_review": "fail",
+       "without_additions_rule": "fail",
+       "failed_requirements": [
+        "C3"
+       ],
+       "confirmed_items_in_failed_requirements": [
+        {
+         "requirement": "C3",
+         "item": 16,
+         "failure_type": "M1",
+         "decision": "confirmed_fail"
+        },
+        {
+         "requirement": "C3",
+         "item": 25,
+         "failure_type": "M1",
+         "decision": "confirmed_fail"
+        },
+        {
+         "requirement": "C3",
+         "item": 26,
+         "failure_type": "M1",
+         "decision": "confirmed_fail"
+        }
+       ],
+       "label": "missing store subtotals",
+       "requirement_source": "prompt"
+      }
+     },
+     {
+      "task_id": "f841ddcf-2a28-4f6d-bac3-61b607219d3e",
+      "task": "June shipment recap",
+      "occupation": "Order Clerks",
+      "opus": {
+       "after_review": "pass",
+       "before_review": "pass",
+       "without_additions_rule": "pass",
+       "failed_requirements": [],
+       "confirmed_items_in_failed_requirements": [],
+       "label": null,
+       "requirement_source": null
+      },
+      "gpt": {
+       "after_review": "pass",
+       "before_review": "fail",
+       "without_additions_rule": "pass",
+       "failed_requirements": [],
+       "confirmed_items_in_failed_requirements": [],
+       "label": null,
+       "requirement_source": null
+      }
+     },
+     {
+      "task_id": "47ef842d-8eac-4b90-bda8-dd934c228c96",
+      "task": "Weeks of supply",
+      "occupation": "Order Clerks",
+      "opus": {
+       "after_review": "fail",
+       "before_review": "fail",
+       "without_additions_rule": "fail",
+       "failed_requirements": [
+        "C4"
+       ],
+       "confirmed_items_in_failed_requirements": [
+        {
+         "requirement": "C4",
+         "item": 13,
+         "failure_type": "M2",
+         "decision": "confirmed_fail"
+        }
+       ],
+       "label": "exact label",
+       "requirement_source": "rubric"
+      },
+      "gpt": {
+       "after_review": "fail",
+       "before_review": "fail",
+       "without_additions_rule": "fail",
+       "failed_requirements": [
+        "C4"
+       ],
+       "confirmed_items_in_failed_requirements": [
+        {
+         "requirement": "C4",
+         "item": 13,
+         "failure_type": "M2",
+         "decision": "confirmed_fail"
+        }
+       ],
+       "label": "exact label",
+       "requirement_source": "rubric"
+      }
+     },
+     {
+      "task_id": "1137e2bb-bdf9-4876-b572-f29b7de5e595",
+      "task": "PO entry audit",
+      "occupation": "Order Clerks",
+      "opus": {
+       "after_review": "pass",
+       "before_review": "fail",
+       "without_additions_rule": "pass",
+       "failed_requirements": [],
+       "confirmed_items_in_failed_requirements": [],
+       "label": null,
+       "requirement_source": null
+      },
+      "gpt": {
+       "after_review": "fail",
+       "before_review": "not_confirmed",
+       "without_additions_rule": "fail",
+       "failed_requirements": [
+        "C3"
+       ],
+       "confirmed_items_in_failed_requirements": [
+        {
+         "requirement": "C3",
+         "item": 23,
+         "failure_type": "M7",
+         "decision": "grader_false_pass"
+        }
+       ],
+       "label": "explanation omits the rule",
+       "requirement_source": "prompt"
+      }
+     },
+     {
+      "task_id": "c3525d4d-2012-45df-853e-2d2a0e902991",
+      "task": "Holiday floor-stand budget",
+      "occupation": "Order Clerks",
+      "opus": {
+       "after_review": "pass",
+       "before_review": "fail",
+       "without_additions_rule": "pass",
+       "failed_requirements": [],
+       "confirmed_items_in_failed_requirements": [],
+       "label": null,
+       "requirement_source": null
+      },
+      "gpt": {
+       "after_review": "pass",
+       "before_review": "fail",
+       "without_additions_rule": "pass",
+       "failed_requirements": [],
+       "confirmed_items_in_failed_requirements": [],
+       "label": null,
+       "requirement_source": null
+      }
+     },
+     {
+      "task_id": "7b08cd4d-df60-41ae-9102-8aaa49306ba2",
+      "task": "Tour profit and loss",
+      "occupation": "Accountants and Auditors",
+      "opus": {
+       "after_review": "pass",
+       "before_review": "fail",
+       "without_additions_rule": "pass",
+       "failed_requirements": [],
+       "confirmed_items_in_failed_requirements": [],
+       "label": null,
+       "requirement_source": null
+      },
+      "gpt": {
+       "after_review": "fail",
+       "before_review": "fail",
+       "without_additions_rule": "fail",
+       "failed_requirements": [
+        "C1"
+       ],
+       "confirmed_items_in_failed_requirements": [
+        {
+         "requirement": "C1",
+         "item": 16,
+         "failure_type": "M1",
+         "decision": "confirmed_fail"
+        },
+        {
+         "requirement": "C1",
+         "item": 17,
+         "failure_type": "M1",
+         "decision": "confirmed_fail"
+        }
+       ],
+       "label": "missing per-stop tax *",
+       "requirement_source": "rubric"
+      }
+     },
+     {
+      "task_id": "7d7fc9a7-21a7-4b83-906f-416dea5ad04f",
+      "task": "Prepaid amortization",
+      "occupation": "Accountants and Auditors",
+      "opus": {
+       "after_review": "fail",
+       "before_review": "fail",
+       "without_additions_rule": "not_confirmed",
+       "failed_requirements": [
+        "C2",
+        "C3"
+       ],
+       "confirmed_items_in_failed_requirements": [
+        {
+         "requirement": "C2",
+         "item": 21,
+         "failure_type": "ADDS",
+         "decision": "verified_fail"
+        },
+        {
+         "requirement": "C3",
+         "item": 39,
+         "failure_type": "ADDS",
+         "decision": "verified_fail"
+        }
+       ],
+       "label": "additions column †",
+       "requirement_source": "rule"
+      },
+      "gpt": {
+       "after_review": "fail",
+       "before_review": "fail",
+       "without_additions_rule": "not_confirmed",
+       "failed_requirements": [
+        "C2",
+        "C3"
+       ],
+       "confirmed_items_in_failed_requirements": [
+        {
+         "requirement": "C2",
+         "item": 21,
+         "failure_type": "ADDS",
+         "decision": "confirmed_fail"
+        },
+        {
+         "requirement": "C3",
+         "item": 39,
+         "failure_type": "ADDS",
+         "decision": "confirmed_fail"
+        }
+       ],
+       "label": "additions column †",
+       "requirement_source": "rule"
+      }
+     },
+     {
+      "task_id": "2ea2e5b5-257f-42e6-a7dc-93763f28b19d",
+      "task": "Work-time study deck",
+      "occupation": "Computer and Information Systems Managers",
+      "opus": {
+       "after_review": "fail",
+       "before_review": "fail",
+       "without_additions_rule": "fail",
+       "failed_requirements": [
+        "C3"
+       ],
+       "confirmed_items_in_failed_requirements": [
+        {
+         "requirement": "C3",
+         "item": 27,
+         "failure_type": "M2",
+         "decision": "confirmed_fail"
+        },
+        {
+         "requirement": "C3",
+         "item": 38,
+         "failure_type": "M2",
+         "decision": "confirmed_fail"
+        }
+       ],
+       "label": "exact label",
+       "requirement_source": "rubric"
+      },
+      "gpt": {
+       "after_review": "fail",
+       "before_review": "fail",
+       "without_additions_rule": "fail",
+       "failed_requirements": [
+        "C3"
+       ],
+       "confirmed_items_in_failed_requirements": [
+        {
+         "requirement": "C3",
+         "item": 27,
+         "failure_type": "M2",
+         "decision": "verified_fail"
+        },
+        {
+         "requirement": "C3",
+         "item": 38,
+         "failure_type": "M2",
+         "decision": "verified_fail"
+        }
+       ],
+       "label": "exact label",
+       "requirement_source": "rubric"
+      }
+     },
+     {
+      "task_id": "c357f0e2-963d-4eb7-a6fa-3078fe55b3ba",
+      "task": "UAT test plan",
+      "occupation": "Computer and Information Systems Managers",
+      "opus": {
+       "after_review": "pass",
+       "before_review": "fail",
+       "without_additions_rule": "pass",
+       "failed_requirements": [],
+       "confirmed_items_in_failed_requirements": [],
+       "label": null,
+       "requirement_source": null
+      },
+      "gpt": {
+       "after_review": "fail",
+       "before_review": "fail",
+       "without_additions_rule": "fail",
+       "failed_requirements": [
+        "C2",
+        "C3"
+       ],
+       "confirmed_items_in_failed_requirements": [
+        {
+         "requirement": "C2",
+         "item": 12,
+         "failure_type": "M2",
+         "decision": "confirmed_fail"
+        },
+        {
+         "requirement": "C2",
+         "item": 50,
+         "failure_type": "M5",
+         "decision": "confirmed_fail"
+        },
+        {
+         "requirement": "C3",
+         "item": 15,
+         "failure_type": "M5",
+         "decision": "confirmed_fail"
+        }
+       ],
+       "label": "label and missing test case",
+       "requirement_source": "rubric"
+      }
+     },
+     {
+      "task_id": "a45bc83b-22f9-4def-8d89-9c5661b2b86f",
+      "task": "GCP migration design",
+      "occupation": "Computer and Information Systems Managers",
+      "opus": {
+       "after_review": "pass",
+       "before_review": "pass",
+       "without_additions_rule": "pass",
+       "failed_requirements": [],
+       "confirmed_items_in_failed_requirements": [],
+       "label": null,
+       "requirement_source": null
+      },
+      "gpt": {
+       "after_review": "pass",
+       "before_review": "pass",
+       "without_additions_rule": "pass",
+       "failed_requirements": [],
+       "confirmed_items_in_failed_requirements": [],
+       "label": null,
+       "requirement_source": null
+      }
+     }
+    ],
+    "after_review": {
+     "opus": {
+      "pass": 7,
+      "fail": 3,
+      "not_confirmed": 0
+     },
+     "gpt": {
+      "pass": 3,
+      "fail": 7,
+      "not_confirmed": 0
+     }
+    },
+    "before_review": {
+     "opus": {
+      "pass": 3,
+      "fail": 7,
+      "not_confirmed": 0
+     },
+     "gpt": {
+      "pass": 1,
+      "fail": 8,
+      "not_confirmed": 1
+     }
+    },
+    "failures_only_an_exact_label": {
+     "opus": 2,
+     "gpt": 2
+    },
+    "failed_tasks_by_requirement_source": {
+     "opus": {
+      "prompt": 0,
+      "rubric": 2,
+      "rule": 1
+     },
+     "gpt": {
+      "prompt": 2,
+      "rubric": 4,
+      "rule": 1
+     }
+    },
+    "failed_tasks_decided_by_a_grader_false_pass_alone": 1
+   },
+   "source": "human-layer status recomputed with the frozen scoring on copies (local run store, not in repo); see report §7.3; human adjudication records (local run store, not in repo); see report §7.3 and §7.7; failure types from repository: analysis/human_taxonomy.json; requirement sources from repository: analysis/requirement_source.json; labels from site/content.json",
+   "verification": "a task passes when all its critical requirements pass (after review); each failing cell's label is checked against the failure types of the confirmed items in its failing requirements; a failed task's source is 'prompt' if any confirmed item in its failing requirements is stated in the prompt, else 'rubric', else 'rule'"
+  },
+  "requirement_source_sensitivity": {
+   "value": {
+    "as_tagged": {
+     "prompt_items": {
+      "opus": 0,
+      "gpt": 12
+     },
+     "failed_tasks_on_prompt": {
+      "opus": 0,
+      "gpt": 2
+     }
+    },
+    "judgment_calls_as_rubric": {
+     "prompt_items": {
+      "opus": 0,
+      "gpt": 3
+     },
+     "failed_tasks_on_prompt": {
+      "opus": 0,
+      "gpt": 1
+     }
+    },
+    "judgment_calls_as_prompt": {
+     "prompt_items": {
+      "opus": 0,
+      "gpt": 15
+     },
+     "failed_tasks_on_prompt": {
+      "opus": 0,
+      "gpt": 4
+     }
+    }
+   },
+   "source": "derived from repository: analysis/requirement_source.json and the task verdicts",
+   "verification": "the tally recomputed with every judgment call (debatable tag) read as rubric, and as prompt"
+  },
+  "opus_failure_split": {
+   "value": {
+    "rubric_detail": 5,
+    "exact_wording": 3,
+    "added_rule": 2
+   },
+   "source": "derived from repository: analysis/requirement_source.json (source) and analysis/human_taxonomy.json (M2 = exact wording)",
+   "verification": "rubric-tagged items in M2 count as exact wording, the other rubric-tagged items as detail the rubric adds"
+  },
+  "task_verdicts_without_additions_rule": {
+   "value": {
+    "opus": {
+     "pass": 7,
+     "fail": 2,
+     "not_confirmed": 1
+    },
+    "gpt": {
+     "pass": 3,
+     "fail": 6,
+     "not_confirmed": 1
+    }
+   },
+   "source": "human-layer status recomputed with the frozen scoring on copies (local run store, not in repo); see report §7.3",
+   "verification": "after review, with the per-line additions rubric items set to cannot assess (the pre-registered additions rule not binding)"
+  },
+  "weekly_sales_example": {
+   "value": {
+    "critical_requirements": 4,
+    "names_recorded": {
+     "C1": "Structure",
+     "C2": "Brand totals",
+     "C3": "PivotTable",
+     "C4": "ST% logic"
+    },
+    "store_requirement": "C3",
+    "store_requirement_items": 7,
+    "failed_subtotal_items_gpt": [
+     16,
+     25,
+     26
+    ],
+    "item_16_points": 2,
+    "subtotal_items_grader": [
+     "deterministic"
+    ]
+   },
+   "source": "repository: private/rubric (the task's GDPval rubric, not published) and failure-analysis bundle: every graded item of the formal runs (local run store, not in repo); see report §7.7; membership from human-layer status recomputed with the frozen scoring on copies (local run store, not in repo); see report §7.3",
+   "verification": "counted from the records; the page's names of the requirements and the quoted rubric items are descriptive paraphrases, the recorded names are listed here"
+  },
+  "expert_file_weekly_sales": {
+   "value": {
+    "st_pct_method": "average of row ratios (expert error in the audit)",
+    "clinique_wtd_st_expert": "0.2467",
+    "clinique_wtd_st_ratio_of_sums": "0.2309",
+    "data_tab_cells_differing_from_source": 557,
+    "data_tab_difference": "unexplained in the audit: an undocumented expert edit or another input version"
+   },
+   "source": "repository: docs/expert_gold_fail_audit.md (weekly sales rows); the task input (local run store, not in repo) for the ST% recomputation",
+   "verification": "pre-run material audit; the Clinique WTD values recomputed from the input at build time"
+  },
+  "pilot_estimate": {
+   "value": {
+    "families": [
+     "weekly sales reporting",
+     "weeks of supply",
+     "PO entry audit"
+    ],
+    "tasks_per_family": 20,
+    "runs_per_task": 3,
+    "accept_rise_points": 10,
+    "hold_within_points": 2,
+    "gdpval_hours_per_task": 7,
+    "gdpval_source": "GDPval paper (arXiv:2510.04374v1), section 1: \"Tasks require an average of 7 hours of work for an expert professional to complete.\"",
+    "extra_hours_per_sample": 4,
+    "train_per_family": 15,
+    "heldout_per_family": 5,
+    "samples": 60,
+    "hours_per_sample": 11,
+    "hours_total": 660
+   },
+   "source": "repository: site/content.json (data.pilot_plan, the proposal's parameters); GDPval paper (arXiv:2510.04374v1), section 1: \"Tasks require an average of 7 hours of work for an expert professional to complete.\"",
+   "verification": "estimate for a proposal, not a measured result; the expert time per task is GDPval's reported average, the extra hours are this proposal's estimate"
+  },
+  "charts": {
+   "value": {
+    "review_change": {
+     "per_model": 35,
+     "opus": {
+      "before": {
+       "pass": 25,
+       "fail": 7,
+       "not_confirmed": 3
+      },
+      "after": {
+       "pass": 31,
+       "fail": 4,
+       "not_confirmed": 0
+      },
+      "after_pass_pct": 89
+     },
+     "gpt": {
+      "before": {
+       "pass": 16,
+       "fail": 14,
+       "not_confirmed": 5
+      },
+      "after": {
+       "pass": 26,
+       "fail": 9,
+       "not_confirmed": 0
+      },
+      "after_pass_pct": 74
+     }
+    },
+    "review_result": {
+     "n": 170,
+     "segments": [
+      {
+       "key": "confirmed_fail+verified_fail+grader_false_pass",
+       "name": "confirmed failure",
+       "count": 40,
+       "cls": "seg-accent",
+       "pct": 24
+      },
+      {
+       "key": "grader_false_fail",
+       "name": "grader false fail",
+       "count": 67,
+       "cls": "seg-g1",
+       "pct": 39
+      },
+      {
+       "key": "verified_pass",
+       "name": "cannot assess, then pass",
+       "count": 21,
+       "cls": "seg-g2",
+       "pct": 12
+      },
+      {
+       "key": "leave",
+       "name": "cannot assess, left",
+       "count": 42,
+       "cls": "seg-g3",
+       "pct": 25
+      }
+     ]
+    },
+    "review_result_graded_verdicts": {
+     "grader_false_fail|fail": 67,
+     "verified_pass|cannot_assess": 21,
+     "confirmed_fail|fail": 33,
+     "verified_fail|cannot_assess": 6,
+     "leave|cannot_assess": 42,
+     "grader_false_pass|pass": 1
+    }
+   },
+   "source": "derived at build time from critical_counts (before review = as graded, after review = adjudicated) and worksheet_breakdown",
+   "verification": "before review = frozen verdicts plus the pre-registered visual review; after review = plus the author's review decisions (final)"
+  },
+  "review_count_flow": {
+   "value": {
+    "graded_fail_or_cannot_assess": 239,
+    "reviewed_of_those": 169,
+    "critical_members": 145,
+    "draft_suspected": 24,
+    "graded_pass_from_blind_audit": 1,
+    "reviewed": 170,
+    "reviewed_graded_fail": 100,
+    "reviewed_graded_fail_critical": 78,
+    "reviewed_graded_fail_draft_suspected": 22,
+    "reviewed_cannot_assess": 69,
+    "not_reviewed": 96,
+    "not_reviewed_fail": 60,
+    "not_reviewed_cannot_assess": 10,
+    "no_verdict": 26
+   },
+   "source": "author adjudication worksheet (local run store, not in repo); see report §7.7; failure-analysis bundle: every graded item of the formal runs (local run store, not in repo); see report §7.7",
+   "verification": "reconciled at build time: graded fail or cannot assess = reviewed + not reviewed; reviewed = those + the blind-audit pass"
+  },
+  "rule_dependence_tasks": {
+   "value": {
+    "opus": 1,
+    "gpt": 1
+   },
+   "source": "human-layer status recomputed with the frozen scoring on copies (local run store, not in repo); see report §7.3",
+   "verification": "failed tasks after review minus failed tasks without the additions rule, per model"
+  },
+  "term_check": {
+   "value": {
+    "forbidden": [
+     "R-2.7-21",
+     "as graded",
+     "adjudicated",
+     "unresolved",
+     "re-checked",
+     "criteria",
+     "code check",
+     "not confirmed",
+     "grader couldn't read",
+     "added rule",
+     "requirement source",
+     "prompt-stated",
+     "stated in the prompt",
+     "deadline exception",
+     "evidence pack",
+     "source-only",
+     "formal"
+    ],
+    "hits": []
+   },
+   "source": "site/index.html (text, alt and aria labels; link targets excluded)",
+   "verification": "computed at build time"
+  }
+ }
+}

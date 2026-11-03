@@ -1,6 +1,10 @@
-# Pre-registration (DRAFT, not frozen)
+# Pre-registration
 
-Status: draft under human review. Items marked **APPROVED** were approved by the human on
+> FROZEN: the generation conditions at `freeze-v1-generation` (`dda234f`) and the grading rules at `freeze-v1-grading`
+> (`cc684ef`). Later changes follow the amendment policy in section 1.12 and are recorded in `docs/status.md`. The
+> pre-freeze status paragraph below is kept unchanged as the record.
+
+Status before the freeze: draft under human review. Items marked **APPROVED** were approved by the human on
 2026-10-29 and 2026-10-30 after an independent re-check of the stage-1 materials and recalculations; items
 marked **PENDING** await the human's decision; items marked **TOOLCHAIN** depend on results of
 the toolchain-validation stage. Nothing is frozen until `freeze-v1` is tagged; after freeze,

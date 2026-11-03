@@ -1,0 +1,458 @@
+{
+ "_about": "Requirement source of each human-confirmed failure (the 40 items of analysis/human_taxonomy.json): where the requirement that the item fails is stated. Display and analysis only: no verdict, adjudication or failure type changes. Tagged after the runs from the task prompts (formal task inputs) and the adjudication evidence. 'prompt_fragments' are verbatim substrings of the task prompt; site/build.py checks them.",
+ "status": "approved",
+ "status_note": "Proposed by Claude on 2026-11-03 at the author's request; approved by the author on 2026-11-03, including each of the twelve judgment calls (items marked debatable, each with its own author_decision).",
+ "rule": {
+  "prompt": "The prompt itself asks for the missing element (a level, measure, tab, section or statement), so a reader of the prompt alone would expect it.",
+  "rubric": "The prompt leaves the element open: the rubric fixes its exact wording, form or detail, or adds it beyond the prompt. Where the deliverable covers what the prompt names in another form, the item is rubric.",
+  "rule": "The item fails only under a rule this evaluation added before the runs (the pre-registered additions rule)."
+ },
+ "items": [
+  {
+   "candidate": "gpt",
+   "task_id": "47ef842d-8eac-4b90-bda8-dd934c228c96",
+   "item": 28,
+   "failure_type": "M1",
+   "source": "prompt",
+   "prompt_fragments": [
+    "calculated as the daily inventory sold in the last 4 weeks multiplied by 7",
+    "Ensure to show your work"
+   ],
+   "note": "The prompt defines the weekly rate as \"daily inventory sold in the last 4 weeks multiplied by 7\" and says \"Ensure to show your work\"; the deliverable shows the weekly rate only.",
+   "debatable": true,
+   "author_decision": "approved as prompt (judgment call), 2026-11-03"
+  },
+  {
+   "candidate": "gpt",
+   "task_id": "47ef842d-8eac-4b90-bda8-dd934c228c96",
+   "item": 35,
+   "failure_type": "M1",
+   "source": "prompt",
+   "prompt_fragments": [
+    "calculated as the daily inventory sold in the last 4 weeks multiplied by 7",
+    "Ensure to show your work"
+   ],
+   "note": "The prompt defines the weekly rate as \"daily inventory sold in the last 4 weeks multiplied by 7\" and says \"Ensure to show your work\"; the deliverable shows the weekly rate only.",
+   "debatable": true,
+   "author_decision": "approved as prompt (judgment call), 2026-11-03"
+  },
+  {
+   "candidate": "gpt",
+   "task_id": "47ef842d-8eac-4b90-bda8-dd934c228c96",
+   "item": 42,
+   "failure_type": "M1",
+   "source": "prompt",
+   "prompt_fragments": [
+    "calculated as the daily inventory sold in the last 4 weeks multiplied by 7",
+    "Ensure to show your work"
+   ],
+   "note": "The prompt defines the weekly rate as \"daily inventory sold in the last 4 weeks multiplied by 7\" and says \"Ensure to show your work\"; the deliverable shows the weekly rate only.",
+   "debatable": true,
+   "author_decision": "approved as prompt (judgment call), 2026-11-03"
+  },
+  {
+   "candidate": "gpt",
+   "task_id": "47ef842d-8eac-4b90-bda8-dd934c228c96",
+   "item": 49,
+   "failure_type": "M1",
+   "source": "prompt",
+   "prompt_fragments": [
+    "calculated as the daily inventory sold in the last 4 weeks multiplied by 7",
+    "Ensure to show your work"
+   ],
+   "note": "The prompt defines the weekly rate as \"daily inventory sold in the last 4 weeks multiplied by 7\" and says \"Ensure to show your work\"; the deliverable shows the weekly rate only.",
+   "debatable": true,
+   "author_decision": "approved as prompt (judgment call), 2026-11-03"
+  },
+  {
+   "candidate": "gpt",
+   "task_id": "47ef842d-8eac-4b90-bda8-dd934c228c96",
+   "item": 56,
+   "failure_type": "M1",
+   "source": "prompt",
+   "prompt_fragments": [
+    "calculated as the daily inventory sold in the last 4 weeks multiplied by 7",
+    "Ensure to show your work"
+   ],
+   "note": "The prompt defines the weekly rate as \"daily inventory sold in the last 4 weeks multiplied by 7\" and says \"Ensure to show your work\"; the deliverable shows the weekly rate only.",
+   "debatable": true,
+   "author_decision": "approved as prompt (judgment call), 2026-11-03"
+  },
+  {
+   "candidate": "gpt",
+   "task_id": "47ef842d-8eac-4b90-bda8-dd934c228c96",
+   "item": 57,
+   "failure_type": "M1",
+   "source": "prompt",
+   "prompt_fragments": [
+    "calculated as the daily inventory sold in the last 4 weeks multiplied by 7",
+    "Ensure to show your work"
+   ],
+   "note": "The prompt defines the weekly rate as \"daily inventory sold in the last 4 weeks multiplied by 7\" and says \"Ensure to show your work\"; the deliverable shows the weekly rate only. The missing heading is the daily figure of items 28-56.",
+   "debatable": true,
+   "author_decision": "approved as prompt (judgment call), 2026-11-03"
+  },
+  {
+   "candidate": "gpt",
+   "task_id": "7b08cd4d-df60-41ae-9102-8aaa49306ba2",
+   "item": 16,
+   "failure_type": "M1",
+   "source": "rubric",
+   "prompt_fragments": [],
+   "note": "The prompt asks to apply withholding rates by country; withholding per tour stop is the rubric's detail, and the expert reference applies it by country.",
+   "debatable": true,
+   "author_decision": "approved as rubric (judgment call), 2026-11-03"
+  },
+  {
+   "candidate": "gpt",
+   "task_id": "7b08cd4d-df60-41ae-9102-8aaa49306ba2",
+   "item": 17,
+   "failure_type": "M1",
+   "source": "rubric",
+   "prompt_fragments": [],
+   "note": "As item 16 (net revenue per stop).",
+   "debatable": true,
+   "author_decision": "approved as rubric (judgment call), 2026-11-03"
+  },
+  {
+   "candidate": "gpt",
+   "task_id": "b5d2e6f1-62a2-433a-bcdd-95b260cdd860",
+   "item": 16,
+   "failure_type": "M1",
+   "source": "prompt",
+   "prompt_fragments": [
+    "insert a pivot table",
+    "should total the sales by store for each brand"
+   ],
+   "note": "The prompt asks the Sales by Store pivot to total the sales by store; the deliverable has the store-brand rows and the grand total but no store totals.",
+   "debatable": false
+  },
+  {
+   "candidate": "gpt",
+   "task_id": "b5d2e6f1-62a2-433a-bcdd-95b260cdd860",
+   "item": 25,
+   "failure_type": "M1",
+   "source": "prompt",
+   "prompt_fragments": [
+    "should total the sales by store for each brand",
+    "Please include grand totals"
+   ],
+   "note": "The grand total is correct; the item fails because the store totals it must equal are missing.",
+   "debatable": false
+  },
+  {
+   "candidate": "gpt",
+   "task_id": "b5d2e6f1-62a2-433a-bcdd-95b260cdd860",
+   "item": 26,
+   "failure_type": "M1",
+   "source": "prompt",
+   "prompt_fragments": [
+    "should total the sales by store for each brand"
+   ],
+   "note": "No store total rows, so no labelled store totals.",
+   "debatable": false
+  },
+  {
+   "candidate": "gpt",
+   "task_id": "2ea2e5b5-257f-42e6-a7dc-93763f28b19d",
+   "item": 27,
+   "failure_type": "M2",
+   "source": "rubric",
+   "prompt_fragments": [],
+   "note": "The prompt names Margin Impact as the slide's segment and its values as Cost Impact / Investment Impact; a column or row labelled 'Margin Impact' with entries only 'Cost' or 'Investment' is the rubric's wording.",
+   "debatable": false
+  },
+  {
+   "candidate": "opus",
+   "task_id": "2ea2e5b5-257f-42e6-a7dc-93763f28b19d",
+   "item": 27,
+   "failure_type": "M2",
+   "source": "rubric",
+   "prompt_fragments": [],
+   "note": "The prompt names Margin Impact as the slide's segment and its values as Cost Impact / Investment Impact; a column or row labelled 'Margin Impact' with entries only 'Cost' or 'Investment' is the rubric's wording.",
+   "debatable": false
+  },
+  {
+   "candidate": "gpt",
+   "task_id": "2ea2e5b5-257f-42e6-a7dc-93763f28b19d",
+   "item": 38,
+   "failure_type": "M2",
+   "source": "rubric",
+   "prompt_fragments": [],
+   "note": "The prompt names Time Sensitivity as the slide's segment; a column or row labelled 'Time Sensitivity' is the rubric's wording.",
+   "debatable": false
+  },
+  {
+   "candidate": "opus",
+   "task_id": "2ea2e5b5-257f-42e6-a7dc-93763f28b19d",
+   "item": 38,
+   "failure_type": "M2",
+   "source": "rubric",
+   "prompt_fragments": [],
+   "note": "The prompt names Time Sensitivity as the slide's segment; a column or row labelled 'Time Sensitivity' is the rubric's wording.",
+   "debatable": false
+  },
+  {
+   "candidate": "gpt",
+   "task_id": "47ef842d-8eac-4b90-bda8-dd934c228c96",
+   "item": 13,
+   "failure_type": "M2",
+   "source": "rubric",
+   "prompt_fragments": [],
+   "note": "The prompt asks for a graph of which 'products' have the highest out-of-stock rates; categories that are exactly the five UPCs are the rubric's specification.",
+   "debatable": false
+  },
+  {
+   "candidate": "opus",
+   "task_id": "47ef842d-8eac-4b90-bda8-dd934c228c96",
+   "item": 13,
+   "failure_type": "M2",
+   "source": "rubric",
+   "prompt_fragments": [],
+   "note": "The prompt asks for a graph of which 'products' have the highest out-of-stock rates; categories that are exactly the five UPCs are the rubric's specification.",
+   "debatable": false
+  },
+  {
+   "candidate": "gpt",
+   "task_id": "47ef842d-8eac-4b90-bda8-dd934c228c96",
+   "item": 17,
+   "failure_type": "M2",
+   "source": "rubric",
+   "prompt_fragments": [],
+   "note": "The prompt states no rounding for the chart values.",
+   "debatable": false
+  },
+  {
+   "candidate": "gpt",
+   "task_id": "7d7fc9a7-21a7-4b83-906f-416dea5ad04f",
+   "item": 3,
+   "failure_type": "M2",
+   "source": "prompt",
+   "prompt_fragments": [
+    "three tabs",
+    "Prepaid Expenses (Account #1250)"
+   ],
+   "note": "The prompt lists the tab as 'Prepaid Expenses (Account #1250)'; the deliverable's tab is 'Prepaid Expenses', with 1250 in the sheet header.",
+   "debatable": true,
+   "author_decision": "approved as prompt (judgment call), 2026-11-03"
+  },
+  {
+   "candidate": "gpt",
+   "task_id": "7d7fc9a7-21a7-4b83-906f-416dea5ad04f",
+   "item": 4,
+   "failure_type": "M2",
+   "source": "prompt",
+   "prompt_fragments": [
+    "three tabs",
+    "Prepaid Insurance (Account #1251)"
+   ],
+   "note": "As item 3, for account 1251.",
+   "debatable": true,
+   "author_decision": "approved as prompt (judgment call), 2026-11-03"
+  },
+  {
+   "candidate": "gpt",
+   "task_id": "c357f0e2-963d-4eb7-a6fa-3078fe55b3ba",
+   "item": 12,
+   "failure_type": "M2",
+   "source": "rubric",
+   "prompt_fragments": [],
+   "note": "The prompt names the roles in the plural (Viewers, Project Managers, Super Admins, and System Admins), as the deliverable does; the singular exact match is the rubric's.",
+   "debatable": false
+  },
+  {
+   "candidate": "gpt",
+   "task_id": "a45bc83b-22f9-4def-8d89-9c5661b2b86f",
+   "item": 60,
+   "failure_type": "M3",
+   "source": "rubric",
+   "prompt_fragments": [],
+   "note": "The prompt asks for a POC with step-by-step instructions; a named load-test tool is the rubric's detail.",
+   "debatable": false
+  },
+  {
+   "candidate": "opus",
+   "task_id": "a45bc83b-22f9-4def-8d89-9c5661b2b86f",
+   "item": 64,
+   "failure_type": "M3",
+   "source": "rubric",
+   "prompt_fragments": [],
+   "note": "The prompt asks for enterprise-grade security and availability; dev / test / prod separation is the rubric's detail.",
+   "debatable": false
+  },
+  {
+   "candidate": "opus",
+   "task_id": "a45bc83b-22f9-4def-8d89-9c5661b2b86f",
+   "item": 68,
+   "failure_type": "M3",
+   "source": "rubric",
+   "prompt_fragments": [],
+   "note": "The prompt asks for static content hosting; bucket versioning or lifecycle policies are the rubric's detail.",
+   "debatable": false
+  },
+  {
+   "candidate": "gpt",
+   "task_id": "c357f0e2-963d-4eb7-a6fa-3078fe55b3ba",
+   "item": 66,
+   "failure_type": "M3",
+   "source": "rubric",
+   "prompt_fragments": [],
+   "note": "The prompt names no performance or load testing.",
+   "debatable": false
+  },
+  {
+   "candidate": "gpt",
+   "task_id": "7d7fc9a7-21a7-4b83-906f-416dea5ad04f",
+   "item": 31,
+   "failure_type": "M4",
+   "source": "rubric",
+   "prompt_fragments": [],
+   "note": "The prompt asks the schedules to reconcile to the GL; the rule against unsupported negative amortization is stated in the rubric.",
+   "debatable": false
+  },
+  {
+   "candidate": "gpt",
+   "task_id": "7d7fc9a7-21a7-4b83-906f-416dea5ad04f",
+   "item": 32,
+   "failure_type": "M4",
+   "source": "rubric",
+   "prompt_fragments": [],
+   "note": "As item 31 (no unsupported balance increase).",
+   "debatable": false
+  },
+  {
+   "candidate": "gpt",
+   "task_id": "7d7fc9a7-21a7-4b83-906f-416dea5ad04f",
+   "item": 49,
+   "failure_type": "M4",
+   "source": "rubric",
+   "prompt_fragments": [],
+   "note": "As item 31, account 1251.",
+   "debatable": false
+  },
+  {
+   "candidate": "gpt",
+   "task_id": "7d7fc9a7-21a7-4b83-906f-416dea5ad04f",
+   "item": 50,
+   "failure_type": "M4",
+   "source": "rubric",
+   "prompt_fragments": [],
+   "note": "As item 32, account 1251.",
+   "debatable": false
+  },
+  {
+   "candidate": "gpt",
+   "task_id": "c357f0e2-963d-4eb7-a6fa-3078fe55b3ba",
+   "item": 15,
+   "failure_type": "M5",
+   "source": "rubric",
+   "prompt_fragments": [],
+   "note": "The deliverable has a create-Idea row with the required fields; naming at least two specific fields is the rubric's detail.",
+   "debatable": false
+  },
+  {
+   "candidate": "opus",
+   "task_id": "c357f0e2-963d-4eb7-a6fa-3078fe55b3ba",
+   "item": 34,
+   "failure_type": "M5",
+   "source": "rubric",
+   "prompt_fragments": [],
+   "note": "The prompt asks for cases where mandatory inputs are missing, which the deliverable has (a blank milestone name); a blank required date is the rubric's choice of field.",
+   "debatable": false
+  },
+  {
+   "candidate": "gpt",
+   "task_id": "c357f0e2-963d-4eb7-a6fa-3078fe55b3ba",
+   "item": 50,
+   "failure_type": "M5",
+   "source": "rubric",
+   "prompt_fragments": [],
+   "note": "The prompt gives Super Admins access across organizations, and the deliverable tests that access in several rows; one row editing an Idea, Proposal or Project in two organizations, both allowed, is the rubric's form.",
+   "debatable": true,
+   "author_decision": "approved as rubric (judgment call), 2026-11-03"
+  },
+  {
+   "candidate": "opus",
+   "task_id": "1137e2bb-bdf9-4876-b572-f29b7de5e595",
+   "item": 22,
+   "failure_type": "M6",
+   "source": "rubric",
+   "prompt_fragments": [],
+   "note": "The prompt names no sort order for the summary.",
+   "debatable": false
+  },
+  {
+   "candidate": "gpt",
+   "task_id": "1137e2bb-bdf9-4876-b572-f29b7de5e595",
+   "item": 23,
+   "failure_type": "M7",
+   "source": "prompt",
+   "prompt_fragments": [
+    "a brief summary in Word outlining the types of errors identified"
+   ],
+   "note": "The summary outlines the error types but never states what makes a case-pack line an error (a CASE quantity that is not a whole multiple of the case pack).",
+   "debatable": true,
+   "author_decision": "approved as prompt (judgment call), 2026-11-03"
+  },
+  {
+   "candidate": "gpt",
+   "task_id": "1137e2bb-bdf9-4876-b572-f29b7de5e595",
+   "item": 21,
+   "failure_type": "R03",
+   "source": "rubric",
+   "prompt_fragments": [],
+   "note": "A separate missing-case-pack indicator goes beyond the prompt (preregistration A-21).",
+   "debatable": false
+  },
+  {
+   "candidate": "opus",
+   "task_id": "1137e2bb-bdf9-4876-b572-f29b7de5e595",
+   "item": 21,
+   "failure_type": "R03",
+   "source": "rubric",
+   "prompt_fragments": [],
+   "note": "A separate missing-case-pack indicator goes beyond the prompt (preregistration A-21).",
+   "debatable": false
+  },
+  {
+   "candidate": "gpt",
+   "task_id": "7d7fc9a7-21a7-4b83-906f-416dea5ad04f",
+   "item": 21,
+   "failure_type": "ADDS",
+   "source": "rule",
+   "prompt_fragments": [],
+   "note": "Fails only under the pre-registered rule that additions are listed line by line (R-2.7-21); the roll-forwards are arithmetically valid.",
+   "debatable": false
+  },
+  {
+   "candidate": "opus",
+   "task_id": "7d7fc9a7-21a7-4b83-906f-416dea5ad04f",
+   "item": 21,
+   "failure_type": "ADDS",
+   "source": "rule",
+   "prompt_fragments": [],
+   "note": "Fails only under the pre-registered rule that additions are listed line by line (R-2.7-21); the roll-forwards are arithmetically valid.",
+   "debatable": false
+  },
+  {
+   "candidate": "gpt",
+   "task_id": "7d7fc9a7-21a7-4b83-906f-416dea5ad04f",
+   "item": 39,
+   "failure_type": "ADDS",
+   "source": "rule",
+   "prompt_fragments": [],
+   "note": "As item 21, account 1251.",
+   "debatable": false
+  },
+  {
+   "candidate": "opus",
+   "task_id": "7d7fc9a7-21a7-4b83-906f-416dea5ad04f",
+   "item": 39,
+   "failure_type": "ADDS",
+   "source": "rule",
+   "prompt_fragments": [],
+   "note": "As item 21, account 1251.",
+   "debatable": false
+  }
+ ]
+}

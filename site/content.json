@@ -1,0 +1,785 @@
+{
+  "_about": "Reader copy of the submission page, site v5 (the author's spec ~/turing-eval-runs/analysis/site_v5_spec.md and the approved page site_v4_11_preview.html, 2026-11-02; supersedes v2, v3, v3.1 and v4). Approved blocks carry the preview's copy verbatim; blocks revised in the 2026-11-03 discussion round (title and findings by requirement source, card C on M7, worked example, pilot size and cost, review chart moved to Method) were approved by the author on 2026-11-03 with final edits. Numbers are never typed here: site/build.py inserts them from site/data/metrics.json as {{token}} placeholders. Markup: `code`, **bold**, [pass|word] / [fail|word] / [nc|word] for status-coloured words, a newline in a table heading for a line break. The *_fill blocks hold the content the spec's section 3 assigns to the preview's placeholders; their wording is listed in the hand-off for the author's review. Markup also: [text](https://...) for a link. Clarity round of 2026-11-03 (approved by the author): one name per concept on the page (failure source: in the prompt / rubric only / additions rule; undecided; cannot assess), card C quotes both definitions, the review bar chart replaced by a sentence, the data section reordered.",
+  "repo_url": "https://github.com/yuningzhang520/gdpval-diagnostic-eval",
+  "report_path": "report/REPORT.md",
+  "nav": [
+    [
+      "findings",
+      "Findings"
+    ],
+    [
+      "results",
+      "Results"
+    ],
+    [
+      "failures",
+      "Failures"
+    ],
+    [
+      "data",
+      "Data"
+    ],
+    [
+      "method",
+      "Method and limits"
+    ]
+  ],
+  "findings": {
+    "status": "approved",
+    "title": "Omissions and form, not arithmetic",
+    "deck": "A diagnostic evaluation of Claude Opus 5.5 and GPT-6.1-sol, both at high reasoning effort, on {{tasks}} GDPval tasks, {{runs_each_word}} run each, with source-based grading and author review.",
+    "bullets": [
+      [
+        "None of the {{confirmed_items}} confirmed failures is a wrong calculation.",
+        "The failures (failed rubric items) are content left out ({{omit_items}}), a different label or form ({{form_items}}), and one rounding approach that breaks an accounting rule ({{rule_items}}). Totals reconcile even where a breakdown is missing."
+      ],
+      [
+        "Only GPT-6.1-sol missed things the prompt asked for.",
+        "Each failure is tagged by whether the model was told: in the prompt; rubric only (GDPval's grading key expects it, the prompt doesn't say it); or the additions rule (ours, set before the runs). {{gpt_prompt_items}} of GPT-6.1-sol's {{gpt_items}} failures are in the prompt, such as store subtotals, and cost it {{gpt_prompt_task_fails}} tasks. All {{opus_items}} of Opus 5.5's are rubric only or the additions rule."
+      ],
+      [
+        "Rubric grading needs a human pass.",
+        "Of the {{rv_fail}} graded fails the author reviewed, chosen where a verdict could change ({{rv_fail_crit}}) or a model failure was suspected ({{rv_fail_draft}}), {{seg1}} ({{gff_pct}}%) were grader false fails; in {{fp_alone_word}} task a grader false pass hid the only failure. {{rubric_fail_cells}} of the {{fail_cells}} task failures ({{opus_tasks_fail}} Opus 5.5, {{gpt_tasks_fail}} GPT-6.1-sol) turn only on rubric-only wording or detail, or the additions rule."
+      ]
+    ],
+    "tiles": [
+      [
+        "{{opus_tasks_pass}}/{{tasks}}",
+        "tasks passed",
+        "Opus 5.5"
+      ],
+      [
+        "{{gpt_tasks_pass}}/{{tasks}}",
+        "tasks passed",
+        "GPT-6.1-sol"
+      ],
+      [
+        "{{opus_prompt_items}} / {{gpt_prompt_items}}",
+        "failures on something the prompt asked for",
+        "Opus 5.5 / GPT-6.1-sol, of {{opus_items}} / {{gpt_items}}"
+      ],
+      [
+        "{{seg1}}/{{rv_fail}}",
+        "grader false fails",
+        "among graded fails reviewed by hand"
+      ]
+    ],
+    "note": "Units: {{tasks}} tasks; {{rubric_items}} rubric items per model, each one scored line in GDPval's expert rubric; {{crit_total}} critical (must-meet) requirements, groups of rubric items covering {{crit_items}} of them. A task passes when all its critical requirements pass.",
+    "terms_title": "Key terms (task, rubric item, critical requirement, grader, verdict, author review, failure source, category / failure type, severity)",
+    "terms_head": [
+      "Term",
+      "Meaning",
+      "Example: weekly sales task"
+    ],
+    "terms": [
+      [
+        "Task",
+        "One complete piece of work ({{tasks}} in all)",
+        "Build a weekly sales workbook"
+      ],
+      [
+        "Rubric item",
+        "One scored line in GDPval's expert rubric ({{rubric_items}} per model)",
+        "\"+{{ex_item_points}}: On Sales by Store, there is a subtotal row for each Store block…\""
+      ],
+      [
+        "Critical requirement",
+        "A group of rubric items the task can't do without, fixed before the runs ({{crit_total}} in all, covering {{crit_items}} rubric items)",
+        "The store view requirement: {{ex_crit_items}} rubric items, including the subtotal ones"
+      ],
+      [
+        "Grader",
+        "What gives a rubric item its verdict: code grader, LLM judge or human visual review",
+        "The subtotal rubric items are graded by the code grader"
+      ],
+      [
+        "Verdict",
+        "Rubric item: pass / fail / cannot assess. Critical requirement: fail if any rubric item fails, pass if all pass, otherwise undecided. Task: pass only if all critical requirements pass",
+        "{{ex_failed_items}} subtotal rubric items fail → the store view requirement fails → the task fails"
+      ],
+      [
+        "Author review",
+        "The author's hand review of {{ws_rows}} rubric items, each ending as a confirmed failure, a grader false fail, or cannot assess (then pass, or left)",
+        "GPT-6.1-sol's missing subtotals: confirmed failure"
+      ],
+      [
+        "Failure source",
+        "Whether the model was told: in the prompt; rubric only (GDPval's grading key expects it, the prompt doesn't say it); or the additions rule (ours, set before the runs: additions listed line by line)",
+        "Missing subtotals: in the prompt, which asks the tab to \"total the sales by store\""
+      ],
+      [
+        "Category / failure type",
+        "Classification of the {{confirmed_items}} confirmed failures: {{categories}} categories, split into {{types}} failure types ({{types_split}})",
+        "Missing subtotals: category A, required content omitted"
+      ],
+      [
+        "Severity",
+        "The author's rating of business impact (high / medium / low), separate from whether a rubric item is critical",
+        "Missing subtotals: high. A chart label: low"
+      ]
+    ]
+  },
+  "results": {
+    "status": "approved",
+    "heading": "Results",
+    "grid_title": "After review, {{opus_tasks_pass}} of Opus 5.5's {{tasks}} tasks pass; {{gpt_tasks_pass}} of GPT-6.1-sol's do",
+    "grid_sub": "Task verdicts after author review. A failing cell names what failed and its failure source: in the prompt, rubric only, or the additions rule.",
+    "grid_head": [
+      "Task",
+      "Claude Opus 5.5",
+      "GPT-6.1-sol"
+    ],
+    "grid_total": [
+      "Tasks passed",
+      "{{opus_tasks_pass}} of {{tasks}}",
+      "{{gpt_tasks_pass}} of {{tasks}}"
+    ],
+    "fail_labels": {
+      "b5d2e6f1|gpt": {
+        "label": "missing store subtotals",
+        "types": [
+          "M1"
+        ]
+      },
+      "47ef842d|opus": {
+        "label": "exact label",
+        "types": [
+          "M2"
+        ]
+      },
+      "47ef842d|gpt": {
+        "label": "exact label",
+        "types": [
+          "M2"
+        ]
+      },
+      "1137e2bb|gpt": {
+        "label": "explanation omits the rule",
+        "types": [
+          "M7"
+        ]
+      },
+      "7b08cd4d|gpt": {
+        "label": "missing per-stop tax *",
+        "types": [
+          "M1"
+        ]
+      },
+      "7d7fc9a7|opus": {
+        "label": "additions column †",
+        "types": [
+          "ADDS"
+        ]
+      },
+      "7d7fc9a7|gpt": {
+        "label": "additions column †",
+        "types": [
+          "ADDS"
+        ]
+      },
+      "2ea2e5b5|opus": {
+        "label": "exact label",
+        "types": [
+          "M2"
+        ]
+      },
+      "2ea2e5b5|gpt": {
+        "label": "exact label",
+        "types": [
+          "M2"
+        ]
+      },
+      "c357f0e2|gpt": {
+        "label": "label and missing test case",
+        "types": [
+          "M2",
+          "M5"
+        ]
+      }
+    },
+    "notes_title": "Notes on these verdicts (strictness, * and †, weeks of supply, borderline cases)",
+    "notes": [
+      "The verdict is strict: one failed rubric item in a critical requirement fails the task; {{opus_label_only}} of Opus 5.5's {{opus_tasks_fail}} failed tasks fail only on an exact label.",
+      "* The rubric is stricter than the expert reference here.",
+      "† Depends on the additions rule (ours, set before the runs: additions listed line by line); without it, tasks: Opus 5.5 {{sens_opus_pass}} pass / {{sens_opus_fail}} fail / {{sens_opus_nc}} undecided, GPT-6.1-sol {{sens_gpt_pass}} / {{sens_gpt_fail}} / {{sens_gpt_nc}}.",
+      "Weeks of supply fails for both models only on the chart: the pre-registered chart requirement asks for exactly the five UPCs as categories; the inventory measures (scope, rate and weeks of supply, out-of-stock) pass for both.",
+      "Borderline cases. For {{src_debatable}} of the {{confirmed_items}} failures, whether the prompt asked for the missing piece is a judgment call (the author decided each). Counting all {{src_debatable}} as rubric only, GPT-6.1-sol fails {{gpt_prompt_tasks_min}} task on something the prompt asked for; counting all as in the prompt, {{gpt_prompt_tasks_max}}. All {{src_debatable}} are GPT-6.1-sol failures."
+    ],
+    "chart_title": "What author review changed: reduced grader noise",
+    "chart_sub": "Unit: critical requirements ({{crit_total}} per model); before review = the graders' verdicts. [pass|pass] · [fail|fail] · [nc|undecided] (no rubric item failed, but one couldn't be assessed)",
+    "row_labels": [
+      "Before review",
+      "After review"
+    ],
+    "share": "{{n}} of {{crit_total}} ({{pct}}%)",
+    "chosen_title": "How the critical requirements were chosen, and what before / after review mean",
+    "chosen": [
+      "How the {{crit_total}} critical requirements were chosen.",
+      "They were set in the preregistration before the evaluation runs, {{crit_min}} to {{crit_max}} per task. Each names a must-meet part of the task whose failure matters most to the business outcome and cannot be offset by other points, recorded with its evidence location and test method."
+    ],
+    "bases": [
+      [
+        "Before review:",
+        "the graders' verdicts plus the pre-registered human visual review."
+      ],
+      [
+        "After review:",
+        "plus author review, which corrected grader errors and settled every critical requirement the graders left undecided. This is the headline."
+      ]
+    ],
+    "grid_total2": [
+      "Failed on something the prompt asked for",
+      "{{opus_prompt_task_fails}} of {{tasks}}",
+      "{{gpt_prompt_task_fails}} of {{tasks}}"
+    ],
+    "source_words": {
+      "prompt": "in the prompt",
+      "rubric": "rubric only",
+      "rule": "additions rule"
+    }
+  },
+  "failures": {
+    "status": "approved",
+    "heading": "Failures",
+    "cat_title": "The {{confirmed_items}} confirmed failures fall into {{categories}} categories",
+    "cat_sub": "Unit: failures (rubric items); {{types}} failure types in all ({{types_split}}). \"Model was told\" counts failures on something the prompt asked for, the clearest evidence of a model failure; the rest are rubric only or, in A, the additions rule. Severity is a separate scale: business impact.",
+    "cat_head": [
+      "Category",
+      "Opus 5.5\nfailures · tasks",
+      "GPT-6.1-sol\nfailures · tasks",
+      "Total",
+      "Model was told (in the prompt)\nOpus / GPT",
+      "Severity\nOpus / GPT"
+    ],
+    "categories": [
+      {
+        "id": "A",
+        "name": "Required content omitted",
+        "meaning": "a level, measure or column the rubric requires is missing",
+        "types": [
+          "M1",
+          "ADDS",
+          "R03"
+        ]
+      },
+      {
+        "id": "B",
+        "name": "Label or display not as required",
+        "meaning": "the information is there, in a different form than the rubric names",
+        "types": [
+          "M2",
+          "M6"
+        ]
+      },
+      {
+        "id": "C",
+        "name": "Document content omitted",
+        "meaning": "a design, test or explanation leaves out a specified control, condition or criterion",
+        "types": [
+          "M3",
+          "M5",
+          "M7"
+        ]
+      },
+      {
+        "id": "D",
+        "name": "Added line breaks a rule",
+        "meaning": "an added adjustment line conflicts with an accounting rule the rubric states",
+        "types": [
+          "M4"
+        ]
+      }
+    ],
+    "cat_total": "Total",
+    "severity_note": "Severity is the author's rating of business impact: high = missing business content; medium = missing document content; low = form, or a minor rule issue; — = no failure in the category.",
+    "types_title": "All {{types}} failure types and their rubric items",
+    "examples_title": "Three representative examples, from categories A–C",
+    "examples_sub": "D is one low-impact rounding approach in {{d_tasks_word}} task; it is listed in the full taxonomy."
+  },
+  "taxonomy_fill": {
+    "status": "approved",
+    "note": "Fills the preview's placeholder for the full taxonomy (spec v5 section 3): the existing failure types of analysis/human_taxonomy.json regrouped under A–D, with per-type severity, the failures on something the prompt asked for, critical membership and the rubric items grouped by model and task (codes and the flagging layer stay in the report and the metrics). Names and definitions are the report's cluster table (REPORT.md 7.5) in the page's terms.",
+    "head": [
+      "Failure type",
+      "Severity",
+      "Opus 5.5\nfailures · tasks",
+      "GPT-6.1-sol\nfailures · tasks",
+      "Model was told (in the prompt)\nOpus / GPT",
+      "Inside critical requirements\nOpus / GPT",
+      "Rubric items (model: task, item numbers)"
+    ],
+    "types": {
+      "M1": [
+        "Required reporting levels or measures are omitted",
+        "The workbook has the inputs or higher-level totals but omits a requested measure or aggregation level."
+      ],
+      "ADDS": [
+        "Per-line additions column absent",
+        "Neither prepaid schedule presents a per-line monthly additions column; the roll-forwards are arithmetically valid, and the rubric items fail under the additions rule (additions listed line by line)."
+      ],
+      "R03": [
+        "Missing separate invalid-case-pack indicator",
+        "No separate indicator for a missing or invalid case pack (a rubric item beyond the prompt); no count is affected."
+      ],
+      "M2": [
+        "Semantic substitutes miss an exact name or display the rubric specifies",
+        "The information is present, but the exact identifier, label, sheet name or decimal presentation the rubric names is replaced by another form."
+      ],
+      "M6": [
+        "A grouped report lacks the prioritization the rubric asks for",
+        "The SKU summary cannot be sorted by total errors without breaking its grouping."
+      ],
+      "M3": [
+        "An operational control or concrete validation step is left unspecified",
+        "The design or test document discusses the goal but leaves the named control, access decision or validation procedure unspecified."
+      ],
+      "M5": [
+        "A nearby test scenario omits the exact required condition or assertion",
+        "A test covers the feature but not the required missing-input condition, specified fields or both-organisation edit."
+      ],
+      "M7": [
+        "A plain-language explanation omits the rule it applies",
+        "The rule is applied correctly in the workbook, but the narrative leaves out the condition that defines it."
+      ],
+      "M4": [
+        "A disclosed rounding adjustment conflicts with an accounting rule",
+        "A labelled fractional-cent line reconciles rounded lines to the exact balance and thereby shows negative amortization and a balance increase that no source document supports; the four rubric items are one rounding approach."
+      ]
+    },
+    "notes": [
+      [
+        "Review.",
+        "Every item was confirmed by the author's review. Category C failures were all flagged first by the LLM judge or the blind audit, none by a code grader."
+      ],
+      [
+        "Tour profit and loss.",
+        "GPT-6.1-sol's two missing per-stop rubric items follow the expert reference's country-level approach; the rubric is stricter than the reference."
+      ],
+      [
+        "Weeks of supply.",
+        "GPT-6.1-sol's six missing daily figures are the input to the weekly rate, which it reports correctly; that critical requirement passes. The failure type's high severity applies to the store subtotals and per-stop amounts."
+      ],
+      [
+        "Single occurrences.",
+        "A failure type seen once shows that the failure happened, not how often."
+      ]
+    ]
+  },
+  "cards": {
+    "status": "approved",
+    "items": [
+      {
+        "id": "A",
+        "title": "Example from A (Required content omitted): missing store subtotals",
+        "lines": [
+          [
+            "Required.",
+            "The prompt asks the Sales by Store pivot table to \"total the sales by store\"; the rubric requires a labelled subtotal for each of the {{stores}} stores."
+          ],
+          [
+            "Delivered.",
+            "GPT-6.1-sol has the right grand total but no store subtotals; Opus 5.5 has all {{opus_store_total_rows}}."
+          ],
+          [
+            "Impact.",
+            "Although the grand total is correct, the manager must reconstruct each store's total before comparing store performance."
+          ]
+        ]
+      },
+      {
+        "id": "B",
+        "title": "Example from B (Label or display not as required): product names instead of UPC codes",
+        "lines": [
+          [
+            "Required.",
+            "By the rubric, chart categories that are exactly the {{card_b_upcs_word}} UPC codes; the prompt asks which \"products\" have the highest out-of-stock rates."
+          ],
+          [
+            "Delivered.",
+            "Both models label the chart with product names; the UPCs appear only in tables."
+          ],
+          [
+            "Impact.",
+            "Low: the chart answers the prompt's question but can't be matched to the UPC list. Exact labels like this decide {{m2_opus_sole}} of Opus 5.5's {{opus_failed_crit}} failed critical requirements."
+          ]
+        ],
+        "details_title": "Evidence"
+      },
+      {
+        "id": "C",
+        "title": "Example from C (Document content omitted): the case-pack rule left out of a summary",
+        "lines": [
+          [
+            "Required.",
+            "The prompt sets the rule (a CASE line must be ordered in whole multiples of the case pack) and asks for a Word summary \"outlining the types of errors identified\"; the rubric requires that summary to define both checks in plain language (rubric item {{c_item}}, critical)."
+          ],
+          [
+            "Delivered.",
+            "Opus 5.5: a case-pack error is \"a CASE-UOM line whose ordered units are not a whole multiple of the case pack\". GPT-6.1-sol: \"Case-pack errors count invalid CASE lines once; EA lines are exempt.\" It never says what makes a line invalid; \"multiple\" appears nowhere in its summary. Its workbook applies the rule correctly."
+          ],
+          [
+            "Impact.",
+            "A manager can't tell from the summary why a line was flagged. The LLM judge passed this rubric item; only the blind audit caught it, and it alone fails GPT-6.1-sol's PO audit."
+          ]
+        ],
+        "details_title": "Evidence"
+      }
+    ],
+    "card_keys": {
+      "A": {
+        "cluster": "M1",
+        "cand": "gpt",
+        "task": "b5d2e6f1"
+      },
+      "B": {
+        "cluster": "M2",
+        "task": "47ef842d",
+        "item": 13
+      },
+      "C": {
+        "cluster": "M7",
+        "task": "1137e2bb",
+        "item": 23
+      }
+    },
+    "card_c_quotes": {
+      "opus": [
+        "a CASE-UOM line whose ordered units are not a whole multiple of the case pack"
+      ],
+      "gpt": [
+        "Case-pack errors count invalid CASE lines once; EA lines are exempt."
+      ]
+    }
+  },
+  "cards_fill": {
+    "status": "approved",
+    "note": "Fills the preview's evidence placeholders (spec v5 section 3). Card A's crop captions, marks legend, divider and provenance line are the ones approved on 2026-11-02, with the rubric items added to the caption line; card B is a crop rendered by the same rules; card C (M7, replacing the earlier UAT example on 2026-11-03) crops the heading and paragraph that define the checks in each model's Word summary.",
+    "crop_caption": "{{cand}} · {{sheet}} {{range}}",
+    "crop_items": " · rubric items {{items}} (critical)",
+    "mark_box": "Box: the Store 1 Total row.",
+    "mark_line": "Dashed line: Store 2 follows Shiseido with no Store 1 subtotal.",
+    "grand_label": "Grand Total rows",
+    "provenance": "Rendered from the saved cells with LibreOffice (run IDs in the metrics).",
+    "b_caption": "{{cand}} · {{sheet}} chart ({{range}}) · rubric item {{item}} (critical)",
+    "b_provenance": "Rendered from the saved workbooks with LibreOffice, category axis visible; the UPCs are in the tables of the same sheet.",
+    "c_caption": "{{cand}} · {{file}}, page {{page}}, “{{heading}}”",
+    "c_provenance": "Rendered from the saved Word documents with LibreOffice. \"Divisibility\" appears {{c_divisib_word}} in GPT-6.1-sol's summary, in its recommendation of \"a CASE-only divisibility control\".",
+    "c_item_cap": " · rubric item {{item}} (critical)"
+  },
+  "data": {
+    "status": "approved",
+    "heading": "Data opportunity",
+    "thesis": "Models leave out pieces a task asks for, and the rubrics that grade them mix what a task needs with exact wording. The proposal: tasks where everything a deliverable must contain is listed, tagged with its source and verified by an expert, each with a deliberately broken version of the deliverable.",
+    "why_title": "Why it has to be expert-verified (evidence from this evaluation)",
+    "why_points": [
+      [
+        "Graders.",
+        "{{seg1}} of the {{rv_fail}} graded fails the author reviewed were grader errors."
+      ],
+      [
+        "Rubrics.",
+        "{{rubric_fail_cells}} of the {{fail_cells}} task failures turn only on rubric-only wording or detail, or the additions rule."
+      ],
+      [
+        "Expert files.",
+        "GDPval's own expert file for the weekly sales task fails two source checks: sell-through averaged over rows, and a Data tab that differs from the export in {{gold_cells}} cells."
+      ]
+    ],
+    "card_title": "The dataset",
+    "card_lead": "One sample = one professional task, with:",
+    "components": [
+      "the task prompt and its real source files;",
+      "a verified expert deliverable;",
+      "a checklist of everything the deliverable must contain (levels, measures, labels, controls, test conditions), each item tagged with its source (in the prompt, rubric only, or an evaluator's rule) and severity;",
+      "automated tests that compute expected values from the source files, and judge checks for explanations, controls and test conditions;",
+      "a deficient variant: the expert deliverable with one checklist item removed."
+    ],
+    "seed": [
+      [
+        "Seed and scale.",
+        "The {{tasks}} tasks here, across {{occupations}} occupations, extended into task families: the same kind of work with fresh source data."
+      ],
+      [
+        "Quality.",
+        "Built by domain experts. A second expert reviews each checklist. Every check passes on the expert deliverable. Each deficient variant fails the checks for the item it removes and passes the rest. Where a check and the expert disagree, a reviewer decides before the sample is accepted."
+      ]
+    ],
+    "per_model": [
+      "What each lab gets.",
+      "GPT-6.1-sol: what the prompt asks for first ({{gpt_prompt_items}} failures in {{gpt_prompt_tasks}} tasks, such as store subtotals). Opus 5.5: none of its failures is something the prompt asked for; of its {{opus_items}}, {{opus_detail_items}} are professional detail the rubric adds (environment separation, bucket versioning, a blank-date test case, sorting by error count, a case-pack flag), {{opus_wording_items}} exact wording and {{opus_rule_items}} the additions rule. Standards an expert knows but the prompt doesn't state are its opening; the suite also guards the breakdowns it delivers."
+    ],
+    "pilot": [
+      "Pilot and proof.",
+      "Grow {{pilot_families_n}} task families ({{pilot_families}}); in each, {{pilot_train}} tasks for training and {{pilot_heldout}} held out, on different source data; evaluate the held-out tasks, {{pilot_runs}} runs per task. Accept if the share of checklist items met rises by at least {{pilot_rise}} percentage points while the numerical tests' pass rate stays within {{pilot_hold}} points. Untested here."
+    ],
+    "cost": [
+      "Size and cost (estimate).",
+      "{{pilot_tasks}} tasks per family, {{pilot_samples}} samples. [GDPval](https://arxiv.org/abs/2510.04374) reports {{gdpval_hours}} hours of expert work per task on average; with about {{pilot_extra_hours}} more for checklist, tests, variant and second review, about {{pilot_hours_per}} expert hours per sample, {{pilot_hours_total}} in all."
+    ],
+    "more_title": "How it targets each gap, and three uses (evaluate, train, guard)",
+    "gap_title": "How it targets each gap",
+    "gap_head": [
+      "Gap",
+      "Seen here\nfailures (in the prompt)",
+      "In the dataset",
+      "What the model learns"
+    ],
+    "seen_fmt": "{{n}} ({{p}})",
+    "gaps": {
+      "A": [
+        "the checklist lists every required level, measure and column; the deficient variant drops one",
+        "to deliver every required level, not only the totals"
+      ],
+      "B": [
+        "the checklist marks which labels the prompt fixes and which only the rubric names, scored separately",
+        "to keep a label exact where the prompt fixes it"
+      ],
+      "C": [
+        "the checklist maps each required control or test condition to where it must appear; a judge check, validated on the complete / deficient pairs, tests it",
+        "to cover every specified case and control"
+      ],
+      "D": [
+        "accounting rules, such as no unsupported adjustments, are checklist entries with tests",
+        "to respect accounting rules the task implies (low priority: {{d_tasks_word}} occurrence)"
+      ]
+    },
+    "uses_title": "Three uses",
+    "uses": [
+      [
+        "Evaluate.",
+        "Score completeness against the checklist separately from numerical accuracy, and items in the prompt separately from rubric-only ones."
+      ],
+      [
+        "Train.",
+        "Expert deliverables as demonstrations; complete versus deficient pairs for preference training; the automated tests as rewards for reinforcement learning."
+      ],
+      [
+        "Guard.",
+        "Rerun as a regression suite on each new model version."
+      ]
+    ],
+    "details_title": "Worked example and splits",
+    "pilot_plan": {
+      "_about": "Parameters of the proposed pilot (proposal, not measured). The expert time per task is GDPval's reported average; the extra hours per sample are this proposal's estimate.",
+      "families": [
+        "weekly sales reporting",
+        "weeks of supply",
+        "PO entry audit"
+      ],
+      "tasks_per_family": 20,
+      "runs_per_task": 3,
+      "accept_rise_points": 10,
+      "hold_within_points": 2,
+      "gdpval_hours_per_task": 7,
+      "gdpval_source": "GDPval paper (arXiv:2510.04374v1), section 1: \"Tasks require an average of 7 hours of work for an expert professional to complete.\"",
+      "extra_hours_per_sample": 4,
+      "train_per_family": 15,
+      "heldout_per_family": 5
+    }
+  },
+  "worked_fill": {
+    "status": "approved",
+    "note": "Fills the preview's placeholder (spec v5 section 3): the worked example, composition, train / evaluation separation and hypothesis, as a definition list; revised on 2026-11-03 (pivot table as the prompt requires, checklist excerpt with sources, the expert file's audit result).",
+    "items": [
+      [
+        "Observed failure",
+        "GPT-6.1-sol, weekly sales analysis, rubric items {{card_a_items}}: 'Sales by Store' holds every store-brand row and a grand total that reconciles to the source, but no store subtotal rows, although the prompt asks the tab to \"total the sales by store\"; the store-level view cannot be read without re-aggregating. Claude Opus 5.5's workbook carries a labelled total for each of the {{stores}} stores."
+      ],
+      [
+        "Task input",
+        "a weekly sales export ({{source_rows}} rows: store, brand, WTD / MTD / YTD sales quantity, sales dollars and stock on hand) and the instruction to build brand and store summaries with sell-through as pivot tables."
+      ],
+      [
+        "Business rule",
+        "a store-level view carries one labelled subtotal per store equal to the sum of its brand rows, and a grand total equal to the sum of the subtotals; sell-through is the ratio of sums at each level."
+      ],
+      [
+        "Checklist (excerpt)",
+        "Sales by Store is a pivot table built from the Data tab (in the prompt); a labelled total for each store and a grand total equal to their sum (in the prompt: \"total the sales by store\", \"include grand totals\"; rubric items {{card_a_items}}); ST% = sales ÷ stock on hand at every level (in the prompt), computed from the totals, not averaged over rows (an evaluator's rule)."
+      ],
+      [
+        "Target deliverable",
+        "on the Sales by Store tab, a pivot table built from the Data tab with Store and Brand as row fields, a labelled total under each store block and a grand total, each reconciling to the export."
+      ],
+      [
+        "Automated test",
+        "Sales by Store holds a pivot table whose source is the Data tab; for each of the {{stores}} stores a labelled total equal to the independent recomputation from the export; the grand total equal to the sum of the store totals; ST% within 0.0005 of the ratio of sums; expected values computed from the source, not read from the deliverable."
+      ],
+      [
+        "Why verified",
+        "GDPval's own expert file for this task fails two of these tests: its ST% averages row ratios (Clinique WTD {{gold_st_expert}} against {{gold_st_sums}} from the totals), and its Data tab differs from the source export in {{gold_cells}} cells, a difference the audit could not explain (an expert edit or another input version)."
+      ],
+      [
+        "Targeted failure type",
+        "dropping a requested aggregation level during presentation while the top-level totals stay correct."
+      ],
+      [
+        "Composition",
+        "the evaluation’s {{tasks}} tasks and {{occupations_word}} occupations (Order Clerks; Accountants and Auditors; Computer and Information Systems Managers) as the seed, extended with tasks of the same families built from real source data, each with an expert deliverable and its checklist."
+      ],
+      [
+        "Training use",
+        "complete / deficient pairs, the same task with and without the required level (the expert deliverable against a version that drops the level), labelled by the checklist."
+      ],
+      [
+        "Train / evaluation separation",
+        "within each family, training and held-out tasks use different source materials (no shared sales export, store list or rubric text); held-out tasks use the same frozen tests. A separate leave-one-family-out run measures transfer to a new family."
+      ],
+      [
+        "Hypothesis",
+        "Expert deliverables carrying every requested level, with the task’s checklist, raise level-presence pass rates on unseen same-family tasks without lowering top-line accuracy; untested."
+      ]
+    ]
+  },
+  "method": {
+    "status": "approved",
+    "heading": "Method and limits",
+    "sub": "A rubric-based diagnostic, not GDPval's expert-preference metric.",
+    "strip": [
+      [
+        "Measured",
+        "{{tasks}} tasks, {{rubric_items}} rubric items, {{crit_total}} critical requirements, frozen before the runs"
+      ],
+      [
+        "Key choice",
+        "Graders never guess; author review only where it can change a verdict"
+      ],
+      [
+        "Reliability",
+        "Graders agree with the author on {{ag_det_n}} of {{ag_det_d}} (code grader) and {{ag_judge_n}} of {{ag_judge_d}} (LLM judge) audited rubric items"
+      ],
+      [
+        "Limits",
+        "Descriptive only; one author; failure sources tagged after the runs; the additions rule decides {{rule_task_fail_per_model}} failed {{rule_task_word}} per model"
+      ]
+    ],
+    "tasks_line": [
+      "Tasks.",
+      "All {{oc_tasks}} GDPval Order Clerks tasks plus {{other_tasks}} from accounting and IT, each adding a different deliverable (prepaid schedule, tour P&L, slide deck, UAT plan, cloud design) under the same two demands: rules traceable to the inputs, and detail, summary and narrative that agree. Candidates were excluded only for missing or contradictory materials."
+    ],
+    "tooling": [
+      "Tooling.",
+      "Built with coding agents: Claude Code wrote the harness, graders, analysis and this page; OpenAI Codex reviewed the code independently (read-only) and drafted the failure triage."
+    ],
+    "steps_title": "How it was measured, step by step",
+    "steps": [
+      [
+        "1",
+        "**Rubric.** Each GDPval task comes with an expert rubric: a list of **rubric items**, each worth points, such as one requiring a subtotal row for each store. Each model faces {{rubric_items}} rubric items across the {{tasks}} tasks. Before any model ran, the author grouped the rubric items each task can't do without into **critical requirements**: {{crit_total}} in all, {{crit_min}} to {{crit_max}} per task, covering {{crit_items}} rubric items."
+      ],
+      [
+        "2",
+        "**Run.** Each model did each task once, with the same prompt, tools and offline sandbox, at high reasoning effort (the same label doesn't mean the same compute), up to {{max_tokens}} output tokens per request and a {{time_limit_words}} limit."
+      ],
+      [
+        "3",
+        "**Grade.** Each rubric item went to one **grader**: a code grader, an LLM judge or human visual review. Graders never guess: if one couldn't read the part of the file it needed, the verdict is **cannot assess**, not a fail (e.g. content inside a chart, or two columns that both look like the vendor)."
+      ],
+      [
+        "4",
+        "**Review.** An AI draft (OpenAI Codex) first sorted the {{reviewed}} rubric items graded fail or cannot assess by likely cause. In **author review**, the author then reviewed {{ws_rows}} rubric items by hand: every failed or cannot-assess rubric item that could change a critical requirement's verdict, every likely model failure, and the one graded pass the blind audit found failing."
+      ]
+    ],
+    "example_title": "Example: the weekly sales task",
+    "example": "{{ex_crit_count}} critical requirements, with their rubric items paraphrased: **the right sheets** (such as a sheet named Sales by Store); **correct brand totals** (one row per brand; each value equals the sum of the source rows); **a store view with a subtotal per store** (a subtotal row for each store; the grand total equals the sum of the subtotals); and **correct sell-through** (WTD ST% = WTD sales quantity ÷ WTD stock on hand).",
+    "config_title": "Configuration, by step",
+    "config": [
+      "**Prepare.** Selected the {{tasks}} tasks, checked their source files, rubrics and expert references, and fixed the {{crit_total}} critical requirements in a preregistration.",
+      "**Calibrate.** Tuned the code graders on development runs, then tested them on held-out runs before freezing.",
+      "**Freeze.** Fixed the prompt, graders and configuration (tags freeze-v1-generation and freeze-v1-grading).",
+      "**Run.** `{{opus_id}}` (adaptive thinking, effort {{effort}}) and `{{gpt_id}}` (reasoning effort {{effort}}), {{attempts_word}} attempt per task, {{max_tokens}} output tokens per request, {{time_limit_words}} limit, up to {{max_retries}} retries on transport errors only; {{gen_date_long}}, {{gen_start}}–{{gen_end}} UTC.",
+      "**Grade.** Code graders recompute expected values from the source files; the LLM judge (Gemini 3.1 Pro) grades the rest from the relevant cells, pages and source values; human visual review covers charts and layout. Judging ran {{judge_start}}–{{judge_end}} UTC.",
+      "**Audit.** The author labelled {{sample_n}} rubric items blind (saved {{labels_saved}} UTC, before seeing results). The LLM judge's held-out validation ({{jv_agree}}) ran at the same time as the main judging.",
+      "**Review.** AI draft (OpenAI Codex, read-only) over the {{reviewed}} rubric items graded fail or cannot assess; author review of {{ws_rows}}, {{review_time}}, with cells and pages located by Claude."
+    ],
+    "design_title": "Design choices (graders never guess, the expert reference as evidence, frozen verdicts, task pass as the headline)",
+    "design": [
+      [
+        "Graders never guess.",
+        "\"Cannot assess\" instead of an inferred pass, so no hidden passes."
+      ],
+      [
+        "The expert reference is evidence too.",
+        "Expected values come from the source files, which exposed a rubric stricter than its reference (tour task)."
+      ],
+      [
+        "Frozen verdicts, author decisions on top.",
+        "Every correction stays traceable, and review time goes only where it can change a verdict."
+      ],
+      [
+        "Task pass as the headline.",
+        "A deliverable counts only if every must-have holds; severity shows how bad each failure is. Trade-off: one exact-label miss fails a whole task."
+      ]
+    ],
+    "reliability_title": "Grader reliability",
+    "review_title": "Author review of {{ws_rows}} rubric items: {{seg0}} confirmed failures, {{seg1}} grader false fails, {{seg2}} cannot assess → pass, and {{seg3}} cannot assess → left (their critical requirement already fails on another rubric item).",
+    "review_scope_title": "How the {{ws_rows}} were chosen, and what was not reviewed",
+    "review_scope": [
+      [
+        "Which {{ws_rows}}.",
+        "Of the {{reviewed}} rubric items graded fail or cannot assess, the {{rv_crit}} inside critical requirements and the {{rv_draft}} the AI draft suspected were model failures; plus {{rv_fp}} graded pass that the blind audit found failing. By graded verdict: {{rv_fail}} fail ({{seg1}} grader false fails, {{rv_conf_fail}} confirmed), {{rv_ca}} cannot assess ({{seg2}} pass, {{rv_vfail}} fail, {{seg3}} left) and the {{rv_fp}} pass."
+      ],
+      [
+        "Not reviewed: {{notrev_total}}.",
+        "{{nr_fail}} graded fail outside critical requirements (the AI draft: {{nr_fail_ffail}} grader false fails, {{nr_fail_amb}} ambiguous rubric items), {{nr_ca}} cannot assess outside critical requirements, and {{nr_visual}} visual items without a verdict plus {{nr_invalid}} invalid judge outputs."
+      ],
+      [
+        "AI draft.",
+        "OpenAI Codex (read-only) sorted the {{reviewed}} rubric items graded fail or cannot assess by likely cause. The author decided each of the {{ws_rows}} from the deliverable itself, or from cells and pages located by Claude, with the AI draft only as a second opinion."
+      ],
+      [
+        "Grader false fail, example.",
+        "The code grader looked for \"on hand\" and missed \"On-Hand\", so {{d08_items_word}} correct inventory totals were judged missing."
+      ]
+    ],
+    "reliability_sub": "Blind audit: the author labelled {{sample_n}} rubric items without seeing the verdicts, {{ag_det_d}} graded by the code grader and {{ag_judge_d}} by the LLM judge.",
+    "reliability_tiles": [
+      [
+        "{{ag_det_n}}/{{ag_det_d}}",
+        "rubric items where the code grader agrees with the author"
+      ],
+      [
+        "{{ag_judge_n}}/{{ag_judge_d}}",
+        "rubric items where the LLM judge agrees with the author"
+      ]
+    ],
+    "selection_note": "The blind audit samples all rubric items, most of which pass. The {{rv_fail}} reviewed fails were chosen where a verdict could change ({{rv_fail_crit}}) or a model failure was suspected ({{rv_fail_draft}}), and grader errors turned out to cluster there (one missed \"On-Hand\" label alone made ten false fails), so {{gff_pct}}% describes those fails, not an overall grader error rate.",
+    "judge_note": "The LLM judge (Gemini 3.1 Pro) was also validated on {{jv_d}} held-out test cases, all passing, so its ability to catch failures is untested.",
+    "limits_title": "Limits",
+    "limits": [
+      [
+        "Sample.",
+        "{{tasks}} tasks, {{runs_each_word}} run each: all {{oc_tasks}} GDPval Order Clerks tasks plus {{other_tasks}} selected accounting and IT tasks. Counts are descriptive, not a model ranking."
+      ],
+      [
+        "Graders.",
+        "Grader false passes were checked only in the {{sample_n}}-item blind audit ({{fp_all_n}} in {{fp_all_d}} audited passes)."
+      ],
+      [
+        "Author choices.",
+        "The author chose the {{crit_total}} critical requirements (fixed before the runs) and rated severity (after review)."
+      ],
+      [
+        "Review.",
+        "One author, not a domain expert, {{review_time}}; {{ws_leave}} rubric items left (cannot assess), {{notrev_total}} outside critical requirements not reviewed."
+      ],
+      [
+        "Failure sources.",
+        "Tagged after the runs from the prompts (Claude's draft, reviewed by the author); they change no verdict. {{src_debatable}} are borderline cases, listed in the report."
+      ],
+      [
+        "Cost.",
+        "${{cost_formal}} for the {{runs}} evaluation runs, generation and judging; ${{cost_all}} across all paid work, including development and validation runs. Generation alone: Opus 5.5 ${{cost_gen_opus}}, GPT-6.1-sol ${{cost_gen_gpt}}, at the same '{{effort}}' effort label."
+      ]
+    ]
+  },
+  "footer": {
+    "status": "approved",
+    "links": [
+      "Repository",
+      "Full report",
+      "Metrics with provenance"
+    ],
+    "built": "Built {{built}}"
+  }
+}

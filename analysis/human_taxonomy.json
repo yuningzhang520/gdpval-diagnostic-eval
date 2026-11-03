@@ -1,0 +1,976 @@
+{
+ "_about": "Human-confirmed model-failure taxonomy: every item is a human adjudication record (confirmed_fail, verified_fail or grader_false_pass) across the whole adjudication layer, and belongs to exactly one cluster, so counts are additive. Rubric-item counts are not independent incidents (M4 is one rounding strategy; the ADDS line is one requirement on two schedules). Built by formal/tooling/build_taxonomy.py from the adjudication records, the Codex draft's cluster definitions (M1-M6) and the human's explicit assignments. Severities and cards are the author's proposals until the human approves them.",
+ "built_at": "2026-11-03T00:27:47+00:00",
+ "status": "proposed severities and cards; cluster membership per the human's rules",
+ "confirmed_items": 40,
+ "adjudication_layer_items": 183,
+ "adjudication_layer_by_class": {
+  "grader_false_fail": 70,
+  "grader_false_pass": 1,
+  "verified_pass": 17,
+  "confirmed_fail": 33,
+  "leave": 46,
+  "verified_fail": 6,
+  "confirmed_pass": 10
+ },
+ "failed_critical_criteria": {
+  "opus": {
+   "count": 4,
+   "criteria": [
+    {
+     "task_id": "47ef842d-8eac-4b90-bda8-dd934c228c96",
+     "criterion": "C4",
+     "deciding_items": [
+      13
+     ],
+     "clusters": [
+      "M2"
+     ]
+    },
+    {
+     "task_id": "7d7fc9a7-21a7-4b83-906f-416dea5ad04f",
+     "criterion": "C2",
+     "deciding_items": [
+      21
+     ],
+     "clusters": [
+      "ADDS"
+     ]
+    },
+    {
+     "task_id": "7d7fc9a7-21a7-4b83-906f-416dea5ad04f",
+     "criterion": "C3",
+     "deciding_items": [
+      39
+     ],
+     "clusters": [
+      "ADDS"
+     ]
+    },
+    {
+     "task_id": "2ea2e5b5-257f-42e6-a7dc-93763f28b19d",
+     "criterion": "C3",
+     "deciding_items": [
+      27,
+      38
+     ],
+     "clusters": [
+      "M2"
+     ]
+    }
+   ]
+  },
+  "gpt": {
+   "count": 9,
+   "criteria": [
+    {
+     "task_id": "b5d2e6f1-62a2-433a-bcdd-95b260cdd860",
+     "criterion": "C3",
+     "deciding_items": [
+      16,
+      25,
+      26
+     ],
+     "clusters": [
+      "M1"
+     ]
+    },
+    {
+     "task_id": "47ef842d-8eac-4b90-bda8-dd934c228c96",
+     "criterion": "C4",
+     "deciding_items": [
+      13
+     ],
+     "clusters": [
+      "M2"
+     ]
+    },
+    {
+     "task_id": "1137e2bb-bdf9-4876-b572-f29b7de5e595",
+     "criterion": "C3",
+     "deciding_items": [
+      23
+     ],
+     "clusters": [
+      "M7"
+     ]
+    },
+    {
+     "task_id": "7b08cd4d-df60-41ae-9102-8aaa49306ba2",
+     "criterion": "C1",
+     "deciding_items": [
+      16,
+      17
+     ],
+     "clusters": [
+      "M1"
+     ]
+    },
+    {
+     "task_id": "7d7fc9a7-21a7-4b83-906f-416dea5ad04f",
+     "criterion": "C2",
+     "deciding_items": [
+      21
+     ],
+     "clusters": [
+      "ADDS"
+     ]
+    },
+    {
+     "task_id": "7d7fc9a7-21a7-4b83-906f-416dea5ad04f",
+     "criterion": "C3",
+     "deciding_items": [
+      39
+     ],
+     "clusters": [
+      "ADDS"
+     ]
+    },
+    {
+     "task_id": "2ea2e5b5-257f-42e6-a7dc-93763f28b19d",
+     "criterion": "C3",
+     "deciding_items": [
+      27,
+      38
+     ],
+     "clusters": [
+      "M2"
+     ]
+    },
+    {
+     "task_id": "c357f0e2-963d-4eb7-a6fa-3078fe55b3ba",
+     "criterion": "C2",
+     "deciding_items": [
+      12,
+      50
+     ],
+     "clusters": [
+      "M2",
+      "M5"
+     ]
+    },
+    {
+     "task_id": "c357f0e2-963d-4eb7-a6fa-3078fe55b3ba",
+     "criterion": "C3",
+     "deciding_items": [
+      15
+     ],
+     "clusters": [
+      "M5"
+     ]
+    }
+   ]
+  }
+ },
+ "failed_critical_criteria_total": 13,
+ "m2_leverage": "sole cause of Opus\u2019s 2 label-related critical fails, in 3 of GPT-6.1-sol\u2019s 9 (1 also M5)",
+ "m2_counts": {
+  "m2_opus_sole": 2,
+  "m2_gpt_with": 3,
+  "gpt_failed": 9,
+  "m2_gpt_m5": 1
+ },
+ "clusters": [
+  {
+   "id": "M1",
+   "name": "Required reporting levels or measures are omitted",
+   "definition": "The workbook has the underlying inputs or higher-level totals, but omits a requested measure or aggregation level from the delivered report. Likely mechanism (inference): presentation simplification was not checked against a field-by-field and level-by-level requirement list. This is not evidence of an arithmetic propagation error.",
+   "items": [
+    {
+     "candidate": "gpt",
+     "task_id": "47ef842d-8eac-4b90-bda8-dd934c228c96",
+     "item": 28,
+     "criterion_id": "",
+     "is_critical": false,
+     "flagged_by": "deterministic",
+     "adjudication": "confirmed_fail",
+     "recorded_at": "2026-11-02T22:05:01+00:00",
+     "decision_evidence": "Summary table columns: OOS rank, UPC, Product, On-hand units, Weekly ROS units/wk, Active stores, OOS stores, Stores OOS %, All-store WOS. No Daily Inventory Sold in Last 4 Weeks column (weekly ROS only; note says weekly ROS = daily sold x 7). Opus Table 1 does include Daily Units Sold (L4W avg).",
+     "rubric_text": "For UPC 875218534223, Daily Inventory Sold in Last 4 Weeks is either within 10.4\u201310.6 inclusive or shown as the nearest integer 11"
+    },
+    {
+     "candidate": "gpt",
+     "task_id": "47ef842d-8eac-4b90-bda8-dd934c228c96",
+     "item": 35,
+     "criterion_id": "",
+     "is_critical": false,
+     "flagged_by": "deterministic",
+     "adjudication": "confirmed_fail",
+     "recorded_at": "2026-11-02T22:05:01+00:00",
+     "decision_evidence": "Same table: no daily-sales column for UPC 375301052429 (weekly ROS 15.75 only).",
+     "rubric_text": "For UPC 375301052429, Daily Inventory Sold in Last 4 Weeks is either within 2.2\u20132.4 inclusive or shown as the nearest integer 2"
+    },
+    {
+     "candidate": "gpt",
+     "task_id": "47ef842d-8eac-4b90-bda8-dd934c228c96",
+     "item": 42,
+     "criterion_id": "",
+     "is_critical": false,
+     "flagged_by": "deterministic",
+     "adjudication": "confirmed_fail",
+     "recorded_at": "2026-11-02T22:05:01+00:00",
+     "decision_evidence": "Same table: no daily-sales column for UPC 567219040266 (weekly ROS 41.50 only).",
+     "rubric_text": "For UPC 567219040266, Daily Inventory Sold in Last 4 Weeks is either within 5.8\u20136.0 inclusive or shown as the nearest integer 6"
+    },
+    {
+     "candidate": "gpt",
+     "task_id": "47ef842d-8eac-4b90-bda8-dd934c228c96",
+     "item": 49,
+     "criterion_id": "",
+     "is_critical": false,
+     "flagged_by": "deterministic",
+     "adjudication": "confirmed_fail",
+     "recorded_at": "2026-11-02T22:05:01+00:00",
+     "decision_evidence": "Same table: no daily-sales column for UPC 901153373247 (weekly ROS 101.25 only).",
+     "rubric_text": "For UPC 901153373247, Daily Inventory Sold in Last 4 Weeks is either within 14.4\u201314.6 inclusive or shown as the nearest integer 14"
+    },
+    {
+     "candidate": "gpt",
+     "task_id": "47ef842d-8eac-4b90-bda8-dd934c228c96",
+     "item": 56,
+     "criterion_id": "",
+     "is_critical": false,
+     "flagged_by": "deterministic",
+     "adjudication": "confirmed_fail",
+     "recorded_at": "2026-11-02T22:05:01+00:00",
+     "decision_evidence": "Same table: no daily-sales column for UPC 217313054556 (weekly ROS 47.00 only).",
+     "rubric_text": "For UPC 217313054556, Daily Inventory Sold in Last 4 Weeks is either within 6.6\u20136.8 inclusive or shown as the nearest integer 7"
+    },
+    {
+     "candidate": "gpt",
+     "task_id": "47ef842d-8eac-4b90-bda8-dd934c228c96",
+     "item": 57,
+     "criterion_id": "",
+     "is_critical": false,
+     "flagged_by": "judge",
+     "adjudication": "confirmed_fail",
+     "recorded_at": "2026-11-02T22:05:01+00:00",
+     "decision_evidence": "Summary headers cover on-hand, weekly ROS, active stores, OOS stores, OOS %, WOS, but have no Daily Inventory Sold in Last 4 Weeks heading.",
+     "rubric_text": "The summary table includes clear column headings for: Current Week Inventory, Daily Inventory Sold in Last 4 Weeks, Weekly Unit Rate of Sale, Weeks of Supply (WOS), Number of Stores, Count of OOS Stores, and Percent OOS (wording may vary but must be equivalent)"
+    },
+    {
+     "candidate": "gpt",
+     "task_id": "7b08cd4d-df60-41ae-9102-8aaa49306ba2",
+     "item": 16,
+     "criterion_id": "C1",
+     "is_critical": true,
+     "flagged_by": "deterministic",
+     "adjudication": "confirmed_fail",
+     "recorded_at": "2026-11-02T22:05:01+00:00",
+     "decision_evidence": "Revenue Detail lists gross and rate per stop (A8:E14) but no per-stop withholding amount; withholding and net are computed by country only (A19:E24), and A26 states No stop-level tax allocation is made. Note: the deliverable says this matches the reference approach, and the expert reference is also country-level; the rubric item is stricter.",
+     "rubric_text": "For each tour stop, Withholding Amount (USD) equals the country\u2019s withholding rate multiplied by that row\u2019s Combined Gross (USD).",
+     "note": "follows the expert reference's country-level approach; the rubric item is stricter (per stop)"
+    },
+    {
+     "candidate": "gpt",
+     "task_id": "7b08cd4d-df60-41ae-9102-8aaa49306ba2",
+     "item": 17,
+     "criterion_id": "C1",
+     "is_critical": true,
+     "flagged_by": "deterministic",
+     "adjudication": "confirmed_fail",
+     "recorded_at": "2026-11-02T22:05:01+00:00",
+     "decision_evidence": "No per-stop net revenue column; net revenue is computed by country only (E20:E24). Same note as item 16: country-level approach matches the expert reference; the rubric item requires per-stop amounts.",
+     "rubric_text": "For each tour stop, Net Revenue (USD) equals that row\u2019s Combined Gross (USD) minus the Withholding Amount (USD).",
+     "note": "follows the expert reference's country-level approach; the rubric item is stricter (per stop)"
+    },
+    {
+     "candidate": "gpt",
+     "task_id": "b5d2e6f1-62a2-433a-bcdd-95b260cdd860",
+     "item": 16,
+     "criterion_id": "C3",
+     "is_critical": true,
+     "flagged_by": "deterministic",
+     "adjudication": "confirmed_fail",
+     "recorded_at": "2026-11-02T22:05:00+00:00",
+     "decision_evidence": "Sales by Store: each store block has 8 brand rows followed directly by the next store; no per-store subtotal rows; only the single Grand Total at the bottom (checked Store 37-39 and the Grand Total row).",
+     "rubric_text": "On \"Sales by Store\", there is a subtotal row for each Store block that sums the store\u2019s Brand Name rows for each numeric column."
+    },
+    {
+     "candidate": "gpt",
+     "task_id": "b5d2e6f1-62a2-433a-bcdd-95b260cdd860",
+     "item": 25,
+     "criterion_id": "C3",
+     "is_critical": true,
+     "flagged_by": "deterministic",
+     "adjudication": "confirmed_fail",
+     "recorded_at": "2026-11-02T22:05:00+00:00",
+     "decision_evidence": "No store subtotal rows exist, so the Grand Total cannot equal a sum of store subtotals (same observation as item 16).",
+     "rubric_text": "On \"Sales by Store\", the Grand Total row values equal the sum of all store subtotal rows for each numeric column."
+    },
+    {
+     "candidate": "gpt",
+     "task_id": "b5d2e6f1-62a2-433a-bcdd-95b260cdd860",
+     "item": 26,
+     "criterion_id": "C3",
+     "is_critical": true,
+     "flagged_by": "deterministic",
+     "adjudication": "confirmed_fail",
+     "recorded_at": "2026-11-02T22:05:00+00:00",
+     "decision_evidence": "No store subtotal rows exist to carry a store label (same observation as item 16).",
+     "rubric_text": "On \"Sales by Store\", each subtotal row for a store is clearly labeled with the Store name."
+    }
+   ],
+   "severity": "high",
+   "severity_basis": "the omitted level is what the task's reader needs; 5 of the 11 items sit in critical criteria (store subtotals; per-stop withholding and net revenue), the six daily-sales items do not",
+   "per_model": {
+    "opus": {
+     "items": 0,
+     "tasks": 0
+    },
+    "gpt": {
+     "items": 11,
+     "tasks": 3
+    }
+   },
+   "tasks_affected": 3,
+   "critical_rubric_items": 5,
+   "flagged_by": {
+    "deterministic": 10,
+    "judge": 1
+   },
+   "note": "7b08cd4d items 16 / 17 follow the expert reference's country-level approach (the rubric is stricter)"
+  },
+  {
+   "id": "M2",
+   "name": "Semantic substitutes do not meet explicit naming or display requirements",
+   "definition": "The intended information is often present, but exact required identifiers, field labels, sheet names or decimal presentation are replaced with a different form. Likely mechanism (inference): readability and inherited source labels were prioritized without a final literal-contract check. These are predominantly presentation mismatches, not missing transactions.",
+   "items": [
+    {
+     "candidate": "gpt",
+     "task_id": "2ea2e5b5-257f-42e6-a7dc-93763f28b19d",
+     "item": 27,
+     "criterion_id": "C3",
+     "is_critical": true,
+     "flagged_by": "deterministic",
+     "adjudication": "verified_fail",
+     "recorded_at": "2026-11-02T22:45:29+00:00",
+     "decision_evidence": "Re-graded by hand for consistency with Opus item 27: slide 3 Margin Impact table headers are Activity, Segment, Hours, % total; no column or row labelled Margin Impact, as required by the frozen literal rule (grader version .6). The kicker read failure does not affect this check. Literal labelling only.",
+     "rubric_text": "The Margin Impact table includes a 'Margin Impact' column or row whose entries are only 'Cost' or 'Investment'."
+    },
+    {
+     "candidate": "opus",
+     "task_id": "2ea2e5b5-257f-42e6-a7dc-93763f28b19d",
+     "item": 27,
+     "criterion_id": "C3",
+     "is_critical": true,
+     "flagged_by": "deterministic",
+     "adjudication": "confirmed_fail",
+     "recorded_at": "2026-11-02T22:05:01+00:00",
+     "decision_evidence": "Slide 3 Margin Impact table headers are Segment / Activity, Hours, % of Total Hours, % of Segment, with group rows Cost Impact / Investment Impact. No column or row labelled Margin Impact, as required by the frozen literal rule (grader version .6). Slide title carries the phrase; literal labelling only.",
+     "rubric_text": "The Margin Impact table includes a 'Margin Impact' column or row whose entries are only 'Cost' or 'Investment'."
+    },
+    {
+     "candidate": "gpt",
+     "task_id": "2ea2e5b5-257f-42e6-a7dc-93763f28b19d",
+     "item": 38,
+     "criterion_id": "C3",
+     "is_critical": true,
+     "flagged_by": "deterministic",
+     "adjudication": "verified_fail",
+     "recorded_at": "2026-11-02T22:45:29+00:00",
+     "decision_evidence": "Re-graded by hand for consistency with Opus item 38: slide 4 Time Sensitivity table headers are Activity, Segment, Hours, % total; no column or row labelled Time Sensitivity. Literal labelling only.",
+     "rubric_text": "The Time Sensitivity table includes a column or row labeled Time Sensitivity."
+    },
+    {
+     "candidate": "opus",
+     "task_id": "2ea2e5b5-257f-42e6-a7dc-93763f28b19d",
+     "item": 38,
+     "criterion_id": "C3",
+     "is_critical": true,
+     "flagged_by": "deterministic",
+     "adjudication": "confirmed_fail",
+     "recorded_at": "2026-11-02T22:05:01+00:00",
+     "decision_evidence": "Slide 4 Time Sensitivity table headers are Segment / Activity, Hours, % of Total Hours, % of Segment, with group rows High / Medium / Low. No column or row labelled Time Sensitivity. Slide title carries the phrase; literal labelling only.",
+     "rubric_text": "The Time Sensitivity table includes a column or row labeled Time Sensitivity."
+    },
+    {
+     "candidate": "gpt",
+     "task_id": "47ef842d-8eac-4b90-bda8-dd934c228c96",
+     "item": 13,
+     "criterion_id": "C4",
+     "is_critical": true,
+     "flagged_by": "deterministic",
+     "adjudication": "confirmed_fail",
+     "recorded_at": "2026-11-02T22:05:01+00:00",
+     "decision_evidence": "Store availability bar chart categories are short product names (AC Amber Noir, Honey Bliss Kiss, ...), not the five UPC numbers the item requires. Literal labelling; UPCs appear in the table, not on the chart.",
+     "rubric_text": "Includes a chart that plots Percent of Stores Out of Stock for the five specified UPCs (categories exactly the five UPCs)"
+    },
+    {
+     "candidate": "opus",
+     "task_id": "47ef842d-8eac-4b90-bda8-dd934c228c96",
+     "item": 13,
+     "criterion_id": "C4",
+     "is_critical": true,
+     "flagged_by": "deterministic",
+     "adjudication": "confirmed_fail",
+     "recorded_at": "2026-11-02T22:05:01+00:00",
+     "decision_evidence": "Summary OOS bar chart categories are product descriptions (AC AMBER NOIR EDP SPRAY, HONEY BLISS KISS EDT, ...), not the five UPC numbers the item requires. Literal labelling; the UPCs appear in Table 1, not on the chart.",
+     "rubric_text": "Includes a chart that plots Percent of Stores Out of Stock for the five specified UPCs (categories exactly the five UPCs)"
+    },
+    {
+     "candidate": "gpt",
+     "task_id": "47ef842d-8eac-4b90-bda8-dd934c228c96",
+     "item": 17,
+     "criterion_id": "",
+     "is_critical": false,
+     "flagged_by": "deterministic",
+     "adjudication": "confirmed_fail",
+     "recorded_at": "2026-11-02T22:05:01+00:00",
+     "decision_evidence": "Chart data labels show two decimals (11.56%, 8.79%, 2.30%, 0.57%, 0.16%), not one decimal as required.",
+     "rubric_text": "Percent OOS values used for the chart are rounded to one decimal place"
+    },
+    {
+     "candidate": "gpt",
+     "task_id": "7d7fc9a7-21a7-4b83-906f-416dea5ad04f",
+     "item": 3,
+     "criterion_id": "",
+     "is_critical": false,
+     "flagged_by": "deterministic",
+     "adjudication": "confirmed_fail",
+     "recorded_at": "2026-11-02T22:05:01+00:00",
+     "decision_evidence": "Detailed sheet is named Prepaid Expenses (sheets: Prepaid Summary, Prepaid Expenses, Prepaid Insurance); the account number 1250 appears in the sheet header, not in the sheet name. Literal naming, low severity.",
+     "rubric_text": "Workbook contains a detailed worksheet for Prepaid Expenses whose sheet name includes the account number 1250 (e.g., Prepaid Expenses (Account #1250))."
+    },
+    {
+     "candidate": "gpt",
+     "task_id": "7d7fc9a7-21a7-4b83-906f-416dea5ad04f",
+     "item": 4,
+     "criterion_id": "",
+     "is_critical": false,
+     "flagged_by": "deterministic",
+     "adjudication": "confirmed_fail",
+     "recorded_at": "2026-11-02T22:05:01+00:00",
+     "decision_evidence": "Detailed sheet is named Prepaid Insurance, without 1251 in the sheet name. Literal naming, low severity.",
+     "rubric_text": "Workbook contains a detailed worksheet for Prepaid Insurance whose sheet name includes the account number 1251 (e.g., Prepaid Insurance (Account #1251))."
+    },
+    {
+     "candidate": "gpt",
+     "task_id": "c357f0e2-963d-4eb7-a6fa-3078fe55b3ba",
+     "item": 12,
+     "criterion_id": "C2",
+     "is_critical": true,
+     "flagged_by": "judge",
+     "adjudication": "confirmed_fail",
+     "recorded_at": "2026-11-02T22:05:01+00:00",
+     "decision_evidence": "Role column uses plural labels (Viewers, Project Managers, System Admins, Super Admins), matching the prompt wording, not the exact singular names. Fails under preregistration 2.9: items 12/13 are checked by label; permission correctness is graded separately.",
+     "rubric_text": "Role coverage includes at least one counted row for each of these roles (case-insensitive exact match): Viewer, Project Manager, System Admin, Super Admin."
+    }
+   ],
+   "severity": "low",
+   "severity_basis": "the information is present under another label; literal-naming items, several in critical criteria (chart categories, table labels, role names)",
+   "per_model": {
+    "opus": {
+     "items": 3,
+     "tasks": 2
+    },
+    "gpt": {
+     "items": 7,
+     "tasks": 4
+    }
+   },
+   "tasks_affected": 4,
+   "critical_rubric_items": 7,
+   "flagged_by": {
+    "deterministic": 9,
+    "judge": 1
+   }
+  },
+  {
+   "id": "M3",
+   "name": "An operational control or concrete validation step is left unspecified",
+   "definition": "The artifact discusses a goal or supplies functional content but omits the named operational mechanism, access decision or performance validation procedure. Likely mechanism (inference): broad design coverage was accepted without checking that each required operational step had an executable or explicit counterpart.",
+   "items": [
+    {
+     "candidate": "gpt",
+     "task_id": "a45bc83b-22f9-4def-8d89-9c5661b2b86f",
+     "item": 60,
+     "criterion_id": "",
+     "is_critical": false,
+     "flagged_by": "judge",
+     "adjudication": "confirmed_fail",
+     "recorded_at": "2026-11-02T22:05:01+00:00",
+     "decision_evidence": "Runbook sets a load profile (Ramp 5 to 20 RPS for ten minutes, 5xx <1%, p95 <2 s) but names no load tool (ab, wrk, siege or similar) or procedure.",
+     "rubric_text": "POC includes performance or load validation using a standard tool (e.g., ApacheBench/ab, wrk, or siege)"
+    },
+    {
+     "candidate": "opus",
+     "task_id": "a45bc83b-22f9-4def-8d89-9c5661b2b86f",
+     "item": 64,
+     "criterion_id": "",
+     "is_critical": false,
+     "flagged_by": "judge",
+     "adjudication": "confirmed_fail",
+     "recorded_at": "2026-11-02T22:05:01+00:00",
+     "decision_evidence": "Proposed_Architecture_Summary has no environment separation; POC guide defines a single project (acme-webapp-poc). No dev/test/prod separation is described. (GPT summary paragraph 15, by contrast, states separate production/non-production projects.)",
+     "rubric_text": "Proposed architecture indicates environment separation (e.g., distinct projects or environments for dev/test/prod)"
+    },
+    {
+     "candidate": "opus",
+     "task_id": "a45bc83b-22f9-4def-8d89-9c5661b2b86f",
+     "item": 68,
+     "criterion_id": "",
+     "is_critical": false,
+     "flagged_by": "judge",
+     "adjudication": "confirmed_fail",
+     "recorded_at": "2026-11-02T22:05:01+00:00",
+     "decision_evidence": "Neither the summary nor the POC guide enables object versioning or a lifecycle policy on the static bucket; only versioned file names are suggested.",
+     "rubric_text": "Architecture or POC includes lifecycle policies or object versioning for the static content bucket"
+    },
+    {
+     "candidate": "gpt",
+     "task_id": "c357f0e2-963d-4eb7-a6fa-3078fe55b3ba",
+     "item": 66,
+     "criterion_id": "",
+     "is_critical": false,
+     "flagged_by": "judge",
+     "adjudication": "confirmed_fail",
+     "recorded_at": "2026-11-02T22:45:29+00:00",
+     "decision_evidence": "No performance or load case among the 100 rows; limit-related cases cover file size and type (rows 25-27, 101) and title length (row 7, UAT-005), none of them concurrency or response time.",
+     "rubric_text": "At least one counted row mentions performance or load (e.g., concurrent users or response time) with an Expected Result describing acceptable performance."
+    }
+   ],
+   "severity": "medium",
+   "severity_basis": "a design or test document leaves a specified control or validation step unstated; provisional judge verdicts confirmed by the author from the documents; nothing here shows a deployed system lacking the control",
+   "per_model": {
+    "opus": {
+     "items": 2,
+     "tasks": 1
+    },
+    "gpt": {
+     "items": 2,
+     "tasks": 2
+    }
+   },
+   "tasks_affected": 2,
+   "critical_rubric_items": 0,
+   "flagged_by": {
+    "judge": 4
+   }
+  },
+  {
+   "id": "M4",
+   "name": "A disclosed rounding adjustment conflicts with a source-only accounting rule",
+   "definition": "A synthetic fractional-cent line aligns rounded invoice calculations with the full-precision account balance, creating negative amortization and a rising balance unsupported by a source invoice adjustment. Likely mechanism (inference): the model reconciled two rounding conventions by adding an explicit precision-adjustment line, without testing that line against the rubric's no-negative/no-unfunded-increase constraints.",
+   "items": [
+    {
+     "candidate": "gpt",
+     "task_id": "7d7fc9a7-21a7-4b83-906f-416dea5ad04f",
+     "item": 31,
+     "criterion_id": "",
+     "is_critical": false,
+     "flagged_by": "judge",
+     "adjudication": "confirmed_fail",
+     "recorded_at": "2026-11-02T22:05:01+00:00",
+     "decision_evidence": "Prepaid Expenses row 51 Fractional-cent rounding: monthly expense (0.01), (0.01), (0.01), (0.02), i.e. negative amortization with no source invoice adjustment. Disclosed and immaterial ($0.05).",
+     "rubric_text": "No negative amortization entries appear on 1250 unless supported by an explicit adjustment or credit documented in the source invoices."
+    },
+    {
+     "candidate": "gpt",
+     "task_id": "7d7fc9a7-21a7-4b83-906f-416dea5ad04f",
+     "item": 32,
+     "criterion_id": "",
+     "is_critical": false,
+     "flagged_by": "judge",
+     "adjudication": "confirmed_fail",
+     "recorded_at": "2026-11-02T22:05:01+00:00",
+     "decision_evidence": "Same row 51: ending balance rises 0.01 -> 0.02 -> 0.03 -> 0.05 with original amount 0 and no documented addition.",
+     "rubric_text": "On 1250, a line\u2019s remaining balance does not increase in a month unless there is a documented addition for that line in that month."
+    },
+    {
+     "candidate": "gpt",
+     "task_id": "7d7fc9a7-21a7-4b83-906f-416dea5ad04f",
+     "item": 49,
+     "criterion_id": "",
+     "is_critical": false,
+     "flagged_by": "deterministic",
+     "adjudication": "confirmed_fail",
+     "recorded_at": "2026-11-02T22:05:01+00:00",
+     "decision_evidence": "Prepaid Insurance row 35 Fractional-cent rounding: monthly expense (0.01), (0.01), (0.02), (0.01); negative amortization with no adjustment in Aurisic_Prepaid_Insurance.pdf.",
+     "rubric_text": "No negative amortization entries appear on 1251 unless supported by an explicit adjustment or credit documented in Aurisic_Prepaid_Insurance.pdf."
+    },
+    {
+     "candidate": "gpt",
+     "task_id": "7d7fc9a7-21a7-4b83-906f-416dea5ad04f",
+     "item": 50,
+     "criterion_id": "",
+     "is_critical": false,
+     "flagged_by": "deterministic",
+     "adjudication": "confirmed_fail",
+     "recorded_at": "2026-11-02T22:05:01+00:00",
+     "decision_evidence": "Same row 35: ending balance rises 0.01 -> 0.02 -> 0.04 -> 0.05 with no documented addition.",
+     "rubric_text": "On 1251, a line\u2019s remaining balance does not increase in a month unless there is a documented addition for that line in that month."
+    }
+   ],
+   "severity": "low",
+   "severity_basis": "one disclosed rounding strategy ($0.05 at most) that violates the no-negative-amortization and no-unfunded-increase rules on four items",
+   "per_model": {
+    "opus": {
+     "items": 0,
+     "tasks": 0
+    },
+    "gpt": {
+     "items": 4,
+     "tasks": 1
+    }
+   },
+   "tasks_affected": 1,
+   "critical_rubric_items": 0,
+   "flagged_by": {
+    "judge": 2,
+    "deterministic": 2
+   },
+   "note": "the four items describe one rounding strategy (a labelled fractional-cent line on each schedule), not four independent mistakes"
+  },
+  {
+   "id": "M5",
+   "name": "A nearby test scenario omits the exact required condition or assertion",
+   "definition": "A test addresses the general feature but fails to instantiate the required missing-input condition, specified fields or both-organization mutation. Likely mechanism (inference): related scenarios were treated as interchangeable during coverage review; generic references to configured fields replaced concrete test data.",
+   "items": [
+    {
+     "candidate": "gpt",
+     "task_id": "c357f0e2-963d-4eb7-a6fa-3078fe55b3ba",
+     "item": 15,
+     "criterion_id": "C3",
+     "is_critical": true,
+     "flagged_by": "judge",
+     "adjudication": "confirmed_fail",
+     "recorded_at": "2026-11-02T22:05:01+00:00",
+     "decision_evidence": "Row 3 (UAT-001): names only the idea title plus all configured required basic information; the rubric requires at least two specific required fields.",
+     "rubric_text": "There is a counted row under Idea Management that creates a new Idea with required fields populated (lists at least two specific fields) and the Expected Result states the Idea is saved/created."
+    },
+    {
+     "candidate": "opus",
+     "task_id": "c357f0e2-963d-4eb7-a6fa-3078fe55b3ba",
+     "item": 34,
+     "criterion_id": "",
+     "is_critical": false,
+     "flagged_by": "judge",
+     "adjudication": "confirmed_fail",
+     "recorded_at": "2026-11-02T22:05:01+00:00",
+     "decision_evidence": "Row 27 (UAT-025) tests invalid values (end before start; durations 0, -5, abc), not a required date or duration left blank. Row 49 blanks a milestone name, not a date. No missing-required-date case.",
+     "rubric_text": "At least one counted row attempts to save with a required Date or Phase Duration missing and the Expected Result states a validation error."
+    },
+    {
+     "candidate": "gpt",
+     "task_id": "c357f0e2-963d-4eb7-a6fa-3078fe55b3ba",
+     "item": 50,
+     "criterion_id": "C2",
+     "is_critical": true,
+     "flagged_by": "judge",
+     "adjudication": "confirmed_fail",
+     "recorded_at": "2026-11-02T22:05:01+00:00",
+     "decision_evidence": "Row 91 (UAT-089): Super Admin opens an Org A and an Org B project but changes only the Org B description. No row edits records in two organizations with both edits allowed.",
+     "rubric_text": "There is at least one counted row showing a Super Admin editing records across two different organizations (any of Idea, Proposal, or Project) with Expected Result allowed for both."
+    }
+   ],
+   "severity": "medium",
+   "severity_basis": "a required negative or cross-organisation test condition or assertion is missing from a UAT plan; two of three items are critical for GPT-6.1-sol",
+   "per_model": {
+    "opus": {
+     "items": 1,
+     "tasks": 1
+    },
+    "gpt": {
+     "items": 2,
+     "tasks": 1
+    }
+   },
+   "tasks_affected": 1,
+   "critical_rubric_items": 2,
+   "flagged_by": {
+    "judge": 3
+   }
+  },
+  {
+   "id": "M6",
+   "name": "A grouped report lacks the requested prioritization interaction",
+   "definition": "The summary is useful for drilldown but its interleaved group structure does not offer an easy sort of SKU totals by error count. Likely mechanism (inference): the author supplied a rank column and outline groups but did not validate the requested sorting workflow.",
+   "items": [
+    {
+     "candidate": "opus",
+     "task_id": "1137e2bb-bdf9-4876-b572-f29b7de5e595",
+     "item": 22,
+     "criterion_id": "",
+     "is_critical": false,
+     "flagged_by": "deterministic",
+     "adjudication": "confirmed_fail",
+     "recorded_at": "2026-11-02T22:05:01+00:00",
+     "decision_evidence": "SKU Error Summary is ordered by SKU number (SKU-0101, 0102, 0103, ...), not by Total Errors. No AutoFilter, Excel Table or PivotTable on the summary (filter arrows exist only on RawData). The SKU Priority Rank column shows priority, but sorting the sheet would break the SKU/PO grouping. Low severity.",
+     "rubric_text": "Summary worksheet is sorted or easily sortable by Total Errors in descending order"
+    }
+   ],
+   "severity": "low",
+   "severity_basis": "the summary cannot be sorted by total errors without breaking the SKU grouping; non-critical",
+   "per_model": {
+    "opus": {
+     "items": 1,
+     "tasks": 1
+    },
+    "gpt": {
+     "items": 0,
+     "tasks": 0
+    }
+   },
+   "tasks_affected": 1,
+   "critical_rubric_items": 0,
+   "flagged_by": {
+    "deterministic": 1
+   }
+  },
+  {
+   "id": "M7",
+   "name": "A plain-language explanation of a check omits its decisive criterion",
+   "definition": "The deliverable applies a rule correctly in the workbook but its narrative explanation of the check leaves out the condition that defines it, so a reader could not re-apply the check from the explanation alone.",
+   "items": [
+    {
+     "candidate": "gpt",
+     "task_id": "1137e2bb-bdf9-4876-b572-f29b7de5e595",
+     "item": 23,
+     "criterion_id": "C3",
+     "is_critical": true,
+     "flagged_by": "human review (blind label F06; judge passed it)",
+     "adjudication": "grader_false_pass",
+     "recorded_at": "2026-11-02T22:45:29+00:00",
+     "decision_evidence": "Cluster: M7 (new) - a plain-language explanation of a check omits its decisive criterion. Human blind label F06 (2026-11-02T12:26:25Z, fail; judge pass): Wholesale_Order_Audit_Summary.docx, p. 1, 'Method & workbook use' and 'Where to begin', points 2-3: the price check is explained; for Case Pack the document gives a 1-unit/24-pack example and mentions a CASE-only divisibility control, but never states that CASE quantities must be whole multiples of the case pack size. The plain-language definition of this check is incomplete. Recorded as grader_false_pass on the human's instruction of 2026-11-02 (judge verdict kept, provisional).",
+     "rubric_text": "The Word document briefly defines the two checks: Price Mismatch and Case Pack (in plain language)"
+    }
+   ],
+   "severity": "medium",
+   "severity_basis": "the narrative definition of the case-pack check omits its decisive condition; a judge false pass caught only by the blind human sample",
+   "per_model": {
+    "opus": {
+     "items": 0,
+     "tasks": 0
+    },
+    "gpt": {
+     "items": 1,
+     "tasks": 1
+    }
+   },
+   "tasks_affected": 1,
+   "critical_rubric_items": 1,
+   "flagged_by": {
+    "human": 1
+   }
+  },
+  {
+   "id": "R03",
+   "name": "Missing separate invalid-case-pack indicator",
+   "definition": "The workbook flags case-pack violations but carries no separate indicator for a missing or invalid case pack (rubric item 21, which goes beyond the prompt; A-21). All source case packs are positive, so no count is affected.",
+   "items": [
+    {
+     "candidate": "gpt",
+     "task_id": "1137e2bb-bdf9-4876-b572-f29b7de5e595",
+     "item": 21,
+     "criterion_id": "",
+     "is_critical": false,
+     "flagged_by": "deterministic",
+     "adjudication": "verified_fail",
+     "recorded_at": "2026-11-02T22:05:01+00:00",
+     "decision_evidence": "RawData columns I-M: Price Mismatch Errors, Case Pack Errors, Total Errors, Error Type, Line Has Error. No separate missing/invalid Case Pack indicator. All source case packs are positive, so counts are unaffected.",
+     "rubric_text": "Excel includes a separate indicator for missing/invalid Case Pack when UOM = CASE and Case Pack is blank or \u2264 0 (e.g., a 'Case Pack Missing' flag), and such rows are not counted as Case Pack errors"
+    },
+    {
+     "candidate": "opus",
+     "task_id": "1137e2bb-bdf9-4876-b572-f29b7de5e595",
+     "item": 21,
+     "criterion_id": "",
+     "is_critical": false,
+     "flagged_by": "deterministic",
+     "adjudication": "verified_fail",
+     "recorded_at": "2026-11-02T22:05:01+00:00",
+     "decision_evidence": "RawData columns I-O: Price Mismatch Error, Case Pack Error, Total Errors, Error Summary, Unit Price Variance, Extended Price Variance ($), Units Off Case Multiple. No separate missing/invalid Case Pack indicator. All source case packs are positive, so counts are unaffected.",
+     "rubric_text": "Excel includes a separate indicator for missing/invalid Case Pack when UOM = CASE and Case Pack is blank or \u2264 0 (e.g., a 'Case Pack Missing' flag), and such rows are not counted as Case Pack errors"
+    }
+   ],
+   "severity": "low",
+   "severity_basis": "a rubric structure beyond the prompt; no count is affected",
+   "per_model": {
+    "opus": {
+     "items": 1,
+     "tasks": 1
+    },
+    "gpt": {
+     "items": 1,
+     "tasks": 1
+    }
+   },
+   "tasks_affected": 1,
+   "critical_rubric_items": 0,
+   "flagged_by": {
+    "deterministic": 2
+   }
+  },
+  {
+   "id": "ADDS",
+   "name": "Per-line additions column absent (both models; depends on R-2.7-21)",
+   "definition": "Neither prepaid schedule presents a per-line monthly additions column; the roll-forwards are arithmetically valid, and the items fail under the binding pre-run rule R-2.7-21 (additions are never inferred). Mutually exclusive with M1.",
+   "items": [
+    {
+     "candidate": "gpt",
+     "task_id": "7d7fc9a7-21a7-4b83-906f-416dea5ad04f",
+     "item": 21,
+     "criterion_id": "C2",
+     "is_critical": true,
+     "flagged_by": "deterministic",
+     "adjudication": "confirmed_fail",
+     "recorded_at": "2026-11-02T22:05:01+00:00",
+     "decision_evidence": "Prepaid Expenses header row 9: per month only Expense and Ending balance; no per-line Current Month Adds column. Fails under the binding frozen rule R-2.7-21 (additions are never inferred). Roll-forwards are arithmetically valid.",
+     "rubric_text": "For each 1250 line and each month Jan\u2013Apr 2025, Beginning Balance + Current Month Adds \u2212 Current Month Amortization = Ending Balance.",
+     "note": "dependent on R-2.7-21 (per-line additions never inferred; binding)"
+    },
+    {
+     "candidate": "opus",
+     "task_id": "7d7fc9a7-21a7-4b83-906f-416dea5ad04f",
+     "item": 21,
+     "criterion_id": "C2",
+     "is_critical": true,
+     "flagged_by": "deterministic",
+     "adjudication": "verified_fail",
+     "recorded_at": "2026-11-02T22:45:29+00:00",
+     "decision_evidence": "Re-graded by hand for consistency with GPT items 21/39: Prepaid Expenses 1250 header row 7 has Original Amount, Monthly Expense, monthly amortization L:O, YTD P and month-end balances Q:T, but no per-line Current Month Adds column. Fails under the binding frozen rule R-2.7-21 (additions are never inferred). The vendor read failure does not affect this check.",
+     "rubric_text": "For each 1250 line and each month Jan\u2013Apr 2025, Beginning Balance + Current Month Adds \u2212 Current Month Amortization = Ending Balance.",
+     "note": "dependent on R-2.7-21 (per-line additions never inferred; binding)"
+    },
+    {
+     "candidate": "gpt",
+     "task_id": "7d7fc9a7-21a7-4b83-906f-416dea5ad04f",
+     "item": 39,
+     "criterion_id": "C3",
+     "is_critical": true,
+     "flagged_by": "deterministic",
+     "adjudication": "confirmed_fail",
+     "recorded_at": "2026-11-02T22:05:01+00:00",
+     "decision_evidence": "Prepaid Insurance header row 9: no per-line Current Month Adds column. Fails under the binding frozen rule R-2.7-21.",
+     "rubric_text": "For each 1251 line and each month Jan\u2013Apr 2025, Beginning Balance + Current Month Adds \u2212 Current Month Amortization = Ending Balance.",
+     "note": "dependent on R-2.7-21 (per-line additions never inferred; binding)"
+    },
+    {
+     "candidate": "opus",
+     "task_id": "7d7fc9a7-21a7-4b83-906f-416dea5ad04f",
+     "item": 39,
+     "criterion_id": "C3",
+     "is_critical": true,
+     "flagged_by": "deterministic",
+     "adjudication": "verified_fail",
+     "recorded_at": "2026-11-02T22:45:29+00:00",
+     "decision_evidence": "Re-graded by hand for consistency with GPT item 39: Prepaid Insurance 1251 header row 7 has the same layout (monthly amortization L:O, balances Q:T) and no per-line Current Month Adds column. Fails under the binding frozen rule R-2.7-21.",
+     "rubric_text": "For each 1251 line and each month Jan\u2013Apr 2025, Beginning Balance + Current Month Adds \u2212 Current Month Amortization = Ending Balance.",
+     "note": "dependent on R-2.7-21 (per-line additions never inferred; binding)"
+    }
+   ],
+   "severity": "medium",
+   "severity_basis": "a presentation requirement under a binding pre-run rule, critical (C2 / C3) for both models; the roll-forwards themselves are arithmetically valid",
+   "per_model": {
+    "opus": {
+     "items": 2,
+     "tasks": 1
+    },
+    "gpt": {
+     "items": 2,
+     "tasks": 1
+    }
+   },
+   "tasks_affected": 1,
+   "critical_rubric_items": 4,
+   "flagged_by": {
+    "deterministic": 4
+   },
+   "note": "kept out of M1 so that M1 counts only levels and measures omitted without a rule in play; the sensitivity of R-2.7-21 is reported with the critical status"
+  }
+ ],
+ "cards": [
+  {
+   "id": "card-M1",
+   "clusters": [
+    "M1"
+   ],
+   "rank": 1,
+   "card_status": "approved",
+   "title": "Required reporting detail omitted",
+   "required": "A subtotal per store.",
+   "observed": "Elsewhere GPT also omits per-stop withholding/net and daily sales; Opus provides all three levels (verified).",
+   "evidence": "Weekly Sales Analysis.xlsx, Sales by Store; items 16/25/26 (critical). Tour P&L 16/17 follow the expert\u2019s country-level approach; rubric stricter.",
+   "why": "A reader who checks the grand total sees nothing wrong; the store view the task asked for has to be rebuilt.",
+   "data": "required-level lists, per-level verifiers.",
+   "per_model": {
+    "opus": {
+     "items": 0,
+     "tasks": 0,
+     "critical": 0
+    },
+    "gpt": {
+     "items": 11,
+     "tasks": 3,
+     "critical": 5
+    }
+   },
+   "items_total": 11,
+   "tasks_affected": 3,
+   "severity": "high",
+   "critical_rubric_items": 5
+  },
+  {
+   "id": "card-M2",
+   "clusters": [
+    "M2"
+   ],
+   "rank": 2,
+   "card_status": "approved",
+   "title": "Exact labels replaced by equivalents",
+   "required": "Chart categories: the five UPCs.",
+   "observed": "Both use product names; UPCs only in tables.",
+   "evidence": "Both Summary charts; item 13 (critical).",
+   "why": "Low business severity, high rubric leverage: sole cause of Opus\u2019s {{m2_opus_sole}} label-related critical fails, in {{m2_gpt_with}} of GPT-6.1-sol\u2019s {{gpt_failed}} ({{m2_gpt_m5}} also M5).",
+   "data": "literal-label annotations; a verifier that scores literal and semantic requirements separately.",
+   "per_model": {
+    "opus": {
+     "items": 3,
+     "tasks": 2,
+     "critical": 3
+    },
+    "gpt": {
+     "items": 7,
+     "tasks": 4,
+     "critical": 4
+    }
+   },
+   "items_total": 10,
+   "tasks_affected": 4,
+   "severity": "low",
+   "critical_rubric_items": 7
+  },
+  {
+   "id": "card-M3M5",
+   "clusters": [
+    "M3",
+    "M5"
+   ],
+   "rank": 3,
+   "card_status": "approved",
+   "title": "Design and test documents omit named controls or conditions",
+   "required": "Super Admin edits in two organisations, both allowed.",
+   "observed": "Row 91 opens both organisations, edits only Org B. Opus: no blank-date case; GPT: no load tool or performance case.",
+   "evidence": "ProjMGR_Tool_UAT_Test_Plan.xlsx row 91; item 50 (critical).",
+   "why": "Document omissions, not deployed-system faults.",
+   "data": "control and condition annotations.",
+   "per_model": {
+    "opus": {
+     "items": 3,
+     "tasks": 2,
+     "critical": 0
+    },
+    "gpt": {
+     "items": 4,
+     "tasks": 2,
+     "critical": 2
+    }
+   },
+   "items_total": 7,
+   "tasks_affected": 2,
+   "severity": "medium",
+   "critical_rubric_items": 2
+  }
+ ]
+}

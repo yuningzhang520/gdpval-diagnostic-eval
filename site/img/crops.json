@@ -1,0 +1,377 @@
+{
+ "rendered_with": "LibreOffice in the frozen sandbox image sha256:18cde712cde1…, no network; display-only preparation of copies (card A: PivotTable relationship removed so the saved cells are shown; card C: Word documents unchanged)",
+ "crops": [
+  {
+   "card": "A",
+   "cand": "opus",
+   "task_id": "b5d2e6f1-62a2-433a-bcdd-95b260cdd860",
+   "run_uuid": "Mae4tizWVH2BiinB5zKQV2",
+   "file": "Weekly Sales Data - Beauty Sales Analysis.xlsx",
+   "sha256": "dcc1c9e4827e7a5480228bdcb93896af86eb24adafad8c32dbea1227020cc353",
+   "manifest_sha256_checked": true,
+   "sheet": "Sales by Store",
+   "range": "A11:C15",
+   "header_row": 4,
+   "kind": "store_boundary",
+   "mark": "box_row",
+   "hidden_columns": null,
+   "cells": {
+    "header": [
+     "Store",
+     "Brand Name",
+     "WTD Sales Quantity"
+    ],
+    "rows": [
+     [
+      11,
+      "Store 1",
+      "Men's Treatment",
+      "242"
+     ],
+     [
+      12,
+      "Store 1",
+      "Shiseido",
+      "162"
+     ],
+     [
+      13,
+      "Store 1 Total",
+      "",
+      "1,420"
+     ],
+     [
+      14,
+      "Store 2",
+      "Clinique",
+      "181"
+     ],
+     [
+      15,
+      "Store 2",
+      "Elizabeth Arden",
+      "119"
+     ]
+    ]
+   },
+   "png": "opus_A11-C15.png",
+   "png_px": [
+    861,
+    331
+   ],
+   "png_sha256": "50a4bfb64798b5ed76845f3bf781f0956a52cf52ebe6f4ae29016448f1640d4e"
+  },
+  {
+   "card": "A",
+   "cand": "opus",
+   "task_id": "b5d2e6f1-62a2-433a-bcdd-95b260cdd860",
+   "run_uuid": "Mae4tizWVH2BiinB5zKQV2",
+   "file": "Weekly Sales Data - Beauty Sales Analysis.xlsx",
+   "sha256": "dcc1c9e4827e7a5480228bdcb93896af86eb24adafad8c32dbea1227020cc353",
+   "manifest_sha256_checked": true,
+   "sheet": "Sales by Store",
+   "range": "A354:C356",
+   "header_row": 4,
+   "kind": "grand_total",
+   "mark": null,
+   "hidden_columns": null,
+   "cells": {
+    "header": [
+     "Store",
+     "Brand Name",
+     "WTD Sales Quantity"
+    ],
+    "rows": [
+     [
+      354,
+      "Store 39",
+      "Shiseido",
+      "162"
+     ],
+     [
+      355,
+      "Store 39 Total",
+      "",
+      "1,420"
+     ],
+     [
+      356,
+      "Grand Total",
+      "",
+      "55,380"
+     ]
+    ]
+   },
+   "png": "opus_A354-C356.png",
+   "png_px": [
+    861,
+    251
+   ],
+   "png_sha256": "a6c8f2d83abcc02c5d01281530eebc50eef9c52e6da979f0564eab955aa73d2c"
+  },
+  {
+   "card": "A",
+   "cand": "gpt",
+   "task_id": "b5d2e6f1-62a2-433a-bcdd-95b260cdd860",
+   "run_uuid": "d5sypgfTdCCwfsFV9jdzLd",
+   "file": "Weekly Sales Analysis.xlsx",
+   "sha256": "3e021dd2f4644b85466f750a19416a5b24f593018a9d6981cbd31777994c6305",
+   "manifest_sha256_checked": true,
+   "sheet": "Sales by Store",
+   "range": "A13:C16",
+   "header_row": 6,
+   "kind": "store_boundary",
+   "mark": "line_before",
+   "hidden_columns": null,
+   "cells": {
+    "header": [
+     "Store",
+     "Brand Name",
+     "WTD Sales Quantity"
+    ],
+    "rows": [
+     [
+      13,
+      "",
+      "Men's Treatment",
+      "242"
+     ],
+     [
+      14,
+      "",
+      "Shiseido",
+      "162"
+     ],
+     [
+      15,
+      "Store 2",
+      "Clinique",
+      "181"
+     ],
+     [
+      16,
+      "",
+      "Elizabeth Arden",
+      "119"
+     ]
+    ]
+   },
+   "png": "gpt_A13-C16.png",
+   "png_px": [
+    903,
+    361
+   ],
+   "png_sha256": "79ee66032edda4b4f1df80383f87a277d0486a173c6e59a4144ffc3fc1e4d77d"
+  },
+  {
+   "card": "A",
+   "cand": "gpt",
+   "task_id": "b5d2e6f1-62a2-433a-bcdd-95b260cdd860",
+   "run_uuid": "d5sypgfTdCCwfsFV9jdzLd",
+   "file": "Weekly Sales Analysis.xlsx",
+   "sha256": "3e021dd2f4644b85466f750a19416a5b24f593018a9d6981cbd31777994c6305",
+   "manifest_sha256_checked": true,
+   "sheet": "Sales by Store",
+   "range": "A317:C319",
+   "header_row": 6,
+   "kind": "grand_total",
+   "mark": null,
+   "hidden_columns": null,
+   "cells": {
+    "header": [
+     "Store",
+     "Brand Name",
+     "WTD Sales Quantity"
+    ],
+    "rows": [
+     [
+      317,
+      "",
+      "Men's Treatment",
+      "242"
+     ],
+     [
+      318,
+      "",
+      "Shiseido",
+      "162"
+     ],
+     [
+      319,
+      "Grand Total",
+      "",
+      "55,380"
+     ]
+    ]
+   },
+   "png": "gpt_A317-C319.png",
+   "png_px": [
+    903,
+    337
+   ],
+   "png_sha256": "720c461970b6381a0da9a8d81bf53ec69193bee55932ecc7cd6d56bbdb5e4cb7"
+  },
+  {
+   "card": "B",
+   "cand": "opus",
+   "task_id": "47ef842d-8eac-4b90-bda8-dd934c228c96",
+   "run_uuid": "LVyjBBcU4iFqDKviwY2YJz",
+   "file": "Top5_UPC_Inventory_Position_Wk28_2025.xlsx",
+   "sha256": "b8d9f3dd3dc2f415ed34606b0d7a3bb5777aa6383d644c9da16bed5bf5b40e36",
+   "manifest_sha256_checked": true,
+   "sheet": "Summary",
+   "range": "A19:F35",
+   "header_row": null,
+   "kind": "chart",
+   "mark": null,
+   "hidden_columns": null,
+   "chart": {
+    "category_ref": "'Summary'!$C$48:$C$52",
+    "categories": [
+     "AC AMBER NOIR EDP SPRAY",
+     "HONEY BLISS KISS EDT",
+     "LVNC VANILLA REVERIE EDT",
+     "HONEYCREST EDP SPRAY",
+     "A DURAND CINNAMON SPARK ROLLERBALL"
+    ],
+    "chart_title": "% of Active Stores Out of Stock – Top 5 UPCs (Wk 28 2025)",
+    "upc_cells": "B48:B52",
+    "upcs": [
+     "875218534223",
+     "375301052429",
+     "567219040266",
+     "901153373247",
+     "217313054556"
+    ]
+   },
+   "cut_at_row": null,
+   "png": "b_opus_A19-F35.png",
+   "png_px": [
+    1395,
+    663
+   ],
+   "png_sha256": "304dcba73a7ad016042110cc385febc2e877f32c1019ee3c6176255ffcf55a5f"
+  },
+  {
+   "card": "B",
+   "cand": "gpt",
+   "task_id": "47ef842d-8eac-4b90-bda8-dd934c228c96",
+   "run_uuid": "dPR5yvN9wEfcMyQiAC2njB",
+   "file": "Inventory_Health_Top_5_2025_W28.xlsx",
+   "sha256": "acceda689a53b986277c5d2d5d40ec008fcfe234c3903922c4d9de5edadd607e",
+   "manifest_sha256_checked": true,
+   "sheet": "Summary",
+   "range": "A18:E32",
+   "header_row": null,
+   "kind": "chart",
+   "mark": null,
+   "hidden_columns": null,
+   "chart": {
+    "category_ref": "Summary!$K$11:$K$15",
+    "categories": [
+     "AC Amber Noir",
+     "Honey Bliss Kiss",
+     "LVNC Vanilla Reverie",
+     "Honeycrest",
+     "A Durand Cinnamon Spark"
+    ],
+    "chart_title": null,
+    "upc_cells": "B11:B15",
+    "upcs": [
+     "875218534223",
+     "375301052429",
+     "567219040266",
+     "901153373247",
+     "217313054556"
+    ]
+   },
+   "cut_at_row": 32,
+   "png": "b_gpt_A18-E32.png",
+   "png_px": [
+    1372,
+    518
+   ],
+   "png_sha256": "9a9a70661334016645e28365097c8a3ebce81639d9ed61d41a6bcae9581f0969"
+  },
+  {
+   "card": "C",
+   "cand": "opus",
+   "task_id": "1137e2bb-bdf9-4876-b572-f29b7de5e595",
+   "run_uuid": "iS5pLfPvTxhxxXScg7HXVw",
+   "file": "PO_Audit_Error_Summary.docx",
+   "sha256": "f687de7ed5ef52ab69c590be76863b0903e24f37b9d3a72ec42252aefed05487",
+   "manifest_sha256_checked": true,
+   "sheet": null,
+   "range": null,
+   "header_row": null,
+   "kind": "doc_paragraph",
+   "mark": null,
+   "hidden_columns": null,
+   "text": {
+    "heading": "1. Summary",
+    "paragraph": "I audited all 41 PO lines in the export (10 POs, 16 SKUs, 4 ship-to locations) against two checks: Price Mismatch (entered unit price ≠ expected unit price) and Case Pack (a CASE-UOM line whose ordered units are not a whole multiple of the case pack).",
+    "document_terms": {
+     "multiple": 3,
+     "divisib": 1
+    },
+    "rendered_terms": {
+     "multiple": 3,
+     "divisib": 1
+    }
+   },
+   "page": 1,
+   "clip_pt": [
+    62.5,
+    141.4,
+    540.7,
+    204.4
+   ],
+   "png": "c_opus_summary.png",
+   "png_px": [
+    1288,
+    181
+   ],
+   "png_sha256": "af5cc23eaa971682b65493a55d3df6c8b560436df9e01d239eb3c56fb1c48428"
+  },
+  {
+   "card": "C",
+   "cand": "gpt",
+   "task_id": "1137e2bb-bdf9-4876-b572-f29b7de5e595",
+   "run_uuid": "mE6xrcKcirXrQgh4ugBfbE",
+   "file": "Wholesale_Order_Audit_Summary.docx",
+   "sha256": "b798ae94af50f517ad6f9a4f2e63e04b5d1766e1e3b7e81085c69c6bc2bf0359",
+   "manifest_sha256_checked": true,
+   "sheet": null,
+   "range": null,
+   "header_row": null,
+   "kind": "doc_paragraph",
+   "mark": null,
+   "hidden_columns": null,
+   "text": {
+    "heading": "Method & workbook use",
+    "paragraph": "Price errors compare entered vs. expected unit prices at 2-decimal precision, assuming expected prices are authoritative. Case-pack errors count invalid CASE lines once; EA lines are exempt. Total errors sum the two flags. The SKU Summary tab expands via + to PO totals; filter RawData for individual ship-to lines. This is a 41-line snapshot, not a measure of invoice losses, short shipments or assessed fines; no order dates or shipment status were supplied.",
+    "document_terms": {
+     "multiple": 0,
+     "divisib": 1
+    },
+    "rendered_terms": {
+     "multiple": 0,
+     "divisib": 1
+    }
+   },
+   "page": 1,
+   "clip_pt": [
+    46.9,
+    634.7,
+    564.5,
+    724.4
+   ],
+   "png": "c_gpt_summary.png",
+   "png_px": [
+    1393,
+    252
+   ],
+   "png_sha256": "571e1be90d87f5697718aee23c0c4bcbc29a4d4c9cda28285f6d4ecc4591cf6b"
+  }
+ ]
+}
