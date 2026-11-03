@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-11-03T15:24:00+00:00",
+ "generated_at": "2026-11-03T15:24:52+00:00",
  "build": "final",
  "pending": [],
  "warnings": [],
@@ -14,7 +14,7 @@
   },
   {
    "source": "repository: docs/status.md",
-   "sha256": "3ad398b22ccad49cb7803b7282c131bd02b32349dd25ec0cfa5785450f5d4963"
+   "sha256": "4755c9aefc877ece186b5386b8e77de406759669e9cf2629dc37916cd561af06"
   },
   {
    "source": "repository: preregistration.md",
@@ -211,11 +211,11 @@
    "value": {
     "rows": 170,
     "by_class": {
+     "grader_false_fail": 67,
+     "confirmed_fail": 33,
      "leave": 42,
      "verified_pass": 21,
-     "grader_false_fail": 67,
      "verified_fail": 6,
-     "confirmed_fail": 33,
      "grader_false_pass": 1
     },
     "confirmed_failing": 40

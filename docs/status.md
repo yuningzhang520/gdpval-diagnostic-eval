@@ -1,7 +1,11 @@
 # Status
 
-Current stage: **Deliverables: page v5.3 clarity round, built final (2026-11-03), awaiting "commit"** (entry "Site
-v5.3: clarity round"). Not committed, not deployed.
+Current stage: **Publication prep, phase 1 done (2026-11-03)**: page and report committed (`1a5c94c`), publish prep
+committed and pushed to the private repository (entry "Publication prep, phase 1"). Waiting for the author's "go
+public" (phase 2: make the repository public, enable Pages, verify the live site, tag `v1.0-submission`).
+
+Earlier header, kept for the record: **Deliverables: page v5.3 clarity round, built final (2026-11-03), awaiting
+"commit"** (entry "Site v5.3: clarity round").
 
 Earlier header, kept for the record: **Deliverables: page v5.2 after a second external review, built final
 (2026-11-03), awaiting "commit"** (entry "Site v5.2: second review").
@@ -6054,6 +6058,36 @@ After a read-only review round (chat), the author agreed to every proposed chang
   term check clean; no local path in `metrics.json`; preview and screenshots at 1200 and 390 px, light and dark, in
   `~/turing-eval-runs/analysis/site_v5_1_*`. Not committed, not deployed.
 
+## Publication prep, phase 1 (2026-11-03)
+
+Authorized by the author in chat (commit and push to the still-private repository; stop before going public). No
+history rewrite, no force push, no tag moved, no paid call; frozen verdicts, ledgers and adjudication records
+untouched; the code under the freeze tags unchanged.
+- Privacy scan, working tree and full history (`git log -p --all`, 114 commits): no real credential (every key-like
+  string is a test fixture; compared with the five `.env` values as booleans, none matches); the brief PDF, the GDPval
+  paper PDF, `plan/`, `private/`, `.env`, the parquet and the blind labels were never committed; no recruiter
+  correspondence; no ledger, log, Inspect log or model-output file ever tracked; no file or blob over 5 MB. Local
+  absolute paths: 62 lines in history (username only, already public in the repository URL; not rewritten); in the
+  working tree the documentation paths were replaced (`docs/status.md`, `docs/codex_review_2.md`, report 8.2) by
+  `<repo>`, `~/turing-eval-runs` or `<tmp>`; the remaining hits are frozen code (docstrings, the sandbox-isolation
+  deny list, synthetic test paths) and two synthetic placeholders in this log. One chat quote in Chinese in this log
+  translated.
+- Content audit against the final page: no dead relative link; report references to the local run store now carry
+  `~/turing-eval-runs/` (three in the report, one in `site/README.md`, two here); `site/README.md` uses the page's
+  terms (failure source, evaluation run); `PLAN.md`'s opening no longer says no results exist. Not changed (historical
+  log entries): this log's mention of `grading/freeze/freeze-v1_manifest.json` (an earlier design; the freeze record is
+  `harness/freeze/freeze-v1-generation.json`); "the human" in this log and the dated process records under `docs/`.
+- Repository hygiene: nothing tracked needed untracking (no caches, previews, scratch files or page specs; specs and
+  previews live in the local run store).
+- README for reviewers: the site URL and report link at the top, a repository map, how to check a number, rebuild the
+  page and rerun the evaluation (with what each needs and the costs), "Built with coding agents", the GDPval data
+  attribution; the critical-criteria sentence no longer refers to the pilot task.
+- Pages workflow (`.github/workflows/pages.yml`): on a push to `main` touching the page, or by hand; publishes
+  `site/index.html`, `site/img/` and `site/data/` as committed (no build step); refuses a draft build; skipped while the
+  repository is private. Pages itself not enabled.
+- Remote: `origin` is `yuningzhang520/gdpval-diagnostic-eval`, the repository every footer link names; all local tags
+  (freeze, grader and `v1.x` tags) were already on the remote.
+
 ## Site v5.3: clarity round (2026-11-03)
 
 A full read of the page with every collapsed section opened, as a reader would, raised six clarity questions (chat);
@@ -6222,7 +6256,8 @@ The author approved the v5.1 revision with final edits (chat, 2026-11-03).
 
 ## In flight
 
-- Nothing is running. The v5.3 page is built final; it waits for the author's "commit". Nothing since
+- Nothing is running. Phase 1 of publication is pushed to the private repository; phase 2 waits for the author's "go
+  public". Nothing since
   `81538cb` is committed, and nothing is deployed (the repository stays private for now).
 
 Earlier list (2026-11-01), kept for the record: V1.1 tagged (`v1.1-judge-item-recovery`, `57e2a25`); Judge Validation
@@ -6599,10 +6634,13 @@ or superseded later (entries above).
 - 2026-11-03 · Site v5.1 approved with final edits (all twelve requirement-source judgment calls approved; Quality adjudication rule; Author choices limit; formal generation cost per model from the ledgers, 14.90 / 3.08 USD, not the worker-ledger figures 13.41 / 2.78; 1 failed task per model under the added rule; tile 3 wording); final build passed; not committed
 - 2026-11-03 · Site v5.2 after the second external review (title "Omissions and form, not arithmetic"; tally sensitivity; 67 of 100 graded fails; count flow and report 7.7 correction 69 → 70; data-section fixes; Opus per-model line; B unchanged); final build passed; not committed
 - 2026-11-03 · Site v5.3 clarity round approved (one name per concept, enforced by the term check; card C quotes; 67% scoped; review chart cut; data section reordered); final build passed; not committed
+- 2026-11-03 · Publication prep phase 1 (privacy scan clean, documentation paths replaced, reviewer README, Pages workflow); commits `1a5c94c` (page and report) and the publish-prep commit, pushed to the private repository
 
 ## Next stage (not started)
 
-Deliverables hand-off, on the author's go only: commit the site, report and status (on "commit"); run the publication
+Deliverables hand-off, on the author's "go public" only (phase 2): make the repository public, set Pages to GitHub
+Actions and run the workflow, verify the live page, tag `v1.0-submission`. Earlier wording, kept: commit the site,
+report and status (on "commit"); run the publication
 checks (no secrets, no `private/`, `plan/`, `.env`, parquet or sealed labels in the repository or its history; every
 evidence link resolves); deploy the committed `site/` only when the author decides.
 

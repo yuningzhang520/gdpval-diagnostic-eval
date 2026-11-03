@@ -1,0 +1,54 @@
+# Deploys the submission page to GitHub Pages.
+# Publishes the committed page as-is (site/index.html, site/img/, site/data/); it does not rebuild, because
+# site/build.py needs the local run store and the GDPval rubrics, which are not in the repository.
+# Runs on a push to main that touches the page, or by hand. While the repository is private the job is skipped,
+# so nothing deploys before the repository is made public and Pages is set to "GitHub Actions".
+name: pages
+on:
+  push:
+    branches: [main]
+    paths:
+      - "site/index.html"
+      - "site/img/**"
+      - "site/data/**"
+      - ".github/workflows/pages.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: pages
+  cancel-in-progress: false
+jobs:
+  deploy:
+    if: ${{ !github.event.repository.private }}
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Refuse a draft build
+        run: |
+          test -f site/index.html
+          if grep -q "Draft build, not for publication" site/index.html; then echo "site/index.html is a draft build"; exit 1; fi
+          python3 - <<'EOF'
+          import json
+          m = json.load(open("site/data/metrics.json"))
+          assert m["build"] == "final", m["build"]
+          assert not m["pending"], m["pending"]
+          assert not m["warnings"], m["warnings"]
+          EOF
+      - name: Stage the page (index.html, img/, data/ only)
+        run: |
+          mkdir -p _site
+          cp site/index.html _site/
+          cp -R site/img site/data _site/
+          touch _site/.nojekyll
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - id: deployment
+        uses: actions/deploy-pages@v4

@@ -11,9 +11,9 @@ statement below is to be checked against the code.
 - Diff baseline: commit `a9a1f88293264d653e4f0ded024eeeedcf1f4636`, the pin of the Codex Review 1 B2 closure
   (`docs/codex_review_1_b2_closure_2.md`).
 - This file was committed after the pin. Before anything else, run:
-  `git -C /Users/yuning/turing-th diff --name-only 5121e1a HEAD -- grading harness config.json`
+  `git -C <repo> diff --name-only 5121e1a HEAD -- grading harness config.json`
   If it prints anything, stop and report it: the code under review is no longer the code in the working tree.
-- Working tree: `/Users/yuning/turing-th`. Gold deliverables and rubrics live in the untracked `private/` and the tests
+- Working tree: `<repo>`. Gold deliverables and rubrics live in the untracked `private/` and the tests
   need them, so the review runs in that working tree and does not use an export. Do not modify, add, stage or commit
   anything there. Write any output only under a scratch directory of your own, for example `/tmp/codex-r2/`.
 - Do not read `plan/`, `.env` or any credential. Do not run `grading.judge_dev run|pass2`,
@@ -24,10 +24,10 @@ statement below is to be checked against the code.
   Cost and coverage registries without verdicts may be read: `~/turing-eval-runs/judge_validation/registry.jsonl` and
   `ledger.json`. Gold deliverables, rubrics and recalculation references under `private/` may be read.
 - Codex CLI, read-only, from the working tree. For example:
-  `codex --cd /Users/yuning/turing-th --sandbox read-only --ask-for-approval never`
+  `codex --cd <repo> --sandbox read-only --ask-for-approval never`
   (confirm the flags with `codex --help`). In a read-only sandbox, tests that create temporary files may be refused.
   Then verify the code and the recorded logs listed in section 2E, and list the tests you could not run.
-- Harness tests must run through `harness/tests/run_isolated.sh /Users/yuning/turing-th <module>`, because the
+- Harness tests must run through `harness/tests/run_isolated.sh <repo> <module>`, because the
   collector refuses symlinked temporary paths such as macOS `/var`. Grading tests run with
   `.venv/bin/python -m unittest <module>` from the working tree root.
 
@@ -164,7 +164,7 @@ Gold-first evidence per task:
   `GOLD_RECALC_DOCKER=1` and the pinned LibreOffice image.
 - Docker-gated suites: `grading/tests/regress_recalc_docker.py` and `grading/tests/regress_grading_cli.py`. Their
   latest results are in section 4.
-- `logs/` is not tracked; the paths above are local to `/Users/yuning/turing-th`.
+- `logs/` is not tracked; the paths above are local to `<repo>`.
 
 ### G. V1.1 (`57e2a25`; preregistration 1.20; `docs/status.md` "V1.1")
 
@@ -335,7 +335,7 @@ guarantee) or Non-blocking, with the file and line, the input, the observed and 
 
 Docker-gated suites at `0c8efcb` (clean frozen tree; logs `logs/docker-gated-20261101T213418Z/`):
 
-| Command (`harness/tests/run_isolated.sh /Users/yuning/turing-th ...`) | Exit | Result | Wall time |
+| Command (`harness/tests/run_isolated.sh <repo> ...`) | Exit | Result | Wall time |
 |---|---|---|---|
 | `GOLD_RECALC_DOCKER=1 ... unittest grading.tests.test_gold_7d7fc9a7.GoldRecalcDockerTests` | 0 | 3/3 | 5.43 s |
 | `GOLD_RECALC_DOCKER=1 ... unittest grading.tests.test_gold_1137e2bb.GoldRecalcDockerTests` | 0 | 2/2 | 10.30 s |
@@ -372,16 +372,16 @@ Validation and Judge Validation records (2026-11-01, code `0c8efcb`; details in 
 ## 5. Prompt for a fresh Codex session
 
 ```
-You are reviewing a grading codebase read-only. Start with /Users/yuning/turing-th/docs/codex_review_2.md and treat
+You are reviewing a grading codebase read-only. Start with <repo>/docs/codex_review_2.md and treat
 every statement in it as a claim to verify against the code, not as a fact: open the cited files and functions,
 check them line by line, and run the listed tests yourself. Do not accept a description, a test count or a result
 because the package states it.
 
-Rules: do not modify, add, stage or commit any file in /Users/yuning/turing-th; write your notes and probe files only
+Rules: do not modify, add, stage or commit any file in <repo>; write your notes and probe files only
 under /tmp/codex-r2/. Do not read plan/, .env or any credential. Do not run any command that calls a model provider
 (grading.judge_dev run or pass2, grading.judge_validation run or recover, grading.run_grading --judge, harness.launcher,
 harness.scheduler). Harness tests run
-through harness/tests/run_isolated.sh /Users/yuning/turing-th <module>; grading tests with
+through harness/tests/run_isolated.sh <repo> <module>; grading tests with
 .venv/bin/python -m unittest <module> from the repository root.
 
 First check the pin (section 1): if git diff --name-only 5121e1a HEAD -- grading harness config.json prints anything,
@@ -393,7 +393,7 @@ outcome, and say plainly what you did not check.
 
 ## 6. Narrow delta review after Review 2 (prepared 2026-11-02)
 
-Review 2 (pinned `5121e1a`; report `/private/tmp/codex-r2/review-42FFBH0Q/REVIEW.md`) returned BLOCKED with R2-B1–B5.
+Review 2 (pinned `5121e1a`; report `<tmp>/codex-r2/review-42FFBH0Q/REVIEW.md`) returned BLOCKED with R2-B1–B5.
 This delta covers every code change since that pin. It is a targeted review against the reviewed snapshot, not a
 rerun of Review 2.
 
@@ -413,7 +413,7 @@ Range (updated 2026-11-02: the end moved to the N3 commit, by the human's decisi
 | (N3 commit) | `v1.6-recovery-hash-check` | engine .11: Review 2 N3, a judge-item recovery is refused when the base call record carries no request hash (`judge_recovery.recovery_plan`); positive and negative test; N1 package corrections (docs) | preregistration 1.22 "N3"; status "Review 2 N1–N5 decisions" |
 
 Verify each Blocking finding:
-- Rerun your own Review 2 probe logic against the N3 commit (`/private/tmp/codex-r2/review-42FFBH0Q/probes.py`, with
+- Rerun your own Review 2 probe logic against the N3 commit (`<tmp>/codex-r2/review-42FFBH0Q/probes.py`, with
   the snapshot paths pointed at a fresh export of `v1.6-recovery-hash-check`).
 - Our adapted copy and its outputs are in `logs/r2-fixes/` (`codex_probe_adapted.py`, `before_*.log`,
   `codex_probe_after.json`).
@@ -475,7 +475,7 @@ Constraints:
 - Read-only. Write only under `/tmp/codex-r2/`, and make no provider call.
 - Do not run `grading.judge_validation` (`run`, `recover`, `resume`), `grading.judge_formal` (`run`, `resume`),
   `grading.judge_dev`, `grading.run_grading --judge`, `harness.launcher` or `harness.scheduler`.
-- A Judge Validation worker runs unattended from `/Users/yuning/turing-th-jv`. Do not touch it, its process or
+- A Judge Validation worker runs unattended from `<repo>-jv`. Do not touch it, its process or
   `~/turing-eval-runs/judge_validation/`.
 - Do not open anything under `~/turing-eval-runs/validation/`, `~/turing-eval-runs/labeling/validation-v4/` or
   `~/turing-eval-runs/qa/`, and never quote Validation verdicts or judge responses.
@@ -489,10 +489,10 @@ Constraints:
 Prompt for a fresh Codex session:
 
 ```
-You are doing a narrow, read-only delta review. Read section 6 of /Users/yuning/turing-th/docs/codex_review_2.md and
+You are doing a narrow, read-only delta review. Read section 6 of <repo>/docs/codex_review_2.md and
 treat every statement in it as a claim to verify against the code at tag v1.6-recovery-hash-check, not as a fact.
-Export that tag (git archive v1.6-recovery-hash-check) into a new directory under /tmp/codex-r2/ and review there; do not modify, add, stage or commit anything in /Users/yuning/turing-th
-or /Users/yuning/turing-th-jv. Do not read plan/, .env or any credential, and make no provider call (no judge_validation
+Export that tag (git archive v1.6-recovery-hash-check) into a new directory under /tmp/codex-r2/ and review there; do not modify, add, stage or commit anything in <repo>
+or <repo>-jv. Do not read plan/, .env or any credential, and make no provider call (no judge_validation
 run/recover/resume, judge_formal run/resume, judge_dev, run_grading --judge, harness.launcher or harness.scheduler). Do not
 open ~/turing-eval-runs/validation/, ~/turing-eval-runs/labeling/validation-v4/ or ~/turing-eval-runs/qa/.
 First confirm that git diff --name-only v1.6-recovery-hash-check HEAD -- grading harness config.json prints nothing.

@@ -7,9 +7,9 @@ work deliverable, and when it cannot, which errors can be identified reliably an
 mapped to useful data improvements. The deliverables are a one-page site, this
 reproducible repository, and a dataset proposal.
 
-Status of each component is tracked in `docs/status.md`. Nothing in this document
-should be read as a result until the corresponding run artifacts (`results.jsonl`,
-`grades.jsonl`, Inspect logs) exist and are referenced from the site.
+This document describes the methods. The results are on the site (`site/`) and in
+`report/REPORT.md`, each figure traced to the run artifacts (`results.jsonl`, `grades.jsonl`,
+Inspect logs) in `site/data/metrics.json`; the project log is `docs/status.md`.
 
 ## 1. Research question and evidence chain
 
