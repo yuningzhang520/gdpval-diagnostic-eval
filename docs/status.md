@@ -1,8 +1,11 @@
 # Status
 
-Current stage: **Publication prep, phase 1 done (2026-11-03)**: page and report committed (`1a5c94c`), publish prep
-committed and pushed to the private repository (entry "Publication prep, phase 1"). Waiting for the author's "go
-public" (phase 2: make the repository public, enable Pages, verify the live site, tag `v1.0-submission`).
+Current stage: **Submitted state (2026-11-03)**: the repository is public, the page is live at
+https://yuningzhang520.github.io/gdpval-diagnostic-eval/ and verified, and the final commit is tagged
+`v1.0-submission` (entry "Publication, phase 2").
+
+Earlier header, kept for the record: **Publication prep, phase 1 done (2026-11-03)**: page and report committed
+(`1a5c94c`), publish prep committed and pushed to the private repository. Waiting for the author's "go public".
 
 Earlier header, kept for the record: **Deliverables: page v5.3 clarity round, built final (2026-11-03), awaiting
 "commit"** (entry "Site v5.3: clarity round").
@@ -6058,6 +6061,21 @@ After a read-only review round (chat), the author agreed to every proposed chang
   term check clean; no local path in `metrics.json`; preview and screenshots at 1200 and 390 px, light and dark, in
   `~/turing-eval-runs/analysis/site_v5_1_*`. Not committed, not deployed.
 
+## Publication, phase 2 (2026-11-03)
+
+On the author's "go public", after the results copies (`e0d0bd5`) passed every scan and hash check.
+- Before: the remote held only `main`, no issues, pull requests or releases. The repository was made public; Pages was
+  created with GitHub Actions as its source; the `pages` workflow ran by hand on `e0d0bd5` and deployed (every step
+  succeeded, the draft guard included).
+- Live checks, all passed: the page returns 200 and is byte-identical to `site/index.html`; the 8 evidence images
+  return 200 and are byte-identical to `site/img/`; `data/metrics.json` is byte-identical, `"build": "final"`, no pending
+  block, no warning; the footer links (repository, full report, metrics) return 200; the `freeze-v1-generation` and
+  `freeze-v1-grading` tag pages return 200; no local path in the live page or metrics; the page copy, build and crop
+  scripts are not served (404). Rendered in headless Chrome at 1200 and 390 px with every image loaded.
+- This entry's commit refreshes `site/data/metrics.json` for the new hash of this log (the page is unchanged), is
+  redeployed by the workflow, and is tagged `v1.0-submission`. The repository's About gives a one-line description and
+  the site URL.
+
 ## Results copies and the brief check (2026-11-03)
 
 Requested by the author with the approval of phase 1. No page change; the originals in the run store untouched.
@@ -6276,8 +6294,7 @@ The author approved the v5.1 revision with final edits (chat, 2026-11-03).
 
 ## In flight
 
-- Nothing is running. Phase 1 of publication is pushed to the private repository; phase 2 waits for the author's "go
-  public". Nothing since
+- Nothing is running. The repository is public and the page is live; the submission is tagged `v1.0-submission`. Nothing since
   `81538cb` is committed, and nothing is deployed (the repository stays private for now).
 
 Earlier list (2026-11-01), kept for the record: V1.1 tagged (`v1.1-judge-item-recovery`, `57e2a25`); Judge Validation
@@ -6655,11 +6672,13 @@ or superseded later (entries above).
 - 2026-11-03 · Site v5.2 after the second external review (title "Omissions and form, not arithmetic"; tally sensitivity; 67 of 100 graded fails; count flow and report 7.7 correction 69 → 70; data-section fixes; Opus per-model line; B unchanged); final build passed; not committed
 - 2026-11-03 · Site v5.3 clarity round approved (one name per concept, enforced by the term check; card C quotes; 67% scoped; review chart cut; data section reordered); final build passed; not committed
 - 2026-11-03 · Publication prep phase 1 (privacy scan clean, documentation paths replaced, reviewer README, Pages workflow); commits `1a5c94c` (page and report) and the publish-prep commit, pushed to the private repository
+- 2026-11-03 · Results copies (`e0d0bd5`); repository made public; Pages deployed from GitHub Actions and verified live; final commit tagged `v1.0-submission`
 
 ## Next stage (not started)
 
-Deliverables hand-off, on the author's "go public" only (phase 2): make the repository public, set Pages to GitHub
-Actions and run the workflow, verify the live page, tag `v1.0-submission`. Earlier wording, kept: commit the site,
+Hand-off: send the site and repository links with the submission; prepare the live pitch. Earlier wording, kept: on the
+author's "go public" only (phase 2): make the repository public, set Pages to GitHub Actions and run the workflow,
+verify the live page, tag `v1.0-submission`; commit the site,
 report and status (on "commit"); run the publication
 checks (no secrets, no `private/`, `plan/`, `.env`, parquet or sealed labels in the repository or its history; every
 evidence link resolves); deploy the committed `site/` only when the author decides.
