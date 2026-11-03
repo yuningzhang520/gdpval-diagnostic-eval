@@ -1,0 +1,1348 @@
+{
+ "checkpoint": "~/turing-eval-runs/labeling/formal-v4-checkpoint/checkpoint.json",
+ "grading_freeze": "freeze-v1-grading (cc684ef)",
+ "judge_status": "provisional (deadline exception; Judge Validation agreement 3/3; Codex recheck 2 limitations)",
+ "runs": [
+  {
+   "task_id": "b5d2e6f1-62a2-433a-bcdd-95b260cdd860",
+   "model": "anthropic/claude-opus-5-5",
+   "run_uuid": "Mae4tizWVH2BiinB5zKQV2",
+   "pass": "pass-20261102T115725665994Z-0e9c",
+   "blocked": false,
+   "source": {
+    "results": "~/turing-eval-runs/formal/grading_sealed/Mae4tizWVH2BiinB5zKQV2/results.jsonl",
+    "grades": "~/turing-eval-runs/formal/grading_sealed/Mae4tizWVH2BiinB5zKQV2/grades.jsonl"
+   },
+   "judge_mode": "none",
+   "judge_completeness": "none",
+   "grader_version": "engine-2026-11-02.12+b5d2e6f1-2026-11-01.2",
+   "P": 58,
+   "E": 60,
+   "W": 65,
+   "P_over_E": 0.9666666666666667,
+   "E_over_W": 0.9230769230769231,
+   "ungraded": [
+    {
+     "item": 32,
+     "verdict": "pending_human",
+     "reason": "visual criterion: human review from the rendered deliverable"
+    }
+   ],
+   "critical_overall": "pass",
+   "critical": {
+    "C1": "pass",
+    "C2": "pass",
+    "C3": "pass",
+    "C4": "pass"
+   },
+   "critical_preregistered": null,
+   "critical_overall_preregistered": null,
+   "judge_items": 0,
+   "judge_verdicts": {},
+   "visual_items": {
+    "pending_human": 1
+   },
+   "generation_cost_usd": "1.493437"
+  },
+  {
+   "task_id": "b5d2e6f1-62a2-433a-bcdd-95b260cdd860",
+   "model": "openai/gpt-6.1-sol",
+   "run_uuid": "d5sypgfTdCCwfsFV9jdzLd",
+   "pass": "pass-20261102T115729995774Z-4fc2",
+   "blocked": false,
+   "source": {
+    "results": "~/turing-eval-runs/formal/grading_sealed/d5sypgfTdCCwfsFV9jdzLd/results.jsonl",
+    "grades": "~/turing-eval-runs/formal/grading_sealed/d5sypgfTdCCwfsFV9jdzLd/grades.jsonl"
+   },
+   "judge_mode": "none",
+   "judge_completeness": "none",
+   "grader_version": "engine-2026-11-02.12+b5d2e6f1-2026-11-01.2",
+   "P": 42,
+   "E": 58,
+   "W": 65,
+   "P_over_E": 0.7241379310344828,
+   "E_over_W": 0.8923076923076924,
+   "ungraded": [
+    {
+     "item": 12,
+     "verdict": "cannot_assess",
+     "reason": "extraction_failed: pivot_source unknown (source reference None not a cell range)"
+    },
+    {
+     "item": 32,
+     "verdict": "pending_human",
+     "reason": "visual criterion: human review from the rendered deliverable"
+    }
+   ],
+   "critical_overall": "fail",
+   "critical": {
+    "C1": "pass",
+    "C2": "fail",
+    "C3": "fail",
+    "C4": "pass"
+   },
+   "critical_preregistered": null,
+   "critical_overall_preregistered": null,
+   "judge_items": 0,
+   "judge_verdicts": {},
+   "visual_items": {
+    "pending_human": 1
+   },
+   "generation_cost_usd": "0.302156"
+  },
+  {
+   "task_id": "f841ddcf-2a28-4f6d-bac3-61b607219d3e",
+   "model": "anthropic/claude-opus-5-5",
+   "run_uuid": "hdDnxUR6sUhQD6PHLnhKSm",
+   "pass": "pass-20261102T115733218914Z-a5e4",
+   "blocked": false,
+   "source": {
+    "results": "~/turing-eval-runs/formal/grading_sealed/hdDnxUR6sUhQD6PHLnhKSm/results.jsonl",
+    "grades": "~/turing-eval-runs/formal/grading_sealed/hdDnxUR6sUhQD6PHLnhKSm/grades.jsonl"
+   },
+   "judge_mode": "real",
+   "judge_completeness": "complete",
+   "grader_version": "engine-2026-11-02.12+f841ddcf-2026-11-01.2",
+   "P": 82,
+   "E": 83,
+   "W": 88,
+   "P_over_E": 0.9879518072289156,
+   "E_over_W": 0.9431818181818182,
+   "ungraded": [
+    {
+     "item": 59,
+     "verdict": "pending_human",
+     "reason": "visual criterion: human review from the rendered deliverable"
+    }
+   ],
+   "critical_overall": "pass",
+   "critical": {
+    "C1": "pass",
+    "C2": "pass",
+    "C3": "pass",
+    "C4": "pass",
+    "C5": "pass"
+   },
+   "critical_preregistered": null,
+   "critical_overall_preregistered": null,
+   "judge_items": 7,
+   "judge_verdicts": {
+    "pass": 7
+   },
+   "visual_items": {
+    "pending_human": 1
+   },
+   "generation_cost_usd": "0.921411"
+  },
+  {
+   "task_id": "f841ddcf-2a28-4f6d-bac3-61b607219d3e",
+   "model": "openai/gpt-6.1-sol",
+   "run_uuid": "P8gA2U2jR7VzNWKqqdJ5SZ",
+   "pass": "pass-20261102T115847754554Z-0d8f",
+   "blocked": false,
+   "source": {
+    "results": "~/turing-eval-runs/formal/grading_sealed/P8gA2U2jR7VzNWKqqdJ5SZ/results.jsonl",
+    "grades": "~/turing-eval-runs/formal/grading_sealed/P8gA2U2jR7VzNWKqqdJ5SZ/grades.jsonl"
+   },
+   "judge_mode": "real",
+   "judge_completeness": "complete",
+   "grader_version": "engine-2026-11-02.12+f841ddcf-2026-11-01.2",
+   "P": 61,
+   "E": 81,
+   "W": 88,
+   "P_over_E": 0.7530864197530864,
+   "E_over_W": 0.9204545454545454,
+   "ungraded": [
+    {
+     "item": 37,
+     "verdict": "cannot_assess",
+     "reason": "extraction_failed: table_total unknown (no June shipped table total to compare with); table_total unknown (no slipped table total to compare with)"
+    },
+    {
+     "item": 59,
+     "verdict": "pending_human",
+     "reason": "visual criterion: human review from the rendered deliverable"
+    }
+   ],
+   "critical_overall": "fail",
+   "critical": {
+    "C1": "fail",
+    "C2": "fail",
+    "C3": "fail",
+    "C4": "fail",
+    "C5": "not_confirmed"
+   },
+   "critical_preregistered": null,
+   "critical_overall_preregistered": null,
+   "judge_items": 7,
+   "judge_verdicts": {
+    "fail": 1,
+    "pass": 6
+   },
+   "visual_items": {
+    "pending_human": 1
+   },
+   "generation_cost_usd": "0.181770"
+  },
+  {
+   "task_id": "47ef842d-8eac-4b90-bda8-dd934c228c96",
+   "model": "anthropic/claude-opus-5-5",
+   "run_uuid": "LVyjBBcU4iFqDKviwY2YJz",
+   "pass": "pass-20261102T120000409606Z-f47b",
+   "blocked": false,
+   "source": {
+    "results": "~/turing-eval-runs/formal/grading_sealed/LVyjBBcU4iFqDKviwY2YJz/results.jsonl",
+    "grades": "~/turing-eval-runs/formal/grading_sealed/LVyjBBcU4iFqDKviwY2YJz/grades.jsonl"
+   },
+   "judge_mode": "real",
+   "judge_completeness": "complete",
+   "grader_version": "engine-2026-11-02.12+47ef842d-2026-11-01.3",
+   "P": 82,
+   "E": 92,
+   "W": 99,
+   "P_over_E": 0.8913043478260869,
+   "E_over_W": 0.9292929292929293,
+   "ungraded": [
+    {
+     "item": 15,
+     "verdict": "pending_human",
+     "reason": "visual criterion: human review from the rendered deliverable"
+    },
+    {
+     "item": 16,
+     "verdict": "pending_human",
+     "reason": "visual criterion: human review from the rendered deliverable"
+    },
+    {
+     "item": 58,
+     "verdict": "pending_human",
+     "reason": "visual criterion: human review from the rendered deliverable"
+    }
+   ],
+   "critical_overall": "fail",
+   "critical": {
+    "C1": "pass",
+    "C2": "pass",
+    "C3": "pass",
+    "C4": "fail"
+   },
+   "critical_preregistered": null,
+   "critical_overall_preregistered": null,
+   "judge_items": 1,
+   "judge_verdicts": {
+    "pass": 1
+   },
+   "visual_items": {
+    "pending_human": 3
+   },
+   "generation_cost_usd": "1.115620"
+  },
+  {
+   "task_id": "47ef842d-8eac-4b90-bda8-dd934c228c96",
+   "model": "openai/gpt-6.1-sol",
+   "run_uuid": "dPR5yvN9wEfcMyQiAC2njB",
+   "pass": "pass-20261102T120015898362Z-9b7d",
+   "blocked": false,
+   "source": {
+    "results": "~/turing-eval-runs/formal/grading_sealed/dPR5yvN9wEfcMyQiAC2njB/results.jsonl",
+    "grades": "~/turing-eval-runs/formal/grading_sealed/dPR5yvN9wEfcMyQiAC2njB/grades.jsonl"
+   },
+   "judge_mode": "real",
+   "judge_completeness": "complete",
+   "grader_version": "engine-2026-11-02.12+47ef842d-2026-11-01.3",
+   "P": 76,
+   "E": 92,
+   "W": 99,
+   "P_over_E": 0.8260869565217391,
+   "E_over_W": 0.9292929292929293,
+   "ungraded": [
+    {
+     "item": 15,
+     "verdict": "pending_human",
+     "reason": "visual criterion: human review from the rendered deliverable"
+    },
+    {
+     "item": 16,
+     "verdict": "pending_human",
+     "reason": "visual criterion: human review from the rendered deliverable"
+    },
+    {
+     "item": 58,
+     "verdict": "pending_human",
+     "reason": "visual criterion: human review from the rendered deliverable"
+    }
+   ],
+   "critical_overall": "fail",
+   "critical": {
+    "C1": "pass",
+    "C2": "pass",
+    "C3": "pass",
+    "C4": "fail"
+   },
+   "critical_preregistered": null,
+   "critical_overall_preregistered": null,
+   "judge_items": 1,
+   "judge_verdicts": {
+    "fail": 1
+   },
+   "visual_items": {
+    "pending_human": 3
+   },
+   "generation_cost_usd": "0.324796"
+  },
+  {
+   "task_id": "1137e2bb-bdf9-4876-b572-f29b7de5e595",
+   "model": "anthropic/claude-opus-5-5",
+   "run_uuid": "iS5pLfPvTxhxxXScg7HXVw",
+   "pass": "pass-20261102T120033449260Z-cd91",
+   "blocked": false,
+   "source": {
+    "results": "~/turing-eval-runs/formal/grading_sealed/iS5pLfPvTxhxxXScg7HXVw/results.jsonl",
+    "grades": "~/turing-eval-runs/formal/grading_sealed/iS5pLfPvTxhxxXScg7HXVw/grades.jsonl"
+   },
+   "judge_mode": "real",
+   "judge_completeness": "complete",
+   "grader_version": "engine-2026-11-02.12+1137e2bb-2026-11-01.3",
+   "P": 60,
+   "E": 79,
+   "W": 80,
+   "P_over_E": 0.759493670886076,
+   "E_over_W": 0.9875,
+   "ungraded": [
+    {
+     "item": 21,
+     "verdict": "cannot_assess",
+     "reason": "extraction_failed: case_missing unmapped (['extended price variance ($)', 'units off case multiple'])"
+    }
+   ],
+   "critical_overall": "fail",
+   "critical": {
+    "C1": "pass",
+    "C2": "fail",
+    "C3": "pass"
+   },
+   "critical_preregistered": null,
+   "critical_overall_preregistered": null,
+   "judge_items": 7,
+   "judge_verdicts": {
+    "pass": 7
+   },
+   "visual_items": {},
+   "generation_cost_usd": "1.677193"
+  },
+  {
+   "task_id": "1137e2bb-bdf9-4876-b572-f29b7de5e595",
+   "model": "openai/gpt-6.1-sol",
+   "run_uuid": "mE6xrcKcirXrQgh4ugBfbE",
+   "pass": "pass-20261102T120138543561Z-511d",
+   "blocked": false,
+   "source": {
+    "results": "~/turing-eval-runs/formal/grading_sealed/mE6xrcKcirXrQgh4ugBfbE/results.jsonl",
+    "grades": "~/turing-eval-runs/formal/grading_sealed/mE6xrcKcirXrQgh4ugBfbE/grades.jsonl"
+   },
+   "judge_mode": "real",
+   "judge_completeness": "complete",
+   "grader_version": "engine-2026-11-02.12+1137e2bb-2026-11-01.3",
+   "P": 75,
+   "E": 77,
+   "W": 80,
+   "P_over_E": 0.974025974025974,
+   "E_over_W": 0.9625,
+   "ungraded": [
+    {
+     "item": 21,
+     "verdict": "cannot_assess",
+     "reason": "extraction_failed: case_missing unmapped (['line has error'])"
+    },
+    {
+     "item": 25,
+     "verdict": "cannot_assess",
+     "reason": "no number bound to the price-mismatch phrase; semantics unclear, route to judge/human"
+    },
+    {
+     "item": 26,
+     "verdict": "cannot_assess",
+     "reason": "conflicting case-pack counts [2, 10]; route to judge/human"
+    }
+   ],
+   "critical_overall": "not_confirmed",
+   "critical": {
+    "C1": "pass",
+    "C2": "pass",
+    "C3": "not_confirmed"
+   },
+   "critical_preregistered": null,
+   "critical_overall_preregistered": null,
+   "judge_items": 7,
+   "judge_verdicts": {
+    "pass": 7
+   },
+   "visual_items": {},
+   "generation_cost_usd": "0.243842"
+  },
+  {
+   "task_id": "c3525d4d-2012-45df-853e-2d2a0e902991",
+   "model": "anthropic/claude-opus-5-5",
+   "run_uuid": "fAFHskFwVPcLzn89SuYaxv",
+   "pass": "pass-20261102T120246281223Z-e733",
+   "blocked": false,
+   "source": {
+    "results": "~/turing-eval-runs/formal/grading_sealed/fAFHskFwVPcLzn89SuYaxv/results.jsonl",
+    "grades": "~/turing-eval-runs/formal/grading_sealed/fAFHskFwVPcLzn89SuYaxv/grades.jsonl"
+   },
+   "judge_mode": "real",
+   "judge_completeness": "complete",
+   "grader_version": "engine-2026-11-02.12+c3525d4d-2026-11-01.6",
+   "P": 52,
+   "E": 75,
+   "W": 86,
+   "P_over_E": 0.6933333333333334,
+   "E_over_W": 0.872093023255814,
+   "ungraded": [
+    {
+     "item": 28,
+     "verdict": "cannot_assess",
+     "reason": "extraction_failed: original total program cost ambiguous (2 of 4 candidate readings fail and the others do not; no independent evidence decides which original)"
+    },
+    {
+     "item": 29,
+     "verdict": "cannot_assess",
+     "reason": "extraction_failed: revised total program cost ambiguous (2 of 4 candidate readings fail and the others do not; no independent evidence decides which revised )"
+    },
+    {
+     "item": 30,
+     "verdict": "cannot_assess",
+     "reason": "extraction_failed: total program cost ambiguous (12 of 16 candidate readings fail and the others do not; no independent evidence decides which total )"
+    },
+    {
+     "item": 52,
+     "verdict": "pending_human",
+     "reason": "visual criterion: human review from the rendered deliverable"
+    }
+   ],
+   "critical_overall": "fail",
+   "critical": {
+    "C1": "pass",
+    "C2": "fail",
+    "C3": "pass"
+   },
+   "critical_preregistered": null,
+   "critical_overall_preregistered": null,
+   "judge_items": 5,
+   "judge_verdicts": {
+    "pass": 5
+   },
+   "visual_items": {
+    "pending_human": 1
+   },
+   "generation_cost_usd": "0.687388"
+  },
+  {
+   "task_id": "c3525d4d-2012-45df-853e-2d2a0e902991",
+   "model": "openai/gpt-6.1-sol",
+   "run_uuid": "SJbeNCc6EYF5dHerim5UD6",
+   "pass": "pass-20261102T120327674401Z-ee13",
+   "blocked": false,
+   "source": {
+    "results": "~/turing-eval-runs/formal/grading_sealed/SJbeNCc6EYF5dHerim5UD6/results.jsonl",
+    "grades": "~/turing-eval-runs/formal/grading_sealed/SJbeNCc6EYF5dHerim5UD6/grades.jsonl"
+   },
+   "judge_mode": "real",
+   "judge_completeness": "complete",
+   "grader_version": "engine-2026-11-02.12+c3525d4d-2026-11-01.6",
+   "P": 55,
+   "E": 75,
+   "W": 86,
+   "P_over_E": 0.7333333333333333,
+   "E_over_W": 0.872093023255814,
+   "ungraded": [
+    {
+     "item": 28,
+     "verdict": "cannot_assess",
+     "reason": "extraction_failed: original total program cost ambiguous (1 of 2 candidate readings fail and the others do not; no independent evidence decides which original)"
+    },
+    {
+     "item": 29,
+     "verdict": "cannot_assess",
+     "reason": "extraction_failed: revised total program cost ambiguous (1 of 2 candidate readings fail and the others do not; no independent evidence decides which revised )"
+    },
+    {
+     "item": 30,
+     "verdict": "cannot_assess",
+     "reason": "extraction_failed: total program cost ambiguous (3 of 4 candidate readings fail and the others do not; no independent evidence decides which total pr)"
+    },
+    {
+     "item": 52,
+     "verdict": "pending_human",
+     "reason": "visual criterion: human review from the rendered deliverable"
+    }
+   ],
+   "critical_overall": "fail",
+   "critical": {
+    "C1": "pass",
+    "C2": "fail",
+    "C3": "pass"
+   },
+   "critical_preregistered": null,
+   "critical_overall_preregistered": null,
+   "judge_items": 5,
+   "judge_verdicts": {
+    "pass": 5
+   },
+   "visual_items": {
+    "pending_human": 1
+   },
+   "generation_cost_usd": "0.230607"
+  },
+  {
+   "task_id": "7b08cd4d-df60-41ae-9102-8aaa49306ba2",
+   "model": "anthropic/claude-opus-5-5",
+   "run_uuid": "KU4bWmuqsWUUbkTXEu9Fpj",
+   "pass": "pass-20261102T120408339836Z-770e",
+   "blocked": false,
+   "source": {
+    "results": "~/turing-eval-runs/formal/grading_sealed/KU4bWmuqsWUUbkTXEu9Fpj/results.jsonl",
+    "grades": "~/turing-eval-runs/formal/grading_sealed/KU4bWmuqsWUUbkTXEu9Fpj/grades.jsonl"
+   },
+   "judge_mode": "real",
+   "judge_completeness": "complete",
+   "grader_version": "engine-2026-11-02.12+7b08cd4d-2026-11-01.3",
+   "P": 62,
+   "E": 83,
+   "W": 89,
+   "P_over_E": 0.7469879518072289,
+   "E_over_W": 0.9325842696629213,
+   "ungraded": [
+    {
+     "item": 5,
+     "verdict": "pending_human",
+     "reason": "visual criterion: human review from the rendered deliverable"
+    },
+    {
+     "item": 59,
+     "verdict": "pending_human",
+     "reason": "visual criterion: human review from the rendered deliverable"
+    }
+   ],
+   "critical_overall": "fail",
+   "critical": {
+    "C1": "fail",
+    "C2": "pass",
+    "C3": "pass"
+   },
+   "critical_preregistered": null,
+   "critical_overall_preregistered": null,
+   "judge_items": 14,
+   "judge_verdicts": {
+    "pass": 12,
+    "fail": 2
+   },
+   "visual_items": {
+    "pending_human": 2
+   },
+   "generation_cost_usd": "0.917356"
+  },
+  {
+   "task_id": "7b08cd4d-df60-41ae-9102-8aaa49306ba2",
+   "model": "openai/gpt-6.1-sol",
+   "run_uuid": "hX4B29t5iE2v3rFKMtqWqz",
+   "pass": "pass-20261102T120617329284Z-5da8",
+   "blocked": false,
+   "source": {
+    "results": "~/turing-eval-runs/formal/grading_sealed/hX4B29t5iE2v3rFKMtqWqz/results.jsonl",
+    "grades": "~/turing-eval-runs/formal/grading_sealed/hX4B29t5iE2v3rFKMtqWqz/grades.jsonl"
+   },
+   "judge_mode": "real",
+   "judge_completeness": "complete",
+   "grader_version": "engine-2026-11-02.12+7b08cd4d-2026-11-01.3",
+   "P": 62,
+   "E": 82,
+   "W": 89,
+   "P_over_E": 0.7560975609756098,
+   "E_over_W": 0.9213483146067416,
+   "ungraded": [
+    {
+     "item": 5,
+     "verdict": "pending_human",
+     "reason": "visual criterion: human review from the rendered deliverable"
+    },
+    {
+     "item": 41,
+     "verdict": "cannot_assess",
+     "reason": "The excerpt only provides the high-level summary 'Tour P&L' sheet and lacks the 'Expense Detail' sheet, making it impossible to verify the exact line items, labels, and individual amounts included in 'Other Tour Costs'."
+    },
+    {
+     "item": 59,
+     "verdict": "pending_human",
+     "reason": "visual criterion: human review from the rendered deliverable"
+    }
+   ],
+   "critical_overall": "fail",
+   "critical": {
+    "C1": "fail",
+    "C2": "pass",
+    "C3": "pass"
+   },
+   "critical_preregistered": null,
+   "critical_overall_preregistered": null,
+   "judge_items": 14,
+   "judge_verdicts": {
+    "pass": 11,
+    "cannot_assess": 1,
+    "fail": 2
+   },
+   "visual_items": {
+    "pending_human": 2
+   },
+   "generation_cost_usd": "0.267212"
+  },
+  {
+   "task_id": "7d7fc9a7-21a7-4b83-906f-416dea5ad04f",
+   "model": "anthropic/claude-opus-5-5",
+   "run_uuid": "czgd84YmwwTZzDpVKD5vhD",
+   "pass": "pass-20261102T120837825114Z-bd90",
+   "blocked": false,
+   "source": {
+    "results": "~/turing-eval-runs/formal/grading_sealed/czgd84YmwwTZzDpVKD5vhD/results.jsonl",
+    "grades": "~/turing-eval-runs/formal/grading_sealed/czgd84YmwwTZzDpVKD5vhD/grades.jsonl"
+   },
+   "judge_mode": "real",
+   "judge_completeness": "complete",
+   "grader_version": "engine-2026-11-02.12+7d7fc9a7-2026-11-01.7",
+   "P": 36,
+   "E": 39,
+   "W": 95,
+   "P_over_E": 0.9230769230769231,
+   "E_over_W": 0.4105263157894737,
+   "ungraded": [
+    {
+     "item": 11,
+     "verdict": "cannot_assess",
+     "reason": "extraction_failed: detail_totals unknown (no monthly amortization totals on the 1250 schedule to compare with); detail_totals unknown (no monthly amortization totals on the 1251 schedule to compare with)"
+    },
+    {
+     "item": 13,
+     "verdict": "cannot_assess",
+     "reason": "extraction_failed: sheet 'Prepaid Expenses 1250': vendor column ambiguous ([{'col': 0, 'header': 'vendor adobe magento', 'method': 'contains', 'also_claimed_by': []}, {'col': 3, 'header': 'description it services', 'method': 'contains', 'also_claimed_by': []}])"
+    },
+    {
+     "item": 14,
+     "verdict": "cannot_assess",
+     "reason": "extraction_failed: sheet 'Prepaid Expenses 1250': vendor column ambiguous ([{'col': 0, 'header': 'vendor adobe magento', 'method': 'contains', 'also_claimed_by': []}, {'col': 3, 'header': 'description it services', 'method': 'contains', 'also_claimed_by': []}])"
+    },
+    {
+     "item": 19,
+     "verdict": "cannot_assess",
+     "reason": "extraction_failed: sheet 'Prepaid Expenses 1250': vendor column ambiguous ([{'col': 0, 'header': 'vendor adobe magento', 'method': 'contains', 'also_claimed_by': []}, {'col': 3, 'header': 'description it services', 'method': 'contains', 'also_claimed_by': []}])"
+    },
+    {
+     "item": 20,
+     "verdict": "cannot_assess",
+     "reason": "extraction_failed: sheet 'Prepaid Expenses 1250': vendor column ambiguous ([{'col': 0, 'header': 'vendor adobe magento', 'method': 'contains', 'also_claimed_by': []}, {'col': 3, 'header': 'description it services', 'method': 'contains', 'also_claimed_by': []}])"
+    },
+    {
+     "item": 21,
+     "verdict": "cannot_assess",
+     "reason": "extraction_failed: sheet 'Prepaid Expenses 1250': vendor column ambiguous ([{'col': 0, 'header': 'vendor adobe magento', 'method': 'contains', 'also_claimed_by': []}, {'col': 3, 'header': 'description it services', 'method': 'contains', 'also_claimed_by': []}])"
+    },
+    {
+     "item": 22,
+     "verdict": "cannot_assess",
+     "reason": "extraction_failed: sheet 'Prepaid Expenses 1250': vendor column ambiguous ([{'col': 0, 'header': 'vendor adobe magento', 'method': 'contains', 'also_claimed_by': []}, {'col': 3, 'header': 'description it services', 'method': 'contains', 'also_claimed_by': []}])"
+    },
+    {
+     "item": 23,
+     "verdict": "cannot_assess",
+     "reason": "extraction_failed: sheet 'Prepaid Expenses 1250': vendor column ambiguous ([{'col': 0, 'header': 'vendor adobe magento', 'method': 'contains', 'also_claimed_by': []}, {'col': 3, 'header': 'description it services', 'method': 'contains', 'also_claimed_by': []}])"
+    },
+    {
+     "item": 24,
+     "verdict": "cannot_assess",
+     "reason": "extraction_failed: sheet 'Prepaid Expenses 1250': vendor column ambiguous ([{'col': 0, 'header': 'vendor adobe magento', 'method': 'contains', 'also_claimed_by': []}, {'col': 3, 'header': 'description it services', 'method': 'contains', 'also_claimed_by': []}])"
+    },
+    {
+     "item": 25,
+     "verdict": "cannot_assess",
+     "reason": "extraction_failed: sheet 'Prepaid Expenses 1250': vendor column ambiguous ([{'col': 0, 'header': 'vendor adobe magento', 'method': 'contains', 'also_claimed_by': []}, {'col': 3, 'header': 'description it services', 'method': 'contains', 'also_claimed_by': []}])"
+    },
+    {
+     "item": 26,
+     "verdict": "cannot_assess",
+     "reason": "extraction_failed: sheet 'Prepaid Expenses 1250': vendor column ambiguous ([{'col': 0, 'header': 'vendor adobe magento', 'method': 'contains', 'also_claimed_by': []}, {'col': 3, 'header': 'description it services', 'method': 'contains', 'also_claimed_by': []}])"
+    },
+    {
+     "item": 27,
+     "verdict": "cannot_assess",
+     "reason": "extraction_failed: sheet 'Prepaid Expenses 1250': vendor column ambiguous ([{'col': 0, 'header': 'vendor adobe magento', 'method': 'contains', 'also_claimed_by': []}, {'col': 3, 'header': 'description it services', 'method': 'contains', 'also_claimed_by': []}])"
+    },
+    {
+     "item": 28,
+     "verdict": "cannot_assess",
+     "reason": "extraction_failed: sheet 'Prepaid Expenses 1250': vendor column ambiguous ([{'col': 0, 'header': 'vendor adobe magento', 'method': 'contains', 'also_claimed_by': []}, {'col': 3, 'header': 'description it services', 'method': 'contains', 'also_claimed_by': []}])"
+    },
+    {
+     "item": 29,
+     "verdict": "cannot_assess",
+     "reason": "extraction_failed: sheet 'Prepaid Expenses 1250': vendor column ambiguous ([{'col': 0, 'header': 'vendor adobe magento', 'method': 'contains', 'also_claimed_by': []}, {'col': 3, 'header': 'description it services', 'method': 'contains', 'also_claimed_by': []}])"
+    },
+    {
+     "item": 30,
+     "verdict": "cannot_assess",
+     "reason": "extraction_failed: sheet 'Prepaid Expenses 1250': vendor column ambiguous ([{'col': 0, 'header': 'vendor adobe magento', 'method': 'contains', 'also_claimed_by': []}, {'col': 3, 'header': 'description it services', 'method': 'contains', 'also_claimed_by': []}])"
+    },
+    {
+     "item": 33,
+     "verdict": "cannot_assess",
+     "reason": "extraction_failed: sheet 'Prepaid Insurance 1251': vendor column ambiguous ([{'col': 0, 'header': 'vendor', 'method': 'exact', 'also_claimed_by': []}, {'col': 3, 'header': 'description', 'method': 'exact', 'also_claimed_by': []}])"
+    },
+    {
+     "item": 34,
+     "verdict": "cannot_assess",
+     "reason": "extraction_failed: sheet 'Prepaid Insurance 1251': vendor column ambiguous ([{'col': 0, 'header': 'vendor', 'method': 'exact', 'also_claimed_by': []}, {'col': 3, 'header': 'description', 'method': 'exact', 'also_claimed_by': []}])"
+    },
+    {
+     "item": 36,
+     "verdict": "cannot_assess",
+     "reason": "extraction_failed: sheet 'Prepaid Insurance 1251': vendor column ambiguous ([{'col': 0, 'header': 'vendor', 'method': 'exact', 'also_claimed_by': []}, {'col': 3, 'header': 'description', 'method': 'exact', 'also_claimed_by': []}])"
+    },
+    {
+     "item": 37,
+     "verdict": "cannot_assess",
+     "reason": "extraction_failed: sheet 'Prepaid Insurance 1251': vendor column ambiguous ([{'col': 0, 'header': 'vendor', 'method': 'exact', 'also_claimed_by': []}, {'col': 3, 'header': 'description', 'method': 'exact', 'also_claimed_by': []}])"
+    },
+    {
+     "item": 38,
+     "verdict": "cannot_assess",
+     "reason": "extraction_failed: sheet 'Prepaid Insurance 1251': vendor column ambiguous ([{'col': 0, 'header': 'vendor', 'method': 'exact', 'also_claimed_by': []}, {'col': 3, 'header': 'description', 'method': 'exact', 'also_claimed_by': []}])"
+    },
+    {
+     "item": 39,
+     "verdict": "cannot_assess",
+     "reason": "extraction_failed: sheet 'Prepaid Insurance 1251': vendor column ambiguous ([{'col': 0, 'header': 'vendor', 'method': 'exact', 'also_claimed_by': []}, {'col': 3, 'header': 'description', 'method': 'exact', 'also_claimed_by': []}])"
+    },
+    {
+     "item": 40,
+     "verdict": "cannot_assess",
+     "reason": "extraction_failed: sheet 'Prepaid Insurance 1251': vendor column ambiguous ([{'col': 0, 'header': 'vendor', 'method': 'exact', 'also_claimed_by': []}, {'col': 3, 'header': 'description', 'method': 'exact', 'also_claimed_by': []}])"
+    },
+    {
+     "item": 41,
+     "verdict": "cannot_assess",
+     "reason": "extraction_failed: sheet 'Prepaid Insurance 1251': vendor column ambiguous ([{'col': 0, 'header': 'vendor', 'method': 'exact', 'also_claimed_by': []}, {'col': 3, 'header': 'description', 'method': 'exact', 'also_claimed_by': []}])"
+    },
+    {
+     "item": 42,
+     "verdict": "cannot_assess",
+     "reason": "extraction_failed: sheet 'Prepaid Insurance 1251': vendor column ambiguous ([{'col': 0, 'header': 'vendor', 'method': 'exact', 'also_claimed_by': []}, {'col': 3, 'header': 'description', 'method': 'exact', 'also_claimed_by': []}])"
+    },
+    {
+     "item": 43,
+     "verdict": "cannot_assess",
+     "reason": "extraction_failed: sheet 'Prepaid Insurance 1251': vendor column ambiguous ([{'col': 0, 'header': 'vendor', 'method': 'exact', 'also_claimed_by': []}, {'col': 3, 'header': 'description', 'method': 'exact', 'also_claimed_by': []}])"
+    },
+    {
+     "item": 44,
+     "verdict": "cannot_assess",
+     "reason": "extraction_failed: sheet 'Prepaid Insurance 1251': vendor column ambiguous ([{'col': 0, 'header': 'vendor', 'method': 'exact', 'also_claimed_by': []}, {'col': 3, 'header': 'description', 'method': 'exact', 'also_claimed_by': []}])"
+    },
+    {
+     "item": 47,
+     "verdict": "cannot_assess",
+     "reason": "extraction_failed: sheet 'Prepaid Insurance 1251': vendor column ambiguous ([{'col': 0, 'header': 'vendor', 'method': 'exact', 'also_claimed_by': []}, {'col': 3, 'header': 'description', 'method': 'exact', 'also_claimed_by': []}])"
+    },
+    {
+     "item": 48,
+     "verdict": "cannot_assess",
+     "reason": "extraction_failed: sheet 'Prepaid Insurance 1251': vendor column ambiguous ([{'col': 0, 'header': 'vendor', 'method': 'exact', 'also_claimed_by': []}, {'col': 3, 'header': 'description', 'method': 'exact', 'also_claimed_by': []}])"
+    },
+    {
+     "item": 49,
+     "verdict": "cannot_assess",
+     "reason": "extraction_failed: sheet 'Prepaid Insurance 1251': vendor column ambiguous ([{'col': 0, 'header': 'vendor', 'method': 'exact', 'also_claimed_by': []}, {'col': 3, 'header': 'description', 'method': 'exact', 'also_claimed_by': []}])"
+    },
+    {
+     "item": 50,
+     "verdict": "cannot_assess",
+     "reason": "extraction_failed: sheet 'Prepaid Insurance 1251': vendor column ambiguous ([{'col': 0, 'header': 'vendor', 'method': 'exact', 'also_claimed_by': []}, {'col': 3, 'header': 'description', 'method': 'exact', 'also_claimed_by': []}])"
+    },
+    {
+     "item": 56,
+     "verdict": "pending_human",
+     "reason": "visual criterion: human review from the rendered deliverable"
+    }
+   ],
+   "critical_overall": "fail",
+   "critical": {
+    "C1": "not_confirmed",
+    "C2": "not_confirmed",
+    "C3": "not_confirmed",
+    "C4": "fail"
+   },
+   "critical_preregistered": null,
+   "critical_overall_preregistered": null,
+   "judge_items": 14,
+   "judge_verdicts": {
+    "pass": 14
+   },
+   "visual_items": {
+    "pending_human": 1
+   },
+   "generation_cost_usd": "1.673360"
+  },
+  {
+   "task_id": "7d7fc9a7-21a7-4b83-906f-416dea5ad04f",
+   "model": "openai/gpt-6.1-sol",
+   "run_uuid": "FDVJTwSvqDJFQj6JyTpkHY",
+   "pass": "pass-20261102T121133296465Z-6b7c",
+   "blocked": false,
+   "source": {
+    "results": "~/turing-eval-runs/formal/grading_sealed/FDVJTwSvqDJFQj6JyTpkHY/results.jsonl",
+    "grades": "~/turing-eval-runs/formal/grading_sealed/FDVJTwSvqDJFQj6JyTpkHY/grades.jsonl"
+   },
+   "judge_mode": "real",
+   "judge_completeness": "complete",
+   "grader_version": "engine-2026-11-02.12+7d7fc9a7-2026-11-01.7",
+   "P": 66,
+   "E": 84,
+   "W": 95,
+   "P_over_E": 0.7857142857142857,
+   "E_over_W": 0.8842105263157894,
+   "ungraded": [
+    {
+     "item": 7,
+     "verdict": "cannot_assess",
+     "reason": "extraction_failed: summary_cells ambiguous (balance_1250: labelled candidates differ in linkage [('A9', 'hard_coded'), ('F9', 'linked'), ('G9', ); summary_cells ambiguous (balance_1251: labelled candidates differ in linkage [('A10', 'hard_coded'), ('F10', 'linked'), ('G10)"
+    },
+    {
+     "item": 8,
+     "verdict": "cannot_assess",
+     "reason": "extraction_failed: summary_cells ambiguous (April 2025 GL balance for 1250: 3 labelled candidates with different values [('A9', '1250.0'), ('F9')"
+    },
+    {
+     "item": 9,
+     "verdict": "cannot_assess",
+     "reason": "extraction_failed: summary_cells ambiguous (April 2025 GL balance for 1251: 3 labelled candidates with different values [('A10', '1251.0'), ('F1)"
+    },
+    {
+     "item": 56,
+     "verdict": "pending_human",
+     "reason": "visual criterion: human review from the rendered deliverable"
+    }
+   ],
+   "critical_overall": "fail",
+   "critical": {
+    "C1": "pass",
+    "C2": "fail",
+    "C3": "fail",
+    "C4": "not_confirmed"
+   },
+   "critical_preregistered": null,
+   "critical_overall_preregistered": null,
+   "judge_items": 14,
+   "judge_verdicts": {
+    "pass": 11,
+    "fail": 3
+   },
+   "visual_items": {
+    "pending_human": 1
+   },
+   "generation_cost_usd": "0.376698"
+  },
+  {
+   "task_id": "2ea2e5b5-257f-42e6-a7dc-93763f28b19d",
+   "model": "anthropic/claude-opus-5-5",
+   "run_uuid": "SaDUDAyEP45E3gNRVZWjgp",
+   "pass": "pass-20261102T121440292802Z-cc25",
+   "blocked": false,
+   "source": {
+    "results": "~/turing-eval-runs/formal/grading_sealed/SaDUDAyEP45E3gNRVZWjgp/results.jsonl",
+    "grades": "~/turing-eval-runs/formal/grading_sealed/SaDUDAyEP45E3gNRVZWjgp/grades.jsonl"
+   },
+   "judge_mode": "real",
+   "judge_completeness": "complete",
+   "grader_version": "engine-2026-11-02.12+2ea2e5b5-2026-11-02.6",
+   "P": 78,
+   "E": 85,
+   "W": 85,
+   "P_over_E": 0.9176470588235294,
+   "E_over_W": 1.0,
+   "ungraded": [],
+   "critical_overall": "fail",
+   "critical": {
+    "C1": "pass",
+    "C2": "pass",
+    "C3": "fail"
+   },
+   "critical_preregistered": {
+    "C1": "pass",
+    "C2": "pass",
+    "C3": "fail"
+   },
+   "critical_overall_preregistered": "fail",
+   "judge_items": 4,
+   "judge_verdicts": {
+    "pass": 4
+   },
+   "visual_items": {},
+   "generation_cost_usd": "0.588023"
+  },
+  {
+   "task_id": "2ea2e5b5-257f-42e6-a7dc-93763f28b19d",
+   "model": "openai/gpt-6.1-sol",
+   "run_uuid": "ehpELnbiUfAp5dFTeDNwt9",
+   "pass": "pass-20261102T121505538896Z-e39c",
+   "blocked": false,
+   "source": {
+    "results": "~/turing-eval-runs/formal/grading_sealed/ehpELnbiUfAp5dFTeDNwt9/results.jsonl",
+    "grades": "~/turing-eval-runs/formal/grading_sealed/ehpELnbiUfAp5dFTeDNwt9/grades.jsonl"
+   },
+   "judge_mode": "real",
+   "judge_completeness": "complete",
+   "grader_version": "engine-2026-11-02.12+2ea2e5b5-2026-11-02.6",
+   "P": 28,
+   "E": 30,
+   "W": 85,
+   "P_over_E": 0.9333333333333333,
+   "E_over_W": 0.35294117647058826,
+   "ungraded": [
+    {
+     "item": 5,
+     "verdict": "cannot_assess",
+     "reason": "extraction_failed: no slide identified as the margin section; unidentified slides [3, 4, 5]"
+    },
+    {
+     "item": 6,
+     "verdict": "cannot_assess",
+     "reason": "extraction_failed: no slide identified as the time section; unidentified slides [3, 4, 5]"
+    },
+    {
+     "item": 7,
+     "verdict": "cannot_assess",
+     "reason": "extraction_failed: no slide identified as the strategic section; unidentified slides [3, 4, 5]"
+    },
+    {
+     "item": 27,
+     "verdict": "cannot_assess",
+     "reason": "extraction_failed: no slide identified as the margin section; unidentified slides [3, 4, 5]"
+    },
+    {
+     "item": 28,
+     "verdict": "cannot_assess",
+     "reason": "extraction_failed: no slide identified as the margin section; unidentified slides [3, 4, 5]"
+    },
+    {
+     "item": 29,
+     "verdict": "cannot_assess",
+     "reason": "extraction_failed: no slide identified as the margin section; unidentified slides [3, 4, 5]"
+    },
+    {
+     "item": 30,
+     "verdict": "cannot_assess",
+     "reason": "extraction_failed: no slide identified as the margin section; unidentified slides [3, 4, 5]"
+    },
+    {
+     "item": 31,
+     "verdict": "cannot_assess",
+     "reason": "extraction_failed: no slide identified as the margin section; unidentified slides [3, 4, 5]"
+    },
+    {
+     "item": 32,
+     "verdict": "cannot_assess",
+     "reason": "extraction_failed: no slide identified as the margin section; unidentified slides [3, 4, 5]"
+    },
+    {
+     "item": 33,
+     "verdict": "cannot_assess",
+     "reason": "extraction_failed: no slide identified as the margin section; unidentified slides [3, 4, 5]"
+    },
+    {
+     "item": 34,
+     "verdict": "cannot_assess",
+     "reason": "extraction_failed: no slide identified as the margin section; unidentified slides [3, 4, 5]"
+    },
+    {
+     "item": 35,
+     "verdict": "cannot_assess",
+     "reason": "extraction_failed: no slide identified as the time section; unidentified slides [3, 4, 5]"
+    },
+    {
+     "item": 36,
+     "verdict": "cannot_assess",
+     "reason": "extraction_failed: no slide identified as the time section; unidentified slides [3, 4, 5]"
+    },
+    {
+     "item": 37,
+     "verdict": "cannot_assess",
+     "reason": "extraction_failed: no slide identified as the time section; unidentified slides [3, 4, 5]"
+    },
+    {
+     "item": 38,
+     "verdict": "cannot_assess",
+     "reason": "extraction_failed: no slide identified as the time section; unidentified slides [3, 4, 5]"
+    },
+    {
+     "item": 39,
+     "verdict": "cannot_assess",
+     "reason": "extraction_failed: no slide identified as the time section; unidentified slides [3, 4, 5]"
+    },
+    {
+     "item": 40,
+     "verdict": "cannot_assess",
+     "reason": "extraction_failed: no slide identified as the time section; unidentified slides [3, 4, 5]"
+    },
+    {
+     "item": 41,
+     "verdict": "cannot_assess",
+     "reason": "extraction_failed: no slide identified as the time section; unidentified slides [3, 4, 5]"
+    },
+    {
+     "item": 42,
+     "verdict": "cannot_assess",
+     "reason": "extraction_failed: no slide identified as the time section; unidentified slides [3, 4, 5]"
+    },
+    {
+     "item": 43,
+     "verdict": "cannot_assess",
+     "reason": "extraction_failed: no slide identified as the time section; unidentified slides [3, 4, 5]"
+    },
+    {
+     "item": 44,
+     "verdict": "cannot_assess",
+     "reason": "extraction_failed: no slide identified as the time section; unidentified slides [3, 4, 5]"
+    },
+    {
+     "item": 45,
+     "verdict": "cannot_assess",
+     "reason": "extraction_failed: no slide identified as the strategic section; unidentified slides [3, 4, 5]"
+    },
+    {
+     "item": 46,
+     "verdict": "cannot_assess",
+     "reason": "extraction_failed: no slide identified as the strategic section; unidentified slides [3, 4, 5]"
+    },
+    {
+     "item": 47,
+     "verdict": "cannot_assess",
+     "reason": "extraction_failed: no slide identified as the strategic section; unidentified slides [3, 4, 5]"
+    },
+    {
+     "item": 48,
+     "verdict": "cannot_assess",
+     "reason": "extraction_failed: no slide identified as the strategic section; unidentified slides [3, 4, 5]"
+    },
+    {
+     "item": 49,
+     "verdict": "cannot_assess",
+     "reason": "extraction_failed: no slide identified as the strategic section; unidentified slides [3, 4, 5]"
+    },
+    {
+     "item": 50,
+     "verdict": "cannot_assess",
+     "reason": "extraction_failed: no slide identified as the strategic section; unidentified slides [3, 4, 5]"
+    },
+    {
+     "item": 51,
+     "verdict": "cannot_assess",
+     "reason": "extraction_failed: no slide identified as the strategic section; unidentified slides [3, 4, 5]"
+    },
+    {
+     "item": 52,
+     "verdict": "cannot_assess",
+     "reason": "extraction_failed: no slide identified as the strategic section; unidentified slides [3, 4, 5]"
+    },
+    {
+     "item": 53,
+     "verdict": "cannot_assess",
+     "reason": "extraction_failed: no slide identified as the strategic section; unidentified slides [3, 4, 5]"
+    },
+    {
+     "item": 54,
+     "verdict": "cannot_assess",
+     "reason": "extraction_failed: no slide identified as the strategic section; unidentified slides [3, 4, 5]"
+    },
+    {
+     "item": 55,
+     "verdict": "cannot_assess",
+     "reason": "extraction_failed: no slide identified as the time section; unidentified slides [3, 4, 5]"
+    },
+    {
+     "item": 56,
+     "verdict": "cannot_assess",
+     "reason": "extraction_failed: no slide identified as the strategic section; unidentified slides [3, 4, 5]"
+    }
+   ],
+   "critical_overall": "fail",
+   "critical": {
+    "C1": "not_confirmed",
+    "C2": "fail",
+    "C3": "not_confirmed"
+   },
+   "critical_preregistered": {
+    "C1": "not_confirmed",
+    "C2": "fail",
+    "C3": "not_confirmed"
+   },
+   "critical_overall_preregistered": "fail",
+   "judge_items": 4,
+   "judge_verdicts": {
+    "pass": 4
+   },
+   "visual_items": {},
+   "generation_cost_usd": "0.223819"
+  },
+  {
+   "task_id": "c357f0e2-963d-4eb7-a6fa-3078fe55b3ba",
+   "model": "anthropic/claude-opus-5-5",
+   "run_uuid": "AbudpM6dPVjwu2NSnwrZ6D",
+   "pass": "pass-20261102T121530287546Z-1e75",
+   "blocked": false,
+   "source": {
+    "results": "~/turing-eval-runs/formal/grading_sealed/AbudpM6dPVjwu2NSnwrZ6D/results.jsonl",
+    "grades": "~/turing-eval-runs/formal/grading_sealed/AbudpM6dPVjwu2NSnwrZ6D/grades.jsonl"
+   },
+   "judge_mode": "real",
+   "judge_completeness": "partial",
+   "grader_version": "engine-2026-11-02.12+c357f0e2-2026-11-01.3",
+   "P": 92,
+   "E": 95,
+   "W": 101,
+   "P_over_E": 0.968421052631579,
+   "E_over_W": 0.9405940594059405,
+   "ungraded": [
+    {
+     "item": 66,
+     "verdict": "invalid_judge_output",
+     "reason": "evidence must be a non-empty list for pass/fail"
+    },
+    {
+     "item": 70,
+     "verdict": "pending_human",
+     "reason": "visual criterion: human review from the rendered deliverable"
+    }
+   ],
+   "critical_overall": "fail",
+   "critical": {
+    "C1": "pass",
+    "C2": "pass",
+    "C3": "fail"
+   },
+   "critical_preregistered": null,
+   "critical_overall_preregistered": null,
+   "judge_items": 54,
+   "judge_verdicts": {
+    "pass": 50,
+    "fail": 3,
+    "invalid_judge_output": 1
+   },
+   "visual_items": {
+    "pending_human": 1
+   },
+   "generation_cost_usd": "1.644991"
+  },
+  {
+   "task_id": "c357f0e2-963d-4eb7-a6fa-3078fe55b3ba",
+   "model": "openai/gpt-6.1-sol",
+   "run_uuid": "4FAJ3AmGzujC6FZ67Krt9B",
+   "pass": "pass-20261102T122438506232Z-7829",
+   "blocked": false,
+   "source": {
+    "results": "~/turing-eval-runs/formal/grading_sealed/4FAJ3AmGzujC6FZ67Krt9B/results.jsonl",
+    "grades": "~/turing-eval-runs/formal/grading_sealed/4FAJ3AmGzujC6FZ67Krt9B/grades.jsonl"
+   },
+   "judge_mode": "real",
+   "judge_completeness": "complete",
+   "grader_version": "engine-2026-11-02.12+c357f0e2-2026-11-01.3",
+   "P": 89,
+   "E": 96,
+   "W": 101,
+   "P_over_E": 0.9270833333333334,
+   "E_over_W": 0.9504950495049505,
+   "ungraded": [
+    {
+     "item": 70,
+     "verdict": "pending_human",
+     "reason": "visual criterion: human review from the rendered deliverable"
+    }
+   ],
+   "critical_overall": "fail",
+   "critical": {
+    "C1": "pass",
+    "C2": "fail",
+    "C3": "fail"
+   },
+   "critical_preregistered": null,
+   "critical_overall_preregistered": null,
+   "judge_items": 54,
+   "judge_verdicts": {
+    "fail": 5,
+    "pass": 49
+   },
+   "visual_items": {
+    "pending_human": 1
+   },
+   "generation_cost_usd": "0.324154"
+  },
+  {
+   "task_id": "a45bc83b-22f9-4def-8d89-9c5661b2b86f",
+   "model": "anthropic/claude-opus-5-5",
+   "run_uuid": "BVeKQk8ZWp6j2uxp9hsuGf",
+   "pass": "pass-20261102T124516281243Z-a9a6",
+   "blocked": false,
+   "source": {
+    "results": "~/turing-eval-runs/formal/grading_sealed/BVeKQk8ZWp6j2uxp9hsuGf/results.jsonl",
+    "grades": "~/turing-eval-runs/formal/grading_sealed/BVeKQk8ZWp6j2uxp9hsuGf/grades.jsonl"
+   },
+   "judge_mode": "real",
+   "judge_completeness": "partial",
+   "grader_version": "engine-2026-11-02.12+a45bc83b-2026-11-01.3",
+   "P": 66,
+   "E": 73,
+   "W": 87,
+   "P_over_E": 0.9041095890410958,
+   "E_over_W": 0.8390804597701149,
+   "ungraded": [
+    {
+     "item": 4,
+     "verdict": "pending_human",
+     "reason": "visual criterion: human review from the rendered deliverable"
+    },
+    {
+     "item": 26,
+     "verdict": "pending_human",
+     "reason": "visual criterion: human review from the rendered deliverable"
+    },
+    {
+     "item": 27,
+     "verdict": "pending_human",
+     "reason": "visual criterion: human review from the rendered deliverable"
+    },
+    {
+     "item": 28,
+     "verdict": "pending_human",
+     "reason": "visual criterion: human review from the rendered deliverable"
+    },
+    {
+     "item": 29,
+     "verdict": "pending_human",
+     "reason": "visual criterion: human review from the rendered deliverable"
+    },
+    {
+     "item": 30,
+     "verdict": "pending_human",
+     "reason": "visual criterion: human review from the rendered deliverable"
+    },
+    {
+     "item": 66,
+     "verdict": "invalid_judge_output",
+     "reason": "evidence must be a non-empty list for pass/fail"
+    },
+    {
+     "item": 70,
+     "verdict": "pending_human",
+     "reason": "visual criterion: human review from the rendered deliverable"
+    },
+    {
+     "item": 72,
+     "verdict": "pending_human",
+     "reason": "visual criterion: human review from the rendered deliverable"
+    }
+   ],
+   "critical_overall": "not_confirmed",
+   "critical": {
+    "C1": "pass",
+    "C2": "pass",
+    "C3": "not_confirmed"
+   },
+   "critical_preregistered": null,
+   "critical_overall_preregistered": null,
+   "judge_items": 60,
+   "judge_verdicts": {
+    "pass": 52,
+    "fail": 7,
+    "invalid_judge_output": 1
+   },
+   "visual_items": {
+    "pending_human": 8
+   },
+   "generation_cost_usd": "4.182122"
+  },
+  {
+   "task_id": "a45bc83b-22f9-4def-8d89-9c5661b2b86f",
+   "model": "openai/gpt-6.1-sol",
+   "run_uuid": "NHSUKRMDDbYoJoGyWnpjcN",
+   "pass": "pass-20261102T124517129297Z-bcc4",
+   "blocked": false,
+   "source": {
+    "results": "~/turing-eval-runs/formal/grading_sealed/NHSUKRMDDbYoJoGyWnpjcN/results.jsonl",
+    "grades": "~/turing-eval-runs/formal/grading_sealed/NHSUKRMDDbYoJoGyWnpjcN/grades.jsonl"
+   },
+   "judge_mode": "real",
+   "judge_completeness": "complete",
+   "grader_version": "engine-2026-11-02.12+a45bc83b-2026-11-01.3",
+   "P": 68,
+   "E": 74,
+   "W": 87,
+   "P_over_E": 0.918918918918919,
+   "E_over_W": 0.8505747126436781,
+   "ungraded": [
+    {
+     "item": 4,
+     "verdict": "pending_human",
+     "reason": "visual criterion: human review from the rendered deliverable"
+    },
+    {
+     "item": 26,
+     "verdict": "pending_human",
+     "reason": "visual criterion: human review from the rendered deliverable"
+    },
+    {
+     "item": 27,
+     "verdict": "pending_human",
+     "reason": "visual criterion: human review from the rendered deliverable"
+    },
+    {
+     "item": 28,
+     "verdict": "pending_human",
+     "reason": "visual criterion: human review from the rendered deliverable"
+    },
+    {
+     "item": 29,
+     "verdict": "pending_human",
+     "reason": "visual criterion: human review from the rendered deliverable"
+    },
+    {
+     "item": 30,
+     "verdict": "pending_human",
+     "reason": "visual criterion: human review from the rendered deliverable"
+    },
+    {
+     "item": 70,
+     "verdict": "pending_human",
+     "reason": "visual criterion: human review from the rendered deliverable"
+    },
+    {
+     "item": 72,
+     "verdict": "pending_human",
+     "reason": "visual criterion: human review from the rendered deliverable"
+    }
+   ],
+   "critical_overall": "not_confirmed",
+   "critical": {
+    "C1": "pass",
+    "C2": "pass",
+    "C3": "not_confirmed"
+   },
+   "critical_preregistered": null,
+   "critical_overall_preregistered": null,
+   "judge_items": 60,
+   "judge_verdicts": {
+    "pass": 54,
+    "fail": 6
+   },
+   "visual_items": {
+    "pending_human": 8
+   },
+   "generation_cost_usd": "0.603256"
+  }
+ ]
+}

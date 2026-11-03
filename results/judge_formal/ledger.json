@@ -1,0 +1,3820 @@
+{
+ "version": 2,
+ "label": "judge_formal",
+ "ceiling_usd": "30.000000",
+ "created_at": "2026-11-02T11:57:25+00:00",
+ "ledger_id": "bdb038d93b344949da890547e19b34ae",
+ "entries": [
+  {
+   "type": "reservation",
+   "unit_id": "hdDnxUR6sUhQD6PHLnhKSm:judge:20261102T115733184900Z-4ec8",
+   "kind": "judge",
+   "estimated_usd": "2.440000",
+   "at": "2026-11-02T11:57:33+00:00",
+   "meta": {
+    "kind": "judge"
+   },
+   "claim": true
+  },
+  {
+   "type": "settlement",
+   "unit_id": "hdDnxUR6sUhQD6PHLnhKSm:judge:20261102T115733184900Z-4ec8",
+   "kind": "judge",
+   "cost_usd": "0.186906",
+   "breakdown": {
+    "input": "0.114738",
+    "output": "0.072168",
+    "cache_read": "0.000000",
+    "cache_write": "0.000000"
+   },
+   "retry_estimate_usd": "0.000000",
+   "per_model": {
+    "google/gemini-3.1-pro-preview": {
+     "input": "0.114738",
+     "output": "0.072168",
+     "cache_read": "0.000000",
+     "cache_write": "0.000000",
+     "total": "0.186906",
+     "calls": "7",
+     "flags": [],
+     "tiers": {
+      "standard": 7
+     }
+    }
+   },
+   "raw_usage": {
+    "google/gemini-3.1-pro-preview": {
+     "input_tokens": 57369,
+     "output_tokens": 6014,
+     "cache_read_tokens": 0,
+     "cache_write_tokens": 0
+    }
+   },
+   "raw_calls": {
+    "google/gemini-3.1-pro-preview": [
+     {
+      "input_tokens": 8206,
+      "output_tokens": 2187,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 8202,
+      "output_tokens": 745,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 8191,
+      "output_tokens": 1300,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 8195,
+      "output_tokens": 430,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 8185,
+      "output_tokens": 400,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 8187,
+      "output_tokens": 567,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 8203,
+      "output_tokens": 385,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     }
+    ]
+   },
+   "usage_scope": {
+    "same_sample": true,
+    "source": "per-call usage of this judge batch"
+   },
+   "usage_reconciliation": {
+    "google/gemini-3.1-pro-preview": {
+     "aggregated": {
+      "input": 57369,
+      "output": 6014,
+      "cache_read": 0,
+      "cache_write": 0
+     },
+     "per_call": {
+      "input": 57369,
+      "output": 6014,
+      "cache_read": 0,
+      "cache_write": 0
+     },
+     "difference": {
+      "input": 0,
+      "output": 0,
+      "cache_read": 0,
+      "cache_write": 0
+     },
+     "conflict": false,
+     "calls": 7,
+     "conservative": {
+      "input_tokens": 57369,
+      "output_tokens": 6014,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     }
+    }
+   },
+   "inspect_total_cost_usd": null,
+   "estimated": false,
+   "estimate_basis": [],
+   "inferred": null,
+   "manual_review_required": false,
+   "flags": [],
+   "note": "judge batch 7 judge call(s): 7 ok, 0 provider_error, 0 not_attempted, 0 with missing/uncertain usage",
+   "reserved_usd": "2.440000",
+   "at": "2026-11-02T11:58:47+00:00"
+  },
+  {
+   "type": "reservation",
+   "unit_id": "P8gA2U2jR7VzNWKqqdJ5SZ:judge:20261102T115847723261Z-41ba",
+   "kind": "judge",
+   "estimated_usd": "2.440000",
+   "at": "2026-11-02T11:58:47+00:00",
+   "meta": {
+    "kind": "judge"
+   },
+   "claim": true
+  },
+  {
+   "type": "settlement",
+   "unit_id": "P8gA2U2jR7VzNWKqqdJ5SZ:judge:20261102T115847723261Z-41ba",
+   "kind": "judge",
+   "cost_usd": "0.181234",
+   "breakdown": {
+    "input": "0.111070",
+    "output": "0.070164",
+    "cache_read": "0.000000",
+    "cache_write": "0.000000"
+   },
+   "retry_estimate_usd": "0.000000",
+   "per_model": {
+    "google/gemini-3.1-pro-preview": {
+     "input": "0.111070",
+     "output": "0.070164",
+     "cache_read": "0.000000",
+     "cache_write": "0.000000",
+     "total": "0.181234",
+     "calls": "7",
+     "flags": [],
+     "tiers": {
+      "standard": 7
+     }
+    }
+   },
+   "raw_usage": {
+    "google/gemini-3.1-pro-preview": {
+     "input_tokens": 55535,
+     "output_tokens": 5847,
+     "cache_read_tokens": 0,
+     "cache_write_tokens": 0
+    }
+   },
+   "raw_calls": {
+    "google/gemini-3.1-pro-preview": [
+     {
+      "input_tokens": 7944,
+      "output_tokens": 2217,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 7940,
+      "output_tokens": 491,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 7929,
+      "output_tokens": 891,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 7933,
+      "output_tokens": 822,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 7923,
+      "output_tokens": 661,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 7925,
+      "output_tokens": 359,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 7941,
+      "output_tokens": 406,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     }
+    ]
+   },
+   "usage_scope": {
+    "same_sample": true,
+    "source": "per-call usage of this judge batch"
+   },
+   "usage_reconciliation": {
+    "google/gemini-3.1-pro-preview": {
+     "aggregated": {
+      "input": 55535,
+      "output": 5847,
+      "cache_read": 0,
+      "cache_write": 0
+     },
+     "per_call": {
+      "input": 55535,
+      "output": 5847,
+      "cache_read": 0,
+      "cache_write": 0
+     },
+     "difference": {
+      "input": 0,
+      "output": 0,
+      "cache_read": 0,
+      "cache_write": 0
+     },
+     "conflict": false,
+     "calls": 7,
+     "conservative": {
+      "input_tokens": 55535,
+      "output_tokens": 5847,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     }
+    }
+   },
+   "inspect_total_cost_usd": null,
+   "estimated": false,
+   "estimate_basis": [],
+   "inferred": null,
+   "manual_review_required": false,
+   "flags": [],
+   "note": "judge batch 7 judge call(s): 7 ok, 0 provider_error, 0 not_attempted, 0 with missing/uncertain usage",
+   "reserved_usd": "2.440000",
+   "at": "2026-11-02T12:00:00+00:00"
+  },
+  {
+   "type": "reservation",
+   "unit_id": "LVyjBBcU4iFqDKviwY2YJz:judge:20261102T120000377389Z-e7fe",
+   "kind": "judge",
+   "estimated_usd": "0.350000",
+   "at": "2026-11-02T12:00:00+00:00",
+   "meta": {
+    "kind": "judge"
+   },
+   "claim": true
+  },
+  {
+   "type": "settlement",
+   "unit_id": "LVyjBBcU4iFqDKviwY2YJz:judge:20261102T120000377389Z-e7fe",
+   "kind": "judge",
+   "cost_usd": "0.010382",
+   "breakdown": {
+    "input": "0.004454",
+    "output": "0.005928",
+    "cache_read": "0.000000",
+    "cache_write": "0.000000"
+   },
+   "retry_estimate_usd": "0.000000",
+   "per_model": {
+    "google/gemini-3.1-pro-preview": {
+     "input": "0.004454",
+     "output": "0.005928",
+     "cache_read": "0.000000",
+     "cache_write": "0.000000",
+     "total": "0.010382",
+     "calls": "1",
+     "flags": [],
+     "tiers": {
+      "standard": 1
+     }
+    }
+   },
+   "raw_usage": {
+    "google/gemini-3.1-pro-preview": {
+     "input_tokens": 2227,
+     "output_tokens": 494,
+     "cache_read_tokens": 0,
+     "cache_write_tokens": 0
+    }
+   },
+   "raw_calls": {
+    "google/gemini-3.1-pro-preview": [
+     {
+      "input_tokens": 2227,
+      "output_tokens": 494,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     }
+    ]
+   },
+   "usage_scope": {
+    "same_sample": true,
+    "source": "per-call usage of this judge batch"
+   },
+   "usage_reconciliation": {
+    "google/gemini-3.1-pro-preview": {
+     "aggregated": {
+      "input": 2227,
+      "output": 494,
+      "cache_read": 0,
+      "cache_write": 0
+     },
+     "per_call": {
+      "input": 2227,
+      "output": 494,
+      "cache_read": 0,
+      "cache_write": 0
+     },
+     "difference": {
+      "input": 0,
+      "output": 0,
+      "cache_read": 0,
+      "cache_write": 0
+     },
+     "conflict": false,
+     "calls": 1,
+     "conservative": {
+      "input_tokens": 2227,
+      "output_tokens": 494,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     }
+    }
+   },
+   "inspect_total_cost_usd": null,
+   "estimated": false,
+   "estimate_basis": [],
+   "inferred": null,
+   "manual_review_required": false,
+   "flags": [],
+   "note": "judge batch 1 judge call(s): 1 ok, 0 provider_error, 0 not_attempted, 0 with missing/uncertain usage",
+   "reserved_usd": "0.350000",
+   "at": "2026-11-02T12:00:15+00:00"
+  },
+  {
+   "type": "reservation",
+   "unit_id": "dPR5yvN9wEfcMyQiAC2njB:judge:20261102T120015860626Z-2d80",
+   "kind": "judge",
+   "estimated_usd": "0.350000",
+   "at": "2026-11-02T12:00:15+00:00",
+   "meta": {
+    "kind": "judge"
+   },
+   "claim": true
+  },
+  {
+   "type": "settlement",
+   "unit_id": "dPR5yvN9wEfcMyQiAC2njB:judge:20261102T120015860626Z-2d80",
+   "kind": "judge",
+   "cost_usd": "0.011390",
+   "breakdown": {
+    "input": "0.003878",
+    "output": "0.007512",
+    "cache_read": "0.000000",
+    "cache_write": "0.000000"
+   },
+   "retry_estimate_usd": "0.000000",
+   "per_model": {
+    "google/gemini-3.1-pro-preview": {
+     "input": "0.003878",
+     "output": "0.007512",
+     "cache_read": "0.000000",
+     "cache_write": "0.000000",
+     "total": "0.011390",
+     "calls": "1",
+     "flags": [],
+     "tiers": {
+      "standard": 1
+     }
+    }
+   },
+   "raw_usage": {
+    "google/gemini-3.1-pro-preview": {
+     "input_tokens": 1939,
+     "output_tokens": 626,
+     "cache_read_tokens": 0,
+     "cache_write_tokens": 0
+    }
+   },
+   "raw_calls": {
+    "google/gemini-3.1-pro-preview": [
+     {
+      "input_tokens": 1939,
+      "output_tokens": 626,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     }
+    ]
+   },
+   "usage_scope": {
+    "same_sample": true,
+    "source": "per-call usage of this judge batch"
+   },
+   "usage_reconciliation": {
+    "google/gemini-3.1-pro-preview": {
+     "aggregated": {
+      "input": 1939,
+      "output": 626,
+      "cache_read": 0,
+      "cache_write": 0
+     },
+     "per_call": {
+      "input": 1939,
+      "output": 626,
+      "cache_read": 0,
+      "cache_write": 0
+     },
+     "difference": {
+      "input": 0,
+      "output": 0,
+      "cache_read": 0,
+      "cache_write": 0
+     },
+     "conflict": false,
+     "calls": 1,
+     "conservative": {
+      "input_tokens": 1939,
+      "output_tokens": 626,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     }
+    }
+   },
+   "inspect_total_cost_usd": null,
+   "estimated": false,
+   "estimate_basis": [],
+   "inferred": null,
+   "manual_review_required": false,
+   "flags": [],
+   "note": "judge batch 1 judge call(s): 1 ok, 0 provider_error, 0 not_attempted, 0 with missing/uncertain usage",
+   "reserved_usd": "0.350000",
+   "at": "2026-11-02T12:00:33+00:00"
+  },
+  {
+   "type": "reservation",
+   "unit_id": "iS5pLfPvTxhxxXScg7HXVw:judge:20261102T120033410251Z-5e76",
+   "kind": "judge",
+   "estimated_usd": "2.440000",
+   "at": "2026-11-02T12:00:33+00:00",
+   "meta": {
+    "kind": "judge"
+   },
+   "claim": true
+  },
+  {
+   "type": "settlement",
+   "unit_id": "iS5pLfPvTxhxxXScg7HXVw:judge:20261102T120033410251Z-5e76",
+   "kind": "judge",
+   "cost_usd": "0.116674",
+   "breakdown": {
+    "input": "0.054982",
+    "output": "0.061692",
+    "cache_read": "0.000000",
+    "cache_write": "0.000000"
+   },
+   "retry_estimate_usd": "0.000000",
+   "per_model": {
+    "google/gemini-3.1-pro-preview": {
+     "input": "0.054982",
+     "output": "0.061692",
+     "cache_read": "0.000000",
+     "cache_write": "0.000000",
+     "total": "0.116674",
+     "calls": "7",
+     "flags": [],
+     "tiers": {
+      "standard": 7
+     }
+    }
+   },
+   "raw_usage": {
+    "google/gemini-3.1-pro-preview": {
+     "input_tokens": 27491,
+     "output_tokens": 5141,
+     "cache_read_tokens": 0,
+     "cache_write_tokens": 0
+    }
+   },
+   "raw_calls": {
+    "google/gemini-3.1-pro-preview": [
+     {
+      "input_tokens": 4544,
+      "output_tokens": 1814,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 3701,
+      "output_tokens": 355,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 3846,
+      "output_tokens": 483,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 3851,
+      "output_tokens": 999,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 3851,
+      "output_tokens": 622,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 3849,
+      "output_tokens": 422,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 3849,
+      "output_tokens": 446,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     }
+    ]
+   },
+   "usage_scope": {
+    "same_sample": true,
+    "source": "per-call usage of this judge batch"
+   },
+   "usage_reconciliation": {
+    "google/gemini-3.1-pro-preview": {
+     "aggregated": {
+      "input": 27491,
+      "output": 5141,
+      "cache_read": 0,
+      "cache_write": 0
+     },
+     "per_call": {
+      "input": 27491,
+      "output": 5141,
+      "cache_read": 0,
+      "cache_write": 0
+     },
+     "difference": {
+      "input": 0,
+      "output": 0,
+      "cache_read": 0,
+      "cache_write": 0
+     },
+     "conflict": false,
+     "calls": 7,
+     "conservative": {
+      "input_tokens": 27491,
+      "output_tokens": 5141,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     }
+    }
+   },
+   "inspect_total_cost_usd": null,
+   "estimated": false,
+   "estimate_basis": [],
+   "inferred": null,
+   "manual_review_required": false,
+   "flags": [],
+   "note": "judge batch 7 judge call(s): 7 ok, 0 provider_error, 0 not_attempted, 0 with missing/uncertain usage",
+   "reserved_usd": "2.440000",
+   "at": "2026-11-02T12:01:38+00:00"
+  },
+  {
+   "type": "reservation",
+   "unit_id": "mE6xrcKcirXrQgh4ugBfbE:judge:20261102T120138505413Z-0702",
+   "kind": "judge",
+   "estimated_usd": "2.440000",
+   "at": "2026-11-02T12:01:38+00:00",
+   "meta": {
+    "kind": "judge"
+   },
+   "claim": true
+  },
+  {
+   "type": "settlement",
+   "unit_id": "mE6xrcKcirXrQgh4ugBfbE:judge:20261102T120138505413Z-0702",
+   "kind": "judge",
+   "cost_usd": "0.093218",
+   "breakdown": {
+    "input": "0.031694",
+    "output": "0.061524",
+    "cache_read": "0.000000",
+    "cache_write": "0.000000"
+   },
+   "retry_estimate_usd": "0.000000",
+   "per_model": {
+    "google/gemini-3.1-pro-preview": {
+     "input": "0.031694",
+     "output": "0.061524",
+     "cache_read": "0.000000",
+     "cache_write": "0.000000",
+     "total": "0.093218",
+     "calls": "7",
+     "flags": [],
+     "tiers": {
+      "standard": 7
+     }
+    }
+   },
+   "raw_usage": {
+    "google/gemini-3.1-pro-preview": {
+     "input_tokens": 15847,
+     "output_tokens": 5127,
+     "cache_read_tokens": 0,
+     "cache_write_tokens": 0
+    }
+   },
+   "raw_calls": {
+    "google/gemini-3.1-pro-preview": [
+     {
+      "input_tokens": 4192,
+      "output_tokens": 1668,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 1819,
+      "output_tokens": 1132,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 1964,
+      "output_tokens": 494,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 1969,
+      "output_tokens": 317,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 1969,
+      "output_tokens": 365,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 1967,
+      "output_tokens": 414,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 1967,
+      "output_tokens": 737,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     }
+    ]
+   },
+   "usage_scope": {
+    "same_sample": true,
+    "source": "per-call usage of this judge batch"
+   },
+   "usage_reconciliation": {
+    "google/gemini-3.1-pro-preview": {
+     "aggregated": {
+      "input": 15847,
+      "output": 5127,
+      "cache_read": 0,
+      "cache_write": 0
+     },
+     "per_call": {
+      "input": 15847,
+      "output": 5127,
+      "cache_read": 0,
+      "cache_write": 0
+     },
+     "difference": {
+      "input": 0,
+      "output": 0,
+      "cache_read": 0,
+      "cache_write": 0
+     },
+     "conflict": false,
+     "calls": 7,
+     "conservative": {
+      "input_tokens": 15847,
+      "output_tokens": 5127,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     }
+    }
+   },
+   "inspect_total_cost_usd": null,
+   "estimated": false,
+   "estimate_basis": [],
+   "inferred": null,
+   "manual_review_required": false,
+   "flags": [],
+   "note": "judge batch 7 judge call(s): 7 ok, 0 provider_error, 0 not_attempted, 0 with missing/uncertain usage",
+   "reserved_usd": "2.440000",
+   "at": "2026-11-02T12:02:46+00:00"
+  },
+  {
+   "type": "reservation",
+   "unit_id": "fAFHskFwVPcLzn89SuYaxv:judge:20261102T120246239565Z-5b2a",
+   "kind": "judge",
+   "estimated_usd": "1.750000",
+   "at": "2026-11-02T12:02:46+00:00",
+   "meta": {
+    "kind": "judge"
+   },
+   "claim": true
+  },
+  {
+   "type": "settlement",
+   "unit_id": "fAFHskFwVPcLzn89SuYaxv:judge:20261102T120246239565Z-5b2a",
+   "kind": "judge",
+   "cost_usd": "0.054340",
+   "breakdown": {
+    "input": "0.029260",
+    "output": "0.025080",
+    "cache_read": "0.000000",
+    "cache_write": "0.000000"
+   },
+   "retry_estimate_usd": "0.000000",
+   "per_model": {
+    "google/gemini-3.1-pro-preview": {
+     "input": "0.029260",
+     "output": "0.025080",
+     "cache_read": "0.000000",
+     "cache_write": "0.000000",
+     "total": "0.054340",
+     "calls": "5",
+     "flags": [],
+     "tiers": {
+      "standard": 5
+     }
+    }
+   },
+   "raw_usage": {
+    "google/gemini-3.1-pro-preview": {
+     "input_tokens": 14630,
+     "output_tokens": 2090,
+     "cache_read_tokens": 0,
+     "cache_write_tokens": 0
+    }
+   },
+   "raw_calls": {
+    "google/gemini-3.1-pro-preview": [
+     {
+      "input_tokens": 2841,
+      "output_tokens": 286,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 3019,
+      "output_tokens": 426,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 4733,
+      "output_tokens": 316,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 2998,
+      "output_tokens": 687,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 1039,
+      "output_tokens": 375,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     }
+    ]
+   },
+   "usage_scope": {
+    "same_sample": true,
+    "source": "per-call usage of this judge batch"
+   },
+   "usage_reconciliation": {
+    "google/gemini-3.1-pro-preview": {
+     "aggregated": {
+      "input": 14630,
+      "output": 2090,
+      "cache_read": 0,
+      "cache_write": 0
+     },
+     "per_call": {
+      "input": 14630,
+      "output": 2090,
+      "cache_read": 0,
+      "cache_write": 0
+     },
+     "difference": {
+      "input": 0,
+      "output": 0,
+      "cache_read": 0,
+      "cache_write": 0
+     },
+     "conflict": false,
+     "calls": 5,
+     "conservative": {
+      "input_tokens": 14630,
+      "output_tokens": 2090,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     }
+    }
+   },
+   "inspect_total_cost_usd": null,
+   "estimated": false,
+   "estimate_basis": [],
+   "inferred": null,
+   "manual_review_required": false,
+   "flags": [],
+   "note": "judge batch 5 judge call(s): 5 ok, 0 provider_error, 0 not_attempted, 0 with missing/uncertain usage",
+   "reserved_usd": "1.750000",
+   "at": "2026-11-02T12:03:27+00:00"
+  },
+  {
+   "type": "reservation",
+   "unit_id": "SJbeNCc6EYF5dHerim5UD6:judge:20261102T120327641232Z-b8cf",
+   "kind": "judge",
+   "estimated_usd": "1.750000",
+   "at": "2026-11-02T12:03:27+00:00",
+   "meta": {
+    "kind": "judge"
+   },
+   "claim": true
+  },
+  {
+   "type": "settlement",
+   "unit_id": "SJbeNCc6EYF5dHerim5UD6:judge:20261102T120327641232Z-b8cf",
+   "kind": "judge",
+   "cost_usd": "0.054840",
+   "breakdown": {
+    "input": "0.027936",
+    "output": "0.026904",
+    "cache_read": "0.000000",
+    "cache_write": "0.000000"
+   },
+   "retry_estimate_usd": "0.000000",
+   "per_model": {
+    "google/gemini-3.1-pro-preview": {
+     "input": "0.027936",
+     "output": "0.026904",
+     "cache_read": "0.000000",
+     "cache_write": "0.000000",
+     "total": "0.054840",
+     "calls": "5",
+     "flags": [],
+     "tiers": {
+      "standard": 5
+     }
+    }
+   },
+   "raw_usage": {
+    "google/gemini-3.1-pro-preview": {
+     "input_tokens": 13968,
+     "output_tokens": 2242,
+     "cache_read_tokens": 0,
+     "cache_write_tokens": 0
+    }
+   },
+   "raw_calls": {
+    "google/gemini-3.1-pro-preview": [
+     {
+      "input_tokens": 1832,
+      "output_tokens": 463,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 2013,
+      "output_tokens": 385,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 7095,
+      "output_tokens": 605,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 1992,
+      "output_tokens": 486,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 1036,
+      "output_tokens": 303,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     }
+    ]
+   },
+   "usage_scope": {
+    "same_sample": true,
+    "source": "per-call usage of this judge batch"
+   },
+   "usage_reconciliation": {
+    "google/gemini-3.1-pro-preview": {
+     "aggregated": {
+      "input": 13968,
+      "output": 2242,
+      "cache_read": 0,
+      "cache_write": 0
+     },
+     "per_call": {
+      "input": 13968,
+      "output": 2242,
+      "cache_read": 0,
+      "cache_write": 0
+     },
+     "difference": {
+      "input": 0,
+      "output": 0,
+      "cache_read": 0,
+      "cache_write": 0
+     },
+     "conflict": false,
+     "calls": 5,
+     "conservative": {
+      "input_tokens": 13968,
+      "output_tokens": 2242,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     }
+    }
+   },
+   "inspect_total_cost_usd": null,
+   "estimated": false,
+   "estimate_basis": [],
+   "inferred": null,
+   "manual_review_required": false,
+   "flags": [],
+   "note": "judge batch 5 judge call(s): 5 ok, 0 provider_error, 0 not_attempted, 0 with missing/uncertain usage",
+   "reserved_usd": "1.750000",
+   "at": "2026-11-02T12:04:08+00:00"
+  },
+  {
+   "type": "reservation",
+   "unit_id": "KU4bWmuqsWUUbkTXEu9Fpj:judge:20261102T120408304681Z-9019",
+   "kind": "judge",
+   "estimated_usd": "4.880000",
+   "at": "2026-11-02T12:04:08+00:00",
+   "meta": {
+    "kind": "judge"
+   },
+   "claim": true
+  },
+  {
+   "type": "settlement",
+   "unit_id": "KU4bWmuqsWUUbkTXEu9Fpj:judge:20261102T120408304681Z-9019",
+   "kind": "judge",
+   "cost_usd": "0.331860",
+   "breakdown": {
+    "input": "0.212688",
+    "output": "0.119172",
+    "cache_read": "0.000000",
+    "cache_write": "0.000000"
+   },
+   "retry_estimate_usd": "0.000000",
+   "per_model": {
+    "google/gemini-3.1-pro-preview": {
+     "input": "0.212688",
+     "output": "0.119172",
+     "cache_read": "0.000000",
+     "cache_write": "0.000000",
+     "total": "0.331860",
+     "calls": "14",
+     "flags": [],
+     "tiers": {
+      "standard": 14
+     }
+    }
+   },
+   "raw_usage": {
+    "google/gemini-3.1-pro-preview": {
+     "input_tokens": 106344,
+     "output_tokens": 9931,
+     "cache_read_tokens": 0,
+     "cache_write_tokens": 0
+    }
+   },
+   "raw_calls": {
+    "google/gemini-3.1-pro-preview": [
+     {
+      "input_tokens": 7324,
+      "output_tokens": 624,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 7334,
+      "output_tokens": 621,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 7325,
+      "output_tokens": 422,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 7320,
+      "output_tokens": 229,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 7320,
+      "output_tokens": 211,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 7320,
+      "output_tokens": 199,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 7792,
+      "output_tokens": 1498,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 7837,
+      "output_tokens": 1336,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 7836,
+      "output_tokens": 1145,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 7797,
+      "output_tokens": 1299,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 7796,
+      "output_tokens": 829,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 7783,
+      "output_tokens": 468,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 7780,
+      "output_tokens": 457,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 7780,
+      "output_tokens": 593,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     }
+    ]
+   },
+   "usage_scope": {
+    "same_sample": true,
+    "source": "per-call usage of this judge batch"
+   },
+   "usage_reconciliation": {
+    "google/gemini-3.1-pro-preview": {
+     "aggregated": {
+      "input": 106344,
+      "output": 9931,
+      "cache_read": 0,
+      "cache_write": 0
+     },
+     "per_call": {
+      "input": 106344,
+      "output": 9931,
+      "cache_read": 0,
+      "cache_write": 0
+     },
+     "difference": {
+      "input": 0,
+      "output": 0,
+      "cache_read": 0,
+      "cache_write": 0
+     },
+     "conflict": false,
+     "calls": 14,
+     "conservative": {
+      "input_tokens": 106344,
+      "output_tokens": 9931,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     }
+    }
+   },
+   "inspect_total_cost_usd": null,
+   "estimated": false,
+   "estimate_basis": [],
+   "inferred": null,
+   "manual_review_required": false,
+   "flags": [],
+   "note": "judge batch 14 judge call(s): 14 ok, 0 provider_error, 0 not_attempted, 0 with missing/uncertain usage",
+   "reserved_usd": "4.880000",
+   "at": "2026-11-02T12:06:17+00:00"
+  },
+  {
+   "type": "reservation",
+   "unit_id": "hX4B29t5iE2v3rFKMtqWqz:judge:20261102T120617298702Z-6694",
+   "kind": "judge",
+   "estimated_usd": "4.880000",
+   "at": "2026-11-02T12:06:17+00:00",
+   "meta": {
+    "kind": "judge"
+   },
+   "claim": true
+  },
+  {
+   "type": "settlement",
+   "unit_id": "hX4B29t5iE2v3rFKMtqWqz:judge:20261102T120617298702Z-6694",
+   "kind": "judge",
+   "cost_usd": "0.226076",
+   "breakdown": {
+    "input": "0.103796",
+    "output": "0.122280",
+    "cache_read": "0.000000",
+    "cache_write": "0.000000"
+   },
+   "retry_estimate_usd": "0.000000",
+   "per_model": {
+    "google/gemini-3.1-pro-preview": {
+     "input": "0.103796",
+     "output": "0.122280",
+     "cache_read": "0.000000",
+     "cache_write": "0.000000",
+     "total": "0.226076",
+     "calls": "14",
+     "flags": [],
+     "tiers": {
+      "standard": 14
+     }
+    }
+   },
+   "raw_usage": {
+    "google/gemini-3.1-pro-preview": {
+     "input_tokens": 51898,
+     "output_tokens": 10190,
+     "cache_read_tokens": 0,
+     "cache_write_tokens": 0
+    }
+   },
+   "raw_calls": {
+    "google/gemini-3.1-pro-preview": [
+     {
+      "input_tokens": 3435,
+      "output_tokens": 454,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 3445,
+      "output_tokens": 531,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 3436,
+      "output_tokens": 595,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 3431,
+      "output_tokens": 174,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 3431,
+      "output_tokens": 290,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 3431,
+      "output_tokens": 246,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 3903,
+      "output_tokens": 1523,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 3948,
+      "output_tokens": 1358,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 3947,
+      "output_tokens": 1200,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 3908,
+      "output_tokens": 888,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 3907,
+      "output_tokens": 761,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 3894,
+      "output_tokens": 556,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 3891,
+      "output_tokens": 986,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 3891,
+      "output_tokens": 628,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     }
+    ]
+   },
+   "usage_scope": {
+    "same_sample": true,
+    "source": "per-call usage of this judge batch"
+   },
+   "usage_reconciliation": {
+    "google/gemini-3.1-pro-preview": {
+     "aggregated": {
+      "input": 51898,
+      "output": 10190,
+      "cache_read": 0,
+      "cache_write": 0
+     },
+     "per_call": {
+      "input": 51898,
+      "output": 10190,
+      "cache_read": 0,
+      "cache_write": 0
+     },
+     "difference": {
+      "input": 0,
+      "output": 0,
+      "cache_read": 0,
+      "cache_write": 0
+     },
+     "conflict": false,
+     "calls": 14,
+     "conservative": {
+      "input_tokens": 51898,
+      "output_tokens": 10190,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     }
+    }
+   },
+   "inspect_total_cost_usd": null,
+   "estimated": false,
+   "estimate_basis": [],
+   "inferred": null,
+   "manual_review_required": false,
+   "flags": [],
+   "note": "judge batch 14 judge call(s): 14 ok, 0 provider_error, 0 not_attempted, 0 with missing/uncertain usage",
+   "reserved_usd": "4.880000",
+   "at": "2026-11-02T12:08:37+00:00"
+  },
+  {
+   "type": "reservation",
+   "unit_id": "czgd84YmwwTZzDpVKD5vhD:judge:20261102T120837790154Z-503f",
+   "kind": "judge",
+   "estimated_usd": "4.880000",
+   "at": "2026-11-02T12:08:37+00:00",
+   "meta": {
+    "kind": "judge"
+   },
+   "claim": true
+  },
+  {
+   "type": "settlement",
+   "unit_id": "czgd84YmwwTZzDpVKD5vhD:judge:20261102T120837790154Z-503f",
+   "kind": "judge",
+   "cost_usd": "0.994740",
+   "breakdown": {
+    "input": "0.815424",
+    "output": "0.179316",
+    "cache_read": "0.000000",
+    "cache_write": "0.000000"
+   },
+   "retry_estimate_usd": "0.000000",
+   "per_model": {
+    "google/gemini-3.1-pro-preview": {
+     "input": "0.815424",
+     "output": "0.179316",
+     "cache_read": "0.000000",
+     "cache_write": "0.000000",
+     "total": "0.994740",
+     "calls": "14",
+     "flags": [],
+     "tiers": {
+      "standard": 14
+     }
+    }
+   },
+   "raw_usage": {
+    "google/gemini-3.1-pro-preview": {
+     "input_tokens": 407712,
+     "output_tokens": 14943,
+     "cache_read_tokens": 0,
+     "cache_write_tokens": 0
+    }
+   },
+   "raw_calls": {
+    "google/gemini-3.1-pro-preview": [
+     {
+      "input_tokens": 6699,
+      "output_tokens": 995,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 28726,
+      "output_tokens": 1008,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 28719,
+      "output_tokens": 823,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 28705,
+      "output_tokens": 790,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 26649,
+      "output_tokens": 710,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 28708,
+      "output_tokens": 689,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 28715,
+      "output_tokens": 2547,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 19173,
+      "output_tokens": 2050,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 19161,
+      "output_tokens": 301,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 17995,
+      "output_tokens": 800,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 43835,
+      "output_tokens": 1104,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 43403,
+      "output_tokens": 678,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 43818,
+      "output_tokens": 1078,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 43406,
+      "output_tokens": 1370,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     }
+    ]
+   },
+   "usage_scope": {
+    "same_sample": true,
+    "source": "per-call usage of this judge batch"
+   },
+   "usage_reconciliation": {
+    "google/gemini-3.1-pro-preview": {
+     "aggregated": {
+      "input": 407712,
+      "output": 14943,
+      "cache_read": 0,
+      "cache_write": 0
+     },
+     "per_call": {
+      "input": 407712,
+      "output": 14943,
+      "cache_read": 0,
+      "cache_write": 0
+     },
+     "difference": {
+      "input": 0,
+      "output": 0,
+      "cache_read": 0,
+      "cache_write": 0
+     },
+     "conflict": false,
+     "calls": 14,
+     "conservative": {
+      "input_tokens": 407712,
+      "output_tokens": 14943,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     }
+    }
+   },
+   "inspect_total_cost_usd": null,
+   "estimated": false,
+   "estimate_basis": [],
+   "inferred": null,
+   "manual_review_required": false,
+   "flags": [],
+   "note": "judge batch 14 judge call(s): 14 ok, 0 provider_error, 0 not_attempted, 0 with missing/uncertain usage",
+   "reserved_usd": "4.880000",
+   "at": "2026-11-02T12:11:32+00:00"
+  },
+  {
+   "type": "reservation",
+   "unit_id": "FDVJTwSvqDJFQj6JyTpkHY:judge:20261102T121133263826Z-71e7",
+   "kind": "judge",
+   "estimated_usd": "4.880000",
+   "at": "2026-11-02T12:11:33+00:00",
+   "meta": {
+    "kind": "judge"
+   },
+   "claim": true
+  },
+  {
+   "type": "settlement",
+   "unit_id": "FDVJTwSvqDJFQj6JyTpkHY:judge:20261102T121133263826Z-71e7",
+   "kind": "judge",
+   "cost_usd": "1.072994",
+   "breakdown": {
+    "input": "0.888550",
+    "output": "0.184368",
+    "cache_read": "0.000076",
+    "cache_write": "0.000000"
+   },
+   "retry_estimate_usd": "0.000000",
+   "per_model": {
+    "google/gemini-3.1-pro-preview": {
+     "input": "0.888550",
+     "output": "0.184368",
+     "cache_read": "0.000076",
+     "cache_write": "0.000000",
+     "total": "1.072994",
+     "calls": "14",
+     "flags": [],
+     "tiers": {
+      "standard": 14
+     }
+    }
+   },
+   "raw_usage": {
+    "google/gemini-3.1-pro-preview": {
+     "input_tokens": 444275,
+     "output_tokens": 15364,
+     "cache_read_tokens": 380,
+     "cache_write_tokens": 0
+    }
+   },
+   "raw_calls": {
+    "google/gemini-3.1-pro-preview": [
+     {
+      "input_tokens": 4124,
+      "output_tokens": 948,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 31450,
+      "output_tokens": 1194,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 31443,
+      "output_tokens": 1138,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 31429,
+      "output_tokens": 576,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 29373,
+      "output_tokens": 529,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 31052,
+      "output_tokens": 1699,
+      "cache_read_tokens": 380,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 31439,
+      "output_tokens": 1996,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 20927,
+      "output_tokens": 2120,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 20915,
+      "output_tokens": 459,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 19749,
+      "output_tokens": 577,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 48313,
+      "output_tokens": 773,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 47881,
+      "output_tokens": 1857,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 48296,
+      "output_tokens": 566,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 47884,
+      "output_tokens": 932,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     }
+    ]
+   },
+   "usage_scope": {
+    "same_sample": true,
+    "source": "per-call usage of this judge batch"
+   },
+   "usage_reconciliation": {
+    "google/gemini-3.1-pro-preview": {
+     "aggregated": {
+      "input": 444275,
+      "output": 15364,
+      "cache_read": 380,
+      "cache_write": 0
+     },
+     "per_call": {
+      "input": 444275,
+      "output": 15364,
+      "cache_read": 380,
+      "cache_write": 0
+     },
+     "difference": {
+      "input": 0,
+      "output": 0,
+      "cache_read": 0,
+      "cache_write": 0
+     },
+     "conflict": false,
+     "calls": 14,
+     "conservative": {
+      "input_tokens": 444275,
+      "output_tokens": 15364,
+      "cache_read_tokens": 380,
+      "cache_write_tokens": 0
+     }
+    }
+   },
+   "inspect_total_cost_usd": null,
+   "estimated": false,
+   "estimate_basis": [],
+   "inferred": null,
+   "manual_review_required": false,
+   "flags": [],
+   "note": "judge batch 14 judge call(s): 14 ok, 0 provider_error, 0 not_attempted, 0 with missing/uncertain usage",
+   "reserved_usd": "4.880000",
+   "at": "2026-11-02T12:14:39+00:00"
+  },
+  {
+   "type": "reservation",
+   "unit_id": "SaDUDAyEP45E3gNRVZWjgp:judge:20261102T121440259292Z-a2ef",
+   "kind": "judge",
+   "estimated_usd": "1.400000",
+   "at": "2026-11-02T12:14:40+00:00",
+   "meta": {
+    "kind": "judge"
+   },
+   "claim": true
+  },
+  {
+   "type": "settlement",
+   "unit_id": "SaDUDAyEP45E3gNRVZWjgp:judge:20261102T121440259292Z-a2ef",
+   "kind": "judge",
+   "cost_usd": "0.031818",
+   "breakdown": {
+    "input": "0.019038",
+    "output": "0.012780",
+    "cache_read": "0.000000",
+    "cache_write": "0.000000"
+   },
+   "retry_estimate_usd": "0.000000",
+   "per_model": {
+    "google/gemini-3.1-pro-preview": {
+     "input": "0.019038",
+     "output": "0.012780",
+     "cache_read": "0.000000",
+     "cache_write": "0.000000",
+     "total": "0.031818",
+     "calls": "4",
+     "flags": [],
+     "tiers": {
+      "standard": 4
+     }
+    }
+   },
+   "raw_usage": {
+    "google/gemini-3.1-pro-preview": {
+     "input_tokens": 9519,
+     "output_tokens": 1065,
+     "cache_read_tokens": 0,
+     "cache_write_tokens": 0
+    }
+   },
+   "raw_calls": {
+    "google/gemini-3.1-pro-preview": [
+     {
+      "input_tokens": 2386,
+      "output_tokens": 219,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 2376,
+      "output_tokens": 387,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 2378,
+      "output_tokens": 200,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 2379,
+      "output_tokens": 259,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     }
+    ]
+   },
+   "usage_scope": {
+    "same_sample": true,
+    "source": "per-call usage of this judge batch"
+   },
+   "usage_reconciliation": {
+    "google/gemini-3.1-pro-preview": {
+     "aggregated": {
+      "input": 9519,
+      "output": 1065,
+      "cache_read": 0,
+      "cache_write": 0
+     },
+     "per_call": {
+      "input": 9519,
+      "output": 1065,
+      "cache_read": 0,
+      "cache_write": 0
+     },
+     "difference": {
+      "input": 0,
+      "output": 0,
+      "cache_read": 0,
+      "cache_write": 0
+     },
+     "conflict": false,
+     "calls": 4,
+     "conservative": {
+      "input_tokens": 9519,
+      "output_tokens": 1065,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     }
+    }
+   },
+   "inspect_total_cost_usd": null,
+   "estimated": false,
+   "estimate_basis": [],
+   "inferred": null,
+   "manual_review_required": false,
+   "flags": [],
+   "note": "judge batch 4 judge call(s): 4 ok, 0 provider_error, 0 not_attempted, 0 with missing/uncertain usage",
+   "reserved_usd": "1.400000",
+   "at": "2026-11-02T12:15:05+00:00"
+  },
+  {
+   "type": "reservation",
+   "unit_id": "ehpELnbiUfAp5dFTeDNwt9:judge:20261102T121505502925Z-36bb",
+   "kind": "judge",
+   "estimated_usd": "1.400000",
+   "at": "2026-11-02T12:15:05+00:00",
+   "meta": {
+    "kind": "judge"
+   },
+   "claim": true
+  },
+  {
+   "type": "settlement",
+   "unit_id": "ehpELnbiUfAp5dFTeDNwt9:judge:20261102T121505502925Z-36bb",
+   "kind": "judge",
+   "cost_usd": "0.031338",
+   "breakdown": {
+    "input": "0.017022",
+    "output": "0.014316",
+    "cache_read": "0.000000",
+    "cache_write": "0.000000"
+   },
+   "retry_estimate_usd": "0.000000",
+   "per_model": {
+    "google/gemini-3.1-pro-preview": {
+     "input": "0.017022",
+     "output": "0.014316",
+     "cache_read": "0.000000",
+     "cache_write": "0.000000",
+     "total": "0.031338",
+     "calls": "4",
+     "flags": [],
+     "tiers": {
+      "standard": 4
+     }
+    }
+   },
+   "raw_usage": {
+    "google/gemini-3.1-pro-preview": {
+     "input_tokens": 8511,
+     "output_tokens": 1193,
+     "cache_read_tokens": 0,
+     "cache_write_tokens": 0
+    }
+   },
+   "raw_calls": {
+    "google/gemini-3.1-pro-preview": [
+     {
+      "input_tokens": 2134,
+      "output_tokens": 201,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 2124,
+      "output_tokens": 312,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 2126,
+      "output_tokens": 423,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 2127,
+      "output_tokens": 257,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     }
+    ]
+   },
+   "usage_scope": {
+    "same_sample": true,
+    "source": "per-call usage of this judge batch"
+   },
+   "usage_reconciliation": {
+    "google/gemini-3.1-pro-preview": {
+     "aggregated": {
+      "input": 8511,
+      "output": 1193,
+      "cache_read": 0,
+      "cache_write": 0
+     },
+     "per_call": {
+      "input": 8511,
+      "output": 1193,
+      "cache_read": 0,
+      "cache_write": 0
+     },
+     "difference": {
+      "input": 0,
+      "output": 0,
+      "cache_read": 0,
+      "cache_write": 0
+     },
+     "conflict": false,
+     "calls": 4,
+     "conservative": {
+      "input_tokens": 8511,
+      "output_tokens": 1193,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     }
+    }
+   },
+   "inspect_total_cost_usd": null,
+   "estimated": false,
+   "estimate_basis": [],
+   "inferred": null,
+   "manual_review_required": false,
+   "flags": [],
+   "note": "judge batch 4 judge call(s): 4 ok, 0 provider_error, 0 not_attempted, 0 with missing/uncertain usage",
+   "reserved_usd": "1.400000",
+   "at": "2026-11-02T12:15:29+00:00"
+  },
+  {
+   "type": "reservation",
+   "unit_id": "AbudpM6dPVjwu2NSnwrZ6D:judge:20261102T121530251776Z-beb8",
+   "kind": "judge",
+   "estimated_usd": "18.810000",
+   "at": "2026-11-02T12:15:30+00:00",
+   "meta": {
+    "kind": "judge"
+   },
+   "claim": true
+  },
+  {
+   "type": "settlement",
+   "unit_id": "AbudpM6dPVjwu2NSnwrZ6D:judge:20261102T121530251776Z-beb8",
+   "kind": "judge",
+   "cost_usd": "1.966541",
+   "breakdown": {
+    "input": "1.546422",
+    "output": "0.417672",
+    "cache_read": "0.002447",
+    "cache_write": "0.000000"
+   },
+   "retry_estimate_usd": "0.000000",
+   "per_model": {
+    "google/gemini-3.1-pro-preview": {
+     "input": "1.546422",
+     "output": "0.417672",
+     "cache_read": "0.002447",
+     "cache_write": "0.000000",
+     "total": "1.966541",
+     "calls": "55",
+     "flags": [],
+     "tiers": {
+      "standard": 55
+     }
+    }
+   },
+   "raw_usage": {
+    "google/gemini-3.1-pro-preview": {
+     "input_tokens": 773211,
+     "output_tokens": 34806,
+     "cache_read_tokens": 12236,
+     "cache_write_tokens": 0
+    }
+   },
+   "raw_calls": {
+    "google/gemini-3.1-pro-preview": [
+     {
+      "input_tokens": 14286,
+      "output_tokens": 633,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 14292,
+      "output_tokens": 1181,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 14292,
+      "output_tokens": 504,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 14290,
+      "output_tokens": 512,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 14280,
+      "output_tokens": 342,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 14284,
+      "output_tokens": 387,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 14285,
+      "output_tokens": 636,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 14278,
+      "output_tokens": 479,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 14280,
+      "output_tokens": 433,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 14277,
+      "output_tokens": 383,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 14269,
+      "output_tokens": 452,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 14269,
+      "output_tokens": 403,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 14271,
+      "output_tokens": 571,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 14268,
+      "output_tokens": 485,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 14268,
+      "output_tokens": 423,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 14268,
+      "output_tokens": 456,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 14268,
+      "output_tokens": 354,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 14270,
+      "output_tokens": 392,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 14292,
+      "output_tokens": 701,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 14282,
+      "output_tokens": 822,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 14276,
+      "output_tokens": 472,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 14280,
+      "output_tokens": 773,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 14277,
+      "output_tokens": 439,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 14277,
+      "output_tokens": 525,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 14288,
+      "output_tokens": 601,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 14279,
+      "output_tokens": 510,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 14278,
+      "output_tokens": 557,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 14275,
+      "output_tokens": 510,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 14275,
+      "output_tokens": 671,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 14277,
+      "output_tokens": 1973,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 14280,
+      "output_tokens": 1008,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 14282,
+      "output_tokens": 374,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 14274,
+      "output_tokens": 337,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 14284,
+      "output_tokens": 608,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 14283,
+      "output_tokens": 422,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 14298,
+      "output_tokens": 572,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 14296,
+      "output_tokens": 551,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 14289,
+      "output_tokens": 795,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 14285,
+      "output_tokens": 1080,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 14283,
+      "output_tokens": 682,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 14284,
+      "output_tokens": 693,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 14290,
+      "output_tokens": 885,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 14280,
+      "output_tokens": 538,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 14280,
+      "output_tokens": 850,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 14281,
+      "output_tokens": 824,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 14292,
+      "output_tokens": 733,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 14277,
+      "output_tokens": 529,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 14277,
+      "output_tokens": 2106,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 14277,
+      "output_tokens": 713,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 14277,
+      "output_tokens": 491,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 14293,
+      "output_tokens": 598,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 14285,
+      "output_tokens": 367,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 14283,
+      "output_tokens": 459,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 14283,
+      "output_tokens": 515,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 2047,
+      "output_tokens": 496,
+      "cache_read_tokens": 12236,
+      "cache_write_tokens": 0
+     }
+    ]
+   },
+   "usage_scope": {
+    "same_sample": true,
+    "source": "per-call usage of this judge batch"
+   },
+   "usage_reconciliation": {
+    "google/gemini-3.1-pro-preview": {
+     "aggregated": {
+      "input": 773211,
+      "output": 34806,
+      "cache_read": 12236,
+      "cache_write": 0
+     },
+     "per_call": {
+      "input": 773211,
+      "output": 34806,
+      "cache_read": 12236,
+      "cache_write": 0
+     },
+     "difference": {
+      "input": 0,
+      "output": 0,
+      "cache_read": 0,
+      "cache_write": 0
+     },
+     "conflict": false,
+     "calls": 55,
+     "conservative": {
+      "input_tokens": 773211,
+      "output_tokens": 34806,
+      "cache_read_tokens": 12236,
+      "cache_write_tokens": 0
+     }
+    }
+   },
+   "inspect_total_cost_usd": null,
+   "estimated": false,
+   "estimate_basis": [],
+   "inferred": null,
+   "manual_review_required": false,
+   "flags": [],
+   "note": "judge batch 55 judge call(s): 55 ok, 0 provider_error, 0 not_attempted, 0 with missing/uncertain usage",
+   "reserved_usd": "18.810000",
+   "at": "2026-11-02T12:24:37+00:00"
+  },
+  {
+   "type": "reservation",
+   "unit_id": "4FAJ3AmGzujC6FZ67Krt9B:judge:20261102T122438472647Z-a225",
+   "kind": "judge",
+   "estimated_usd": "18.810000",
+   "at": "2026-11-02T12:24:38+00:00",
+   "meta": {
+    "kind": "judge"
+   },
+   "claim": true
+  },
+  {
+   "type": "settlement",
+   "unit_id": "4FAJ3AmGzujC6FZ67Krt9B:judge:20261102T122438472647Z-a225",
+   "kind": "judge",
+   "cost_usd": "1.752288",
+   "breakdown": {
+    "input": "1.279120",
+    "output": "0.471216",
+    "cache_read": "0.001952",
+    "cache_write": "0.000000"
+   },
+   "retry_estimate_usd": "0.000000",
+   "per_model": {
+    "google/gemini-3.1-pro-preview": {
+     "input": "1.279120",
+     "output": "0.471216",
+     "cache_read": "0.001952",
+     "cache_write": "0.000000",
+     "total": "1.752288",
+     "calls": "55",
+     "flags": [],
+     "tiers": {
+      "standard": 55
+     }
+    }
+   },
+   "raw_usage": {
+    "google/gemini-3.1-pro-preview": {
+     "input_tokens": 639560,
+     "output_tokens": 39268,
+     "cache_read_tokens": 9762,
+     "cache_write_tokens": 0
+    }
+   },
+   "raw_calls": {
+    "google/gemini-3.1-pro-preview": [
+     {
+      "input_tokens": 11811,
+      "output_tokens": 1512,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 11817,
+      "output_tokens": 911,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 11817,
+      "output_tokens": 704,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 11815,
+      "output_tokens": 527,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 11805,
+      "output_tokens": 340,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 11809,
+      "output_tokens": 626,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 11810,
+      "output_tokens": 583,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 11803,
+      "output_tokens": 570,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 11805,
+      "output_tokens": 456,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 11802,
+      "output_tokens": 504,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 11794,
+      "output_tokens": 426,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 11794,
+      "output_tokens": 537,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 11796,
+      "output_tokens": 404,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 11793,
+      "output_tokens": 372,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 11793,
+      "output_tokens": 412,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 11793,
+      "output_tokens": 1290,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 11793,
+      "output_tokens": 799,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 11795,
+      "output_tokens": 489,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 11817,
+      "output_tokens": 503,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 11807,
+      "output_tokens": 753,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 11801,
+      "output_tokens": 851,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 11805,
+      "output_tokens": 821,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 11802,
+      "output_tokens": 471,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 11802,
+      "output_tokens": 482,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 11813,
+      "output_tokens": 535,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 11804,
+      "output_tokens": 673,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 11803,
+      "output_tokens": 415,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 11800,
+      "output_tokens": 322,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 11800,
+      "output_tokens": 840,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 11802,
+      "output_tokens": 1552,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 11805,
+      "output_tokens": 1567,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 11807,
+      "output_tokens": 449,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 11799,
+      "output_tokens": 338,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 11809,
+      "output_tokens": 637,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 11808,
+      "output_tokens": 447,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 11823,
+      "output_tokens": 917,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 11821,
+      "output_tokens": 1432,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 11814,
+      "output_tokens": 1560,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 11810,
+      "output_tokens": 842,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 11808,
+      "output_tokens": 527,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 11809,
+      "output_tokens": 949,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 11815,
+      "output_tokens": 696,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 11805,
+      "output_tokens": 772,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 11805,
+      "output_tokens": 1004,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 11806,
+      "output_tokens": 400,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 11817,
+      "output_tokens": 464,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 11802,
+      "output_tokens": 1452,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 11802,
+      "output_tokens": 948,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 11802,
+      "output_tokens": 1218,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 11802,
+      "output_tokens": 571,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 11818,
+      "output_tokens": 390,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 11810,
+      "output_tokens": 456,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 11808,
+      "output_tokens": 412,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 11808,
+      "output_tokens": 483,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 2046,
+      "output_tokens": 657,
+      "cache_read_tokens": 9762,
+      "cache_write_tokens": 0
+     }
+    ]
+   },
+   "usage_scope": {
+    "same_sample": true,
+    "source": "per-call usage of this judge batch"
+   },
+   "usage_reconciliation": {
+    "google/gemini-3.1-pro-preview": {
+     "aggregated": {
+      "input": 639560,
+      "output": 39268,
+      "cache_read": 9762,
+      "cache_write": 0
+     },
+     "per_call": {
+      "input": 639560,
+      "output": 39268,
+      "cache_read": 9762,
+      "cache_write": 0
+     },
+     "difference": {
+      "input": 0,
+      "output": 0,
+      "cache_read": 0,
+      "cache_write": 0
+     },
+     "conflict": false,
+     "calls": 55,
+     "conservative": {
+      "input_tokens": 639560,
+      "output_tokens": 39268,
+      "cache_read_tokens": 9762,
+      "cache_write_tokens": 0
+     }
+    }
+   },
+   "inspect_total_cost_usd": null,
+   "estimated": false,
+   "estimate_basis": [],
+   "inferred": null,
+   "manual_review_required": false,
+   "flags": [],
+   "note": "judge batch 55 judge call(s): 55 ok, 0 provider_error, 0 not_attempted, 0 with missing/uncertain usage",
+   "reserved_usd": "18.810000",
+   "at": "2026-11-02T12:34:18+00:00"
+  },
+  {
+   "type": "reservation",
+   "unit_id": "BVeKQk8ZWp6j2uxp9hsuGf:judge:20261102T123419040867Z-6627",
+   "kind": "judge",
+   "estimated_usd": "20.900000",
+   "at": "2026-11-02T12:34:19+00:00",
+   "meta": {
+    "kind": "judge"
+   },
+   "claim": true
+  },
+  {
+   "type": "settlement",
+   "unit_id": "BVeKQk8ZWp6j2uxp9hsuGf:judge:20261102T123419040867Z-6627",
+   "kind": "judge",
+   "cost_usd": "1.665296",
+   "breakdown": {
+    "input": "1.354088",
+    "output": "0.263628",
+    "cache_read": "0.000000",
+    "cache_write": "0.000000"
+   },
+   "retry_estimate_usd": "0.000000",
+   "per_model": {
+    "google/gemini-3.1-pro-preview": {
+     "input": "1.354088",
+     "output": "0.263628",
+     "cache_read": "0.000000",
+     "cache_write": "0.000000",
+     "total": "1.617716",
+     "calls": "34",
+     "flags": [],
+     "tiers": {
+      "standard": 34
+     }
+    }
+   },
+   "raw_usage": {
+    "google/gemini-3.1-pro-preview": {
+     "input_tokens": 677044,
+     "output_tokens": 21969,
+     "cache_read_tokens": 0,
+     "cache_write_tokens": 0
+    }
+   },
+   "raw_calls": {
+    "google/gemini-3.1-pro-preview": [
+     {
+      "input_tokens": 21559,
+      "output_tokens": 547,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 21580,
+      "output_tokens": 744,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 21564,
+      "output_tokens": 952,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 21562,
+      "output_tokens": 589,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 21575,
+      "output_tokens": 474,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 21576,
+      "output_tokens": 621,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 21562,
+      "output_tokens": 338,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 21566,
+      "output_tokens": 905,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 21555,
+      "output_tokens": 777,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 21564,
+      "output_tokens": 410,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 21574,
+      "output_tokens": 1030,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 21567,
+      "output_tokens": 699,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 21560,
+      "output_tokens": 702,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 21559,
+      "output_tokens": 421,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 21551,
+      "output_tokens": 511,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 21552,
+      "output_tokens": 791,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 21567,
+      "output_tokens": 726,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 21572,
+      "output_tokens": 639,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 21570,
+      "output_tokens": 685,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 3281,
+      "output_tokens": 805,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 18858,
+      "output_tokens": 685,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 18862,
+      "output_tokens": 695,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 18867,
+      "output_tokens": 554,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 18854,
+      "output_tokens": 599,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 18856,
+      "output_tokens": 721,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 18855,
+      "output_tokens": 568,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 18855,
+      "output_tokens": 387,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 18855,
+      "output_tokens": 631,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 18859,
+      "output_tokens": 559,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 18869,
+      "output_tokens": 865,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 18861,
+      "output_tokens": 460,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 18871,
+      "output_tokens": 503,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 18857,
+      "output_tokens": 541,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 18849,
+      "output_tokens": 835,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     }
+    ]
+   },
+   "usage_scope": {
+    "same_sample": true,
+    "source": "per-call usage of this judge batch"
+   },
+   "usage_reconciliation": {
+    "google/gemini-3.1-pro-preview": {
+     "aggregated": {
+      "input": 677044,
+      "output": 21969,
+      "cache_read": 0,
+      "cache_write": 0
+     },
+     "per_call": {
+      "input": 677044,
+      "output": 21969,
+      "cache_read": 0,
+      "cache_write": 0
+     },
+     "difference": {
+      "input": 0,
+      "output": 0,
+      "cache_read": 0,
+      "cache_write": 0
+     },
+     "conflict": false,
+     "calls": 34,
+     "conservative": {
+      "input_tokens": 677044,
+      "output_tokens": 21969,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     }
+    }
+   },
+   "inspect_total_cost_usd": null,
+   "estimated": true,
+   "estimate_basis": [
+    "inferred_buffer"
+   ],
+   "inferred": {
+    "buffer_usd": "0.047580",
+    "buffer_calls": 1,
+    "basis": "1 average metered call(s): 1.617716 USD / 34 metered call(s) x 1",
+    "reported_usd": "1.617716",
+    "recovered_attempts": {
+     "recovered": 1,
+     "buffer_calls": 1,
+     "attempts_per_failed_request": 11,
+     "failures": [
+      {
+       "item": 45,
+       "unit_id": "a45bc83b-22f9-4def-8d89-9c5661b2b86f:item45",
+       "http_status": 429,
+       "provider_status": "RESOURCE_EXHAUSTED",
+       "failure_class": "retryable",
+       "attempts": 1,
+       "seconds": 0.862,
+       "timed_out": false
+      }
+     ],
+     "source": "judge batch: provider failures without usage"
+    },
+    "reconciliation_required": "provider dashboard"
+   },
+   "manual_review_required": false,
+   "flags": [
+    "inferred: 1 recovered 429/5xx attempt(s) without usage; settled at reported usage 1.617716 + buffer 0.047580 USD (1 average metered call(s)); not provider-confirmed"
+   ],
+   "note": "judge batch 61 judge call(s): 34 ok, 1 provider_error, 26 not_attempted, 1 with missing/uncertain usage",
+   "reserved_usd": "20.900000",
+   "at": "2026-11-02T12:40:03+00:00"
+  },
+  {
+   "type": "reservation",
+   "unit_id": "BVeKQk8ZWp6j2uxp9hsuGf:judge:20261102T124006540122Z-76da",
+   "kind": "judge",
+   "estimated_usd": "9.060000",
+   "at": "2026-11-02T12:40:06+00:00",
+   "meta": {
+    "kind": "judge"
+   },
+   "claim": true
+  },
+  {
+   "type": "settlement",
+   "unit_id": "BVeKQk8ZWp6j2uxp9hsuGf:judge:20261102T124006540122Z-76da",
+   "kind": "judge",
+   "cost_usd": "1.153928",
+   "breakdown": {
+    "input": "0.882988",
+    "output": "0.267036",
+    "cache_read": "0.003904",
+    "cache_write": "0.000000"
+   },
+   "retry_estimate_usd": "0.000000",
+   "per_model": {
+    "google/gemini-3.1-pro-preview": {
+     "input": "0.882988",
+     "output": "0.267036",
+     "cache_read": "0.003904",
+     "cache_write": "0.000000",
+     "total": "1.153928",
+     "calls": "27",
+     "flags": [],
+     "tiers": {
+      "standard": 27
+     }
+    }
+   },
+   "raw_usage": {
+    "google/gemini-3.1-pro-preview": {
+     "input_tokens": 441494,
+     "output_tokens": 22253,
+     "cache_read_tokens": 19519,
+     "cache_write_tokens": 0
+    }
+   },
+   "raw_calls": {
+    "google/gemini-3.1-pro-preview": [
+     {
+      "input_tokens": 18869,
+      "output_tokens": 624,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 18870,
+      "output_tokens": 601,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 18864,
+      "output_tokens": 633,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 21564,
+      "output_tokens": 1688,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 3260,
+      "output_tokens": 299,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 3253,
+      "output_tokens": 391,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 3266,
+      "output_tokens": 723,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 3252,
+      "output_tokens": 274,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 3260,
+      "output_tokens": 406,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 18872,
+      "output_tokens": 1266,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 18867,
+      "output_tokens": 435,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 18859,
+      "output_tokens": 1024,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 18859,
+      "output_tokens": 480,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 18865,
+      "output_tokens": 582,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 18867,
+      "output_tokens": 516,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 18851,
+      "output_tokens": 563,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 21564,
+      "output_tokens": 609,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 21556,
+      "output_tokens": 464,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 21564,
+      "output_tokens": 3336,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 21571,
+      "output_tokens": 724,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 21567,
+      "output_tokens": 963,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 2048,
+      "output_tokens": 531,
+      "cache_read_tokens": 19519,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 21570,
+      "output_tokens": 698,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 21558,
+      "output_tokens": 846,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 21577,
+      "output_tokens": 762,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 21571,
+      "output_tokens": 1614,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 18850,
+      "output_tokens": 1201,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     }
+    ]
+   },
+   "usage_scope": {
+    "same_sample": true,
+    "source": "per-call usage of this judge batch"
+   },
+   "usage_reconciliation": {
+    "google/gemini-3.1-pro-preview": {
+     "aggregated": {
+      "input": 441494,
+      "output": 22253,
+      "cache_read": 19519,
+      "cache_write": 0
+     },
+     "per_call": {
+      "input": 441494,
+      "output": 22253,
+      "cache_read": 19519,
+      "cache_write": 0
+     },
+     "difference": {
+      "input": 0,
+      "output": 0,
+      "cache_read": 0,
+      "cache_write": 0
+     },
+     "conflict": false,
+     "calls": 27,
+     "conservative": {
+      "input_tokens": 441494,
+      "output_tokens": 22253,
+      "cache_read_tokens": 19519,
+      "cache_write_tokens": 0
+     }
+    }
+   },
+   "inspect_total_cost_usd": null,
+   "estimated": false,
+   "estimate_basis": [],
+   "inferred": null,
+   "manual_review_required": false,
+   "flags": [],
+   "note": "judge batch 27 judge call(s): 27 ok, 0 provider_error, 0 not_attempted, 0 with missing/uncertain usage",
+   "reserved_usd": "9.060000",
+   "at": "2026-11-02T12:45:16+00:00"
+  },
+  {
+   "type": "reservation",
+   "unit_id": "NHSUKRMDDbYoJoGyWnpjcN:judge:20261102T124516938620Z-3ec7",
+   "kind": "judge",
+   "estimated_usd": "20.064137",
+   "at": "2026-11-02T12:45:17+00:00",
+   "meta": {
+    "kind": "judge"
+   },
+   "claim": true
+  },
+  {
+   "type": "settlement",
+   "unit_id": "NHSUKRMDDbYoJoGyWnpjcN:judge:20261102T124516938620Z-3ec7",
+   "kind": "judge",
+   "cost_usd": "2.143590",
+   "breakdown": {
+    "input": "1.668558",
+    "output": "0.475032",
+    "cache_read": "0.000000",
+    "cache_write": "0.000000"
+   },
+   "retry_estimate_usd": "0.000000",
+   "per_model": {
+    "google/gemini-3.1-pro-preview": {
+     "input": "1.668558",
+     "output": "0.475032",
+     "cache_read": "0.000000",
+     "cache_write": "0.000000",
+     "total": "2.143590",
+     "calls": "61",
+     "flags": [],
+     "tiers": {
+      "standard": 61
+     }
+    }
+   },
+   "raw_usage": {
+    "google/gemini-3.1-pro-preview": {
+     "input_tokens": 834279,
+     "output_tokens": 39586,
+     "cache_read_tokens": 0,
+     "cache_write_tokens": 0
+    }
+   },
+   "raw_calls": {
+    "google/gemini-3.1-pro-preview": [
+     {
+      "input_tokens": 16324,
+      "output_tokens": 461,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 16345,
+      "output_tokens": 561,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 16329,
+      "output_tokens": 696,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 16327,
+      "output_tokens": 513,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 16340,
+      "output_tokens": 550,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 16341,
+      "output_tokens": 572,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 16327,
+      "output_tokens": 432,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 16331,
+      "output_tokens": 371,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 16320,
+      "output_tokens": 443,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 16329,
+      "output_tokens": 486,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 16339,
+      "output_tokens": 709,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 16332,
+      "output_tokens": 673,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 16325,
+      "output_tokens": 520,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 16324,
+      "output_tokens": 576,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 16316,
+      "output_tokens": 473,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 16317,
+      "output_tokens": 411,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 16332,
+      "output_tokens": 528,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 16337,
+      "output_tokens": 394,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 16335,
+      "output_tokens": 507,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 3724,
+      "output_tokens": 816,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 13368,
+      "output_tokens": 584,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 13372,
+      "output_tokens": 442,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 13377,
+      "output_tokens": 401,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 13364,
+      "output_tokens": 390,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 13366,
+      "output_tokens": 415,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 13365,
+      "output_tokens": 602,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 13365,
+      "output_tokens": 411,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 13365,
+      "output_tokens": 477,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 13369,
+      "output_tokens": 453,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 13379,
+      "output_tokens": 944,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 13371,
+      "output_tokens": 812,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 13381,
+      "output_tokens": 425,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 13367,
+      "output_tokens": 327,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 13359,
+      "output_tokens": 1306,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 13360,
+      "output_tokens": 727,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 13379,
+      "output_tokens": 470,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 13380,
+      "output_tokens": 416,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 13374,
+      "output_tokens": 434,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 16329,
+      "output_tokens": 1386,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 3703,
+      "output_tokens": 313,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 3696,
+      "output_tokens": 558,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 3709,
+      "output_tokens": 335,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 3695,
+      "output_tokens": 281,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 3703,
+      "output_tokens": 381,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 13382,
+      "output_tokens": 871,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 13377,
+      "output_tokens": 548,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 13369,
+      "output_tokens": 534,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 13369,
+      "output_tokens": 622,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 13375,
+      "output_tokens": 2953,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 13377,
+      "output_tokens": 908,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 13361,
+      "output_tokens": 493,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 16329,
+      "output_tokens": 708,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 16321,
+      "output_tokens": 389,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 16329,
+      "output_tokens": 370,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 16336,
+      "output_tokens": 750,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 16332,
+      "output_tokens": 1712,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 16335,
+      "output_tokens": 869,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 16323,
+      "output_tokens": 366,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 16342,
+      "output_tokens": 1868,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 4196,
+      "output_tokens": 497,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     },
+     {
+      "input_tokens": 16336,
+      "output_tokens": 1146,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     }
+    ]
+   },
+   "usage_scope": {
+    "same_sample": true,
+    "source": "per-call usage of this judge batch"
+   },
+   "usage_reconciliation": {
+    "google/gemini-3.1-pro-preview": {
+     "aggregated": {
+      "input": 834279,
+      "output": 39586,
+      "cache_read": 0,
+      "cache_write": 0
+     },
+     "per_call": {
+      "input": 834279,
+      "output": 39586,
+      "cache_read": 0,
+      "cache_write": 0
+     },
+     "difference": {
+      "input": 0,
+      "output": 0,
+      "cache_read": 0,
+      "cache_write": 0
+     },
+     "conflict": false,
+     "calls": 61,
+     "conservative": {
+      "input_tokens": 834279,
+      "output_tokens": 39586,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+     }
+    }
+   },
+   "inspect_total_cost_usd": null,
+   "estimated": false,
+   "estimate_basis": [],
+   "inferred": null,
+   "manual_review_required": false,
+   "flags": [],
+   "note": "judge batch 61 judge call(s): 61 ok, 0 provider_error, 0 not_attempted, 0 with missing/uncertain usage",
+   "reserved_usd": "20.064137",
+   "at": "2026-11-02T12:55:27+00:00"
+  }
+ ]
+}

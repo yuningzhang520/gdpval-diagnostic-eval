@@ -7,7 +7,8 @@ the author-review result and the blind audit). Detail sits in expandables.
 
 ## How it is built
 
-`index.html` and `data/metrics.json` are generated; do not edit them by hand. The evidence crops in `img/` are rendered
+`index.html` and `data/metrics.json` are generated; do not edit them by hand. Copies of the run-store records the
+build reads are in `results/` (hash-checked against the inputs listed in `data/metrics.json`). The evidence crops in `img/` are rendered
 from the deliverables by `render_crops.py`.
 
 ```

@@ -1,0 +1,2176 @@
+{
+ "version": 2,
+ "label": "formal",
+ "ceiling_usd": "200.000000",
+ "created_at": "2026-11-02T10:06:10+00:00",
+ "ledger_id": "6df9d29eaa8fdd711575e6878bcc2fda",
+ "entries": [
+  {
+   "type": "reservation",
+   "unit_id": "f841ddcf-2a28-4f6d-bac3-61b607219d3e:openai/gpt-6.1-sol:20261102T100610Z",
+   "kind": "sample",
+   "estimated_usd": "5.000000",
+   "at": "2026-11-02T10:06:10+00:00",
+   "meta": {
+    "model": "openai/gpt-6.1-sol",
+    "task": "formal_f841ddcf"
+   },
+   "claim": true
+  },
+  {
+   "type": "void",
+   "unit_id": "f841ddcf-2a28-4f6d-bac3-61b607219d3e:openai/gpt-6.1-sol:20261102T100610Z",
+   "reason": "dry run: eval() not called",
+   "at": "2026-11-02T10:06:10+00:00"
+  },
+  {
+   "type": "reservation",
+   "unit_id": "47ef842d-8eac-4b90-bda8-dd934c228c96:openai/gpt-6.1-sol:20261102T100610Z",
+   "kind": "sample",
+   "estimated_usd": "5.000000",
+   "at": "2026-11-02T10:06:10+00:00",
+   "meta": {
+    "model": "openai/gpt-6.1-sol",
+    "task": "formal_47ef842d"
+   },
+   "claim": true
+  },
+  {
+   "type": "void",
+   "unit_id": "47ef842d-8eac-4b90-bda8-dd934c228c96:openai/gpt-6.1-sol:20261102T100610Z",
+   "reason": "dry run: eval() not called",
+   "at": "2026-11-02T10:06:10+00:00"
+  },
+  {
+   "type": "reservation",
+   "unit_id": "1137e2bb-bdf9-4876-b572-f29b7de5e595:openai/gpt-6.1-sol:20261102T100610Z",
+   "kind": "sample",
+   "estimated_usd": "5.000000",
+   "at": "2026-11-02T10:06:10+00:00",
+   "meta": {
+    "model": "openai/gpt-6.1-sol",
+    "task": "formal_1137e2bb"
+   },
+   "claim": true
+  },
+  {
+   "type": "void",
+   "unit_id": "1137e2bb-bdf9-4876-b572-f29b7de5e595:openai/gpt-6.1-sol:20261102T100610Z",
+   "reason": "dry run: eval() not called",
+   "at": "2026-11-02T10:06:10+00:00"
+  },
+  {
+   "type": "reservation",
+   "unit_id": "c3525d4d-2012-45df-853e-2d2a0e902991:openai/gpt-6.1-sol:20261102T100611Z",
+   "kind": "sample",
+   "estimated_usd": "5.000000",
+   "at": "2026-11-02T10:06:11+00:00",
+   "meta": {
+    "model": "openai/gpt-6.1-sol",
+    "task": "formal_c3525d4d"
+   },
+   "claim": true
+  },
+  {
+   "type": "void",
+   "unit_id": "c3525d4d-2012-45df-853e-2d2a0e902991:openai/gpt-6.1-sol:20261102T100611Z",
+   "reason": "dry run: eval() not called",
+   "at": "2026-11-02T10:06:11+00:00"
+  },
+  {
+   "type": "reservation",
+   "unit_id": "7b08cd4d-df60-41ae-9102-8aaa49306ba2:openai/gpt-6.1-sol:20261102T100611Z",
+   "kind": "sample",
+   "estimated_usd": "5.000000",
+   "at": "2026-11-02T10:06:11+00:00",
+   "meta": {
+    "model": "openai/gpt-6.1-sol",
+    "task": "formal_7b08cd4d"
+   },
+   "claim": true
+  },
+  {
+   "type": "void",
+   "unit_id": "7b08cd4d-df60-41ae-9102-8aaa49306ba2:openai/gpt-6.1-sol:20261102T100611Z",
+   "reason": "dry run: eval() not called",
+   "at": "2026-11-02T10:06:11+00:00"
+  },
+  {
+   "type": "reservation",
+   "unit_id": "7d7fc9a7-21a7-4b83-906f-416dea5ad04f:openai/gpt-6.1-sol:20261102T100611Z",
+   "kind": "sample",
+   "estimated_usd": "5.000000",
+   "at": "2026-11-02T10:06:11+00:00",
+   "meta": {
+    "model": "openai/gpt-6.1-sol",
+    "task": "formal_7d7fc9a7"
+   },
+   "claim": true
+  },
+  {
+   "type": "void",
+   "unit_id": "7d7fc9a7-21a7-4b83-906f-416dea5ad04f:openai/gpt-6.1-sol:20261102T100611Z",
+   "reason": "dry run: eval() not called",
+   "at": "2026-11-02T10:06:11+00:00"
+  },
+  {
+   "type": "reservation",
+   "unit_id": "2ea2e5b5-257f-42e6-a7dc-93763f28b19d:openai/gpt-6.1-sol:20261102T100611Z",
+   "kind": "sample",
+   "estimated_usd": "5.000000",
+   "at": "2026-11-02T10:06:11+00:00",
+   "meta": {
+    "model": "openai/gpt-6.1-sol",
+    "task": "formal_2ea2e5b5"
+   },
+   "claim": true
+  },
+  {
+   "type": "void",
+   "unit_id": "2ea2e5b5-257f-42e6-a7dc-93763f28b19d:openai/gpt-6.1-sol:20261102T100611Z",
+   "reason": "dry run: eval() not called",
+   "at": "2026-11-02T10:06:11+00:00"
+  },
+  {
+   "type": "reservation",
+   "unit_id": "c357f0e2-963d-4eb7-a6fa-3078fe55b3ba:openai/gpt-6.1-sol:20261102T100611Z",
+   "kind": "sample",
+   "estimated_usd": "5.000000",
+   "at": "2026-11-02T10:06:11+00:00",
+   "meta": {
+    "model": "openai/gpt-6.1-sol",
+    "task": "formal_c357f0e2"
+   },
+   "claim": true
+  },
+  {
+   "type": "void",
+   "unit_id": "c357f0e2-963d-4eb7-a6fa-3078fe55b3ba:openai/gpt-6.1-sol:20261102T100611Z",
+   "reason": "dry run: eval() not called",
+   "at": "2026-11-02T10:06:11+00:00"
+  },
+  {
+   "type": "reservation",
+   "unit_id": "a45bc83b-22f9-4def-8d89-9c5661b2b86f:openai/gpt-6.1-sol:20261102T100611Z",
+   "kind": "sample",
+   "estimated_usd": "5.000000",
+   "at": "2026-11-02T10:06:11+00:00",
+   "meta": {
+    "model": "openai/gpt-6.1-sol",
+    "task": "formal_a45bc83b"
+   },
+   "claim": true
+  },
+  {
+   "type": "void",
+   "unit_id": "a45bc83b-22f9-4def-8d89-9c5661b2b86f:openai/gpt-6.1-sol:20261102T100611Z",
+   "reason": "dry run: eval() not called",
+   "at": "2026-11-02T10:06:11+00:00"
+  },
+  {
+   "type": "reservation",
+   "unit_id": "f841ddcf-2a28-4f6d-bac3-61b607219d3e:openai/gpt-6.1-sol:20261102T100917Z",
+   "kind": "sample",
+   "estimated_usd": "5.000000",
+   "at": "2026-11-02T10:09:17+00:00",
+   "meta": {
+    "model": "openai/gpt-6.1-sol",
+    "task": "formal_f841ddcf"
+   },
+   "claim": true
+  },
+  {
+   "type": "settlement",
+   "unit_id": "f841ddcf-2a28-4f6d-bac3-61b607219d3e:openai/gpt-6.1-sol:20261102T100917Z",
+   "kind": "sample",
+   "cost_usd": "0.181770",
+   "breakdown": {
+    "input": "0.003698",
+    "output": "0.092220",
+    "cache_read": "0.015269",
+    "cache_write": "0.070583"
+   },
+   "retry_estimate_usd": "0.000000",
+   "per_model": {
+    "openai/gpt-6.1-sol": {
+     "input": "0.003698",
+     "output": "0.092220",
+     "cache_read": "0.015269",
+     "cache_write": "0.070583",
+     "total": "0.181770",
+     "calls": "12",
+     "flags": [
+      "cache writes priced at the ledger rate from candidate facts rate (2.5 USD/MTok); the usage record does not split cache-write retention tiers"
+     ],
+     "tiers": {
+      "standard": 12
+     }
+    }
+   },
+   "raw_usage": {
+    "openai/gpt-6.1-sol": {
+     "input_tokens": 1849,
+     "output_tokens": 9222,
+     "cache_read_tokens": 152684,
+     "cache_write_tokens": 28232
+    }
+   },
+   "raw_calls": {
+    "openai/gpt-6.1-sol": [
+     {
+      "input_tokens": 825,
+      "output_tokens": 38,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "total_cost": 0.00203
+     },
+     {
+      "input_tokens": 994,
+      "output_tokens": 117,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "total_cost": 0.003158
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 76,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 3384,
+      "total_cost": 0.009226
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 710,
+      "cache_read_tokens": 3384,
+      "cache_write_tokens": 7110,
+      "total_cost": 0.0252194
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 489,
+      "cache_read_tokens": 10494,
+      "cache_write_tokens": 2088,
+      "total_cost": 0.0111654
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 5513,
+      "cache_read_tokens": 12582,
+      "cache_write_tokens": 513,
+      "total_cost": 0.0576767
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 91,
+      "cache_read_tokens": 13095,
+      "cache_write_tokens": 5582,
+      "total_cost": 0.0161805
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 646,
+      "cache_read_tokens": 18677,
+      "cache_write_tokens": 1493,
+      "total_cost": 0.0120662
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 582,
+      "cache_read_tokens": 20170,
+      "cache_write_tokens": 3677,
+      "total_cost": 0.0170355
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 37,
+      "cache_read_tokens": 23847,
+      "cache_write_tokens": 651,
+      "total_cost": 0.0043882
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 838,
+      "cache_read_tokens": 24498,
+      "cache_write_tokens": 1439,
+      "total_cost": 0.014433300000000001
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 85,
+      "cache_read_tokens": 25937,
+      "cache_write_tokens": 2295,
+      "total_cost": 0.009187200000000001
+     }
+    ]
+   },
+   "usage_scope": {
+    "same_sample": true,
+    "sample_uuid": "P8gA2U2jR7VzNWKqqdJ5SZ",
+    "samples_in_log": 1,
+    "model_calls": 12,
+    "calls_without_usage": 0,
+    "aggregate_source": "EvalSample.model_usage",
+    "calls_source": "EvalSample.events[model].output.usage"
+   },
+   "usage_reconciliation": {
+    "openai/gpt-6.1-sol": {
+     "aggregated": {
+      "input": 1849,
+      "output": 9222,
+      "cache_read": 152684,
+      "cache_write": 28232
+     },
+     "per_call": {
+      "input": 1849,
+      "output": 9222,
+      "cache_read": 152684,
+      "cache_write": 28232
+     },
+     "difference": {
+      "input": 0,
+      "output": 0,
+      "cache_read": 0,
+      "cache_write": 0
+     },
+     "conflict": false,
+     "calls": 12,
+     "conservative": {
+      "input_tokens": 1849,
+      "output_tokens": 9222,
+      "cache_read_tokens": 152684,
+      "cache_write_tokens": 28232
+     }
+    }
+   },
+   "inspect_total_cost_usd": "0.181766",
+   "estimated": false,
+   "estimate_basis": [],
+   "inferred": null,
+   "manual_review_required": false,
+   "flags": [
+    "openai/gpt-6.1-sol: cache writes priced at the ledger rate from candidate facts rate (2.5 USD/MTok); the usage record does not split cache-write retention tiers"
+   ],
+   "note": "inspect status success",
+   "reserved_usd": "5.000000",
+   "at": "2026-11-02T10:11:57+00:00"
+  },
+  {
+   "type": "reservation",
+   "unit_id": "47ef842d-8eac-4b90-bda8-dd934c228c96:openai/gpt-6.1-sol:20261102T101157Z",
+   "kind": "sample",
+   "estimated_usd": "5.000000",
+   "at": "2026-11-02T10:11:57+00:00",
+   "meta": {
+    "model": "openai/gpt-6.1-sol",
+    "task": "formal_47ef842d"
+   },
+   "claim": true
+  },
+  {
+   "type": "settlement",
+   "unit_id": "47ef842d-8eac-4b90-bda8-dd934c228c96:openai/gpt-6.1-sol:20261102T101157Z",
+   "kind": "sample",
+   "cost_usd": "0.324796",
+   "breakdown": {
+    "input": "0.001840",
+    "output": "0.171640",
+    "cache_read": "0.041831",
+    "cache_write": "0.109485"
+   },
+   "retry_estimate_usd": "0.000000",
+   "per_model": {
+    "openai/gpt-6.1-sol": {
+     "input": "0.001840",
+     "output": "0.171640",
+     "cache_read": "0.041831",
+     "cache_write": "0.109485",
+     "total": "0.324796",
+     "calls": "21",
+     "flags": [
+      "cache writes priced at the ledger rate from candidate facts rate (2.5 USD/MTok); the usage record does not split cache-write retention tiers"
+     ],
+     "tiers": {
+      "standard": 21
+     }
+    }
+   },
+   "raw_usage": {
+    "openai/gpt-6.1-sol": {
+     "input_tokens": 920,
+     "output_tokens": 17164,
+     "cache_read_tokens": 418302,
+     "cache_write_tokens": 43792
+    }
+   },
+   "raw_calls": {
+    "openai/gpt-6.1-sol": [
+     {
+      "input_tokens": 860,
+      "output_tokens": 38,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "total_cost": 0.0021
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 112,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 1034,
+      "total_cost": 0.003711
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 211,
+      "cache_read_tokens": 1034,
+      "cache_write_tokens": 2531,
+      "total_cost": 0.0085469
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 871,
+      "cache_read_tokens": 3565,
+      "cache_write_tokens": 2437,
+      "total_cost": 0.015165000000000001
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 421,
+      "cache_read_tokens": 6002,
+      "cache_write_tokens": 1393,
+      "total_cost": 0.008298700000000001
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 2074,
+      "cache_read_tokens": 7395,
+      "cache_write_tokens": 1075,
+      "total_cost": 0.024173
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 194,
+      "cache_read_tokens": 8470,
+      "cache_write_tokens": 2185,
+      "total_cost": 0.0082555
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 8235,
+      "cache_read_tokens": 10655,
+      "cache_write_tokens": 226,
+      "total_cost": 0.0839865
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 414,
+      "cache_read_tokens": 10881,
+      "cache_write_tokens": 8387,
+      "total_cost": 0.026201600000000002
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 228,
+      "cache_read_tokens": 19268,
+      "cache_write_tokens": 1574,
+      "total_cost": 0.0081478
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 111,
+      "cache_read_tokens": 20842,
+      "cache_write_tokens": 355,
+      "total_cost": 0.0040877000000000005
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 80,
+      "cache_read_tokens": 21197,
+      "cache_write_tokens": 339,
+      "total_cost": 0.0037732000000000004
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 244,
+      "cache_read_tokens": 21536,
+      "cache_write_tokens": 6046,
+      "total_cost": 0.0197146
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 449,
+      "cache_read_tokens": 27582,
+      "cache_write_tokens": 4371,
+      "total_cost": 0.0181817
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 250,
+      "cache_read_tokens": 31953,
+      "cache_write_tokens": 1000,
+      "total_cost": 0.0082013
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 1231,
+      "cache_read_tokens": 32953,
+      "cache_write_tokens": 964,
+      "total_cost": 0.0180213
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 80,
+      "cache_read_tokens": 33917,
+      "cache_write_tokens": 1441,
+      "total_cost": 0.0078002
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 256,
+      "cache_read_tokens": 35358,
+      "cache_write_tokens": 6046,
+      "total_cost": 0.021216799999999997
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 234,
+      "cache_read_tokens": 41404,
+      "cache_write_tokens": 424,
+      "total_cost": 0.007546400000000001
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 1228,
+      "cache_read_tokens": 41828,
+      "cache_write_tokens": 634,
+      "total_cost": 0.018053800000000002
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 203,
+      "cache_read_tokens": 42462,
+      "cache_write_tokens": 1330,
+      "total_cost": 0.0096072
+     }
+    ]
+   },
+   "usage_scope": {
+    "same_sample": true,
+    "sample_uuid": "dPR5yvN9wEfcMyQiAC2njB",
+    "samples_in_log": 1,
+    "model_calls": 21,
+    "calls_without_usage": 0,
+    "aggregate_source": "EvalSample.model_usage",
+    "calls_source": "EvalSample.events[model].output.usage"
+   },
+   "usage_reconciliation": {
+    "openai/gpt-6.1-sol": {
+     "aggregated": {
+      "input": 920,
+      "output": 17164,
+      "cache_read": 418302,
+      "cache_write": 43792
+     },
+     "per_call": {
+      "input": 920,
+      "output": 17164,
+      "cache_read": 418302,
+      "cache_write": 43792
+     },
+     "difference": {
+      "input": 0,
+      "output": 0,
+      "cache_read": 0,
+      "cache_write": 0
+     },
+     "conflict": false,
+     "calls": 21,
+     "conservative": {
+      "input_tokens": 920,
+      "output_tokens": 17164,
+      "cache_read_tokens": 418302,
+      "cache_write_tokens": 43792
+     }
+    }
+   },
+   "inspect_total_cost_usd": "0.324790",
+   "estimated": false,
+   "estimate_basis": [],
+   "inferred": null,
+   "manual_review_required": false,
+   "flags": [
+    "openai/gpt-6.1-sol: cache writes priced at the ledger rate from candidate facts rate (2.5 USD/MTok); the usage record does not split cache-write retention tiers"
+   ],
+   "note": "inspect status success",
+   "reserved_usd": "5.000000",
+   "at": "2026-11-02T10:17:38+00:00"
+  },
+  {
+   "type": "reservation",
+   "unit_id": "1137e2bb-bdf9-4876-b572-f29b7de5e595:openai/gpt-6.1-sol:20261102T101738Z",
+   "kind": "sample",
+   "estimated_usd": "5.000000",
+   "at": "2026-11-02T10:17:38+00:00",
+   "meta": {
+    "model": "openai/gpt-6.1-sol",
+    "task": "formal_1137e2bb"
+   },
+   "claim": true
+  },
+  {
+   "type": "settlement",
+   "unit_id": "1137e2bb-bdf9-4876-b572-f29b7de5e595:openai/gpt-6.1-sol:20261102T101738Z",
+   "kind": "sample",
+   "cost_usd": "0.243842",
+   "breakdown": {
+    "input": "0.002022",
+    "output": "0.132420",
+    "cache_read": "0.027832",
+    "cache_write": "0.081568"
+   },
+   "retry_estimate_usd": "0.000000",
+   "per_model": {
+    "openai/gpt-6.1-sol": {
+     "input": "0.002022",
+     "output": "0.132420",
+     "cache_read": "0.027832",
+     "cache_write": "0.081568",
+     "total": "0.243842",
+     "calls": "17",
+     "flags": [
+      "cache writes priced at the ledger rate from candidate facts rate (2.5 USD/MTok); the usage record does not split cache-write retention tiers"
+     ],
+     "tiers": {
+      "standard": 17
+     }
+    }
+   },
+   "raw_usage": {
+    "openai/gpt-6.1-sol": {
+     "input_tokens": 1011,
+     "output_tokens": 13242,
+     "cache_read_tokens": 278312,
+     "cache_write_tokens": 32626
+    }
+   },
+   "raw_calls": {
+    "openai/gpt-6.1-sol": [
+     {
+      "input_tokens": 963,
+      "output_tokens": 38,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "total_cost": 0.002306
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 85,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 1128,
+      "total_cost": 0.003676
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 487,
+      "cache_read_tokens": 1128,
+      "cache_write_tokens": 1722,
+      "total_cost": 0.0092938
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 6881,
+      "cache_read_tokens": 2850,
+      "cache_write_tokens": 1581,
+      "total_cost": 0.0730535
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 456,
+      "cache_read_tokens": 4431,
+      "cache_write_tokens": 6931,
+      "total_cost": 0.022336599999999998
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 66,
+      "cache_read_tokens": 11362,
+      "cache_write_tokens": 2488,
+      "total_cost": 0.0080222
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 269,
+      "cache_read_tokens": 13850,
+      "cache_write_tokens": 1520,
+      "total_cost": 0.007880999999999999
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 792,
+      "cache_read_tokens": 15370,
+      "cache_write_tokens": 4601,
+      "total_cost": 0.0209655
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 283,
+      "cache_read_tokens": 19971,
+      "cache_write_tokens": 843,
+      "total_cost": 0.0069406
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 1219,
+      "cache_read_tokens": 20814,
+      "cache_write_tokens": 1284,
+      "total_cost": 0.0174874
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 82,
+      "cache_read_tokens": 22098,
+      "cache_write_tokens": 1296,
+      "total_cost": 0.0062758
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 416,
+      "cache_read_tokens": 23394,
+      "cache_write_tokens": 2542,
+      "total_cost": 0.0128604
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 275,
+      "cache_read_tokens": 25936,
+      "cache_write_tokens": 769,
+      "total_cost": 0.0072721
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 465,
+      "cache_read_tokens": 26705,
+      "cache_write_tokens": 2662,
+      "total_cost": 0.013981500000000001
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 76,
+      "cache_read_tokens": 29367,
+      "cache_write_tokens": 571,
+      "total_cost": 0.0051302000000000006
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 1212,
+      "cache_read_tokens": 29938,
+      "cache_write_tokens": 1160,
+      "total_cost": 0.018019800000000002
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 140,
+      "cache_read_tokens": 31098,
+      "cache_write_tokens": 1528,
+      "total_cost": 0.0083358
+     }
+    ]
+   },
+   "usage_scope": {
+    "same_sample": true,
+    "sample_uuid": "mE6xrcKcirXrQgh4ugBfbE",
+    "samples_in_log": 1,
+    "model_calls": 17,
+    "calls_without_usage": 0,
+    "aggregate_source": "EvalSample.model_usage",
+    "calls_source": "EvalSample.events[model].output.usage"
+   },
+   "usage_reconciliation": {
+    "openai/gpt-6.1-sol": {
+     "aggregated": {
+      "input": 1011,
+      "output": 13242,
+      "cache_read": 278312,
+      "cache_write": 32626
+     },
+     "per_call": {
+      "input": 1011,
+      "output": 13242,
+      "cache_read": 278312,
+      "cache_write": 32626
+     },
+     "difference": {
+      "input": 0,
+      "output": 0,
+      "cache_read": 0,
+      "cache_write": 0
+     },
+     "conflict": false,
+     "calls": 17,
+     "conservative": {
+      "input_tokens": 1011,
+      "output_tokens": 13242,
+      "cache_read_tokens": 278312,
+      "cache_write_tokens": 32626
+     }
+    }
+   },
+   "inspect_total_cost_usd": "0.243838",
+   "estimated": false,
+   "estimate_basis": [],
+   "inferred": null,
+   "manual_review_required": false,
+   "flags": [
+    "openai/gpt-6.1-sol: cache writes priced at the ledger rate from candidate facts rate (2.5 USD/MTok); the usage record does not split cache-write retention tiers"
+   ],
+   "note": "inspect status success",
+   "reserved_usd": "5.000000",
+   "at": "2026-11-02T10:21:44+00:00"
+  },
+  {
+   "type": "reservation",
+   "unit_id": "c3525d4d-2012-45df-853e-2d2a0e902991:openai/gpt-6.1-sol:20261102T102144Z",
+   "kind": "sample",
+   "estimated_usd": "5.000000",
+   "at": "2026-11-02T10:21:44+00:00",
+   "meta": {
+    "model": "openai/gpt-6.1-sol",
+    "task": "formal_c3525d4d"
+   },
+   "claim": true
+  },
+  {
+   "type": "settlement",
+   "unit_id": "c3525d4d-2012-45df-853e-2d2a0e902991:openai/gpt-6.1-sol:20261102T102144Z",
+   "kind": "sample",
+   "cost_usd": "0.230607",
+   "breakdown": {
+    "input": "0.002094",
+    "output": "0.147760",
+    "cache_read": "0.012430",
+    "cache_write": "0.068323"
+   },
+   "retry_estimate_usd": "0.000000",
+   "per_model": {
+    "openai/gpt-6.1-sol": {
+     "input": "0.002094",
+     "output": "0.147760",
+     "cache_read": "0.012430",
+     "cache_write": "0.068323",
+     "total": "0.230607",
+     "calls": "12",
+     "flags": [
+      "cache writes priced at the ledger rate from candidate facts rate (2.5 USD/MTok); the usage record does not split cache-write retention tiers"
+     ],
+     "tiers": {
+      "standard": 12
+     }
+    }
+   },
+   "raw_usage": {
+    "openai/gpt-6.1-sol": {
+     "input_tokens": 1047,
+     "output_tokens": 14776,
+     "cache_read_tokens": 124279,
+     "cache_write_tokens": 27328
+    }
+   },
+   "raw_calls": {
+    "openai/gpt-6.1-sol": [
+     {
+      "input_tokens": 1014,
+      "output_tokens": 46,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "total_cost": 0.0024879999999999998
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 191,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 1247,
+      "total_cost": 0.0050335
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 479,
+      "cache_read_tokens": 1247,
+      "cache_write_tokens": 810,
+      "total_cost": 0.0069457
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 3967,
+      "cache_read_tokens": 2057,
+      "cache_write_tokens": 1268,
+      "total_cost": 0.0430517
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 6748,
+      "cache_read_tokens": 3325,
+      "cache_write_tokens": 4455,
+      "total_cost": 0.078956
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 246,
+      "cache_read_tokens": 7780,
+      "cache_write_tokens": 6855,
+      "total_cost": 0.0203815
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 216,
+      "cache_read_tokens": 14635,
+      "cache_write_tokens": 1710,
+      "total_cost": 0.0079045
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 211,
+      "cache_read_tokens": 16345,
+      "cache_write_tokens": 700,
+      "total_cost": 0.0055005
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 192,
+      "cache_read_tokens": 17045,
+      "cache_write_tokens": 1669,
+      "total_cost": 0.007803
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 2012,
+      "cache_read_tokens": 18714,
+      "cache_write_tokens": 1650,
+      "total_cost": 0.026122399999999997
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 248,
+      "cache_read_tokens": 20364,
+      "cache_write_tokens": 2403,
+      "total_cost": 0.0105299
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 220,
+      "cache_read_tokens": 22767,
+      "cache_write_tokens": 4561,
+      "total_cost": 0.0158852
+     }
+    ]
+   },
+   "usage_scope": {
+    "same_sample": true,
+    "sample_uuid": "SJbeNCc6EYF5dHerim5UD6",
+    "samples_in_log": 1,
+    "model_calls": 12,
+    "calls_without_usage": 0,
+    "aggregate_source": "EvalSample.model_usage",
+    "calls_source": "EvalSample.events[model].output.usage"
+   },
+   "usage_reconciliation": {
+    "openai/gpt-6.1-sol": {
+     "aggregated": {
+      "input": 1047,
+      "output": 14776,
+      "cache_read": 124279,
+      "cache_write": 27328
+     },
+     "per_call": {
+      "input": 1047,
+      "output": 14776,
+      "cache_read": 124279,
+      "cache_write": 27328
+     },
+     "difference": {
+      "input": 0,
+      "output": 0,
+      "cache_read": 0,
+      "cache_write": 0
+     },
+     "conflict": false,
+     "calls": 12,
+     "conservative": {
+      "input_tokens": 1047,
+      "output_tokens": 14776,
+      "cache_read_tokens": 124279,
+      "cache_write_tokens": 27328
+     }
+    }
+   },
+   "inspect_total_cost_usd": "0.230602",
+   "estimated": false,
+   "estimate_basis": [],
+   "inferred": null,
+   "manual_review_required": false,
+   "flags": [
+    "openai/gpt-6.1-sol: cache writes priced at the ledger rate from candidate facts rate (2.5 USD/MTok); the usage record does not split cache-write retention tiers"
+   ],
+   "note": "inspect status success",
+   "reserved_usd": "5.000000",
+   "at": "2026-11-02T10:25:44+00:00"
+  },
+  {
+   "type": "reservation",
+   "unit_id": "7b08cd4d-df60-41ae-9102-8aaa49306ba2:openai/gpt-6.1-sol:20261102T102544Z",
+   "kind": "sample",
+   "estimated_usd": "5.000000",
+   "at": "2026-11-02T10:25:44+00:00",
+   "meta": {
+    "model": "openai/gpt-6.1-sol",
+    "task": "formal_7b08cd4d"
+   },
+   "claim": true
+  },
+  {
+   "type": "settlement",
+   "unit_id": "7b08cd4d-df60-41ae-9102-8aaa49306ba2:openai/gpt-6.1-sol:20261102T102544Z",
+   "kind": "sample",
+   "cost_usd": "0.267212",
+   "breakdown": {
+    "input": "0.001928",
+    "output": "0.168550",
+    "cache_read": "0.020984",
+    "cache_write": "0.075750"
+   },
+   "retry_estimate_usd": "0.000000",
+   "per_model": {
+    "openai/gpt-6.1-sol": {
+     "input": "0.001928",
+     "output": "0.168550",
+     "cache_read": "0.020984",
+     "cache_write": "0.075750",
+     "total": "0.267212",
+     "calls": "17",
+     "flags": [
+      "cache writes priced at the ledger rate from candidate facts rate (2.5 USD/MTok); the usage record does not split cache-write retention tiers"
+     ],
+     "tiers": {
+      "standard": 17
+     }
+    }
+   },
+   "raw_usage": {
+    "openai/gpt-6.1-sol": {
+     "input_tokens": 964,
+     "output_tokens": 16855,
+     "cache_read_tokens": 209842,
+     "cache_write_tokens": 30299
+    }
+   },
+   "raw_calls": {
+    "openai/gpt-6.1-sol": [
+     {
+      "input_tokens": 916,
+      "output_tokens": 46,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "total_cost": 0.002292
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 118,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 1047,
+      "total_cost": 0.0038035
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 877,
+      "cache_read_tokens": 1047,
+      "cache_write_tokens": 1176,
+      "total_cost": 0.0118207
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 1503,
+      "cache_read_tokens": 2223,
+      "cache_write_tokens": 1097,
+      "total_cost": 0.018000800000000004
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 1155,
+      "cache_read_tokens": 3320,
+      "cache_write_tokens": 1634,
+      "total_cost": 0.015973
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 577,
+      "cache_read_tokens": 4954,
+      "cache_write_tokens": 1404,
+      "total_cost": 0.009781399999999999
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 534,
+      "cache_read_tokens": 6358,
+      "cache_write_tokens": 600,
+      "total_cost": 0.007481799999999999
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 9258,
+      "cache_read_tokens": 6958,
+      "cache_write_tokens": 563,
+      "total_cost": 0.0946893
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 373,
+      "cache_read_tokens": 7521,
+      "cache_write_tokens": 9393,
+      "total_cost": 0.027970599999999998
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 121,
+      "cache_read_tokens": 16914,
+      "cache_write_tokens": 1053,
+      "total_cost": 0.0055398999999999995
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 62,
+      "cache_read_tokens": 17967,
+      "cache_write_tokens": 266,
+      "total_cost": 0.0030877
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 306,
+      "cache_read_tokens": 18233,
+      "cache_write_tokens": 2768,
+      "total_cost": 0.0118093
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 957,
+      "cache_read_tokens": 21001,
+      "cache_write_tokens": 3012,
+      "total_cost": 0.019206100000000004
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 706,
+      "cache_read_tokens": 24013,
+      "cache_write_tokens": 1138,
+      "total_cost": 0.0123123
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 66,
+      "cache_read_tokens": 25151,
+      "cache_write_tokens": 884,
+      "total_cost": 0.0053911
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 106,
+      "cache_read_tokens": 26035,
+      "cache_write_tokens": 2112,
+      "total_cost": 0.008949499999999999
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 90,
+      "cache_read_tokens": 28147,
+      "cache_write_tokens": 2152,
+      "total_cost": 0.0091007
+     }
+    ]
+   },
+   "usage_scope": {
+    "same_sample": true,
+    "sample_uuid": "hX4B29t5iE2v3rFKMtqWqz",
+    "samples_in_log": 1,
+    "model_calls": 17,
+    "calls_without_usage": 0,
+    "aggregate_source": "EvalSample.model_usage",
+    "calls_source": "EvalSample.events[model].output.usage"
+   },
+   "usage_reconciliation": {
+    "openai/gpt-6.1-sol": {
+     "aggregated": {
+      "input": 964,
+      "output": 16855,
+      "cache_read": 209842,
+      "cache_write": 30299
+     },
+     "per_call": {
+      "input": 964,
+      "output": 16855,
+      "cache_read": 209842,
+      "cache_write": 30299
+     },
+     "difference": {
+      "input": 0,
+      "output": 0,
+      "cache_read": 0,
+      "cache_write": 0
+     },
+     "conflict": false,
+     "calls": 17,
+     "conservative": {
+      "input_tokens": 964,
+      "output_tokens": 16855,
+      "cache_read_tokens": 209842,
+      "cache_write_tokens": 30299
+     }
+    }
+   },
+   "inspect_total_cost_usd": "0.267210",
+   "estimated": false,
+   "estimate_basis": [],
+   "inferred": null,
+   "manual_review_required": false,
+   "flags": [
+    "openai/gpt-6.1-sol: cache writes priced at the ledger rate from candidate facts rate (2.5 USD/MTok); the usage record does not split cache-write retention tiers"
+   ],
+   "note": "inspect status success",
+   "reserved_usd": "5.000000",
+   "at": "2026-11-02T10:30:32+00:00"
+  },
+  {
+   "type": "reservation",
+   "unit_id": "7d7fc9a7-21a7-4b83-906f-416dea5ad04f:openai/gpt-6.1-sol:20261102T103032Z",
+   "kind": "sample",
+   "estimated_usd": "5.000000",
+   "at": "2026-11-02T10:30:33+00:00",
+   "meta": {
+    "model": "openai/gpt-6.1-sol",
+    "task": "formal_7d7fc9a7"
+   },
+   "claim": true
+  },
+  {
+   "type": "settlement",
+   "unit_id": "7d7fc9a7-21a7-4b83-906f-416dea5ad04f:openai/gpt-6.1-sol:20261102T103032Z",
+   "kind": "sample",
+   "cost_usd": "0.376698",
+   "breakdown": {
+    "input": "0.000108",
+    "output": "0.194370",
+    "cache_read": "0.046032",
+    "cache_write": "0.136188"
+   },
+   "retry_estimate_usd": "0.000000",
+   "per_model": {
+    "openai/gpt-6.1-sol": {
+     "input": "0.000108",
+     "output": "0.194370",
+     "cache_read": "0.046032",
+     "cache_write": "0.136188",
+     "total": "0.376698",
+     "calls": "18",
+     "flags": [
+      "cache writes priced at the ledger rate from candidate facts rate (2.5 USD/MTok); the usage record does not split cache-write retention tiers"
+     ],
+     "tiers": {
+      "standard": 18
+     }
+    }
+   },
+   "raw_usage": {
+    "openai/gpt-6.1-sol": {
+     "input_tokens": 54,
+     "output_tokens": 19437,
+     "cache_read_tokens": 460297,
+     "cache_write_tokens": 54474
+    }
+   },
+   "raw_calls": {
+    "openai/gpt-6.1-sol": [
+     {
+      "input_tokens": 3,
+      "output_tokens": 38,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 1101,
+      "total_cost": 0.0031385000000000002
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 164,
+      "cache_read_tokens": 1101,
+      "cache_write_tokens": 336,
+      "total_cost": 0.0025961
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 161,
+      "cache_read_tokens": 1437,
+      "cache_write_tokens": 6040,
+      "total_cost": 0.016859700000000002
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 428,
+      "cache_read_tokens": 7477,
+      "cache_write_tokens": 2984,
+      "total_cost": 0.0124937
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 1936,
+      "cache_read_tokens": 10461,
+      "cache_write_tokens": 840,
+      "total_cost": 0.0225121
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 789,
+      "cache_read_tokens": 11301,
+      "cache_write_tokens": 2296,
+      "total_cost": 0.0147661
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 156,
+      "cache_read_tokens": 13597,
+      "cache_write_tokens": 1072,
+      "total_cost": 0.0056057
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 10860,
+      "cache_read_tokens": 14669,
+      "cache_write_tokens": 3013,
+      "total_cost": 0.1176054
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 535,
+      "cache_read_tokens": 17682,
+      "cache_write_tokens": 11072,
+      "total_cost": 0.034804199999999993
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 98,
+      "cache_read_tokens": 28754,
+      "cache_write_tokens": 2321,
+      "total_cost": 0.0096639
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 578,
+      "cache_read_tokens": 31075,
+      "cache_write_tokens": 6364,
+      "total_cost": 0.0248035
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 1219,
+      "cache_read_tokens": 37439,
+      "cache_write_tokens": 4756,
+      "total_cost": 0.0278299
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 64,
+      "cache_read_tokens": 42195,
+      "cache_write_tokens": 1526,
+      "total_cost": 0.0086805
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 1213,
+      "cache_read_tokens": 43721,
+      "cache_write_tokens": 4246,
+      "total_cost": 0.0271231
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 157,
+      "cache_read_tokens": 47967,
+      "cache_write_tokens": 1311,
+      "total_cost": 0.009650200000000001
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 797,
+      "cache_read_tokens": 49278,
+      "cache_write_tokens": 1349,
+      "total_cost": 0.0162763
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 116,
+      "cache_read_tokens": 50627,
+      "cache_write_tokens": 889,
+      "total_cost": 0.0084512
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 128,
+      "cache_read_tokens": 51516,
+      "cache_write_tokens": 2958,
+      "total_cost": 0.0138326
+     }
+    ]
+   },
+   "usage_scope": {
+    "same_sample": true,
+    "sample_uuid": "FDVJTwSvqDJFQj6JyTpkHY",
+    "samples_in_log": 1,
+    "model_calls": 18,
+    "calls_without_usage": 0,
+    "aggregate_source": "EvalSample.model_usage",
+    "calls_source": "EvalSample.events[model].output.usage"
+   },
+   "usage_reconciliation": {
+    "openai/gpt-6.1-sol": {
+     "aggregated": {
+      "input": 54,
+      "output": 19437,
+      "cache_read": 460297,
+      "cache_write": 54474
+     },
+     "per_call": {
+      "input": 54,
+      "output": 19437,
+      "cache_read": 460297,
+      "cache_write": 54474
+     },
+     "difference": {
+      "input": 0,
+      "output": 0,
+      "cache_read": 0,
+      "cache_write": 0
+     },
+     "conflict": false,
+     "calls": 18,
+     "conservative": {
+      "input_tokens": 54,
+      "output_tokens": 19437,
+      "cache_read_tokens": 460297,
+      "cache_write_tokens": 54474
+     }
+    }
+   },
+   "inspect_total_cost_usd": "0.376693",
+   "estimated": false,
+   "estimate_basis": [],
+   "inferred": null,
+   "manual_review_required": false,
+   "flags": [
+    "openai/gpt-6.1-sol: cache writes priced at the ledger rate from candidate facts rate (2.5 USD/MTok); the usage record does not split cache-write retention tiers"
+   ],
+   "note": "inspect status success",
+   "reserved_usd": "5.000000",
+   "at": "2026-11-02T10:36:14+00:00"
+  },
+  {
+   "type": "reservation",
+   "unit_id": "2ea2e5b5-257f-42e6-a7dc-93763f28b19d:openai/gpt-6.1-sol:20261102T103614Z",
+   "kind": "sample",
+   "estimated_usd": "5.000000",
+   "at": "2026-11-02T10:36:14+00:00",
+   "meta": {
+    "model": "openai/gpt-6.1-sol",
+    "task": "formal_2ea2e5b5"
+   },
+   "claim": true
+  },
+  {
+   "type": "settlement",
+   "unit_id": "2ea2e5b5-257f-42e6-a7dc-93763f28b19d:openai/gpt-6.1-sol:20261102T103614Z",
+   "kind": "sample",
+   "cost_usd": "0.223819",
+   "breakdown": {
+    "input": "0.001460",
+    "output": "0.119390",
+    "cache_read": "0.021833",
+    "cache_write": "0.081136"
+   },
+   "retry_estimate_usd": "0.000000",
+   "per_model": {
+    "openai/gpt-6.1-sol": {
+     "input": "0.001460",
+     "output": "0.119390",
+     "cache_read": "0.021833",
+     "cache_write": "0.081136",
+     "total": "0.223819",
+     "calls": "17",
+     "flags": [
+      "cache writes priced at the ledger rate from candidate facts rate (2.5 USD/MTok); the usage record does not split cache-write retention tiers"
+     ],
+     "tiers": {
+      "standard": 17
+     }
+    }
+   },
+   "raw_usage": {
+    "openai/gpt-6.1-sol": {
+     "input_tokens": 730,
+     "output_tokens": 11939,
+     "cache_read_tokens": 218323,
+     "cache_write_tokens": 32453
+    }
+   },
+   "raw_calls": {
+    "openai/gpt-6.1-sol": [
+     {
+      "input_tokens": 3,
+      "output_tokens": 38,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 1207,
+      "total_cost": 0.0034035000000000003
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 103,
+      "cache_read_tokens": 1207,
+      "cache_write_tokens": 172,
+      "total_cost": 0.0015867000000000001
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 182,
+      "cache_read_tokens": 1379,
+      "cache_write_tokens": 496,
+      "total_cost": 0.0032039
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 949,
+      "cache_read_tokens": 1875,
+      "cache_write_tokens": 924,
+      "total_cost": 0.0119935
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 830,
+      "cache_read_tokens": 2799,
+      "cache_write_tokens": 1322,
+      "total_cost": 0.011890900000000001
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 6339,
+      "cache_read_tokens": 4121,
+      "cache_write_tokens": 1481,
+      "total_cost": 0.0675106
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 115,
+      "cache_read_tokens": 5602,
+      "cache_write_tokens": 6674,
+      "total_cost": 0.0184012
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 25,
+      "cache_read_tokens": 12276,
+      "cache_write_tokens": 297,
+      "total_cost": 0.0022261
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 25,
+      "cache_read_tokens": 12573,
+      "cache_write_tokens": 1492,
+      "total_cost": 0.0052433
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 118,
+      "cache_read_tokens": 14065,
+      "cache_write_tokens": 1492,
+      "total_cost": 0.0063225
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 646,
+      "cache_read_tokens": 15557,
+      "cache_write_tokens": 4515,
+      "total_cost": 0.0193092
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 852,
+      "cache_read_tokens": 20072,
+      "cache_write_tokens": 682,
+      "total_cost": 0.012238200000000001
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 83,
+      "cache_read_tokens": 20754,
+      "cache_write_tokens": 1107,
+      "total_cost": 0.005678900000000001
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 668,
+      "cache_read_tokens": 21861,
+      "cache_write_tokens": 4480,
+      "total_cost": 0.0200721
+     },
+     {
+      "input_tokens": 682,
+      "output_tokens": 83,
+      "cache_read_tokens": 26341,
+      "cache_write_tokens": 0,
+      "total_cost": 0.0048281
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 835,
+      "cache_read_tokens": 26341,
+      "cache_write_tokens": 5159,
+      "total_cost": 0.023887600000000002
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 48,
+      "cache_read_tokens": 31500,
+      "cache_write_tokens": 953,
+      "total_cost": 0.0060184999999999995
+     }
+    ]
+   },
+   "usage_scope": {
+    "same_sample": true,
+    "sample_uuid": "ehpELnbiUfAp5dFTeDNwt9",
+    "samples_in_log": 1,
+    "model_calls": 17,
+    "calls_without_usage": 0,
+    "aggregate_source": "EvalSample.model_usage",
+    "calls_source": "EvalSample.events[model].output.usage"
+   },
+   "usage_reconciliation": {
+    "openai/gpt-6.1-sol": {
+     "aggregated": {
+      "input": 730,
+      "output": 11939,
+      "cache_read": 218323,
+      "cache_write": 32453
+     },
+     "per_call": {
+      "input": 730,
+      "output": 11939,
+      "cache_read": 218323,
+      "cache_write": 32453
+     },
+     "difference": {
+      "input": 0,
+      "output": 0,
+      "cache_read": 0,
+      "cache_write": 0
+     },
+     "conflict": false,
+     "calls": 17,
+     "conservative": {
+      "input_tokens": 730,
+      "output_tokens": 11939,
+      "cache_read_tokens": 218323,
+      "cache_write_tokens": 32453
+     }
+    }
+   },
+   "inspect_total_cost_usd": "0.223815",
+   "estimated": false,
+   "estimate_basis": [],
+   "inferred": null,
+   "manual_review_required": false,
+   "flags": [
+    "openai/gpt-6.1-sol: cache writes priced at the ledger rate from candidate facts rate (2.5 USD/MTok); the usage record does not split cache-write retention tiers"
+   ],
+   "note": "inspect status success",
+   "reserved_usd": "5.000000",
+   "at": "2026-11-02T10:39:51+00:00"
+  },
+  {
+   "type": "reservation",
+   "unit_id": "c357f0e2-963d-4eb7-a6fa-3078fe55b3ba:openai/gpt-6.1-sol:20261102T103951Z",
+   "kind": "sample",
+   "estimated_usd": "5.000000",
+   "at": "2026-11-02T10:39:51+00:00",
+   "meta": {
+    "model": "openai/gpt-6.1-sol",
+    "task": "formal_c357f0e2"
+   },
+   "claim": true
+  },
+  {
+   "type": "settlement",
+   "unit_id": "c357f0e2-963d-4eb7-a6fa-3078fe55b3ba:openai/gpt-6.1-sol:20261102T103951Z",
+   "kind": "sample",
+   "cost_usd": "0.324154",
+   "breakdown": {
+    "input": "0.002376",
+    "output": "0.187170",
+    "cache_read": "0.027930",
+    "cache_write": "0.106678"
+   },
+   "retry_estimate_usd": "0.000000",
+   "per_model": {
+    "openai/gpt-6.1-sol": {
+     "input": "0.002376",
+     "output": "0.187170",
+     "cache_read": "0.027930",
+     "cache_write": "0.106678",
+     "total": "0.324154",
+     "calls": "13",
+     "flags": [
+      "cache writes priced at the ledger rate from candidate facts rate (2.5 USD/MTok); the usage record does not split cache-write retention tiers"
+     ],
+     "tiers": {
+      "standard": 13
+     }
+    }
+   },
+   "raw_usage": {
+    "openai/gpt-6.1-sol": {
+     "input_tokens": 1188,
+     "output_tokens": 18717,
+     "cache_read_tokens": 279290,
+     "cache_write_tokens": 42670
+    }
+   },
+   "raw_calls": {
+    "openai/gpt-6.1-sol": [
+     {
+      "input_tokens": 3,
+      "output_tokens": 38,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 1081,
+      "total_cost": 0.0030885
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 192,
+      "cache_read_tokens": 1081,
+      "cache_write_tokens": 170,
+      "total_cost": 0.0024590999999999997
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 2179,
+      "cache_read_tokens": 1251,
+      "cache_write_tokens": 434,
+      "total_cost": 0.023006099999999998
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 13227,
+      "cache_read_tokens": 1685,
+      "cache_write_tokens": 5706,
+      "total_cost": 0.1467095
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 69,
+      "cache_read_tokens": 7391,
+      "cache_write_tokens": 13335,
+      "total_cost": 0.0347726
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 148,
+      "cache_read_tokens": 20726,
+      "cache_write_tokens": 1529,
+      "total_cost": 0.0073811
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 653,
+      "cache_read_tokens": 22255,
+      "cache_write_tokens": 4524,
+      "total_cost": 0.0200715
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 1138,
+      "cache_read_tokens": 26779,
+      "cache_write_tokens": 10621,
+      "total_cost": 0.0406164
+     },
+     {
+      "input_tokens": 1152,
+      "output_tokens": 37,
+      "cache_read_tokens": 37400,
+      "cache_write_tokens": 0,
+      "total_cost": 0.0064139999999999996
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 37,
+      "cache_read_tokens": 37400,
+      "cache_write_tokens": 2646,
+      "total_cost": 0.010731
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 130,
+      "cache_read_tokens": 40046,
+      "cache_write_tokens": 1497,
+      "total_cost": 0.009053100000000001
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 780,
+      "cache_read_tokens": 41543,
+      "cache_write_tokens": 190,
+      "total_cost": 0.0124353
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 89,
+      "cache_read_tokens": 41733,
+      "cache_write_tokens": 937,
+      "total_cost": 0.0074118000000000005
+     }
+    ]
+   },
+   "usage_scope": {
+    "same_sample": true,
+    "sample_uuid": "4FAJ3AmGzujC6FZ67Krt9B",
+    "samples_in_log": 1,
+    "model_calls": 13,
+    "calls_without_usage": 0,
+    "aggregate_source": "EvalSample.model_usage",
+    "calls_source": "EvalSample.events[model].output.usage"
+   },
+   "usage_reconciliation": {
+    "openai/gpt-6.1-sol": {
+     "aggregated": {
+      "input": 1188,
+      "output": 18717,
+      "cache_read": 279290,
+      "cache_write": 42670
+     },
+     "per_call": {
+      "input": 1188,
+      "output": 18717,
+      "cache_read": 279290,
+      "cache_write": 42670
+     },
+     "difference": {
+      "input": 0,
+      "output": 0,
+      "cache_read": 0,
+      "cache_write": 0
+     },
+     "conflict": false,
+     "calls": 13,
+     "conservative": {
+      "input_tokens": 1188,
+      "output_tokens": 18717,
+      "cache_read_tokens": 279290,
+      "cache_write_tokens": 42670
+     }
+    }
+   },
+   "inspect_total_cost_usd": "0.324150",
+   "estimated": false,
+   "estimate_basis": [],
+   "inferred": null,
+   "manual_review_required": false,
+   "flags": [
+    "openai/gpt-6.1-sol: cache writes priced at the ledger rate from candidate facts rate (2.5 USD/MTok); the usage record does not split cache-write retention tiers"
+   ],
+   "note": "inspect status success",
+   "reserved_usd": "5.000000",
+   "at": "2026-11-02T10:45:49+00:00"
+  },
+  {
+   "type": "reservation",
+   "unit_id": "a45bc83b-22f9-4def-8d89-9c5661b2b86f:openai/gpt-6.1-sol:20261102T104549Z",
+   "kind": "sample",
+   "estimated_usd": "5.000000",
+   "at": "2026-11-02T10:45:49+00:00",
+   "meta": {
+    "model": "openai/gpt-6.1-sol",
+    "task": "formal_a45bc83b"
+   },
+   "claim": true
+  },
+  {
+   "type": "settlement",
+   "unit_id": "a45bc83b-22f9-4def-8d89-9c5661b2b86f:openai/gpt-6.1-sol:20261102T104549Z",
+   "kind": "sample",
+   "cost_usd": "0.603256",
+   "breakdown": {
+    "input": "0.046930",
+    "output": "0.324510",
+    "cache_read": "0.082286",
+    "cache_write": "0.149530"
+   },
+   "retry_estimate_usd": "0.000000",
+   "per_model": {
+    "openai/gpt-6.1-sol": {
+     "input": "0.046930",
+     "output": "0.324510",
+     "cache_read": "0.082286",
+     "cache_write": "0.149530",
+     "total": "0.603256",
+     "calls": "27",
+     "flags": [
+      "cache writes priced at the ledger rate from candidate facts rate (2.5 USD/MTok); the usage record does not split cache-write retention tiers"
+     ],
+     "tiers": {
+      "standard": 27
+     }
+    }
+   },
+   "raw_usage": {
+    "openai/gpt-6.1-sol": {
+     "input_tokens": 23465,
+     "output_tokens": 32451,
+     "cache_read_tokens": 822826,
+     "cache_write_tokens": 59810
+    }
+   },
+   "raw_calls": {
+    "openai/gpt-6.1-sol": [
+     {
+      "input_tokens": 944,
+      "output_tokens": 38,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "total_cost": 0.002268
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 148,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 1187,
+      "total_cost": 0.0044535
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 21,
+      "cache_read_tokens": 1187,
+      "cache_write_tokens": 700,
+      "total_cost": 0.0020846999999999997
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 75,
+      "cache_read_tokens": 1887,
+      "cache_write_tokens": 1371,
+      "total_cost": 0.0043722
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 607,
+      "cache_read_tokens": 3258,
+      "cache_write_tokens": 4138,
+      "total_cost": 0.0167468
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 84,
+      "cache_read_tokens": 7396,
+      "cache_write_tokens": 640,
+      "total_cost": 0.0031856000000000002
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 160,
+      "cache_read_tokens": 8036,
+      "cache_write_tokens": 3331,
+      "total_cost": 0.0107371
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 2200,
+      "cache_read_tokens": 11367,
+      "cache_write_tokens": 3491,
+      "total_cost": 0.031870199999999994
+     },
+     {
+      "input_tokens": 2214,
+      "output_tokens": 13842,
+      "cache_read_tokens": 14858,
+      "cache_write_tokens": 0,
+      "total_cost": 0.14433379999999998
+     },
+     {
+      "input_tokens": 16067,
+      "output_tokens": 170,
+      "cache_read_tokens": 14858,
+      "cache_write_tokens": 0,
+      "total_cost": 0.035319800000000005
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 165,
+      "cache_read_tokens": 14858,
+      "cache_write_tokens": 16503,
+      "total_cost": 0.0443993
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 2406,
+      "cache_read_tokens": 31361,
+      "cache_write_tokens": 1922,
+      "total_cost": 0.032007100000000004
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 152,
+      "cache_read_tokens": 33283,
+      "cache_write_tokens": 2673,
+      "total_cost": 0.0115368
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 4157,
+      "cache_read_tokens": 35956,
+      "cache_write_tokens": 2254,
+      "total_cost": 0.0508066
+     },
+     {
+      "input_tokens": 4171,
+      "output_tokens": 23,
+      "cache_read_tokens": 38210,
+      "cache_write_tokens": 0,
+      "total_cost": 0.012393
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 587,
+      "cache_read_tokens": 38210,
+      "cache_write_tokens": 5877,
+      "total_cost": 0.0243895
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 1428,
+      "cache_read_tokens": 44087,
+      "cache_write_tokens": 956,
+      "total_cost": 0.021084699999999998
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 300,
+      "cache_read_tokens": 45043,
+      "cache_write_tokens": 1698,
+      "total_cost": 0.0117553
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 106,
+      "cache_read_tokens": 46741,
+      "cache_write_tokens": 567,
+      "total_cost": 0.0071576
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 2626,
+      "cache_read_tokens": 47308,
+      "cache_write_tokens": 2742,
+      "total_cost": 0.0378518
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 124,
+      "cache_read_tokens": 50050,
+      "cache_write_tokens": 3180,
+      "total_cost": 0.014201000000000002
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 519,
+      "cache_read_tokens": 53230,
+      "cache_write_tokens": 417,
+      "total_cost": 0.011561499999999999
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 598,
+      "cache_read_tokens": 53647,
+      "cache_write_tokens": 738,
+      "total_cost": 0.013195700000000001
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 1037,
+      "cache_read_tokens": 54385,
+      "cache_write_tokens": 2529,
+      "total_cost": 0.022137
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 604,
+      "cache_read_tokens": 56914,
+      "cache_write_tokens": 1094,
+      "total_cost": 0.014472400000000002
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 25,
+      "cache_read_tokens": 58008,
+      "cache_write_tokens": 680,
+      "total_cost": 0.0077567999999999995
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 249,
+      "cache_read_tokens": 58688,
+      "cache_write_tokens": 1122,
+      "total_cost": 0.0111698
+     }
+    ]
+   },
+   "usage_scope": {
+    "same_sample": true,
+    "sample_uuid": "NHSUKRMDDbYoJoGyWnpjcN",
+    "samples_in_log": 1,
+    "model_calls": 27,
+    "calls_without_usage": 0,
+    "aggregate_source": "EvalSample.model_usage",
+    "calls_source": "EvalSample.events[model].output.usage"
+   },
+   "usage_reconciliation": {
+    "openai/gpt-6.1-sol": {
+     "aggregated": {
+      "input": 23465,
+      "output": 32451,
+      "cache_read": 822826,
+      "cache_write": 59810
+     },
+     "per_call": {
+      "input": 23465,
+      "output": 32451,
+      "cache_read": 822826,
+      "cache_write": 59810
+     },
+     "difference": {
+      "input": 0,
+      "output": 0,
+      "cache_read": 0,
+      "cache_write": 0
+     },
+     "conflict": false,
+     "calls": 27,
+     "conservative": {
+      "input_tokens": 23465,
+      "output_tokens": 32451,
+      "cache_read_tokens": 822826,
+      "cache_write_tokens": 59810
+     }
+    }
+   },
+   "inspect_total_cost_usd": "0.603248",
+   "estimated": false,
+   "estimate_basis": [],
+   "inferred": null,
+   "manual_review_required": false,
+   "flags": [
+    "openai/gpt-6.1-sol: cache writes priced at the ledger rate from candidate facts rate (2.5 USD/MTok); the usage record does not split cache-write retention tiers"
+   ],
+   "note": "inspect status success",
+   "reserved_usd": "5.000000",
+   "at": "2026-11-02T10:56:52+00:00"
+  }
+ ]
+}

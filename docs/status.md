@@ -6058,6 +6058,26 @@ After a read-only review round (chat), the author agreed to every proposed chang
   term check clean; no local path in `metrics.json`; preview and screenshots at 1200 and 390 px, light and dark, in
   `~/turing-eval-runs/analysis/site_v5_1_*`. Not committed, not deployed.
 
+## Results copies and the brief check (2026-11-03)
+
+Requested by the author with the approval of phase 1. No page change; the originals in the run store untouched.
+- `results/`: copies of the records the build reads, mirroring the run store (`results/<path>` = `~/turing-eval-runs/<path>`):
+  per-rubric-item verdicts of both models (`analysis/failures-v1/all_items.csv`), the per-run summary with generation
+  cost per run (`formal/results_summary.json`), the critical-requirement layers (`formal/human_layers_summary.json`), the
+  author-review worksheet of 170 items with decisions and evidence (`analysis/critical_adjudication.csv`), the 7
+  adjudication batches and the visual-review batch (`formal/human_review/`), the 20 blind-audit labels
+  (`labeling/formal-v4-reveal/`), the four evaluation ledgers (no keys or account IDs in them), and the 28 deliverable
+  files of the 20 evaluation runs (3.8 MB: workbooks, documents, decks, two diagrams; no transcripts or logs).
+- Checks, all passed: every record's source hash is a build input in `site/data/metrics.json`; two records had absolute
+  run-store paths (41 in the results summary, 1 in the reveal file), replaced by `~/turing-eval-runs/` and otherwise
+  byte-identical; the ledger copies give the settled totals in the metrics; every deliverable matches its run's
+  artifact manifest; the per-run generation costs add up to 14.900901 and 3.078310 USD. Scan of all 46 files (Office
+  files unzipped): no credential (boolean comparison with `.env`), no local path, no e-mail address other than two
+  `example.com` addresses inside a model's POC guide. `results/SHA256SUMS` lists both hashes per file;
+  `results/README.md` says what each file is and which page numbers it backs. README and `site/README.md` point to it.
+- Brief check: no passage of eight or more words of the brief appears in `PLAN.md`, `CLAUDE.md`, README, the report,
+  the preregistration, the page copy or this log; nothing to paraphrase.
+
 ## Publication prep, phase 1 (2026-11-03)
 
 Authorized by the author in chat (commit and push to the still-private repository; stop before going public). No

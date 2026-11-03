@@ -1,0 +1,1131 @@
+{
+ "revealed_at": "2026-11-02T12:55:48+00:00",
+ "checkpoint": "~/turing-eval-runs/labeling/formal-v4-checkpoint/checkpoint.json",
+ "checkpoint_saved_at": "2026-11-02T12:48:10+00:00",
+ "packets": [
+  {
+   "packet": "F01",
+   "task_id": "b5d2e6f1-62a2-433a-bcdd-95b260cdd860",
+   "item": 19,
+   "candidate": "candidate_b",
+   "model": "openai/gpt-6.1-sol",
+   "run_uuid": "d5sypgfTdCCwfsFV9jdzLd",
+   "item_source": "D",
+   "human_label": "pass",
+   "deterministic_pass": "pass-20261102T101212291322Z-1ddd",
+   "deterministic_verdict": "pass",
+   "authoritative_pass": "pass-20261102T115729995774Z-4fc2",
+   "selection_blocked": false,
+   "judge_verdict": null,
+   "judge_status": "not a judge item",
+   "grader_verdict_compared": "pass",
+   "agree": true,
+   "not_comparable_reason": null
+  },
+  {
+   "packet": "F02",
+   "task_id": "b5d2e6f1-62a2-433a-bcdd-95b260cdd860",
+   "item": 19,
+   "candidate": "candidate_a",
+   "model": "anthropic/claude-opus-5-5",
+   "run_uuid": "Mae4tizWVH2BiinB5zKQV2",
+   "item_source": "D",
+   "human_label": "pass",
+   "deterministic_pass": "pass-20261102T101207661251Z-f7a1",
+   "deterministic_verdict": "pass",
+   "authoritative_pass": "pass-20261102T115725665994Z-0e9c",
+   "selection_blocked": false,
+   "judge_verdict": null,
+   "judge_status": "not a judge item",
+   "grader_verdict_compared": "pass",
+   "agree": true,
+   "not_comparable_reason": null
+  },
+  {
+   "packet": "F03",
+   "task_id": "c357f0e2-963d-4eb7-a6fa-3078fe55b3ba",
+   "item": 11,
+   "candidate": "candidate_a",
+   "model": "anthropic/claude-opus-5-5",
+   "run_uuid": "AbudpM6dPVjwu2NSnwrZ6D",
+   "item_source": "D",
+   "human_label": "pass",
+   "deterministic_pass": "pass-20261102T104743231537Z-f671",
+   "deterministic_verdict": "pass",
+   "authoritative_pass": "pass-20261102T121530287546Z-1e75",
+   "selection_blocked": false,
+   "judge_verdict": null,
+   "judge_status": "not a judge item",
+   "grader_verdict_compared": "pass",
+   "agree": true,
+   "not_comparable_reason": null
+  },
+  {
+   "packet": "F04",
+   "task_id": "c357f0e2-963d-4eb7-a6fa-3078fe55b3ba",
+   "item": 11,
+   "candidate": "candidate_b",
+   "model": "openai/gpt-6.1-sol",
+   "run_uuid": "4FAJ3AmGzujC6FZ67Krt9B",
+   "item_source": "D",
+   "human_label": "pass",
+   "deterministic_pass": "pass-20261102T104640912156Z-3aea",
+   "deterministic_verdict": "pass",
+   "authoritative_pass": "pass-20261102T122438506232Z-7829",
+   "selection_blocked": false,
+   "judge_verdict": null,
+   "judge_status": "not a judge item",
+   "grader_verdict_compared": "pass",
+   "agree": true,
+   "not_comparable_reason": null
+  },
+  {
+   "packet": "F05",
+   "task_id": "1137e2bb-bdf9-4876-b572-f29b7de5e595",
+   "item": 23,
+   "candidate": "candidate_a",
+   "model": "anthropic/claude-opus-5-5",
+   "run_uuid": "iS5pLfPvTxhxxXScg7HXVw",
+   "item_source": "J",
+   "human_label": "pass",
+   "deterministic_pass": "pass-20261102T102418053675Z-15eb",
+   "deterministic_verdict": "pending_judge",
+   "authoritative_pass": "pass-20261102T120033449260Z-cd91",
+   "selection_blocked": false,
+   "judge_verdict": "pass",
+   "judge_status": "judged",
+   "grader_verdict_compared": "pass",
+   "agree": true,
+   "not_comparable_reason": null
+  },
+  {
+   "packet": "F06",
+   "task_id": "1137e2bb-bdf9-4876-b572-f29b7de5e595",
+   "item": 23,
+   "candidate": "candidate_b",
+   "model": "openai/gpt-6.1-sol",
+   "run_uuid": "mE6xrcKcirXrQgh4ugBfbE",
+   "item_source": "J",
+   "human_label": "fail",
+   "deterministic_pass": "pass-20261102T102215252696Z-cd35",
+   "deterministic_verdict": "pending_judge",
+   "authoritative_pass": "pass-20261102T120138543561Z-511d",
+   "selection_blocked": false,
+   "judge_verdict": "pass",
+   "judge_status": "judged",
+   "grader_verdict_compared": "pass",
+   "agree": false,
+   "not_comparable_reason": null
+  },
+  {
+   "packet": "F07",
+   "task_id": "f841ddcf-2a28-4f6d-bac3-61b607219d3e",
+   "item": 15,
+   "candidate": "candidate_b",
+   "model": "openai/gpt-6.1-sol",
+   "run_uuid": "P8gA2U2jR7VzNWKqqdJ5SZ",
+   "item_source": "D",
+   "human_label": "pass",
+   "deterministic_pass": "pass-20261102T101217776421Z-4972",
+   "deterministic_verdict": "pass",
+   "authoritative_pass": "pass-20261102T115847754554Z-0d8f",
+   "selection_blocked": false,
+   "judge_verdict": null,
+   "judge_status": "not a judge item",
+   "grader_verdict_compared": "pass",
+   "agree": true,
+   "not_comparable_reason": null
+  },
+  {
+   "packet": "F08",
+   "task_id": "f841ddcf-2a28-4f6d-bac3-61b607219d3e",
+   "item": 15,
+   "candidate": "candidate_a",
+   "model": "anthropic/claude-opus-5-5",
+   "run_uuid": "hdDnxUR6sUhQD6PHLnhKSm",
+   "item_source": "D",
+   "human_label": "pass",
+   "deterministic_pass": "pass-20261102T101215878401Z-511c",
+   "deterministic_verdict": "pass",
+   "authoritative_pass": "pass-20261102T115733218914Z-a5e4",
+   "selection_blocked": false,
+   "judge_verdict": null,
+   "judge_status": "not a judge item",
+   "grader_verdict_compared": "pass",
+   "agree": true,
+   "not_comparable_reason": null
+  },
+  {
+   "packet": "F09",
+   "task_id": "7b08cd4d-df60-41ae-9102-8aaa49306ba2",
+   "item": 25,
+   "candidate": "candidate_b",
+   "model": "openai/gpt-6.1-sol",
+   "run_uuid": "hX4B29t5iE2v3rFKMtqWqz",
+   "item_source": "J",
+   "human_label": "pass",
+   "deterministic_pass": "pass-20261102T103129853522Z-5f80",
+   "deterministic_verdict": "pending_judge",
+   "authoritative_pass": "pass-20261102T120617329284Z-5da8",
+   "selection_blocked": false,
+   "judge_verdict": "pass",
+   "judge_status": "judged",
+   "grader_verdict_compared": "pass",
+   "agree": true,
+   "not_comparable_reason": null
+  },
+  {
+   "packet": "F10",
+   "task_id": "7b08cd4d-df60-41ae-9102-8aaa49306ba2",
+   "item": 25,
+   "candidate": "candidate_a",
+   "model": "anthropic/claude-opus-5-5",
+   "run_uuid": "KU4bWmuqsWUUbkTXEu9Fpj",
+   "item_source": "J",
+   "human_label": "pass",
+   "deterministic_pass": "pass-20261102T103127591904Z-09f0",
+   "deterministic_verdict": "pending_judge",
+   "authoritative_pass": "pass-20261102T120408339836Z-770e",
+   "selection_blocked": false,
+   "judge_verdict": "pass",
+   "judge_status": "judged",
+   "grader_verdict_compared": "pass",
+   "agree": true,
+   "not_comparable_reason": null
+  },
+  {
+   "packet": "F11",
+   "task_id": "7d7fc9a7-21a7-4b83-906f-416dea5ad04f",
+   "item": 45,
+   "candidate": "candidate_b",
+   "model": "openai/gpt-6.1-sol",
+   "run_uuid": "FDVJTwSvqDJFQj6JyTpkHY",
+   "item_source": "J",
+   "human_label": "pass",
+   "deterministic_pass": "pass-20261102T103632563547Z-2fbd",
+   "deterministic_verdict": "pending_judge",
+   "authoritative_pass": "pass-20261102T121133296465Z-6b7c",
+   "selection_blocked": false,
+   "judge_verdict": "pass",
+   "judge_status": "judged",
+   "grader_verdict_compared": "pass",
+   "agree": true,
+   "not_comparable_reason": null
+  },
+  {
+   "packet": "F12",
+   "task_id": "7d7fc9a7-21a7-4b83-906f-416dea5ad04f",
+   "item": 45,
+   "candidate": "candidate_a",
+   "model": "anthropic/claude-opus-5-5",
+   "run_uuid": "czgd84YmwwTZzDpVKD5vhD",
+   "item_source": "J",
+   "human_label": "pass",
+   "deterministic_pass": "pass-20261102T103735386387Z-c73d",
+   "deterministic_verdict": "pending_judge",
+   "authoritative_pass": "pass-20261102T120837825114Z-bd90",
+   "selection_blocked": false,
+   "judge_verdict": "pass",
+   "judge_status": "judged",
+   "grader_verdict_compared": "pass",
+   "agree": true,
+   "not_comparable_reason": null
+  },
+  {
+   "packet": "F13",
+   "task_id": "a45bc83b-22f9-4def-8d89-9c5661b2b86f",
+   "item": 57,
+   "candidate": "candidate_a",
+   "model": "anthropic/claude-opus-5-5",
+   "run_uuid": "BVeKQk8ZWp6j2uxp9hsuGf",
+   "item_source": "J",
+   "human_label": "pass",
+   "deterministic_pass": "pass-20261102T110448669335Z-cd07",
+   "deterministic_verdict": "pending_judge",
+   "authoritative_pass": "pass-20261102T124516281243Z-a9a6",
+   "selection_blocked": false,
+   "judge_verdict": "pass",
+   "judge_status": "judged",
+   "grader_verdict_compared": "pass",
+   "agree": true,
+   "not_comparable_reason": null
+  },
+  {
+   "packet": "F14",
+   "task_id": "a45bc83b-22f9-4def-8d89-9c5661b2b86f",
+   "item": 57,
+   "candidate": "candidate_b",
+   "model": "openai/gpt-6.1-sol",
+   "run_uuid": "NHSUKRMDDbYoJoGyWnpjcN",
+   "item_source": "J",
+   "human_label": "pass",
+   "deterministic_pass": "pass-20261102T105746151555Z-d44e",
+   "deterministic_verdict": "pending_judge",
+   "authoritative_pass": "pass-20261102T124517129297Z-bcc4",
+   "selection_blocked": false,
+   "judge_verdict": "pass",
+   "judge_status": "judged",
+   "grader_verdict_compared": "pass",
+   "agree": true,
+   "not_comparable_reason": null
+  },
+  {
+   "packet": "F15",
+   "task_id": "c3525d4d-2012-45df-853e-2d2a0e902991",
+   "item": 27,
+   "candidate": "candidate_a",
+   "model": "anthropic/claude-opus-5-5",
+   "run_uuid": "fAFHskFwVPcLzn89SuYaxv",
+   "item_source": "D",
+   "human_label": "pass",
+   "deterministic_pass": "pass-20261102T102723929650Z-2cb3",
+   "deterministic_verdict": "fail",
+   "authoritative_pass": "pass-20261102T120246281223Z-e733",
+   "selection_blocked": false,
+   "judge_verdict": null,
+   "judge_status": "not a judge item",
+   "grader_verdict_compared": "fail",
+   "agree": false,
+   "not_comparable_reason": null
+  },
+  {
+   "packet": "F16",
+   "task_id": "c3525d4d-2012-45df-853e-2d2a0e902991",
+   "item": 27,
+   "candidate": "candidate_b",
+   "model": "openai/gpt-6.1-sol",
+   "run_uuid": "SJbeNCc6EYF5dHerim5UD6",
+   "item_source": "D",
+   "human_label": "pass",
+   "deterministic_pass": "pass-20261102T102620844776Z-ac16",
+   "deterministic_verdict": "fail",
+   "authoritative_pass": "pass-20261102T120327674401Z-ee13",
+   "selection_blocked": false,
+   "judge_verdict": null,
+   "judge_status": "not a judge item",
+   "grader_verdict_compared": "fail",
+   "agree": false,
+   "not_comparable_reason": null
+  },
+  {
+   "packet": "F17",
+   "task_id": "47ef842d-8eac-4b90-bda8-dd934c228c96",
+   "item": 37,
+   "candidate": "candidate_b",
+   "model": "openai/gpt-6.1-sol",
+   "run_uuid": "dPR5yvN9wEfcMyQiAC2njB",
+   "item_source": "D",
+   "human_label": "pass",
+   "deterministic_pass": "pass-20261102T101804048318Z-4167",
+   "deterministic_verdict": "pass",
+   "authoritative_pass": "pass-20261102T120015898362Z-9b7d",
+   "selection_blocked": false,
+   "judge_verdict": null,
+   "judge_status": "not a judge item",
+   "grader_verdict_compared": "pass",
+   "agree": true,
+   "not_comparable_reason": null
+  },
+  {
+   "packet": "F18",
+   "task_id": "47ef842d-8eac-4b90-bda8-dd934c228c96",
+   "item": 37,
+   "candidate": "candidate_a",
+   "model": "anthropic/claude-opus-5-5",
+   "run_uuid": "LVyjBBcU4iFqDKviwY2YJz",
+   "item_source": "D",
+   "human_label": "pass",
+   "deterministic_pass": "pass-20261102T101653673502Z-b5fe",
+   "deterministic_verdict": "pass",
+   "authoritative_pass": "pass-20261102T120000409606Z-f47b",
+   "selection_blocked": false,
+   "judge_verdict": null,
+   "judge_status": "not a judge item",
+   "grader_verdict_compared": "pass",
+   "agree": true,
+   "not_comparable_reason": null
+  },
+  {
+   "packet": "F19",
+   "task_id": "2ea2e5b5-257f-42e6-a7dc-93763f28b19d",
+   "item": 58,
+   "candidate": "candidate_b",
+   "model": "openai/gpt-6.1-sol",
+   "run_uuid": "ehpELnbiUfAp5dFTeDNwt9",
+   "item_source": "J",
+   "human_label": "pass",
+   "deterministic_pass": "pass-20261102T104039275628Z-ee51",
+   "deterministic_verdict": "pending_judge",
+   "authoritative_pass": "pass-20261102T121505538896Z-e39c",
+   "selection_blocked": false,
+   "judge_verdict": "pass",
+   "judge_status": "judged",
+   "grader_verdict_compared": "pass",
+   "agree": true,
+   "not_comparable_reason": null
+  },
+  {
+   "packet": "F20",
+   "task_id": "2ea2e5b5-257f-42e6-a7dc-93763f28b19d",
+   "item": 58,
+   "candidate": "candidate_a",
+   "model": "anthropic/claude-opus-5-5",
+   "run_uuid": "SaDUDAyEP45E3gNRVZWjgp",
+   "item_source": "J",
+   "human_label": "pass",
+   "deterministic_pass": "pass-20261102T103937930412Z-7417",
+   "deterministic_verdict": "pending_judge",
+   "authoritative_pass": "pass-20261102T121440292802Z-cc25",
+   "selection_blocked": false,
+   "judge_verdict": "pass",
+   "judge_status": "judged",
+   "grader_verdict_compared": "pass",
+   "agree": true,
+   "not_comparable_reason": null
+  }
+ ],
+ "runs": {
+  "d5sypgfTdCCwfsFV9jdzLd": {
+   "task_id": "b5d2e6f1-62a2-433a-bcdd-95b260cdd860",
+   "model": "openai/gpt-6.1-sol",
+   "pass": "pass-20261102T115729995774Z-4fc2",
+   "blocked": false,
+   "basis": "latest graded pass pass-20261102T115729995774Z-4fc2 (deterministic_only); no judged pass",
+   "judge_mode": "none",
+   "judge_completeness": "none",
+   "critical_overall": "fail",
+   "critical_fail": {
+    "C2": {
+     "name": "Brand totals",
+     "items": [
+      5,
+      6,
+      10,
+      24
+     ]
+    },
+    "C3": {
+     "name": "PivotTable",
+     "items": [
+      12,
+      14,
+      15,
+      16,
+      17,
+      25,
+      26
+     ]
+    }
+   },
+   "critical_needs_visual_review": {},
+   "noncritical_visual_not_evaluated": [
+    32
+   ],
+   "judge_rows": 0,
+   "judge_verdicts": 0,
+   "judge_missing_or_error": 0
+  },
+  "Mae4tizWVH2BiinB5zKQV2": {
+   "task_id": "b5d2e6f1-62a2-433a-bcdd-95b260cdd860",
+   "model": "anthropic/claude-opus-5-5",
+   "pass": "pass-20261102T115725665994Z-0e9c",
+   "blocked": false,
+   "basis": "latest graded pass pass-20261102T115725665994Z-0e9c (deterministic_only); no judged pass",
+   "judge_mode": "none",
+   "judge_completeness": "none",
+   "critical_overall": "pass",
+   "critical_fail": {},
+   "critical_needs_visual_review": {},
+   "noncritical_visual_not_evaluated": [
+    32
+   ],
+   "judge_rows": 0,
+   "judge_verdicts": 0,
+   "judge_missing_or_error": 0
+  },
+  "P8gA2U2jR7VzNWKqqdJ5SZ": {
+   "task_id": "f841ddcf-2a28-4f6d-bac3-61b607219d3e",
+   "model": "openai/gpt-6.1-sol",
+   "pass": "pass-20261102T115847754554Z-0d8f",
+   "blocked": false,
+   "basis": "latest judged pass pass-20261102T115847754554Z-0d8f (deterministic_plus_judge, judge_completeness complete) of 1 judged / 2 graded passes",
+   "judge_mode": "real",
+   "judge_completeness": "complete",
+   "critical_overall": "fail",
+   "critical_fail": {
+    "C1": {
+     "name": "June shipped total",
+     "items": [
+      35
+     ]
+    },
+    "C2": {
+     "name": "Auditable PO-level evidence",
+     "items": [
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      22
+     ]
+    },
+    "C3": {
+     "name": "Slipped cohort",
+     "items": [
+      24,
+      36
+     ]
+    },
+    "C4": {
+     "name": "Row or account arithmetic",
+     "items": [
+      27,
+      28,
+      47,
+      48,
+      49,
+      50,
+      51,
+      52,
+      53,
+      54
+     ]
+    }
+   },
+   "critical_needs_visual_review": {},
+   "noncritical_visual_not_evaluated": [
+    59
+   ],
+   "judge_rows": 7,
+   "judge_verdicts": 7,
+   "judge_missing_or_error": 0
+  },
+  "hdDnxUR6sUhQD6PHLnhKSm": {
+   "task_id": "f841ddcf-2a28-4f6d-bac3-61b607219d3e",
+   "model": "anthropic/claude-opus-5-5",
+   "pass": "pass-20261102T115733218914Z-a5e4",
+   "blocked": false,
+   "basis": "latest judged pass pass-20261102T115733218914Z-a5e4 (deterministic_plus_judge, judge_completeness complete) of 1 judged / 2 graded passes",
+   "judge_mode": "real",
+   "judge_completeness": "complete",
+   "critical_overall": "pass",
+   "critical_fail": {},
+   "critical_needs_visual_review": {},
+   "noncritical_visual_not_evaluated": [
+    59
+   ],
+   "judge_rows": 7,
+   "judge_verdicts": 7,
+   "judge_missing_or_error": 0
+  },
+  "dPR5yvN9wEfcMyQiAC2njB": {
+   "task_id": "47ef842d-8eac-4b90-bda8-dd934c228c96",
+   "model": "openai/gpt-6.1-sol",
+   "pass": "pass-20261102T120015898362Z-9b7d",
+   "blocked": false,
+   "basis": "latest judged pass pass-20261102T120015898362Z-9b7d (deterministic_plus_judge, judge_completeness complete) of 1 judged / 2 graded passes",
+   "judge_mode": "real",
+   "judge_completeness": "complete",
+   "critical_overall": "fail",
+   "critical_fail": {
+    "C4": {
+     "name": "Chart",
+     "items": [
+      13,
+      14
+     ]
+    }
+   },
+   "critical_needs_visual_review": {},
+   "noncritical_visual_not_evaluated": [
+    15,
+    16,
+    58
+   ],
+   "judge_rows": 1,
+   "judge_verdicts": 1,
+   "judge_missing_or_error": 0
+  },
+  "LVyjBBcU4iFqDKviwY2YJz": {
+   "task_id": "47ef842d-8eac-4b90-bda8-dd934c228c96",
+   "model": "anthropic/claude-opus-5-5",
+   "pass": "pass-20261102T120000409606Z-f47b",
+   "blocked": false,
+   "basis": "latest judged pass pass-20261102T120000409606Z-f47b (deterministic_plus_judge, judge_completeness complete) of 1 judged / 2 graded passes",
+   "judge_mode": "real",
+   "judge_completeness": "complete",
+   "critical_overall": "fail",
+   "critical_fail": {
+    "C4": {
+     "name": "Chart",
+     "items": [
+      13,
+      14
+     ]
+    }
+   },
+   "critical_needs_visual_review": {},
+   "noncritical_visual_not_evaluated": [
+    15,
+    16,
+    58
+   ],
+   "judge_rows": 1,
+   "judge_verdicts": 1,
+   "judge_missing_or_error": 0
+  },
+  "mE6xrcKcirXrQgh4ugBfbE": {
+   "task_id": "1137e2bb-bdf9-4876-b572-f29b7de5e595",
+   "model": "openai/gpt-6.1-sol",
+   "pass": "pass-20261102T120138543561Z-511d",
+   "blocked": false,
+   "basis": "latest judged pass pass-20261102T120138543561Z-511d (deterministic_plus_judge, judge_completeness complete) of 1 judged / 2 graded passes",
+   "judge_mode": "real",
+   "judge_completeness": "complete",
+   "critical_overall": "not_confirmed",
+   "critical_fail": {},
+   "critical_needs_visual_review": {},
+   "noncritical_visual_not_evaluated": [],
+   "judge_rows": 7,
+   "judge_verdicts": 7,
+   "judge_missing_or_error": 0
+  },
+  "iS5pLfPvTxhxxXScg7HXVw": {
+   "task_id": "1137e2bb-bdf9-4876-b572-f29b7de5e595",
+   "model": "anthropic/claude-opus-5-5",
+   "pass": "pass-20261102T120033449260Z-cd91",
+   "blocked": false,
+   "basis": "latest judged pass pass-20261102T120033449260Z-cd91 (deterministic_plus_judge, judge_completeness complete) of 1 judged / 2 graded passes",
+   "judge_mode": "real",
+   "judge_completeness": "complete",
+   "critical_overall": "fail",
+   "critical_fail": {
+    "C2": {
+     "name": "SKU summary",
+     "items": [
+      12,
+      13,
+      15,
+      16,
+      17,
+      56,
+      57,
+      58,
+      59,
+      60,
+      61,
+      62
+     ]
+    }
+   },
+   "critical_needs_visual_review": {},
+   "noncritical_visual_not_evaluated": [],
+   "judge_rows": 7,
+   "judge_verdicts": 7,
+   "judge_missing_or_error": 0
+  },
+  "fAFHskFwVPcLzn89SuYaxv": {
+   "task_id": "c3525d4d-2012-45df-853e-2d2a0e902991",
+   "model": "anthropic/claude-opus-5-5",
+   "pass": "pass-20261102T120246281223Z-e733",
+   "blocked": false,
+   "basis": "latest judged pass pass-20261102T120246281223Z-e733 (deterministic_plus_judge, judge_completeness complete) of 1 judged / 2 graded passes",
+   "judge_mode": "real",
+   "judge_completeness": "complete",
+   "critical_overall": "fail",
+   "critical_fail": {
+    "C2": {
+     "name": "Budget arithmetic",
+     "items": [
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30,
+      31,
+      49
+     ]
+    }
+   },
+   "critical_needs_visual_review": {},
+   "noncritical_visual_not_evaluated": [
+    52
+   ],
+   "judge_rows": 5,
+   "judge_verdicts": 5,
+   "judge_missing_or_error": 0
+  },
+  "SJbeNCc6EYF5dHerim5UD6": {
+   "task_id": "c3525d4d-2012-45df-853e-2d2a0e902991",
+   "model": "openai/gpt-6.1-sol",
+   "pass": "pass-20261102T120327674401Z-ee13",
+   "blocked": false,
+   "basis": "latest judged pass pass-20261102T120327674401Z-ee13 (deterministic_plus_judge, judge_completeness complete) of 1 judged / 2 graded passes",
+   "judge_mode": "real",
+   "judge_completeness": "complete",
+   "critical_overall": "fail",
+   "critical_fail": {
+    "C2": {
+     "name": "Budget arithmetic",
+     "items": [
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30,
+      31,
+      49
+     ]
+    }
+   },
+   "critical_needs_visual_review": {},
+   "noncritical_visual_not_evaluated": [
+    52
+   ],
+   "judge_rows": 5,
+   "judge_verdicts": 5,
+   "judge_missing_or_error": 0
+  },
+  "hX4B29t5iE2v3rFKMtqWqz": {
+   "task_id": "7b08cd4d-df60-41ae-9102-8aaa49306ba2",
+   "model": "openai/gpt-6.1-sol",
+   "pass": "pass-20261102T120617329284Z-5da8",
+   "blocked": false,
+   "basis": "latest judged pass pass-20261102T120617329284Z-5da8 (deterministic_plus_judge, judge_completeness complete) of 1 judged / 2 graded passes",
+   "judge_mode": "real",
+   "judge_completeness": "complete",
+   "critical_overall": "fail",
+   "critical_fail": {
+    "C1": {
+     "name": "Withholding and net revenue",
+     "items": [
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24
+     ]
+    }
+   },
+   "critical_needs_visual_review": {},
+   "noncritical_visual_not_evaluated": [
+    5,
+    59
+   ],
+   "judge_rows": 14,
+   "judge_verdicts": 14,
+   "judge_missing_or_error": 0
+  },
+  "KU4bWmuqsWUUbkTXEu9Fpj": {
+   "task_id": "7b08cd4d-df60-41ae-9102-8aaa49306ba2",
+   "model": "anthropic/claude-opus-5-5",
+   "pass": "pass-20261102T120408339836Z-770e",
+   "blocked": false,
+   "basis": "latest judged pass pass-20261102T120408339836Z-770e (deterministic_plus_judge, judge_completeness complete) of 1 judged / 2 graded passes",
+   "judge_mode": "real",
+   "judge_completeness": "complete",
+   "critical_overall": "fail",
+   "critical_fail": {
+    "C1": {
+     "name": "Withholding and net revenue",
+     "items": [
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24
+     ]
+    }
+   },
+   "critical_needs_visual_review": {},
+   "noncritical_visual_not_evaluated": [
+    5,
+    59
+   ],
+   "judge_rows": 14,
+   "judge_verdicts": 14,
+   "judge_missing_or_error": 0
+  },
+  "FDVJTwSvqDJFQj6JyTpkHY": {
+   "task_id": "7d7fc9a7-21a7-4b83-906f-416dea5ad04f",
+   "model": "openai/gpt-6.1-sol",
+   "pass": "pass-20261102T121133296465Z-6b7c",
+   "blocked": false,
+   "basis": "latest judged pass pass-20261102T121133296465Z-6b7c (deterministic_plus_judge, judge_completeness complete) of 1 judged / 2 graded passes",
+   "judge_mode": "real",
+   "judge_completeness": "complete",
+   "critical_overall": "fail",
+   "critical_fail": {
+    "C2": {
+     "name": "1250 reconciliation",
+     "items": [
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      30
+     ]
+    },
+    "C3": {
+     "name": "1251 reconciliation",
+     "items": [
+      36,
+      37,
+      39,
+      40,
+      41,
+      42,
+      43,
+      44,
+      48
+     ]
+    }
+   },
+   "critical_needs_visual_review": {},
+   "noncritical_visual_not_evaluated": [
+    56
+   ],
+   "judge_rows": 14,
+   "judge_verdicts": 14,
+   "judge_missing_or_error": 0
+  },
+  "czgd84YmwwTZzDpVKD5vhD": {
+   "task_id": "7d7fc9a7-21a7-4b83-906f-416dea5ad04f",
+   "model": "anthropic/claude-opus-5-5",
+   "pass": "pass-20261102T120837825114Z-bd90",
+   "blocked": false,
+   "basis": "latest judged pass pass-20261102T120837825114Z-bd90 (deterministic_plus_judge, judge_completeness complete) of 1 judged / 2 graded passes",
+   "judge_mode": "real",
+   "judge_completeness": "complete",
+   "critical_overall": "fail",
+   "critical_fail": {
+    "C4": {
+     "name": "Summary linkage",
+     "items": [
+      7,
+      8,
+      9,
+      10,
+      11
+     ]
+    }
+   },
+   "critical_needs_visual_review": {},
+   "noncritical_visual_not_evaluated": [
+    56
+   ],
+   "judge_rows": 14,
+   "judge_verdicts": 14,
+   "judge_missing_or_error": 0
+  },
+  "SaDUDAyEP45E3gNRVZWjgp": {
+   "task_id": "2ea2e5b5-257f-42e6-a7dc-93763f28b19d",
+   "model": "anthropic/claude-opus-5-5",
+   "pass": "pass-20261102T121440292802Z-cc25",
+   "blocked": false,
+   "basis": "latest judged pass pass-20261102T121440292802Z-cc25 (deterministic_plus_judge, judge_completeness complete) of 1 judged / 2 graded passes",
+   "judge_mode": "real",
+   "judge_completeness": "complete",
+   "critical_overall": "fail",
+   "critical_fail": {
+    "C3": {
+     "name": "Classification",
+     "items": [
+      27,
+      28,
+      29,
+      30,
+      31,
+      32,
+      33,
+      34,
+      35,
+      36,
+      37,
+      38,
+      39,
+      40,
+      41,
+      42,
+      43,
+      44,
+      45,
+      46,
+      47,
+      48,
+      49,
+      50,
+      51,
+      52,
+      53,
+      54,
+      55,
+      56
+     ]
+    }
+   },
+   "critical_needs_visual_review": {},
+   "noncritical_visual_not_evaluated": [],
+   "judge_rows": 4,
+   "judge_verdicts": 4,
+   "judge_missing_or_error": 0
+  },
+  "ehpELnbiUfAp5dFTeDNwt9": {
+   "task_id": "2ea2e5b5-257f-42e6-a7dc-93763f28b19d",
+   "model": "openai/gpt-6.1-sol",
+   "pass": "pass-20261102T121505538896Z-e39c",
+   "blocked": false,
+   "basis": "latest judged pass pass-20261102T121505538896Z-e39c (deterministic_plus_judge, judge_completeness complete) of 1 judged / 2 graded passes",
+   "judge_mode": "real",
+   "judge_completeness": "complete",
+   "critical_overall": "fail",
+   "critical_fail": {
+    "C2": {
+     "name": "Activity shares",
+     "items": [
+      8,
+      9,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26
+     ]
+    }
+   },
+   "critical_needs_visual_review": {},
+   "noncritical_visual_not_evaluated": [],
+   "judge_rows": 4,
+   "judge_verdicts": 4,
+   "judge_missing_or_error": 0
+  },
+  "AbudpM6dPVjwu2NSnwrZ6D": {
+   "task_id": "c357f0e2-963d-4eb7-a6fa-3078fe55b3ba",
+   "model": "anthropic/claude-opus-5-5",
+   "pass": "pass-20261102T121530287546Z-1e75",
+   "blocked": false,
+   "basis": "latest judged pass pass-20261102T121530287546Z-1e75 (deterministic_plus_judge, judge_completeness partial) of 1 judged / 2 graded passes",
+   "judge_mode": "real",
+   "judge_completeness": "partial",
+   "critical_overall": "fail",
+   "critical_fail": {
+    "C3": {
+     "name": "Module and negative coverage",
+     "items": [
+      13,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      31,
+      35,
+      36,
+      37,
+      45,
+      46,
+      47,
+      48,
+      59,
+      60,
+      61,
+      62,
+      63
+     ]
+    }
+   },
+   "critical_needs_visual_review": {},
+   "noncritical_visual_not_evaluated": [
+    70
+   ],
+   "judge_rows": 54,
+   "judge_verdicts": 53,
+   "judge_missing_or_error": 1
+  },
+  "4FAJ3AmGzujC6FZ67Krt9B": {
+   "task_id": "c357f0e2-963d-4eb7-a6fa-3078fe55b3ba",
+   "model": "openai/gpt-6.1-sol",
+   "pass": "pass-20261102T122438506232Z-7829",
+   "blocked": false,
+   "basis": "latest judged pass pass-20261102T122438506232Z-7829 (deterministic_plus_judge, judge_completeness complete) of 1 judged / 2 graded passes",
+   "judge_mode": "real",
+   "judge_completeness": "complete",
+   "critical_overall": "fail",
+   "critical_fail": {
+    "C2": {
+     "name": "Permission boundaries",
+     "items": [
+      12,
+      49,
+      50,
+      51,
+      52,
+      53,
+      54,
+      55,
+      56,
+      57,
+      58
+     ]
+    },
+    "C3": {
+     "name": "Module and negative coverage",
+     "items": [
+      13,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      31,
+      35,
+      36,
+      37,
+      45,
+      46,
+      47,
+      48,
+      59,
+      60,
+      61,
+      62,
+      63
+     ]
+    }
+   },
+   "critical_needs_visual_review": {},
+   "noncritical_visual_not_evaluated": [
+    70
+   ],
+   "judge_rows": 54,
+   "judge_verdicts": 54,
+   "judge_missing_or_error": 0
+  },
+  "NHSUKRMDDbYoJoGyWnpjcN": {
+   "task_id": "a45bc83b-22f9-4def-8d89-9c5661b2b86f",
+   "model": "openai/gpt-6.1-sol",
+   "pass": "pass-20261102T124517129297Z-bcc4",
+   "blocked": false,
+   "basis": "latest judged pass pass-20261102T124517129297Z-bcc4 (deterministic_plus_judge, judge_completeness complete) of 1 judged / 2 graded passes",
+   "judge_mode": "real",
+   "judge_completeness": "complete",
+   "critical_overall": "not_confirmed",
+   "critical_fail": {},
+   "critical_needs_visual_review": {
+    "C3": {
+     "name": "Diagram",
+     "items": [
+      4,
+      26,
+      27,
+      28,
+      29,
+      30
+     ],
+     "status": "not_confirmed"
+    }
+   },
+   "noncritical_visual_not_evaluated": [
+    70,
+    72
+   ],
+   "judge_rows": 60,
+   "judge_verdicts": 60,
+   "judge_missing_or_error": 0
+  },
+  "BVeKQk8ZWp6j2uxp9hsuGf": {
+   "task_id": "a45bc83b-22f9-4def-8d89-9c5661b2b86f",
+   "model": "anthropic/claude-opus-5-5",
+   "pass": "pass-20261102T124516281243Z-a9a6",
+   "blocked": false,
+   "basis": "latest judged pass pass-20261102T124516281243Z-a9a6 (judge_item_recovery, judge_completeness partial) of 2 judged / 3 graded passes",
+   "judge_mode": "real",
+   "judge_completeness": "partial",
+   "critical_overall": "not_confirmed",
+   "critical_fail": {},
+   "critical_needs_visual_review": {
+    "C3": {
+     "name": "Diagram",
+     "items": [
+      4,
+      26,
+      27,
+      28,
+      29,
+      30
+     ],
+     "status": "not_confirmed"
+    }
+   },
+   "noncritical_visual_not_evaluated": [
+    70,
+    72
+   ],
+   "judge_rows": 60,
+   "judge_verdicts": 59,
+   "judge_missing_or_error": 1
+  }
+ },
+ "summary": {
+  "packets": 20,
+  "comparable": 20,
+  "agree": 17,
+  "deterministic_items": {
+   "n": 10,
+   "agree": 8
+  },
+  "judge_items": {
+   "n": 10,
+   "agree": 9,
+   "awaiting_judge": 0
+  }
+ }
+}

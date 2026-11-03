@@ -1,0 +1,2504 @@
+{
+ "version": 2,
+ "label": "formal",
+ "ceiling_usd": "200.000000",
+ "created_at": "2026-11-02T10:06:09+00:00",
+ "ledger_id": "2469f621bf1c2e722bd510f7accedaa8",
+ "entries": [
+  {
+   "type": "reservation",
+   "unit_id": "f841ddcf-2a28-4f6d-bac3-61b607219d3e:anthropic/claude-opus-5-5:20261102T100609Z",
+   "kind": "sample",
+   "estimated_usd": "8.000000",
+   "at": "2026-11-02T10:06:09+00:00",
+   "meta": {
+    "model": "anthropic/claude-opus-5-5",
+    "task": "formal_f841ddcf"
+   },
+   "claim": true
+  },
+  {
+   "type": "void",
+   "unit_id": "f841ddcf-2a28-4f6d-bac3-61b607219d3e:anthropic/claude-opus-5-5:20261102T100609Z",
+   "reason": "dry run: eval() not called",
+   "at": "2026-11-02T10:06:09+00:00"
+  },
+  {
+   "type": "reservation",
+   "unit_id": "47ef842d-8eac-4b90-bda8-dd934c228c96:anthropic/claude-opus-5-5:20261102T100609Z",
+   "kind": "sample",
+   "estimated_usd": "8.000000",
+   "at": "2026-11-02T10:06:09+00:00",
+   "meta": {
+    "model": "anthropic/claude-opus-5-5",
+    "task": "formal_47ef842d"
+   },
+   "claim": true
+  },
+  {
+   "type": "void",
+   "unit_id": "47ef842d-8eac-4b90-bda8-dd934c228c96:anthropic/claude-opus-5-5:20261102T100609Z",
+   "reason": "dry run: eval() not called",
+   "at": "2026-11-02T10:06:09+00:00"
+  },
+  {
+   "type": "reservation",
+   "unit_id": "1137e2bb-bdf9-4876-b572-f29b7de5e595:anthropic/claude-opus-5-5:20261102T100609Z",
+   "kind": "sample",
+   "estimated_usd": "8.000000",
+   "at": "2026-11-02T10:06:09+00:00",
+   "meta": {
+    "model": "anthropic/claude-opus-5-5",
+    "task": "formal_1137e2bb"
+   },
+   "claim": true
+  },
+  {
+   "type": "void",
+   "unit_id": "1137e2bb-bdf9-4876-b572-f29b7de5e595:anthropic/claude-opus-5-5:20261102T100609Z",
+   "reason": "dry run: eval() not called",
+   "at": "2026-11-02T10:06:09+00:00"
+  },
+  {
+   "type": "reservation",
+   "unit_id": "c3525d4d-2012-45df-853e-2d2a0e902991:anthropic/claude-opus-5-5:20261102T100609Z",
+   "kind": "sample",
+   "estimated_usd": "8.000000",
+   "at": "2026-11-02T10:06:09+00:00",
+   "meta": {
+    "model": "anthropic/claude-opus-5-5",
+    "task": "formal_c3525d4d"
+   },
+   "claim": true
+  },
+  {
+   "type": "void",
+   "unit_id": "c3525d4d-2012-45df-853e-2d2a0e902991:anthropic/claude-opus-5-5:20261102T100609Z",
+   "reason": "dry run: eval() not called",
+   "at": "2026-11-02T10:06:09+00:00"
+  },
+  {
+   "type": "reservation",
+   "unit_id": "7b08cd4d-df60-41ae-9102-8aaa49306ba2:anthropic/claude-opus-5-5:20261102T100609Z",
+   "kind": "sample",
+   "estimated_usd": "8.000000",
+   "at": "2026-11-02T10:06:09+00:00",
+   "meta": {
+    "model": "anthropic/claude-opus-5-5",
+    "task": "formal_7b08cd4d"
+   },
+   "claim": true
+  },
+  {
+   "type": "void",
+   "unit_id": "7b08cd4d-df60-41ae-9102-8aaa49306ba2:anthropic/claude-opus-5-5:20261102T100609Z",
+   "reason": "dry run: eval() not called",
+   "at": "2026-11-02T10:06:09+00:00"
+  },
+  {
+   "type": "reservation",
+   "unit_id": "7d7fc9a7-21a7-4b83-906f-416dea5ad04f:anthropic/claude-opus-5-5:20261102T100609Z",
+   "kind": "sample",
+   "estimated_usd": "8.000000",
+   "at": "2026-11-02T10:06:09+00:00",
+   "meta": {
+    "model": "anthropic/claude-opus-5-5",
+    "task": "formal_7d7fc9a7"
+   },
+   "claim": true
+  },
+  {
+   "type": "void",
+   "unit_id": "7d7fc9a7-21a7-4b83-906f-416dea5ad04f:anthropic/claude-opus-5-5:20261102T100609Z",
+   "reason": "dry run: eval() not called",
+   "at": "2026-11-02T10:06:09+00:00"
+  },
+  {
+   "type": "reservation",
+   "unit_id": "2ea2e5b5-257f-42e6-a7dc-93763f28b19d:anthropic/claude-opus-5-5:20261102T100609Z",
+   "kind": "sample",
+   "estimated_usd": "8.000000",
+   "at": "2026-11-02T10:06:09+00:00",
+   "meta": {
+    "model": "anthropic/claude-opus-5-5",
+    "task": "formal_2ea2e5b5"
+   },
+   "claim": true
+  },
+  {
+   "type": "void",
+   "unit_id": "2ea2e5b5-257f-42e6-a7dc-93763f28b19d:anthropic/claude-opus-5-5:20261102T100609Z",
+   "reason": "dry run: eval() not called",
+   "at": "2026-11-02T10:06:09+00:00"
+  },
+  {
+   "type": "reservation",
+   "unit_id": "c357f0e2-963d-4eb7-a6fa-3078fe55b3ba:anthropic/claude-opus-5-5:20261102T100609Z",
+   "kind": "sample",
+   "estimated_usd": "8.000000",
+   "at": "2026-11-02T10:06:09+00:00",
+   "meta": {
+    "model": "anthropic/claude-opus-5-5",
+    "task": "formal_c357f0e2"
+   },
+   "claim": true
+  },
+  {
+   "type": "void",
+   "unit_id": "c357f0e2-963d-4eb7-a6fa-3078fe55b3ba:anthropic/claude-opus-5-5:20261102T100609Z",
+   "reason": "dry run: eval() not called",
+   "at": "2026-11-02T10:06:09+00:00"
+  },
+  {
+   "type": "reservation",
+   "unit_id": "a45bc83b-22f9-4def-8d89-9c5661b2b86f:anthropic/claude-opus-5-5:20261102T100609Z",
+   "kind": "sample",
+   "estimated_usd": "8.000000",
+   "at": "2026-11-02T10:06:09+00:00",
+   "meta": {
+    "model": "anthropic/claude-opus-5-5",
+    "task": "formal_a45bc83b"
+   },
+   "claim": true
+  },
+  {
+   "type": "void",
+   "unit_id": "a45bc83b-22f9-4def-8d89-9c5661b2b86f:anthropic/claude-opus-5-5:20261102T100609Z",
+   "reason": "dry run: eval() not called",
+   "at": "2026-11-02T10:06:09+00:00"
+  },
+  {
+   "type": "reservation",
+   "unit_id": "f841ddcf-2a28-4f6d-bac3-61b607219d3e:anthropic/claude-opus-5-5:20261102T100646Z",
+   "kind": "sample",
+   "estimated_usd": "8.000000",
+   "at": "2026-11-02T10:06:47+00:00",
+   "meta": {
+    "model": "anthropic/claude-opus-5-5",
+    "task": "formal_f841ddcf"
+   },
+   "claim": true
+  },
+  {
+   "type": "settlement",
+   "unit_id": "f841ddcf-2a28-4f6d-bac3-61b607219d3e:anthropic/claude-opus-5-5:20261102T100646Z",
+   "kind": "sample",
+   "cost_usd": "0.921411",
+   "breakdown": {
+    "input": "0.000128",
+    "output": "0.396560",
+    "cache_read": "0.086355",
+    "cache_write": "0.438368"
+   },
+   "retry_estimate_usd": "0.000000",
+   "per_model": {
+    "anthropic/claude-opus-5-5": {
+     "input": "0.000128",
+     "output": "0.396560",
+     "cache_read": "0.086355",
+     "cache_write": "0.438368",
+     "total": "0.921411",
+     "calls": "15",
+     "flags": [],
+     "tiers": {
+      "standard": 15
+     }
+    }
+   },
+   "raw_usage": {
+    "anthropic/claude-opus-5-5": {
+     "input_tokens": 32,
+     "output_tokens": 19828,
+     "cache_read_tokens": 431771,
+     "cache_write_tokens": 54796
+    }
+   },
+   "raw_calls": {
+    "anthropic/claude-opus-5-5": [
+     {
+      "input_tokens": 4,
+      "output_tokens": 88,
+      "cache_read_tokens": 1154,
+      "cache_write_tokens": 516,
+      "total_cost": 0.004586799999999999
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 158,
+      "cache_read_tokens": 1670,
+      "cache_write_tokens": 282,
+      "total_cost": 0.004912000000000001
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 293,
+      "cache_read_tokens": 1952,
+      "cache_write_tokens": 9142,
+      "total_cost": 0.0519684
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 2662,
+      "cache_read_tokens": 11094,
+      "cache_write_tokens": 4739,
+      "total_cost": 0.07916180000000002
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 2463,
+      "cache_read_tokens": 15833,
+      "cache_write_tokens": 5145,
+      "total_cost": 0.07815960000000001
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 1791,
+      "cache_read_tokens": 20978,
+      "cache_write_tokens": 3594,
+      "total_cost": 0.0579936
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 8530,
+      "cache_read_tokens": 24572,
+      "cache_write_tokens": 2128,
+      "total_cost": 0.18616240000000003
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 509,
+      "cache_read_tokens": 26700,
+      "cache_write_tokens": 8841,
+      "total_cost": 0.059732999999999994
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 565,
+      "cache_read_tokens": 35541,
+      "cache_write_tokens": 9230,
+      "total_cost": 0.06456619999999999
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 68,
+      "cache_read_tokens": 44771,
+      "cache_write_tokens": 573,
+      "total_cost": 0.0131872
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 231,
+      "cache_read_tokens": 45344,
+      "cache_write_tokens": 1620,
+      "total_cost": 0.0217968
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 443,
+      "cache_read_tokens": 46964,
+      "cache_write_tokens": 3365,
+      "total_cost": 0.0350858
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 175,
+      "cache_read_tokens": 50329,
+      "cache_write_tokens": 451,
+      "total_cost": 0.015828800000000004
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 541,
+      "cache_read_tokens": 50780,
+      "cache_write_tokens": 3309,
+      "total_cost": 0.037529
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 1311,
+      "cache_read_tokens": 54089,
+      "cache_write_tokens": 1861,
+      "total_cost": 0.046350800000000004
+     }
+    ]
+   },
+   "usage_scope": {
+    "same_sample": true,
+    "sample_uuid": "hdDnxUR6sUhQD6PHLnhKSm",
+    "samples_in_log": 1,
+    "model_calls": 15,
+    "calls_without_usage": 0,
+    "aggregate_source": "EvalSample.model_usage",
+    "calls_source": "EvalSample.events[model].output.usage"
+   },
+   "usage_reconciliation": {
+    "anthropic/claude-opus-5-5": {
+     "aggregated": {
+      "input": 32,
+      "output": 19828,
+      "cache_read": 431771,
+      "cache_write": 54796
+     },
+     "per_call": {
+      "input": 32,
+      "output": 19828,
+      "cache_read": 431771,
+      "cache_write": 54796
+     },
+     "difference": {
+      "input": 0,
+      "output": 0,
+      "cache_read": 0,
+      "cache_write": 0
+     },
+     "conflict": false,
+     "calls": 15,
+     "conservative": {
+      "input_tokens": 32,
+      "output_tokens": 19828,
+      "cache_read_tokens": 431771,
+      "cache_write_tokens": 54796
+     }
+    }
+   },
+   "inspect_total_cost_usd": "0.757022",
+   "estimated": false,
+   "estimate_basis": [],
+   "inferred": null,
+   "manual_review_required": false,
+   "flags": [],
+   "note": "inspect status success",
+   "reserved_usd": "8.000000",
+   "at": "2026-11-02T10:10:03+00:00"
+  },
+  {
+   "type": "reservation",
+   "unit_id": "47ef842d-8eac-4b90-bda8-dd934c228c96:anthropic/claude-opus-5-5:20261102T101003Z",
+   "kind": "sample",
+   "estimated_usd": "8.000000",
+   "at": "2026-11-02T10:10:03+00:00",
+   "meta": {
+    "model": "anthropic/claude-opus-5-5",
+    "task": "formal_47ef842d"
+   },
+   "claim": true
+  },
+  {
+   "type": "settlement",
+   "unit_id": "47ef842d-8eac-4b90-bda8-dd934c228c96:anthropic/claude-opus-5-5:20261102T101003Z",
+   "kind": "sample",
+   "cost_usd": "1.115620",
+   "breakdown": {
+    "input": "0.000216",
+    "output": "0.573700",
+    "cache_read": "0.130048",
+    "cache_write": "0.411656"
+   },
+   "retry_estimate_usd": "0.000000",
+   "per_model": {
+    "anthropic/claude-opus-5-5": {
+     "input": "0.000216",
+     "output": "0.573700",
+     "cache_read": "0.130048",
+     "cache_write": "0.411656",
+     "total": "1.115620",
+     "calls": "26",
+     "flags": [],
+     "tiers": {
+      "standard": 26
+     }
+    }
+   },
+   "raw_usage": {
+    "anthropic/claude-opus-5-5": {
+     "input_tokens": 54,
+     "output_tokens": 28685,
+     "cache_read_tokens": 650257,
+     "cache_write_tokens": 51457
+    }
+   },
+   "raw_calls": {
+    "anthropic/claude-opus-5-5": [
+     {
+      "input_tokens": 4,
+      "output_tokens": 85,
+      "cache_read_tokens": 1154,
+      "cache_write_tokens": 599,
+      "total_cost": 0.0049418
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 149,
+      "cache_read_tokens": 1753,
+      "cache_write_tokens": 114,
+      "total_cost": 0.003908600000000001
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 259,
+      "cache_read_tokens": 1867,
+      "cache_write_tokens": 889,
+      "total_cost": 0.010006399999999999
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 432,
+      "cache_read_tokens": 2756,
+      "cache_write_tokens": 2195,
+      "total_cost": 0.020174200000000003
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 492,
+      "cache_read_tokens": 4951,
+      "cache_write_tokens": 481,
+      "total_cost": 0.0132432
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 1297,
+      "cache_read_tokens": 5432,
+      "cache_write_tokens": 923,
+      "total_cost": 0.0316494
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 737,
+      "cache_read_tokens": 6355,
+      "cache_write_tokens": 1345,
+      "total_cost": 0.022744
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 768,
+      "cache_read_tokens": 7700,
+      "cache_write_tokens": 2567,
+      "total_cost": 0.029743
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 3986,
+      "cache_read_tokens": 10267,
+      "cache_write_tokens": 1303,
+      "total_cost": 0.08829639999999998
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 6983,
+      "cache_read_tokens": 11570,
+      "cache_write_tokens": 4163,
+      "total_cost": 0.16279700000000003
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 464,
+      "cache_read_tokens": 15733,
+      "cache_write_tokens": 7009,
+      "total_cost": 0.0474796
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 4874,
+      "cache_read_tokens": 22742,
+      "cache_write_tokens": 2844,
+      "total_cost": 0.11625639999999998
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 1484,
+      "cache_read_tokens": 25586,
+      "cache_write_tokens": 5392,
+      "total_cost": 0.061765200000000006
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 426,
+      "cache_read_tokens": 30978,
+      "cache_write_tokens": 1884,
+      "total_cost": 0.0241436
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 346,
+      "cache_read_tokens": 32862,
+      "cache_write_tokens": 584,
+      "total_cost": 0.0164204
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 153,
+      "cache_read_tokens": 33446,
+      "cache_write_tokens": 896,
+      "total_cost": 0.0142372
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 2383,
+      "cache_read_tokens": 34342,
+      "cache_write_tokens": 1745,
+      "total_cost": 0.0632614
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 288,
+      "cache_read_tokens": 36087,
+      "cache_write_tokens": 3164,
+      "total_cost": 0.028805400000000002
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 190,
+      "cache_read_tokens": 39251,
+      "cache_write_tokens": 431,
+      "total_cost": 0.0138132
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 303,
+      "cache_read_tokens": 39682,
+      "cache_write_tokens": 3360,
+      "total_cost": 0.0308044
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 501,
+      "cache_read_tokens": 43042,
+      "cache_write_tokens": 3473,
+      "total_cost": 0.036001399999999996
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 107,
+      "cache_read_tokens": 46515,
+      "cache_write_tokens": 644,
+      "total_cost": 0.014671
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 278,
+      "cache_read_tokens": 47159,
+      "cache_write_tokens": 1677,
+      "total_cost": 0.0233848
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 107,
+      "cache_read_tokens": 48836,
+      "cache_write_tokens": 421,
+      "total_cost": 0.0140202
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 107,
+      "cache_read_tokens": 49257,
+      "cache_write_tokens": 1677,
+      "total_cost": 0.020384400000000004
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 1486,
+      "cache_read_tokens": 50934,
+      "cache_write_tokens": 1677,
+      "total_cost": 0.048299800000000004
+     }
+    ]
+   },
+   "usage_scope": {
+    "same_sample": true,
+    "sample_uuid": "LVyjBBcU4iFqDKviwY2YJz",
+    "samples_in_log": 1,
+    "model_calls": 26,
+    "calls_without_usage": 0,
+    "aggregate_source": "EvalSample.model_usage",
+    "calls_source": "EvalSample.events[model].output.usage"
+   },
+   "usage_reconciliation": {
+    "anthropic/claude-opus-5-5": {
+     "aggregated": {
+      "input": 54,
+      "output": 28685,
+      "cache_read": 650257,
+      "cache_write": 51457
+     },
+     "per_call": {
+      "input": 54,
+      "output": 28685,
+      "cache_read": 650257,
+      "cache_write": 51457
+     },
+     "difference": {
+      "input": 0,
+      "output": 0,
+      "cache_read": 0,
+      "cache_write": 0
+     },
+     "conflict": false,
+     "calls": 26,
+     "conservative": {
+      "input_tokens": 54,
+      "output_tokens": 28685,
+      "cache_read_tokens": 650257,
+      "cache_write_tokens": 51457
+     }
+    }
+   },
+   "inspect_total_cost_usd": "0.961252",
+   "estimated": false,
+   "estimate_basis": [],
+   "inferred": null,
+   "manual_review_required": false,
+   "flags": [],
+   "note": "inspect status success",
+   "reserved_usd": "8.000000",
+   "at": "2026-11-02T10:16:38+00:00"
+  },
+  {
+   "type": "reservation",
+   "unit_id": "1137e2bb-bdf9-4876-b572-f29b7de5e595:anthropic/claude-opus-5-5:20261102T101638Z",
+   "kind": "sample",
+   "estimated_usd": "8.000000",
+   "at": "2026-11-02T10:16:38+00:00",
+   "meta": {
+    "model": "anthropic/claude-opus-5-5",
+    "task": "formal_1137e2bb"
+   },
+   "claim": true
+  },
+  {
+   "type": "settlement",
+   "unit_id": "1137e2bb-bdf9-4876-b572-f29b7de5e595:anthropic/claude-opus-5-5:20261102T101638Z",
+   "kind": "sample",
+   "cost_usd": "1.677193",
+   "breakdown": {
+    "input": "0.000264",
+    "output": "0.751560",
+    "cache_read": "0.274817",
+    "cache_write": "0.650552"
+   },
+   "retry_estimate_usd": "0.000000",
+   "per_model": {
+    "anthropic/claude-opus-5-5": {
+     "input": "0.000264",
+     "output": "0.751560",
+     "cache_read": "0.274817",
+     "cache_write": "0.650552",
+     "total": "1.677193",
+     "calls": "32",
+     "flags": [],
+     "tiers": {
+      "standard": 32
+     }
+    }
+   },
+   "raw_usage": {
+    "anthropic/claude-opus-5-5": {
+     "input_tokens": 66,
+     "output_tokens": 37578,
+     "cache_read_tokens": 1374084,
+     "cache_write_tokens": 81319
+    }
+   },
+   "raw_calls": {
+    "anthropic/claude-opus-5-5": [
+     {
+      "input_tokens": 4,
+      "output_tokens": 220,
+      "cache_read_tokens": 1154,
+      "cache_write_tokens": 790,
+      "total_cost": 0.008596800000000002
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 280,
+      "cache_read_tokens": 1944,
+      "cache_write_tokens": 881,
+      "total_cost": 0.010401800000000001
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 5421,
+      "cache_read_tokens": 2825,
+      "cache_write_tokens": 2602,
+      "total_cost": 0.12200299999999999
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 449,
+      "cache_read_tokens": 5427,
+      "cache_write_tokens": 6371,
+      "total_cost": 0.041928400000000005
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 6112,
+      "cache_read_tokens": 11798,
+      "cache_write_tokens": 1355,
+      "total_cost": 0.1313826
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 1136,
+      "cache_read_tokens": 13153,
+      "cache_write_tokens": 6172,
+      "total_cost": 0.056218599999999994
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 81,
+      "cache_read_tokens": 19325,
+      "cache_write_tokens": 1773,
+      "total_cost": 0.014358
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 311,
+      "cache_read_tokens": 21098,
+      "cache_write_tokens": 111,
+      "total_cost": 0.011002600000000001
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 722,
+      "cache_read_tokens": 21209,
+      "cache_write_tokens": 5028,
+      "total_cost": 0.0438298
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 1821,
+      "cache_read_tokens": 26237,
+      "cache_write_tokens": 9929,
+      "total_cost": 0.09132040000000001
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 249,
+      "cache_read_tokens": 36166,
+      "cache_write_tokens": 2553,
+      "total_cost": 0.0249862
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 6019,
+      "cache_read_tokens": 38719,
+      "cache_write_tokens": 313,
+      "total_cost": 0.1296968
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 394,
+      "cache_read_tokens": 39032,
+      "cache_write_tokens": 6188,
+      "total_cost": 0.0466344
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 59,
+      "cache_read_tokens": 45220,
+      "cache_write_tokens": 805,
+      "total_cost": 0.014256999999999999
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 974,
+      "cache_read_tokens": 46025,
+      "cache_write_tokens": 1602,
+      "total_cost": 0.036703
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 165,
+      "cache_read_tokens": 47627,
+      "cache_write_tokens": 1121,
+      "total_cost": 0.0184384
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 193,
+      "cache_read_tokens": 48748,
+      "cache_write_tokens": 351,
+      "total_cost": 0.0153726
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 239,
+      "cache_read_tokens": 49099,
+      "cache_write_tokens": 515,
+      "total_cost": 0.0171828
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 193,
+      "cache_read_tokens": 49614,
+      "cache_write_tokens": 3355,
+      "total_cost": 0.030565800000000004
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 123,
+      "cache_read_tokens": 52969,
+      "cache_write_tokens": 1758,
+      "total_cost": 0.021851799999999998
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 482,
+      "cache_read_tokens": 54727,
+      "cache_write_tokens": 1688,
+      "total_cost": 0.0290334
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 80,
+      "cache_read_tokens": 56415,
+      "cache_write_tokens": 721,
+      "total_cost": 0.016496
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 2276,
+      "cache_read_tokens": 57136,
+      "cache_write_tokens": 1623,
+      "total_cost": 0.0650702
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 57,
+      "cache_read_tokens": 58759,
+      "cache_write_tokens": 2656,
+      "total_cost": 0.026179800000000003
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 4992,
+      "cache_read_tokens": 61415,
+      "cache_write_tokens": 1145,
+      "total_cost": 0.11785599999999999
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 501,
+      "cache_read_tokens": 62560,
+      "cache_write_tokens": 5001,
+      "total_cost": 0.047545
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 334,
+      "cache_read_tokens": 67561,
+      "cache_write_tokens": 545,
+      "total_cost": 0.0229252
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 1078,
+      "cache_read_tokens": 68106,
+      "cache_write_tokens": 6604,
+      "total_cost": 0.0682092
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 179,
+      "cache_read_tokens": 74710,
+      "cache_write_tokens": 1086,
+      "total_cost": 0.023960000000000002
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 889,
+      "cache_read_tokens": 75796,
+      "cache_write_tokens": 3317,
+      "total_cost": 0.0495322
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 410,
+      "cache_read_tokens": 79113,
+      "cache_write_tokens": 1284,
+      "total_cost": 0.0304506
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 1139,
+      "cache_read_tokens": 80397,
+      "cache_write_tokens": 2076,
+      "total_cost": 0.049247400000000004
+     }
+    ]
+   },
+   "usage_scope": {
+    "same_sample": true,
+    "sample_uuid": "iS5pLfPvTxhxxXScg7HXVw",
+    "samples_in_log": 1,
+    "model_calls": 32,
+    "calls_without_usage": 0,
+    "aggregate_source": "EvalSample.model_usage",
+    "calls_source": "EvalSample.events[model].output.usage"
+   },
+   "usage_reconciliation": {
+    "anthropic/claude-opus-5-5": {
+     "aggregated": {
+      "input": 66,
+      "output": 37578,
+      "cache_read": 1374084,
+      "cache_write": 81319
+     },
+     "per_call": {
+      "input": 66,
+      "output": 37578,
+      "cache_read": 1374084,
+      "cache_write": 81319
+     },
+     "difference": {
+      "input": 0,
+      "output": 0,
+      "cache_read": 0,
+      "cache_write": 0
+     },
+     "conflict": false,
+     "calls": 32,
+     "conservative": {
+      "input_tokens": 66,
+      "output_tokens": 37578,
+      "cache_read_tokens": 1374084,
+      "cache_write_tokens": 81319
+     }
+    }
+   },
+   "inspect_total_cost_usd": "1.433236",
+   "estimated": false,
+   "estimate_basis": [],
+   "inferred": null,
+   "manual_review_required": false,
+   "flags": [],
+   "note": "inspect status success",
+   "reserved_usd": "8.000000",
+   "at": "2026-11-02T10:23:29+00:00"
+  },
+  {
+   "type": "reservation",
+   "unit_id": "c3525d4d-2012-45df-853e-2d2a0e902991:anthropic/claude-opus-5-5:20261102T102329Z",
+   "kind": "sample",
+   "estimated_usd": "8.000000",
+   "at": "2026-11-02T10:23:29+00:00",
+   "meta": {
+    "model": "anthropic/claude-opus-5-5",
+    "task": "formal_c3525d4d"
+   },
+   "claim": true
+  },
+  {
+   "type": "settlement",
+   "unit_id": "c3525d4d-2012-45df-853e-2d2a0e902991:anthropic/claude-opus-5-5:20261102T102329Z",
+   "kind": "sample",
+   "cost_usd": "0.687388",
+   "breakdown": {
+    "input": "0.000128",
+    "output": "0.391680",
+    "cache_read": "0.041036",
+    "cache_write": "0.254544"
+   },
+   "retry_estimate_usd": "0.000000",
+   "per_model": {
+    "anthropic/claude-opus-5-5": {
+     "input": "0.000128",
+     "output": "0.391680",
+     "cache_read": "0.041036",
+     "cache_write": "0.254544",
+     "total": "0.687388",
+     "calls": "15",
+     "flags": [],
+     "tiers": {
+      "standard": 15
+     }
+    }
+   },
+   "raw_usage": {
+    "anthropic/claude-opus-5-5": {
+     "input_tokens": 32,
+     "output_tokens": 19584,
+     "cache_read_tokens": 205188,
+     "cache_write_tokens": 31818
+    }
+   },
+   "raw_calls": {
+    "anthropic/claude-opus-5-5": [
+     {
+      "input_tokens": 4,
+      "output_tokens": 78,
+      "cache_read_tokens": 1154,
+      "cache_write_tokens": 843,
+      "total_cost": 0.0060218
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 269,
+      "cache_read_tokens": 1997,
+      "cache_write_tokens": 150,
+      "total_cost": 0.0065374000000000005
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 737,
+      "cache_read_tokens": 2147,
+      "cache_write_tokens": 889,
+      "total_cost": 0.019622399999999998
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 491,
+      "cache_read_tokens": 3036,
+      "cache_write_tokens": 790,
+      "total_cost": 0.0143852
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 319,
+      "cache_read_tokens": 3826,
+      "cache_write_tokens": 1701,
+      "total_cost": 0.0156582
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 555,
+      "cache_read_tokens": 5527,
+      "cache_write_tokens": 382,
+      "total_cost": 0.0141234
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 11027,
+      "cache_read_tokens": 5909,
+      "cache_write_tokens": 835,
+      "total_cost": 0.22590480000000004
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 564,
+      "cache_read_tokens": 6744,
+      "cache_write_tokens": 11038,
+      "total_cost": 0.0678268
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 141,
+      "cache_read_tokens": 17782,
+      "cache_write_tokens": 4041,
+      "total_cost": 0.026589400000000003
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 944,
+      "cache_read_tokens": 21823,
+      "cache_write_tokens": 1699,
+      "total_cost": 0.03174760000000001
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 115,
+      "cache_read_tokens": 23522,
+      "cache_write_tokens": 1248,
+      "total_cost": 0.013252400000000001
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 2713,
+      "cache_read_tokens": 24770,
+      "cache_write_tokens": 1855,
+      "total_cost": 0.068497
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 74,
+      "cache_read_tokens": 26625,
+      "cache_write_tokens": 2722,
+      "total_cost": 0.020423
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 390,
+      "cache_read_tokens": 29347,
+      "cache_write_tokens": 1632,
+      "total_cost": 0.0218374
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 1167,
+      "cache_read_tokens": 30979,
+      "cache_write_tokens": 1993,
+      "total_cost": 0.039508800000000004
+     }
+    ]
+   },
+   "usage_scope": {
+    "same_sample": true,
+    "sample_uuid": "fAFHskFwVPcLzn89SuYaxv",
+    "samples_in_log": 1,
+    "model_calls": 15,
+    "calls_without_usage": 0,
+    "aggregate_source": "EvalSample.model_usage",
+    "calls_source": "EvalSample.events[model].output.usage"
+   },
+   "usage_reconciliation": {
+    "anthropic/claude-opus-5-5": {
+     "aggregated": {
+      "input": 32,
+      "output": 19584,
+      "cache_read": 205188,
+      "cache_write": 31818
+     },
+     "per_call": {
+      "input": 32,
+      "output": 19584,
+      "cache_read": 205188,
+      "cache_write": 31818
+     },
+     "difference": {
+      "input": 0,
+      "output": 0,
+      "cache_read": 0,
+      "cache_write": 0
+     },
+     "conflict": false,
+     "calls": 15,
+     "conservative": {
+      "input_tokens": 32,
+      "output_tokens": 19584,
+      "cache_read_tokens": 205188,
+      "cache_write_tokens": 31818
+     }
+    }
+   },
+   "inspect_total_cost_usd": "0.591936",
+   "estimated": false,
+   "estimate_basis": [],
+   "inferred": null,
+   "manual_review_required": false,
+   "flags": [],
+   "note": "inspect status success",
+   "reserved_usd": "8.000000",
+   "at": "2026-11-02T10:26:44+00:00"
+  },
+  {
+   "type": "reservation",
+   "unit_id": "7b08cd4d-df60-41ae-9102-8aaa49306ba2:anthropic/claude-opus-5-5:20261102T102644Z",
+   "kind": "sample",
+   "estimated_usd": "8.000000",
+   "at": "2026-11-02T10:26:44+00:00",
+   "meta": {
+    "model": "anthropic/claude-opus-5-5",
+    "task": "formal_7b08cd4d"
+   },
+   "claim": true
+  },
+  {
+   "type": "settlement",
+   "unit_id": "7b08cd4d-df60-41ae-9102-8aaa49306ba2:anthropic/claude-opus-5-5:20261102T102644Z",
+   "kind": "sample",
+   "cost_usd": "0.917356",
+   "breakdown": {
+    "input": "0.000144",
+    "output": "0.477860",
+    "cache_read": "0.081968",
+    "cache_write": "0.357384"
+   },
+   "retry_estimate_usd": "0.000000",
+   "per_model": {
+    "anthropic/claude-opus-5-5": {
+     "input": "0.000144",
+     "output": "0.477860",
+     "cache_read": "0.081968",
+     "cache_write": "0.357384",
+     "total": "0.917356",
+     "calls": "17",
+     "flags": [],
+     "tiers": {
+      "standard": 17
+     }
+    }
+   },
+   "raw_usage": {
+    "anthropic/claude-opus-5-5": {
+     "input_tokens": 36,
+     "output_tokens": 23893,
+     "cache_read_tokens": 409834,
+     "cache_write_tokens": 44673
+    }
+   },
+   "raw_calls": {
+    "anthropic/claude-opus-5-5": [
+     {
+      "input_tokens": 4,
+      "output_tokens": 84,
+      "cache_read_tokens": 1154,
+      "cache_write_tokens": 707,
+      "total_cost": 0.005461799999999999
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 168,
+      "cache_read_tokens": 1861,
+      "cache_write_tokens": 118,
+      "total_cost": 0.004330200000000001
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 5104,
+      "cache_read_tokens": 1979,
+      "cache_write_tokens": 1933,
+      "total_cost": 0.11214879999999999
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 309,
+      "cache_read_tokens": 3912,
+      "cache_write_tokens": 5154,
+      "total_cost": 0.0327404
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 10413,
+      "cache_read_tokens": 9066,
+      "cache_write_tokens": 592,
+      "total_cost": 0.2130412
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 488,
+      "cache_read_tokens": 9658,
+      "cache_write_tokens": 10452,
+      "total_cost": 0.0639596
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 2868,
+      "cache_read_tokens": 20110,
+      "cache_write_tokens": 4198,
+      "total_cost": 0.08238000000000001
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 441,
+      "cache_read_tokens": 24308,
+      "cache_write_tokens": 2946,
+      "total_cost": 0.0284196
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 364,
+      "cache_read_tokens": 27254,
+      "cache_write_tokens": 6150,
+      "total_cost": 0.0434888
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 86,
+      "cache_read_tokens": 33404,
+      "cache_write_tokens": 405,
+      "total_cost": 0.0104338
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 454,
+      "cache_read_tokens": 33809,
+      "cache_write_tokens": 1656,
+      "total_cost": 0.0241298
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 453,
+      "cache_read_tokens": 35465,
+      "cache_write_tokens": 2165,
+      "total_cost": 0.026986000000000003
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 315,
+      "cache_read_tokens": 37630,
+      "cache_write_tokens": 492,
+      "total_cost": 0.016294
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 661,
+      "cache_read_tokens": 38122,
+      "cache_write_tokens": 5067,
+      "total_cost": 0.0461874
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 312,
+      "cache_read_tokens": 43189,
+      "cache_write_tokens": 736,
+      "total_cost": 0.0185658
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 271,
+      "cache_read_tokens": 43925,
+      "cache_write_tokens": 1063,
+      "total_cost": 0.019528
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 1102,
+      "cache_read_tokens": 44988,
+      "cache_write_tokens": 839,
+      "total_cost": 0.035240600000000004
+     }
+    ]
+   },
+   "usage_scope": {
+    "same_sample": true,
+    "sample_uuid": "KU4bWmuqsWUUbkTXEu9Fpj",
+    "samples_in_log": 1,
+    "model_calls": 17,
+    "calls_without_usage": 0,
+    "aggregate_source": "EvalSample.model_usage",
+    "calls_source": "EvalSample.events[model].output.usage"
+   },
+   "usage_reconciliation": {
+    "anthropic/claude-opus-5-5": {
+     "aggregated": {
+      "input": 36,
+      "output": 23893,
+      "cache_read": 409834,
+      "cache_write": 44673
+     },
+     "per_call": {
+      "input": 36,
+      "output": 23893,
+      "cache_read": 409834,
+      "cache_write": 44673
+     },
+     "difference": {
+      "input": 0,
+      "output": 0,
+      "cache_read": 0,
+      "cache_write": 0
+     },
+     "conflict": false,
+     "calls": 17,
+     "conservative": {
+      "input_tokens": 36,
+      "output_tokens": 23893,
+      "cache_read_tokens": 409834,
+      "cache_write_tokens": 44673
+     }
+    }
+   },
+   "inspect_total_cost_usd": "0.783336",
+   "estimated": false,
+   "estimate_basis": [],
+   "inferred": null,
+   "manual_review_required": false,
+   "flags": [],
+   "note": "inspect status success",
+   "reserved_usd": "8.000000",
+   "at": "2026-11-02T10:30:39+00:00"
+  },
+  {
+   "type": "reservation",
+   "unit_id": "7d7fc9a7-21a7-4b83-906f-416dea5ad04f:anthropic/claude-opus-5-5:20261102T103039Z",
+   "kind": "sample",
+   "estimated_usd": "8.000000",
+   "at": "2026-11-02T10:30:39+00:00",
+   "meta": {
+    "model": "anthropic/claude-opus-5-5",
+    "task": "formal_7d7fc9a7"
+   },
+   "claim": true
+  },
+  {
+   "type": "settlement",
+   "unit_id": "7d7fc9a7-21a7-4b83-906f-416dea5ad04f:anthropic/claude-opus-5-5:20261102T103039Z",
+   "kind": "sample",
+   "cost_usd": "1.673360",
+   "breakdown": {
+    "input": "0.000192",
+    "output": "0.703660",
+    "cache_read": "0.231772",
+    "cache_write": "0.737736"
+   },
+   "retry_estimate_usd": "0.000000",
+   "per_model": {
+    "anthropic/claude-opus-5-5": {
+     "input": "0.000192",
+     "output": "0.703660",
+     "cache_read": "0.231772",
+     "cache_write": "0.737736",
+     "total": "1.673360",
+     "calls": "23",
+     "flags": [],
+     "tiers": {
+      "standard": 23
+     }
+    }
+   },
+   "raw_usage": {
+    "anthropic/claude-opus-5-5": {
+     "input_tokens": 48,
+     "output_tokens": 35183,
+     "cache_read_tokens": 1158859,
+     "cache_write_tokens": 92217
+    }
+   },
+   "raw_calls": {
+    "anthropic/claude-opus-5-5": [
+     {
+      "input_tokens": 4,
+      "output_tokens": 166,
+      "cache_read_tokens": 1154,
+      "cache_write_tokens": 1047,
+      "total_cost": 0.0088018
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 403,
+      "cache_read_tokens": 2201,
+      "cache_write_tokens": 9698,
+      "total_cost": 0.0569982
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 431,
+      "cache_read_tokens": 11899,
+      "cache_write_tokens": 5281,
+      "total_cost": 0.0374128
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 390,
+      "cache_read_tokens": 17180,
+      "cache_write_tokens": 6634,
+      "total_cost": 0.044414
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 715,
+      "cache_read_tokens": 23814,
+      "cache_write_tokens": 4624,
+      "total_cost": 0.0421908
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 1393,
+      "cache_read_tokens": 28438,
+      "cache_write_tokens": 910,
+      "total_cost": 0.0381056
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 813,
+      "cache_read_tokens": 29348,
+      "cache_write_tokens": 1464,
+      "total_cost": 0.0294576
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 10469,
+      "cache_read_tokens": 30812,
+      "cache_write_tokens": 1094,
+      "total_cost": 0.22102040000000003
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 105,
+      "cache_read_tokens": 31906,
+      "cache_write_tokens": 10533,
+      "total_cost": 0.0611542
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 13477,
+      "cache_read_tokens": 42439,
+      "cache_write_tokens": 152,
+      "total_cost": 0.2787958
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 635,
+      "cache_read_tokens": 42591,
+      "cache_write_tokens": 13485,
+      "total_cost": 0.0886512
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 317,
+      "cache_read_tokens": 56076,
+      "cache_write_tokens": 664,
+      "total_cost": 0.0208832
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 693,
+      "cache_read_tokens": 56740,
+      "cache_write_tokens": 6156,
+      "total_cost": 0.055996000000000004
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 413,
+      "cache_read_tokens": 62896,
+      "cache_write_tokens": 9904,
+      "total_cost": 0.0703672
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 104,
+      "cache_read_tokens": 72800,
+      "cache_write_tokens": 463,
+      "total_cost": 0.018963
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 183,
+      "cache_read_tokens": 73263,
+      "cache_write_tokens": 1671,
+      "total_cost": 0.0266756
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 1770,
+      "cache_read_tokens": 74934,
+      "cache_write_tokens": 1750,
+      "total_cost": 0.059144800000000004
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 358,
+      "cache_read_tokens": 76684,
+      "cache_write_tokens": 1784,
+      "total_cost": 0.0314248
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 129,
+      "cache_read_tokens": 78468,
+      "cache_write_tokens": 2853,
+      "total_cost": 0.0325466
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 133,
+      "cache_read_tokens": 81321,
+      "cache_write_tokens": 2396,
+      "total_cost": 0.0309122
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 342,
+      "cache_read_tokens": 83717,
+      "cache_write_tokens": 3645,
+      "total_cost": 0.041816400000000004
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 355,
+      "cache_read_tokens": 87362,
+      "cache_write_tokens": 5454,
+      "total_cost": 0.051850400000000005
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 1389,
+      "cache_read_tokens": 92816,
+      "cache_write_tokens": 555,
+      "total_cost": 0.0491262
+     }
+    ]
+   },
+   "usage_scope": {
+    "same_sample": true,
+    "sample_uuid": "czgd84YmwwTZzDpVKD5vhD",
+    "samples_in_log": 1,
+    "model_calls": 23,
+    "calls_without_usage": 0,
+    "aggregate_source": "EvalSample.model_usage",
+    "calls_source": "EvalSample.events[model].output.usage"
+   },
+   "usage_reconciliation": {
+    "anthropic/claude-opus-5-5": {
+     "aggregated": {
+      "input": 48,
+      "output": 35183,
+      "cache_read": 1158859,
+      "cache_write": 92217
+     },
+     "per_call": {
+      "input": 48,
+      "output": 35183,
+      "cache_read": 1158859,
+      "cache_write": 92217
+     },
+     "difference": {
+      "input": 0,
+      "output": 0,
+      "cache_read": 0,
+      "cache_write": 0
+     },
+     "conflict": false,
+     "calls": 23,
+     "conservative": {
+      "input_tokens": 48,
+      "output_tokens": 35183,
+      "cache_read_tokens": 1158859,
+      "cache_write_tokens": 92217
+     }
+    }
+   },
+   "inspect_total_cost_usd": "1.396709",
+   "estimated": false,
+   "estimate_basis": [],
+   "inferred": null,
+   "manual_review_required": false,
+   "flags": [],
+   "note": "inspect status success",
+   "reserved_usd": "8.000000",
+   "at": "2026-11-02T10:36:33+00:00"
+  },
+  {
+   "type": "reservation",
+   "unit_id": "2ea2e5b5-257f-42e6-a7dc-93763f28b19d:anthropic/claude-opus-5-5:20261102T103633Z",
+   "kind": "sample",
+   "estimated_usd": "8.000000",
+   "at": "2026-11-02T10:36:33+00:00",
+   "meta": {
+    "model": "anthropic/claude-opus-5-5",
+    "task": "formal_2ea2e5b5"
+   },
+   "claim": true
+  },
+  {
+   "type": "settlement",
+   "unit_id": "2ea2e5b5-257f-42e6-a7dc-93763f28b19d:anthropic/claude-opus-5-5:20261102T103633Z",
+   "kind": "sample",
+   "cost_usd": "0.588023",
+   "breakdown": {
+    "input": "0.000136",
+    "output": "0.295600",
+    "cache_read": "0.040743",
+    "cache_write": "0.251544"
+   },
+   "retry_estimate_usd": "0.000000",
+   "per_model": {
+    "anthropic/claude-opus-5-5": {
+     "input": "0.000136",
+     "output": "0.295600",
+     "cache_read": "0.040743",
+     "cache_write": "0.251544",
+     "total": "0.588023",
+     "calls": "16",
+     "flags": [],
+     "tiers": {
+      "standard": 16
+     }
+    }
+   },
+   "raw_usage": {
+    "anthropic/claude-opus-5-5": {
+     "input_tokens": 34,
+     "output_tokens": 14780,
+     "cache_read_tokens": 203714,
+     "cache_write_tokens": 31443
+    }
+   },
+   "raw_calls": {
+    "anthropic/claude-opus-5-5": [
+     {
+      "input_tokens": 4,
+      "output_tokens": 88,
+      "cache_read_tokens": 1154,
+      "cache_write_tokens": 1274,
+      "total_cost": 0.0083768
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 167,
+      "cache_read_tokens": 2428,
+      "cache_write_tokens": 287,
+      "total_cost": 0.005268600000000001
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 224,
+      "cache_read_tokens": 2715,
+      "cache_write_tokens": 576,
+      "total_cost": 0.007911
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 832,
+      "cache_read_tokens": 3291,
+      "cache_write_tokens": 1870,
+      "total_cost": 0.0266562
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 189,
+      "cache_read_tokens": 5161,
+      "cache_write_tokens": 881,
+      "total_cost": 0.009225200000000001
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 946,
+      "cache_read_tokens": 6042,
+      "cache_write_tokens": 845,
+      "total_cost": 0.0243614
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 1140,
+      "cache_read_tokens": 6887,
+      "cache_write_tokens": 1386,
+      "total_cost": 0.0311154
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 336,
+      "cache_read_tokens": 8273,
+      "cache_write_tokens": 1157,
+      "total_cost": 0.0141676
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 6393,
+      "cache_read_tokens": 9430,
+      "cache_write_tokens": 963,
+      "total_cost": 0.134569
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 175,
+      "cache_read_tokens": 10393,
+      "cache_write_tokens": 6650,
+      "total_cost": 0.0388366
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 1591,
+      "cache_read_tokens": 17043,
+      "cache_write_tokens": 3497,
+      "total_cost": 0.0527216
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 241,
+      "cache_read_tokens": 20540,
+      "cache_write_tokens": 1659,
+      "total_cost": 0.017231
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 901,
+      "cache_read_tokens": 22199,
+      "cache_write_tokens": 3563,
+      "total_cost": 0.0402828
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 681,
+      "cache_read_tokens": 25762,
+      "cache_write_tokens": 4250,
+      "total_cost": 0.0400304
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 97,
+      "cache_read_tokens": 30012,
+      "cache_write_tokens": 2372,
+      "total_cost": 0.019810400000000002
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 779,
+      "cache_read_tokens": 32384,
+      "cache_write_tokens": 213,
+      "total_cost": 0.023129800000000002
+     }
+    ]
+   },
+   "usage_scope": {
+    "same_sample": true,
+    "sample_uuid": "SaDUDAyEP45E3gNRVZWjgp",
+    "samples_in_log": 1,
+    "model_calls": 16,
+    "calls_without_usage": 0,
+    "aggregate_source": "EvalSample.model_usage",
+    "calls_source": "EvalSample.events[model].output.usage"
+   },
+   "usage_reconciliation": {
+    "anthropic/claude-opus-5-5": {
+     "aggregated": {
+      "input": 34,
+      "output": 14780,
+      "cache_read": 203714,
+      "cache_write": 31443
+     },
+     "per_call": {
+      "input": 34,
+      "output": 14780,
+      "cache_read": 203714,
+      "cache_write": 31443
+     },
+     "difference": {
+      "input": 0,
+      "output": 0,
+      "cache_read": 0,
+      "cache_write": 0
+     },
+     "conflict": false,
+     "calls": 16,
+     "conservative": {
+      "input_tokens": 34,
+      "output_tokens": 14780,
+      "cache_read_tokens": 203714,
+      "cache_write_tokens": 31443
+     }
+    }
+   },
+   "inspect_total_cost_usd": "0.493694",
+   "estimated": false,
+   "estimate_basis": [],
+   "inferred": null,
+   "manual_review_required": false,
+   "flags": [],
+   "note": "inspect status success",
+   "reserved_usd": "8.000000",
+   "at": "2026-11-02T10:39:11+00:00"
+  },
+  {
+   "type": "reservation",
+   "unit_id": "c357f0e2-963d-4eb7-a6fa-3078fe55b3ba:anthropic/claude-opus-5-5:20261102T103911Z",
+   "kind": "sample",
+   "estimated_usd": "8.000000",
+   "at": "2026-11-02T10:39:11+00:00",
+   "meta": {
+    "model": "anthropic/claude-opus-5-5",
+    "task": "formal_c357f0e2"
+   },
+   "claim": true
+  },
+  {
+   "type": "settlement",
+   "unit_id": "c357f0e2-963d-4eb7-a6fa-3078fe55b3ba:anthropic/claude-opus-5-5:20261102T103911Z",
+   "kind": "sample",
+   "cost_usd": "1.644991",
+   "breakdown": {
+    "input": "0.000160",
+    "output": "0.962280",
+    "cache_read": "0.158071",
+    "cache_write": "0.524480"
+   },
+   "retry_estimate_usd": "0.000000",
+   "per_model": {
+    "anthropic/claude-opus-5-5": {
+     "input": "0.000160",
+     "output": "0.962280",
+     "cache_read": "0.158071",
+     "cache_write": "0.524480",
+     "total": "1.644991",
+     "calls": "19",
+     "flags": [],
+     "tiers": {
+      "standard": 19
+     }
+    }
+   },
+   "raw_usage": {
+    "anthropic/claude-opus-5-5": {
+     "input_tokens": 40,
+     "output_tokens": 48114,
+     "cache_read_tokens": 790359,
+     "cache_write_tokens": 65560
+    }
+   },
+   "raw_calls": {
+    "anthropic/claude-opus-5-5": [
+     {
+      "input_tokens": 4,
+      "output_tokens": 89,
+      "cache_read_tokens": 1154,
+      "cache_write_tokens": 973,
+      "total_cost": 0.0068918
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 374,
+      "cache_read_tokens": 2127,
+      "cache_write_tokens": 288,
+      "total_cost": 0.0093534
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 10377,
+      "cache_read_tokens": 2415,
+      "cache_write_tokens": 862,
+      "total_cost": 0.21234100000000003
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 17186,
+      "cache_read_tokens": 3277,
+      "cache_write_tokens": 11930,
+      "total_cost": 0.4040334
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 4762,
+      "cache_read_tokens": 15207,
+      "cache_write_tokens": 20289,
+      "total_cost": 0.1997344
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 8626,
+      "cache_read_tokens": 35496,
+      "cache_write_tokens": 4867,
+      "total_cost": 0.2039622
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 561,
+      "cache_read_tokens": 40363,
+      "cache_write_tokens": 8976,
+      "total_cost": 0.0641806
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 403,
+      "cache_read_tokens": 49339,
+      "cache_write_tokens": 759,
+      "total_cost": 0.0217308
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 986,
+      "cache_read_tokens": 50098,
+      "cache_write_tokens": 1827,
+      "total_cost": 0.0388826
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 665,
+      "cache_read_tokens": 51925,
+      "cache_write_tokens": 1322,
+      "total_cost": 0.030302999999999997
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 111,
+      "cache_read_tokens": 53247,
+      "cache_write_tokens": 1583,
+      "total_cost": 0.020792400000000003
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 423,
+      "cache_read_tokens": 54830,
+      "cache_write_tokens": 2616,
+      "total_cost": 0.032514
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 165,
+      "cache_read_tokens": 57446,
+      "cache_write_tokens": 430,
+      "total_cost": 0.016947200000000003
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 845,
+      "cache_read_tokens": 57876,
+      "cache_write_tokens": 3535,
+      "total_cost": 0.0461582
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 155,
+      "cache_read_tokens": 61411,
+      "cache_write_tokens": 852,
+      "total_cost": 0.0196502
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 450,
+      "cache_read_tokens": 62263,
+      "cache_write_tokens": 522,
+      "total_cost": 0.024070599999999998
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 111,
+      "cache_read_tokens": 62785,
+      "cache_write_tokens": 457,
+      "total_cost": 0.017070000000000002
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 571,
+      "cache_read_tokens": 63242,
+      "cache_write_tokens": 2616,
+      "total_cost": 0.0371564
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 1254,
+      "cache_read_tokens": 65858,
+      "cache_write_tokens": 856,
+      "total_cost": 0.042539600000000004
+     }
+    ]
+   },
+   "usage_scope": {
+    "same_sample": true,
+    "sample_uuid": "AbudpM6dPVjwu2NSnwrZ6D",
+    "samples_in_log": 1,
+    "model_calls": 19,
+    "calls_without_usage": 0,
+    "aggregate_source": "EvalSample.model_usage",
+    "calls_source": "EvalSample.events[model].output.usage"
+   },
+   "usage_reconciliation": {
+    "anthropic/claude-opus-5-5": {
+     "aggregated": {
+      "input": 40,
+      "output": 48114,
+      "cache_read": 790359,
+      "cache_write": 65560
+     },
+     "per_call": {
+      "input": 40,
+      "output": 48114,
+      "cache_read": 790359,
+      "cache_write": 65560
+     },
+     "difference": {
+      "input": 0,
+      "output": 0,
+      "cache_read": 0,
+      "cache_write": 0
+     },
+     "conflict": false,
+     "calls": 19,
+     "conservative": {
+      "input_tokens": 40,
+      "output_tokens": 48114,
+      "cache_read_tokens": 790359,
+      "cache_write_tokens": 65560
+     }
+    }
+   },
+   "inspect_total_cost_usd": "1.448312",
+   "estimated": false,
+   "estimate_basis": [],
+   "inferred": null,
+   "manual_review_required": false,
+   "flags": [],
+   "note": "inspect status success",
+   "reserved_usd": "8.000000",
+   "at": "2026-11-02T10:47:05+00:00"
+  },
+  {
+   "type": "reservation",
+   "unit_id": "a45bc83b-22f9-4def-8d89-9c5661b2b86f:anthropic/claude-opus-5-5:20261102T104705Z",
+   "kind": "sample",
+   "estimated_usd": "8.000000",
+   "at": "2026-11-02T10:47:05+00:00",
+   "meta": {
+    "model": "anthropic/claude-opus-5-5",
+    "task": "formal_a45bc83b"
+   },
+   "claim": true
+  },
+  {
+   "type": "settlement",
+   "unit_id": "a45bc83b-22f9-4def-8d89-9c5661b2b86f:anthropic/claude-opus-5-5:20261102T104705Z",
+   "kind": "sample",
+   "cost_usd": "4.182122",
+   "breakdown": {
+    "input": "0.000352",
+    "output": "2.017400",
+    "cache_read": "0.834818",
+    "cache_write": "1.329552"
+   },
+   "retry_estimate_usd": "0.000000",
+   "per_model": {
+    "anthropic/claude-opus-5-5": {
+     "input": "0.000352",
+     "output": "2.017400",
+     "cache_read": "0.834818",
+     "cache_write": "1.329552",
+     "total": "4.182122",
+     "calls": "43",
+     "flags": [],
+     "tiers": {
+      "standard": 43
+     }
+    }
+   },
+   "raw_usage": {
+    "anthropic/claude-opus-5-5": {
+     "input_tokens": 88,
+     "output_tokens": 100870,
+     "cache_read_tokens": 4174085,
+     "cache_write_tokens": 166194
+    }
+   },
+   "raw_calls": {
+    "anthropic/claude-opus-5-5": [
+     {
+      "input_tokens": 4,
+      "output_tokens": 92,
+      "cache_read_tokens": 1154,
+      "cache_write_tokens": 796,
+      "total_cost": 0.0060668
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 326,
+      "cache_read_tokens": 1950,
+      "cache_write_tokens": 1010,
+      "total_cost": 0.011968
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 514,
+      "cache_read_tokens": 2960,
+      "cache_write_tokens": 4429,
+      "total_cost": 0.033025000000000006
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 201,
+      "cache_read_tokens": 7389,
+      "cache_write_tokens": 2746,
+      "total_cost": 0.0192358
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 102,
+      "cache_read_tokens": 10135,
+      "cache_write_tokens": 7097,
+      "total_cost": 0.039560000000000005
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 4053,
+      "cache_read_tokens": 17232,
+      "cache_write_tokens": 1855,
+      "total_cost": 0.0937894
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 684,
+      "cache_read_tokens": 19087,
+      "cache_write_tokens": 8446,
+      "total_cost": 0.059735399999999994
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 1942,
+      "cache_read_tokens": 27533,
+      "cache_write_tokens": 1814,
+      "total_cost": 0.0534246
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 1900,
+      "cache_read_tokens": 29347,
+      "cache_write_tokens": 2843,
+      "total_cost": 0.0580924
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 475,
+      "cache_read_tokens": 32190,
+      "cache_write_tokens": 3737,
+      "total_cost": 0.034631
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 12595,
+      "cache_read_tokens": 35927,
+      "cache_write_tokens": 7746,
+      "total_cost": 0.2978234
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 4627,
+      "cache_read_tokens": 43673,
+      "cache_write_tokens": 13228,
+      "total_cost": 0.1674226
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 3560,
+      "cache_read_tokens": 56901,
+      "cache_write_tokens": 6224,
+      "total_cost": 0.11370819999999998
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 359,
+      "cache_read_tokens": 63125,
+      "cache_write_tokens": 5157,
+      "total_cost": 0.045598
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 2710,
+      "cache_read_tokens": 68282,
+      "cache_write_tokens": 3805,
+      "total_cost": 0.08688939999999999
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 23598,
+      "cache_read_tokens": 72087,
+      "cache_write_tokens": 3386,
+      "total_cost": 0.5033154
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 2726,
+      "cache_read_tokens": 75473,
+      "cache_write_tokens": 25054,
+      "total_cost": 0.19489259999999997
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 3126,
+      "cache_read_tokens": 100527,
+      "cache_write_tokens": 2733,
+      "total_cost": 0.0962984
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 67,
+      "cache_read_tokens": 103260,
+      "cache_write_tokens": 3134,
+      "total_cost": 0.037669999999999995
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 628,
+      "cache_read_tokens": 106394,
+      "cache_write_tokens": 1618,
+      "total_cost": 0.0419368
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 213,
+      "cache_read_tokens": 108012,
+      "cache_write_tokens": 636,
+      "total_cost": 0.0290504
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 238,
+      "cache_read_tokens": 108648,
+      "cache_write_tokens": 220,
+      "total_cost": 0.027597600000000003
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 22727,
+      "cache_read_tokens": 108868,
+      "cache_write_tokens": 2090,
+      "total_cost": 0.4867716
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 500,
+      "cache_read_tokens": 110958,
+      "cache_write_tokens": 22735,
+      "total_cost": 0.1458746
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 296,
+      "cache_read_tokens": 133693,
+      "cache_write_tokens": 507,
+      "total_cost": 0.0352016
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 643,
+      "cache_read_tokens": 134200,
+      "cache_write_tokens": 2235,
+      "total_cost": 0.050883
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 57,
+      "cache_read_tokens": 136435,
+      "cache_write_tokens": 656,
+      "total_cost": 0.031715
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 115,
+      "cache_read_tokens": 137091,
+      "cache_write_tokens": 1351,
+      "total_cost": 0.0364812
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 825,
+      "cache_read_tokens": 138442,
+      "cache_write_tokens": 1409,
+      "total_cost": 0.051241400000000006
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 2466,
+      "cache_read_tokens": 139851,
+      "cache_write_tokens": 1580,
+      "total_cost": 0.0851982
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 337,
+      "cache_read_tokens": 141431,
+      "cache_write_tokens": 2571,
+      "total_cost": 0.04788920000000001
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 578,
+      "cache_read_tokens": 144002,
+      "cache_write_tokens": 4124,
+      "total_cost": 0.0609884
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 2931,
+      "cache_read_tokens": 148126,
+      "cache_write_tokens": 4292,
+      "total_cost": 0.1097132
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 111,
+      "cache_read_tokens": 152418,
+      "cache_write_tokens": 2941,
+      "total_cost": 0.0474166
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 785,
+      "cache_read_tokens": 155359,
+      "cache_write_tokens": 2729,
+      "total_cost": 0.0604248
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 332,
+      "cache_read_tokens": 158088,
+      "cache_write_tokens": 820,
+      "total_cost": 0.0423656
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 132,
+      "cache_read_tokens": 158908,
+      "cache_write_tokens": 1670,
+      "total_cost": 0.0427796
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 509,
+      "cache_read_tokens": 160578,
+      "cache_write_tokens": 2750,
+      "total_cost": 0.0560536
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 304,
+      "cache_read_tokens": 163328,
+      "cache_write_tokens": 805,
+      "total_cost": 0.0427786
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 512,
+      "cache_read_tokens": 164133,
+      "cache_write_tokens": 575,
+      "total_cost": 0.04594959999999999
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 418,
+      "cache_read_tokens": 164708,
+      "cache_write_tokens": 527,
+      "total_cost": 0.0439446
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 152,
+      "cache_read_tokens": 165235,
+      "cache_write_tokens": 1712,
+      "total_cost": 0.044655
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 1404,
+      "cache_read_tokens": 166947,
+      "cache_write_tokens": 401,
+      "total_cost": 0.0634824
+     }
+    ]
+   },
+   "usage_scope": {
+    "same_sample": true,
+    "sample_uuid": "BVeKQk8ZWp6j2uxp9hsuGf",
+    "samples_in_log": 1,
+    "model_calls": 43,
+    "calls_without_usage": 0,
+    "aggregate_source": "EvalSample.model_usage",
+    "calls_source": "EvalSample.events[model].output.usage"
+   },
+   "usage_reconciliation": {
+    "anthropic/claude-opus-5-5": {
+     "aggregated": {
+      "input": 88,
+      "output": 100870,
+      "cache_read": 4174085,
+      "cache_write": 166194
+     },
+     "per_call": {
+      "input": 88,
+      "output": 100870,
+      "cache_read": 4174085,
+      "cache_write": 166194
+     },
+     "difference": {
+      "input": 0,
+      "output": 0,
+      "cache_read": 0,
+      "cache_write": 0
+     },
+     "conflict": false,
+     "calls": 43,
+     "conservative": {
+      "input_tokens": 88,
+      "output_tokens": 100870,
+      "cache_read_tokens": 4174085,
+      "cache_write_tokens": 166194
+     }
+    }
+   },
+   "inspect_total_cost_usd": "3.683539",
+   "estimated": false,
+   "estimate_basis": [],
+   "inferred": null,
+   "manual_review_required": false,
+   "flags": [],
+   "note": "inspect status success",
+   "reserved_usd": "8.000000",
+   "at": "2026-11-02T11:04:32+00:00"
+  }
+ ]
+}

@@ -1,0 +1,2886 @@
+{
+ "computed_at": "2026-11-03T02:34:12+00:00",
+ "visual_records": 12,
+ "adjudication_records": 183,
+ "scoring": "grading.grade.score_rows at freeze-v1-grading (cc684ef), unchanged",
+ "runs": [
+  {
+   "task_id": "b5d2e6f1-62a2-433a-bcdd-95b260cdd860",
+   "model": "anthropic/claude-opus-5-5",
+   "run_uuid": "Mae4tizWVH2BiinB5zKQV2",
+   "pass": "pass-20261102T115725665994Z-0e9c",
+   "graded": {
+    "C1": "pass",
+    "C2": "pass",
+    "C3": "pass",
+    "C4": "pass"
+   },
+   "with_visual": {
+    "C1": "pass",
+    "C2": "pass",
+    "C3": "pass",
+    "C4": "pass"
+   },
+   "adjudicated": {
+    "C1": "pass",
+    "C2": "pass",
+    "C3": "pass",
+    "C4": "pass"
+   },
+   "preregistered_with_visual": null,
+   "preregistered_adjudicated": null,
+   "overall": {
+    "graded": "pass",
+    "with_visual": "pass",
+    "adjudicated": "pass"
+   },
+   "adds_policy_not_binding": null,
+   "adjudications_applied": {
+    "12": "confirmed_pass",
+    "16": "confirmed_pass",
+    "22": "grader_false_fail",
+    "25": "confirmed_pass",
+    "26": "confirmed_pass"
+   },
+   "score_with_visual": {
+    "P": 58,
+    "E": 60,
+    "W": 65,
+    "P_over_E": 0.9666666666666667,
+    "E_over_W": 0.9230769230769231
+   },
+   "score_adjudicated": {
+    "P": 60,
+    "E": 60,
+    "W": 65,
+    "P_over_E": 1.0,
+    "E_over_W": 0.9230769230769231
+   },
+   "members": {
+    "C1": {
+     "items": [
+      2,
+      3,
+      11
+     ],
+     "verdicts_adjudicated": {
+      "2": "pass",
+      "3": "pass",
+      "11": "pass"
+     }
+    },
+    "C2": {
+     "items": [
+      5,
+      6,
+      10,
+      24
+     ],
+     "verdicts_adjudicated": {
+      "5": "pass",
+      "6": "pass",
+      "10": "pass",
+      "24": "pass"
+     }
+    },
+    "C3": {
+     "items": [
+      12,
+      14,
+      15,
+      16,
+      17,
+      25,
+      26
+     ],
+     "verdicts_adjudicated": {
+      "12": "pass",
+      "14": "pass",
+      "15": "pass",
+      "16": "pass",
+      "17": "pass",
+      "25": "pass",
+      "26": "pass"
+     }
+    },
+    "C4": {
+     "items": [
+      7,
+      8,
+      9,
+      18,
+      19,
+      20,
+      21
+     ],
+     "verdicts_adjudicated": {
+      "7": "pass",
+      "8": "pass",
+      "9": "pass",
+      "18": "pass",
+      "19": "pass",
+      "20": "pass",
+      "21": "pass"
+     }
+    }
+   }
+  },
+  {
+   "task_id": "b5d2e6f1-62a2-433a-bcdd-95b260cdd860",
+   "model": "openai/gpt-6.1-sol",
+   "run_uuid": "d5sypgfTdCCwfsFV9jdzLd",
+   "pass": "pass-20261102T115729995774Z-4fc2",
+   "graded": {
+    "C1": "pass",
+    "C2": "fail",
+    "C3": "fail",
+    "C4": "pass"
+   },
+   "with_visual": {
+    "C1": "pass",
+    "C2": "fail",
+    "C3": "fail",
+    "C4": "pass"
+   },
+   "adjudicated": {
+    "C1": "pass",
+    "C2": "pass",
+    "C3": "fail",
+    "C4": "pass"
+   },
+   "preregistered_with_visual": null,
+   "preregistered_adjudicated": null,
+   "overall": {
+    "graded": "fail",
+    "with_visual": "fail",
+    "adjudicated": "fail"
+   },
+   "adds_policy_not_binding": null,
+   "adjudications_applied": {
+    "5": "grader_false_fail",
+    "12": "verified_pass",
+    "16": "confirmed_fail",
+    "22": "grader_false_fail",
+    "24": "grader_false_fail",
+    "25": "confirmed_fail",
+    "26": "confirmed_fail"
+   },
+   "score_with_visual": {
+    "P": 42,
+    "E": 58,
+    "W": 65,
+    "P_over_E": 0.7241379310344828,
+    "E_over_W": 0.8923076923076924
+   },
+   "score_adjudicated": {
+    "P": 51,
+    "E": 60,
+    "W": 65,
+    "P_over_E": 0.85,
+    "E_over_W": 0.9230769230769231
+   },
+   "members": {
+    "C1": {
+     "items": [
+      2,
+      3,
+      11
+     ],
+     "verdicts_adjudicated": {
+      "2": "pass",
+      "3": "pass",
+      "11": "pass"
+     }
+    },
+    "C2": {
+     "items": [
+      5,
+      6,
+      10,
+      24
+     ],
+     "verdicts_adjudicated": {
+      "5": "pass",
+      "6": "pass",
+      "10": "pass",
+      "24": "pass"
+     }
+    },
+    "C3": {
+     "items": [
+      12,
+      14,
+      15,
+      16,
+      17,
+      25,
+      26
+     ],
+     "verdicts_adjudicated": {
+      "12": "pass",
+      "14": "pass",
+      "15": "pass",
+      "16": "fail",
+      "17": "pass",
+      "25": "fail",
+      "26": "fail"
+     }
+    },
+    "C4": {
+     "items": [
+      7,
+      8,
+      9,
+      18,
+      19,
+      20,
+      21
+     ],
+     "verdicts_adjudicated": {
+      "7": "pass",
+      "8": "pass",
+      "9": "pass",
+      "18": "pass",
+      "19": "pass",
+      "20": "pass",
+      "21": "pass"
+     }
+    }
+   }
+  },
+  {
+   "task_id": "f841ddcf-2a28-4f6d-bac3-61b607219d3e",
+   "model": "anthropic/claude-opus-5-5",
+   "run_uuid": "hdDnxUR6sUhQD6PHLnhKSm",
+   "pass": "pass-20261102T115733218914Z-a5e4",
+   "graded": {
+    "C1": "pass",
+    "C2": "pass",
+    "C3": "pass",
+    "C4": "pass",
+    "C5": "pass"
+   },
+   "with_visual": {
+    "C1": "pass",
+    "C2": "pass",
+    "C3": "pass",
+    "C4": "pass",
+    "C5": "pass"
+   },
+   "adjudicated": {
+    "C1": "pass",
+    "C2": "pass",
+    "C3": "pass",
+    "C4": "pass",
+    "C5": "pass"
+   },
+   "preregistered_with_visual": null,
+   "preregistered_adjudicated": null,
+   "overall": {
+    "graded": "pass",
+    "with_visual": "pass",
+    "adjudicated": "pass"
+   },
+   "adds_policy_not_binding": null,
+   "adjudications_applied": {},
+   "score_with_visual": {
+    "P": 82,
+    "E": 83,
+    "W": 88,
+    "P_over_E": 0.9879518072289156,
+    "E_over_W": 0.9431818181818182
+   },
+   "score_adjudicated": {
+    "P": 82,
+    "E": 83,
+    "W": 88,
+    "P_over_E": 0.9879518072289156,
+    "E_over_W": 0.9431818181818182
+   },
+   "members": {
+    "C1": {
+     "items": [
+      35
+     ],
+     "verdicts_adjudicated": {
+      "35": "pass"
+     }
+    },
+    "C2": {
+     "items": [
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      22
+     ],
+     "verdicts_adjudicated": {
+      "7": "pass",
+      "8": "pass",
+      "9": "pass",
+      "10": "pass",
+      "11": "pass",
+      "12": "pass",
+      "13": "pass",
+      "14": "pass",
+      "15": "pass",
+      "22": "pass"
+     }
+    },
+    "C3": {
+     "items": [
+      24,
+      36
+     ],
+     "verdicts_adjudicated": {
+      "24": "pass",
+      "36": "pass"
+     }
+    },
+    "C4": {
+     "items": [
+      27,
+      28,
+      47,
+      48,
+      49,
+      50,
+      51,
+      52,
+      53,
+      54
+     ],
+     "verdicts_adjudicated": {
+      "27": "pass",
+      "28": "pass",
+      "47": "pass",
+      "48": "pass",
+      "49": "pass",
+      "50": "pass",
+      "51": "pass",
+      "52": "pass",
+      "53": "pass",
+      "54": "pass"
+     }
+    },
+    "C5": {
+     "items": [
+      37
+     ],
+     "verdicts_adjudicated": {
+      "37": "pass"
+     }
+    }
+   }
+  },
+  {
+   "task_id": "f841ddcf-2a28-4f6d-bac3-61b607219d3e",
+   "model": "openai/gpt-6.1-sol",
+   "run_uuid": "P8gA2U2jR7VzNWKqqdJ5SZ",
+   "pass": "pass-20261102T115847754554Z-0d8f",
+   "graded": {
+    "C1": "fail",
+    "C2": "fail",
+    "C3": "fail",
+    "C4": "fail",
+    "C5": "not_confirmed"
+   },
+   "with_visual": {
+    "C1": "fail",
+    "C2": "fail",
+    "C3": "fail",
+    "C4": "fail",
+    "C5": "not_confirmed"
+   },
+   "adjudicated": {
+    "C1": "pass",
+    "C2": "pass",
+    "C3": "pass",
+    "C4": "pass",
+    "C5": "pass"
+   },
+   "preregistered_with_visual": null,
+   "preregistered_adjudicated": null,
+   "overall": {
+    "graded": "fail",
+    "with_visual": "fail",
+    "adjudicated": "pass"
+   },
+   "adds_policy_not_binding": null,
+   "adjudications_applied": {
+    "11": "grader_false_fail",
+    "13": "grader_false_fail",
+    "21": "grader_false_fail",
+    "27": "grader_false_fail",
+    "28": "grader_false_fail",
+    "35": "grader_false_fail",
+    "36": "grader_false_fail",
+    "37": "verified_pass",
+    "38": "grader_false_fail",
+    "47": "grader_false_fail"
+   },
+   "score_with_visual": {
+    "P": 61,
+    "E": 81,
+    "W": 88,
+    "P_over_E": 0.7530864197530864,
+    "E_over_W": 0.9204545454545454
+   },
+   "score_adjudicated": {
+    "P": 79,
+    "E": 83,
+    "W": 88,
+    "P_over_E": 0.9518072289156626,
+    "E_over_W": 0.9431818181818182
+   },
+   "members": {
+    "C1": {
+     "items": [
+      35
+     ],
+     "verdicts_adjudicated": {
+      "35": "pass"
+     }
+    },
+    "C2": {
+     "items": [
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      22
+     ],
+     "verdicts_adjudicated": {
+      "7": "pass",
+      "8": "pass",
+      "9": "pass",
+      "10": "pass",
+      "11": "pass",
+      "12": "pass",
+      "13": "pass",
+      "14": "pass",
+      "15": "pass",
+      "22": "pass"
+     }
+    },
+    "C3": {
+     "items": [
+      24,
+      36
+     ],
+     "verdicts_adjudicated": {
+      "24": "pass",
+      "36": "pass"
+     }
+    },
+    "C4": {
+     "items": [
+      27,
+      28,
+      47,
+      48,
+      49,
+      50,
+      51,
+      52,
+      53,
+      54
+     ],
+     "verdicts_adjudicated": {
+      "27": "pass",
+      "28": "pass",
+      "47": "pass",
+      "48": "pass",
+      "49": "pass",
+      "50": "pass",
+      "51": "pass",
+      "52": "pass",
+      "53": "pass",
+      "54": "pass"
+     }
+    },
+    "C5": {
+     "items": [
+      37
+     ],
+     "verdicts_adjudicated": {
+      "37": "pass"
+     }
+    }
+   }
+  },
+  {
+   "task_id": "47ef842d-8eac-4b90-bda8-dd934c228c96",
+   "model": "anthropic/claude-opus-5-5",
+   "run_uuid": "LVyjBBcU4iFqDKviwY2YJz",
+   "pass": "pass-20261102T120000409606Z-f47b",
+   "graded": {
+    "C1": "pass",
+    "C2": "pass",
+    "C3": "pass",
+    "C4": "fail"
+   },
+   "with_visual": {
+    "C1": "pass",
+    "C2": "pass",
+    "C3": "pass",
+    "C4": "fail"
+   },
+   "adjudicated": {
+    "C1": "pass",
+    "C2": "pass",
+    "C3": "pass",
+    "C4": "fail"
+   },
+   "preregistered_with_visual": null,
+   "preregistered_adjudicated": null,
+   "overall": {
+    "graded": "fail",
+    "with_visual": "fail",
+    "adjudicated": "fail"
+   },
+   "adds_policy_not_binding": null,
+   "adjudications_applied": {
+    "13": "confirmed_fail",
+    "14": "grader_false_fail",
+    "28": "confirmed_pass",
+    "35": "confirmed_pass",
+    "42": "confirmed_pass",
+    "49": "confirmed_pass",
+    "56": "confirmed_pass",
+    "57": "confirmed_pass"
+   },
+   "score_with_visual": {
+    "P": 82,
+    "E": 92,
+    "W": 99,
+    "P_over_E": 0.8913043478260869,
+    "E_over_W": 0.9292929292929293
+   },
+   "score_adjudicated": {
+    "P": 84,
+    "E": 92,
+    "W": 99,
+    "P_over_E": 0.9130434782608695,
+    "E_over_W": 0.9292929292929293
+   },
+   "members": {
+    "C1": {
+     "items": [
+      2,
+      3,
+      21
+     ],
+     "verdicts_adjudicated": {
+      "2": "pass",
+      "3": "pass",
+      "21": "pass"
+     }
+    },
+    "C2": {
+     "items": [
+      7,
+      8,
+      22,
+      23,
+      29,
+      30,
+      36,
+      37,
+      43,
+      44,
+      50,
+      51
+     ],
+     "verdicts_adjudicated": {
+      "7": "pass",
+      "8": "pass",
+      "22": "pass",
+      "23": "pass",
+      "29": "pass",
+      "30": "pass",
+      "36": "pass",
+      "37": "pass",
+      "43": "pass",
+      "44": "pass",
+      "50": "pass",
+      "51": "pass"
+     }
+    },
+    "C3": {
+     "items": [
+      5,
+      6,
+      25,
+      26,
+      32,
+      33,
+      39,
+      40,
+      46,
+      47,
+      53,
+      54
+     ],
+     "verdicts_adjudicated": {
+      "5": "pass",
+      "6": "pass",
+      "25": "pass",
+      "26": "pass",
+      "32": "pass",
+      "33": "pass",
+      "39": "pass",
+      "40": "pass",
+      "46": "pass",
+      "47": "pass",
+      "53": "pass",
+      "54": "pass"
+     }
+    },
+    "C4": {
+     "items": [
+      13,
+      14
+     ],
+     "verdicts_adjudicated": {
+      "13": "fail",
+      "14": "pass"
+     }
+    }
+   }
+  },
+  {
+   "task_id": "47ef842d-8eac-4b90-bda8-dd934c228c96",
+   "model": "openai/gpt-6.1-sol",
+   "run_uuid": "dPR5yvN9wEfcMyQiAC2njB",
+   "pass": "pass-20261102T120015898362Z-9b7d",
+   "graded": {
+    "C1": "pass",
+    "C2": "pass",
+    "C3": "pass",
+    "C4": "fail"
+   },
+   "with_visual": {
+    "C1": "pass",
+    "C2": "pass",
+    "C3": "pass",
+    "C4": "fail"
+   },
+   "adjudicated": {
+    "C1": "pass",
+    "C2": "pass",
+    "C3": "pass",
+    "C4": "fail"
+   },
+   "preregistered_with_visual": null,
+   "preregistered_adjudicated": null,
+   "overall": {
+    "graded": "fail",
+    "with_visual": "fail",
+    "adjudicated": "fail"
+   },
+   "adds_policy_not_binding": null,
+   "adjudications_applied": {
+    "13": "confirmed_fail",
+    "14": "grader_false_fail",
+    "17": "confirmed_fail",
+    "27": "grader_false_fail",
+    "28": "confirmed_fail",
+    "35": "confirmed_fail",
+    "42": "confirmed_fail",
+    "49": "confirmed_fail",
+    "56": "confirmed_fail",
+    "57": "confirmed_fail"
+   },
+   "score_with_visual": {
+    "P": 76,
+    "E": 92,
+    "W": 99,
+    "P_over_E": 0.8260869565217391,
+    "E_over_W": 0.9292929292929293
+   },
+   "score_adjudicated": {
+    "P": 79,
+    "E": 92,
+    "W": 99,
+    "P_over_E": 0.8586956521739131,
+    "E_over_W": 0.9292929292929293
+   },
+   "members": {
+    "C1": {
+     "items": [
+      2,
+      3,
+      21
+     ],
+     "verdicts_adjudicated": {
+      "2": "pass",
+      "3": "pass",
+      "21": "pass"
+     }
+    },
+    "C2": {
+     "items": [
+      7,
+      8,
+      22,
+      23,
+      29,
+      30,
+      36,
+      37,
+      43,
+      44,
+      50,
+      51
+     ],
+     "verdicts_adjudicated": {
+      "7": "pass",
+      "8": "pass",
+      "22": "pass",
+      "23": "pass",
+      "29": "pass",
+      "30": "pass",
+      "36": "pass",
+      "37": "pass",
+      "43": "pass",
+      "44": "pass",
+      "50": "pass",
+      "51": "pass"
+     }
+    },
+    "C3": {
+     "items": [
+      5,
+      6,
+      25,
+      26,
+      32,
+      33,
+      39,
+      40,
+      46,
+      47,
+      53,
+      54
+     ],
+     "verdicts_adjudicated": {
+      "5": "pass",
+      "6": "pass",
+      "25": "pass",
+      "26": "pass",
+      "32": "pass",
+      "33": "pass",
+      "39": "pass",
+      "40": "pass",
+      "46": "pass",
+      "47": "pass",
+      "53": "pass",
+      "54": "pass"
+     }
+    },
+    "C4": {
+     "items": [
+      13,
+      14
+     ],
+     "verdicts_adjudicated": {
+      "13": "fail",
+      "14": "pass"
+     }
+    }
+   }
+  },
+  {
+   "task_id": "1137e2bb-bdf9-4876-b572-f29b7de5e595",
+   "model": "anthropic/claude-opus-5-5",
+   "run_uuid": "iS5pLfPvTxhxxXScg7HXVw",
+   "pass": "pass-20261102T120033449260Z-cd91",
+   "graded": {
+    "C1": "pass",
+    "C2": "fail",
+    "C3": "pass"
+   },
+   "with_visual": {
+    "C1": "pass",
+    "C2": "fail",
+    "C3": "pass"
+   },
+   "adjudicated": {
+    "C1": "pass",
+    "C2": "pass",
+    "C3": "pass"
+   },
+   "preregistered_with_visual": null,
+   "preregistered_adjudicated": null,
+   "overall": {
+    "graded": "fail",
+    "with_visual": "fail",
+    "adjudicated": "pass"
+   },
+   "adds_policy_not_binding": null,
+   "adjudications_applied": {
+    "12": "grader_false_fail",
+    "13": "grader_false_fail",
+    "15": "grader_false_fail",
+    "16": "grader_false_fail",
+    "17": "grader_false_fail",
+    "21": "verified_fail",
+    "22": "confirmed_fail",
+    "56": "grader_false_fail",
+    "57": "grader_false_fail",
+    "58": "grader_false_fail",
+    "59": "grader_false_fail",
+    "60": "grader_false_fail",
+    "61": "grader_false_fail",
+    "62": "grader_false_fail"
+   },
+   "score_with_visual": {
+    "P": 60,
+    "E": 79,
+    "W": 80,
+    "P_over_E": 0.759493670886076,
+    "E_over_W": 0.9875
+   },
+   "score_adjudicated": {
+    "P": 76,
+    "E": 80,
+    "W": 80,
+    "P_over_E": 0.95,
+    "E_over_W": 1.0
+   },
+   "members": {
+    "C1": {
+     "items": [
+      5,
+      6,
+      7,
+      8,
+      18,
+      19,
+      20,
+      31,
+      32,
+      33,
+      34,
+      35,
+      36,
+      37,
+      38,
+      39,
+      40,
+      41,
+      42,
+      43,
+      44,
+      45,
+      46,
+      47,
+      48,
+      49,
+      50,
+      51,
+      52,
+      53,
+      54,
+      55
+     ],
+     "verdicts_adjudicated": {
+      "5": "pass",
+      "6": "pass",
+      "7": "pass",
+      "8": "pass",
+      "18": "pass",
+      "19": "pass",
+      "20": "pass",
+      "31": "pass",
+      "32": "pass",
+      "33": "pass",
+      "34": "pass",
+      "35": "pass",
+      "36": "pass",
+      "37": "pass",
+      "38": "pass",
+      "39": "pass",
+      "40": "pass",
+      "41": "pass",
+      "42": "pass",
+      "43": "pass",
+      "44": "pass",
+      "45": "pass",
+      "46": "pass",
+      "47": "pass",
+      "48": "pass",
+      "49": "pass",
+      "50": "pass",
+      "51": "pass",
+      "52": "pass",
+      "53": "pass",
+      "54": "pass",
+      "55": "pass"
+     }
+    },
+    "C2": {
+     "items": [
+      12,
+      13,
+      15,
+      16,
+      17,
+      56,
+      57,
+      58,
+      59,
+      60,
+      61,
+      62
+     ],
+     "verdicts_adjudicated": {
+      "12": "pass",
+      "13": "pass",
+      "15": "pass",
+      "16": "pass",
+      "17": "pass",
+      "56": "pass",
+      "57": "pass",
+      "58": "pass",
+      "59": "pass",
+      "60": "pass",
+      "61": "pass",
+      "62": "pass"
+     }
+    },
+    "C3": {
+     "items": [
+      2,
+      25,
+      26,
+      23,
+      24,
+      27,
+      28,
+      29,
+      30
+     ],
+     "verdicts_adjudicated": {
+      "2": "pass",
+      "25": "pass",
+      "26": "pass",
+      "23": "pass",
+      "24": "pass",
+      "27": "pass",
+      "28": "pass",
+      "29": "pass",
+      "30": "pass"
+     }
+    }
+   }
+  },
+  {
+   "task_id": "1137e2bb-bdf9-4876-b572-f29b7de5e595",
+   "model": "openai/gpt-6.1-sol",
+   "run_uuid": "mE6xrcKcirXrQgh4ugBfbE",
+   "pass": "pass-20261102T120138543561Z-511d",
+   "graded": {
+    "C1": "pass",
+    "C2": "pass",
+    "C3": "not_confirmed"
+   },
+   "with_visual": {
+    "C1": "pass",
+    "C2": "pass",
+    "C3": "not_confirmed"
+   },
+   "adjudicated": {
+    "C1": "pass",
+    "C2": "pass",
+    "C3": "fail"
+   },
+   "preregistered_with_visual": null,
+   "preregistered_adjudicated": null,
+   "overall": {
+    "graded": "not_confirmed",
+    "with_visual": "not_confirmed",
+    "adjudicated": "fail"
+   },
+   "adds_policy_not_binding": null,
+   "adjudications_applied": {
+    "21": "verified_fail",
+    "23": "grader_false_pass",
+    "25": "verified_pass",
+    "26": "verified_pass"
+   },
+   "score_with_visual": {
+    "P": 75,
+    "E": 77,
+    "W": 80,
+    "P_over_E": 0.974025974025974,
+    "E_over_W": 0.9625
+   },
+   "score_adjudicated": {
+    "P": 75,
+    "E": 80,
+    "W": 80,
+    "P_over_E": 0.9375,
+    "E_over_W": 1.0
+   },
+   "members": {
+    "C1": {
+     "items": [
+      5,
+      6,
+      7,
+      8,
+      18,
+      19,
+      20,
+      31,
+      32,
+      33,
+      34,
+      35,
+      36,
+      37,
+      38,
+      39,
+      40,
+      41,
+      42,
+      43,
+      44,
+      45,
+      46,
+      47,
+      48,
+      49,
+      50,
+      51,
+      52,
+      53,
+      54,
+      55
+     ],
+     "verdicts_adjudicated": {
+      "5": "pass",
+      "6": "pass",
+      "7": "pass",
+      "8": "pass",
+      "18": "pass",
+      "19": "pass",
+      "20": "pass",
+      "31": "pass",
+      "32": "pass",
+      "33": "pass",
+      "34": "pass",
+      "35": "pass",
+      "36": "pass",
+      "37": "pass",
+      "38": "pass",
+      "39": "pass",
+      "40": "pass",
+      "41": "pass",
+      "42": "pass",
+      "43": "pass",
+      "44": "pass",
+      "45": "pass",
+      "46": "pass",
+      "47": "pass",
+      "48": "pass",
+      "49": "pass",
+      "50": "pass",
+      "51": "pass",
+      "52": "pass",
+      "53": "pass",
+      "54": "pass",
+      "55": "pass"
+     }
+    },
+    "C2": {
+     "items": [
+      12,
+      13,
+      15,
+      16,
+      17,
+      56,
+      57,
+      58,
+      59,
+      60,
+      61,
+      62
+     ],
+     "verdicts_adjudicated": {
+      "12": "pass",
+      "13": "pass",
+      "15": "pass",
+      "16": "pass",
+      "17": "pass",
+      "56": "pass",
+      "57": "pass",
+      "58": "pass",
+      "59": "pass",
+      "60": "pass",
+      "61": "pass",
+      "62": "pass"
+     }
+    },
+    "C3": {
+     "items": [
+      2,
+      25,
+      26,
+      23,
+      24,
+      27,
+      28,
+      29,
+      30
+     ],
+     "verdicts_adjudicated": {
+      "2": "pass",
+      "25": "pass",
+      "26": "pass",
+      "23": "fail",
+      "24": "pass",
+      "27": "pass",
+      "28": "pass",
+      "29": "pass",
+      "30": "pass"
+     }
+    }
+   }
+  },
+  {
+   "task_id": "c3525d4d-2012-45df-853e-2d2a0e902991",
+   "model": "anthropic/claude-opus-5-5",
+   "run_uuid": "fAFHskFwVPcLzn89SuYaxv",
+   "pass": "pass-20261102T120246281223Z-e733",
+   "graded": {
+    "C1": "pass",
+    "C2": "fail",
+    "C3": "pass"
+   },
+   "with_visual": {
+    "C1": "pass",
+    "C2": "fail",
+    "C3": "pass"
+   },
+   "adjudicated": {
+    "C1": "pass",
+    "C2": "pass",
+    "C3": "pass"
+   },
+   "preregistered_with_visual": null,
+   "preregistered_adjudicated": null,
+   "overall": {
+    "graded": "fail",
+    "with_visual": "fail",
+    "adjudicated": "pass"
+   },
+   "adds_policy_not_binding": null,
+   "adjudications_applied": {
+    "16": "grader_false_fail",
+    "17": "grader_false_fail",
+    "18": "grader_false_fail",
+    "19": "grader_false_fail",
+    "20": "grader_false_fail",
+    "26": "grader_false_fail",
+    "27": "grader_false_fail",
+    "28": "verified_pass",
+    "29": "verified_pass",
+    "30": "verified_pass",
+    "31": "grader_false_fail",
+    "49": "grader_false_fail"
+   },
+   "score_with_visual": {
+    "P": 52,
+    "E": 75,
+    "W": 86,
+    "P_over_E": 0.6933333333333334,
+    "E_over_W": 0.872093023255814
+   },
+   "score_adjudicated": {
+    "P": 74,
+    "E": 81,
+    "W": 86,
+    "P_over_E": 0.9135802469135802,
+    "E_over_W": 0.9418604651162791
+   },
+   "members": {
+    "C1": {
+     "items": [
+      22,
+      23,
+      32,
+      33,
+      34,
+      35,
+      36
+     ],
+     "verdicts_adjudicated": {
+      "22": "pass",
+      "23": "pass",
+      "32": "pass",
+      "33": "pass",
+      "34": "pass",
+      "35": "pass",
+      "36": "pass"
+     }
+    },
+    "C2": {
+     "items": [
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30,
+      31,
+      49
+     ],
+     "verdicts_adjudicated": {
+      "15": "pass",
+      "16": "pass",
+      "17": "pass",
+      "18": "pass",
+      "19": "pass",
+      "20": "pass",
+      "24": "pass",
+      "25": "pass",
+      "26": "pass",
+      "27": "pass",
+      "28": "pass",
+      "29": "pass",
+      "30": "pass",
+      "31": "pass",
+      "49": "pass"
+     }
+    },
+    "C3": {
+     "items": [
+      37,
+      38,
+      39,
+      41,
+      42,
+      40
+     ],
+     "verdicts_adjudicated": {
+      "37": "pass",
+      "38": "pass",
+      "39": "pass",
+      "41": "pass",
+      "42": "pass",
+      "40": "pass"
+     }
+    }
+   }
+  },
+  {
+   "task_id": "c3525d4d-2012-45df-853e-2d2a0e902991",
+   "model": "openai/gpt-6.1-sol",
+   "run_uuid": "SJbeNCc6EYF5dHerim5UD6",
+   "pass": "pass-20261102T120327674401Z-ee13",
+   "graded": {
+    "C1": "pass",
+    "C2": "fail",
+    "C3": "pass"
+   },
+   "with_visual": {
+    "C1": "pass",
+    "C2": "fail",
+    "C3": "pass"
+   },
+   "adjudicated": {
+    "C1": "pass",
+    "C2": "pass",
+    "C3": "pass"
+   },
+   "preregistered_with_visual": null,
+   "preregistered_adjudicated": null,
+   "overall": {
+    "graded": "fail",
+    "with_visual": "fail",
+    "adjudicated": "pass"
+   },
+   "adds_policy_not_binding": null,
+   "adjudications_applied": {
+    "16": "grader_false_fail",
+    "17": "grader_false_fail",
+    "18": "grader_false_fail",
+    "19": "grader_false_fail",
+    "20": "grader_false_fail",
+    "26": "grader_false_fail",
+    "27": "grader_false_fail",
+    "28": "verified_pass",
+    "29": "verified_pass",
+    "30": "verified_pass",
+    "31": "grader_false_fail",
+    "49": "grader_false_fail"
+   },
+   "score_with_visual": {
+    "P": 55,
+    "E": 75,
+    "W": 86,
+    "P_over_E": 0.7333333333333333,
+    "E_over_W": 0.872093023255814
+   },
+   "score_adjudicated": {
+    "P": 77,
+    "E": 81,
+    "W": 86,
+    "P_over_E": 0.9506172839506173,
+    "E_over_W": 0.9418604651162791
+   },
+   "members": {
+    "C1": {
+     "items": [
+      22,
+      23,
+      32,
+      33,
+      34,
+      35,
+      36
+     ],
+     "verdicts_adjudicated": {
+      "22": "pass",
+      "23": "pass",
+      "32": "pass",
+      "33": "pass",
+      "34": "pass",
+      "35": "pass",
+      "36": "pass"
+     }
+    },
+    "C2": {
+     "items": [
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30,
+      31,
+      49
+     ],
+     "verdicts_adjudicated": {
+      "15": "pass",
+      "16": "pass",
+      "17": "pass",
+      "18": "pass",
+      "19": "pass",
+      "20": "pass",
+      "24": "pass",
+      "25": "pass",
+      "26": "pass",
+      "27": "pass",
+      "28": "pass",
+      "29": "pass",
+      "30": "pass",
+      "31": "pass",
+      "49": "pass"
+     }
+    },
+    "C3": {
+     "items": [
+      37,
+      38,
+      39,
+      41,
+      42,
+      40
+     ],
+     "verdicts_adjudicated": {
+      "37": "pass",
+      "38": "pass",
+      "39": "pass",
+      "41": "pass",
+      "42": "pass",
+      "40": "pass"
+     }
+    }
+   }
+  },
+  {
+   "task_id": "7b08cd4d-df60-41ae-9102-8aaa49306ba2",
+   "model": "anthropic/claude-opus-5-5",
+   "run_uuid": "KU4bWmuqsWUUbkTXEu9Fpj",
+   "pass": "pass-20261102T120408339836Z-770e",
+   "graded": {
+    "C1": "fail",
+    "C2": "pass",
+    "C3": "pass"
+   },
+   "with_visual": {
+    "C1": "fail",
+    "C2": "pass",
+    "C3": "pass"
+   },
+   "adjudicated": {
+    "C1": "pass",
+    "C2": "pass",
+    "C3": "pass"
+   },
+   "preregistered_with_visual": null,
+   "preregistered_adjudicated": null,
+   "overall": {
+    "graded": "fail",
+    "with_visual": "fail",
+    "adjudicated": "pass"
+   },
+   "adds_policy_not_binding": null,
+   "adjudications_applied": {
+    "15": "grader_false_fail",
+    "16": "grader_false_fail",
+    "17": "grader_false_fail",
+    "19": "grader_false_fail",
+    "21": "grader_false_fail",
+    "22": "grader_false_fail",
+    "23": "grader_false_fail",
+    "24": "grader_false_fail"
+   },
+   "score_with_visual": {
+    "P": 62,
+    "E": 83,
+    "W": 89,
+    "P_over_E": 0.7469879518072289,
+    "E_over_W": 0.9325842696629213
+   },
+   "score_adjudicated": {
+    "P": 74,
+    "E": 83,
+    "W": 89,
+    "P_over_E": 0.891566265060241,
+    "E_over_W": 0.9325842696629213
+   },
+   "members": {
+    "C1": {
+     "items": [
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24
+     ],
+     "verdicts_adjudicated": {
+      "15": "pass",
+      "16": "pass",
+      "17": "pass",
+      "18": "pass",
+      "19": "pass",
+      "20": "pass",
+      "21": "pass",
+      "22": "pass",
+      "23": "pass",
+      "24": "pass"
+     }
+    },
+    "C2": {
+     "items": [
+      49,
+      50,
+      51
+     ],
+     "verdicts_adjudicated": {
+      "49": "pass",
+      "50": "pass",
+      "51": "pass"
+     }
+    },
+    "C3": {
+     "items": [
+      52,
+      53,
+      54,
+      55,
+      56,
+      57,
+      58
+     ],
+     "verdicts_adjudicated": {
+      "52": "pass",
+      "53": "pass",
+      "54": "pass",
+      "55": "pass",
+      "56": "pass",
+      "57": "pass",
+      "58": "pass"
+     }
+    }
+   }
+  },
+  {
+   "task_id": "7b08cd4d-df60-41ae-9102-8aaa49306ba2",
+   "model": "openai/gpt-6.1-sol",
+   "run_uuid": "hX4B29t5iE2v3rFKMtqWqz",
+   "pass": "pass-20261102T120617329284Z-5da8",
+   "graded": {
+    "C1": "fail",
+    "C2": "pass",
+    "C3": "pass"
+   },
+   "with_visual": {
+    "C1": "fail",
+    "C2": "pass",
+    "C3": "pass"
+   },
+   "adjudicated": {
+    "C1": "fail",
+    "C2": "pass",
+    "C3": "pass"
+   },
+   "preregistered_with_visual": null,
+   "preregistered_adjudicated": null,
+   "overall": {
+    "graded": "fail",
+    "with_visual": "fail",
+    "adjudicated": "fail"
+   },
+   "adds_policy_not_binding": null,
+   "adjudications_applied": {
+    "15": "grader_false_fail",
+    "16": "confirmed_fail",
+    "17": "confirmed_fail",
+    "19": "grader_false_fail",
+    "21": "grader_false_fail",
+    "22": "grader_false_fail",
+    "23": "grader_false_fail",
+    "24": "grader_false_fail"
+   },
+   "score_with_visual": {
+    "P": 62,
+    "E": 82,
+    "W": 89,
+    "P_over_E": 0.7560975609756098,
+    "E_over_W": 0.9213483146067416
+   },
+   "score_adjudicated": {
+    "P": 70,
+    "E": 82,
+    "W": 89,
+    "P_over_E": 0.8536585365853658,
+    "E_over_W": 0.9213483146067416
+   },
+   "members": {
+    "C1": {
+     "items": [
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24
+     ],
+     "verdicts_adjudicated": {
+      "15": "pass",
+      "16": "fail",
+      "17": "fail",
+      "18": "pass",
+      "19": "pass",
+      "20": "pass",
+      "21": "pass",
+      "22": "pass",
+      "23": "pass",
+      "24": "pass"
+     }
+    },
+    "C2": {
+     "items": [
+      49,
+      50,
+      51
+     ],
+     "verdicts_adjudicated": {
+      "49": "pass",
+      "50": "pass",
+      "51": "pass"
+     }
+    },
+    "C3": {
+     "items": [
+      52,
+      53,
+      54,
+      55,
+      56,
+      57,
+      58
+     ],
+     "verdicts_adjudicated": {
+      "52": "pass",
+      "53": "pass",
+      "54": "pass",
+      "55": "pass",
+      "56": "pass",
+      "57": "pass",
+      "58": "pass"
+     }
+    }
+   }
+  },
+  {
+   "task_id": "7d7fc9a7-21a7-4b83-906f-416dea5ad04f",
+   "model": "anthropic/claude-opus-5-5",
+   "run_uuid": "czgd84YmwwTZzDpVKD5vhD",
+   "pass": "pass-20261102T120837825114Z-bd90",
+   "graded": {
+    "C1": "not_confirmed",
+    "C2": "not_confirmed",
+    "C3": "not_confirmed",
+    "C4": "fail"
+   },
+   "with_visual": {
+    "C1": "not_confirmed",
+    "C2": "not_confirmed",
+    "C3": "not_confirmed",
+    "C4": "fail"
+   },
+   "adjudicated": {
+    "C1": "pass",
+    "C2": "fail",
+    "C3": "fail",
+    "C4": "pass"
+   },
+   "preregistered_with_visual": null,
+   "preregistered_adjudicated": null,
+   "overall": {
+    "graded": "fail",
+    "with_visual": "fail",
+    "adjudicated": "fail"
+   },
+   "adds_policy_not_binding": {
+    "C1": "pass",
+    "C2": "not_confirmed",
+    "C3": "not_confirmed",
+    "C4": "pass"
+   },
+   "adjudications_applied": {
+    "7": "grader_false_fail",
+    "11": "verified_pass",
+    "13": "verified_pass",
+    "14": "verified_pass",
+    "21": "verified_fail",
+    "22": "leave",
+    "23": "leave",
+    "24": "leave",
+    "25": "leave",
+    "26": "leave",
+    "30": "leave",
+    "33": "verified_pass",
+    "34": "verified_pass",
+    "36": "leave",
+    "37": "leave",
+    "39": "verified_fail",
+    "40": "leave",
+    "41": "leave",
+    "42": "leave",
+    "43": "leave",
+    "44": "leave",
+    "48": "leave"
+   },
+   "score_with_visual": {
+    "P": 36,
+    "E": 39,
+    "W": 95,
+    "P_over_E": 0.9230769230769231,
+    "E_over_W": 0.4105263157894737
+   },
+   "score_adjudicated": {
+    "P": 48,
+    "E": 53,
+    "W": 95,
+    "P_over_E": 0.9056603773584906,
+    "E_over_W": 0.5578947368421052
+   },
+   "members": {
+    "C1": {
+     "items": [
+      13,
+      14,
+      33,
+      34
+     ],
+     "verdicts_adjudicated": {
+      "13": "pass",
+      "14": "pass",
+      "33": "pass",
+      "34": "pass"
+     }
+    },
+    "C2": {
+     "items": [
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      30
+     ],
+     "verdicts_adjudicated": {
+      "21": "fail",
+      "22": "cannot_assess",
+      "23": "cannot_assess",
+      "24": "cannot_assess",
+      "25": "cannot_assess",
+      "26": "cannot_assess",
+      "30": "cannot_assess"
+     }
+    },
+    "C3": {
+     "items": [
+      36,
+      37,
+      39,
+      40,
+      41,
+      42,
+      43,
+      44,
+      48
+     ],
+     "verdicts_adjudicated": {
+      "36": "cannot_assess",
+      "37": "cannot_assess",
+      "39": "fail",
+      "40": "cannot_assess",
+      "41": "cannot_assess",
+      "42": "cannot_assess",
+      "43": "cannot_assess",
+      "44": "cannot_assess",
+      "48": "cannot_assess"
+     }
+    },
+    "C4": {
+     "items": [
+      7,
+      8,
+      9,
+      10,
+      11
+     ],
+     "verdicts_adjudicated": {
+      "7": "pass",
+      "8": "pass",
+      "9": "pass",
+      "10": "pass",
+      "11": "pass"
+     }
+    }
+   }
+  },
+  {
+   "task_id": "7d7fc9a7-21a7-4b83-906f-416dea5ad04f",
+   "model": "openai/gpt-6.1-sol",
+   "run_uuid": "FDVJTwSvqDJFQj6JyTpkHY",
+   "pass": "pass-20261102T121133296465Z-6b7c",
+   "graded": {
+    "C1": "pass",
+    "C2": "fail",
+    "C3": "fail",
+    "C4": "not_confirmed"
+   },
+   "with_visual": {
+    "C1": "pass",
+    "C2": "fail",
+    "C3": "fail",
+    "C4": "not_confirmed"
+   },
+   "adjudicated": {
+    "C1": "pass",
+    "C2": "fail",
+    "C3": "fail",
+    "C4": "pass"
+   },
+   "preregistered_with_visual": null,
+   "preregistered_adjudicated": null,
+   "overall": {
+    "graded": "fail",
+    "with_visual": "fail",
+    "adjudicated": "fail"
+   },
+   "adds_policy_not_binding": {
+    "C1": "pass",
+    "C2": "not_confirmed",
+    "C3": "not_confirmed",
+    "C4": "pass"
+   },
+   "adjudications_applied": {
+    "3": "confirmed_fail",
+    "4": "confirmed_fail",
+    "7": "verified_pass",
+    "8": "verified_pass",
+    "9": "verified_pass",
+    "21": "confirmed_fail",
+    "22": "grader_false_fail",
+    "31": "confirmed_fail",
+    "32": "confirmed_fail",
+    "39": "confirmed_fail",
+    "40": "grader_false_fail",
+    "49": "confirmed_fail",
+    "50": "confirmed_fail"
+   },
+   "score_with_visual": {
+    "P": 66,
+    "E": 84,
+    "W": 95,
+    "P_over_E": 0.7857142857142857,
+    "E_over_W": 0.8842105263157894
+   },
+   "score_adjudicated": {
+    "P": 76,
+    "E": 90,
+    "W": 95,
+    "P_over_E": 0.8444444444444444,
+    "E_over_W": 0.9473684210526315
+   },
+   "members": {
+    "C1": {
+     "items": [
+      13,
+      14,
+      33,
+      34
+     ],
+     "verdicts_adjudicated": {
+      "13": "pass",
+      "14": "pass",
+      "33": "pass",
+      "34": "pass"
+     }
+    },
+    "C2": {
+     "items": [
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      30
+     ],
+     "verdicts_adjudicated": {
+      "21": "fail",
+      "22": "pass",
+      "23": "pass",
+      "24": "pass",
+      "25": "pass",
+      "26": "pass",
+      "30": "pass"
+     }
+    },
+    "C3": {
+     "items": [
+      36,
+      37,
+      39,
+      40,
+      41,
+      42,
+      43,
+      44,
+      48
+     ],
+     "verdicts_adjudicated": {
+      "36": "pass",
+      "37": "pass",
+      "39": "fail",
+      "40": "pass",
+      "41": "pass",
+      "42": "pass",
+      "43": "pass",
+      "44": "pass",
+      "48": "pass"
+     }
+    },
+    "C4": {
+     "items": [
+      7,
+      8,
+      9,
+      10,
+      11
+     ],
+     "verdicts_adjudicated": {
+      "7": "pass",
+      "8": "pass",
+      "9": "pass",
+      "10": "pass",
+      "11": "pass"
+     }
+    }
+   }
+  },
+  {
+   "task_id": "2ea2e5b5-257f-42e6-a7dc-93763f28b19d",
+   "model": "anthropic/claude-opus-5-5",
+   "run_uuid": "SaDUDAyEP45E3gNRVZWjgp",
+   "pass": "pass-20261102T121440292802Z-cc25",
+   "graded": {
+    "C1": "pass",
+    "C2": "pass",
+    "C3": "fail"
+   },
+   "with_visual": {
+    "C1": "pass",
+    "C2": "pass",
+    "C3": "fail"
+   },
+   "adjudicated": {
+    "C1": "pass",
+    "C2": "pass",
+    "C3": "fail"
+   },
+   "preregistered_with_visual": {
+    "C1": "pass",
+    "C2": "pass",
+    "C3": "fail"
+   },
+   "preregistered_adjudicated": {
+    "C1": "pass",
+    "C2": "pass",
+    "C3": "fail"
+   },
+   "overall": {
+    "graded": "fail",
+    "with_visual": "fail",
+    "adjudicated": "fail"
+   },
+   "adds_policy_not_binding": null,
+   "adjudications_applied": {
+    "27": "confirmed_fail",
+    "31": "grader_false_fail",
+    "32": "grader_false_fail",
+    "33": "grader_false_fail",
+    "38": "confirmed_fail"
+   },
+   "score_with_visual": {
+    "P": 78,
+    "E": 85,
+    "W": 85,
+    "P_over_E": 0.9176470588235294,
+    "E_over_W": 1.0
+   },
+   "score_adjudicated": {
+    "P": 83,
+    "E": 85,
+    "W": 85,
+    "P_over_E": 0.9764705882352941,
+    "E_over_W": 1.0
+   },
+   "members": {
+    "C1": {
+     "items": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      57,
+      58,
+      59,
+      60
+     ],
+     "verdicts_adjudicated": {
+      "1": "pass",
+      "2": "pass",
+      "3": "pass",
+      "4": "pass",
+      "5": "pass",
+      "6": "pass",
+      "7": "pass",
+      "57": "pass",
+      "58": "pass",
+      "59": "pass",
+      "60": "pass"
+     }
+    },
+    "C2": {
+     "items": [
+      8,
+      9,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26
+     ],
+     "verdicts_adjudicated": {
+      "8": "pass",
+      "9": "pass",
+      "11": "pass",
+      "12": "pass",
+      "13": "pass",
+      "14": "pass",
+      "15": "pass",
+      "16": "pass",
+      "17": "pass",
+      "18": "pass",
+      "19": "pass",
+      "20": "pass",
+      "21": "pass",
+      "22": "pass",
+      "23": "pass",
+      "24": "pass",
+      "25": "pass",
+      "26": "pass"
+     }
+    },
+    "C3": {
+     "items": [
+      27,
+      28,
+      29,
+      30,
+      31,
+      32,
+      33,
+      34,
+      35,
+      36,
+      37,
+      38,
+      39,
+      40,
+      41,
+      42,
+      43,
+      44,
+      45,
+      46,
+      47,
+      48,
+      49,
+      50,
+      51,
+      52,
+      53,
+      54,
+      55,
+      56
+     ],
+     "verdicts_adjudicated": {
+      "27": "fail",
+      "28": "pass",
+      "29": "pass",
+      "30": "pass",
+      "31": "pass",
+      "32": "pass",
+      "33": "pass",
+      "34": "pass",
+      "35": "pass",
+      "36": "pass",
+      "37": "pass",
+      "38": "fail",
+      "39": "pass",
+      "40": "pass",
+      "41": "pass",
+      "42": "pass",
+      "43": "pass",
+      "44": "pass",
+      "45": "pass",
+      "46": "pass",
+      "47": "pass",
+      "48": "pass",
+      "49": "pass",
+      "50": "pass",
+      "51": "pass",
+      "52": "pass",
+      "53": "pass",
+      "54": "pass",
+      "55": "pass",
+      "56": "pass"
+     }
+    }
+   }
+  },
+  {
+   "task_id": "2ea2e5b5-257f-42e6-a7dc-93763f28b19d",
+   "model": "openai/gpt-6.1-sol",
+   "run_uuid": "ehpELnbiUfAp5dFTeDNwt9",
+   "pass": "pass-20261102T121505538896Z-e39c",
+   "graded": {
+    "C1": "not_confirmed",
+    "C2": "fail",
+    "C3": "not_confirmed"
+   },
+   "with_visual": {
+    "C1": "not_confirmed",
+    "C2": "fail",
+    "C3": "not_confirmed"
+   },
+   "adjudicated": {
+    "C1": "pass",
+    "C2": "pass",
+    "C3": "fail"
+   },
+   "preregistered_with_visual": {
+    "C1": "not_confirmed",
+    "C2": "fail",
+    "C3": "not_confirmed"
+   },
+   "preregistered_adjudicated": {
+    "C1": "pass",
+    "C2": "pass",
+    "C3": "fail"
+   },
+   "overall": {
+    "graded": "fail",
+    "with_visual": "fail",
+    "adjudicated": "fail"
+   },
+   "adds_policy_not_binding": null,
+   "adjudications_applied": {
+    "5": "verified_pass",
+    "6": "verified_pass",
+    "7": "verified_pass",
+    "9": "grader_false_fail",
+    "25": "grader_false_fail",
+    "27": "verified_fail",
+    "28": "leave",
+    "29": "leave",
+    "30": "leave",
+    "31": "leave",
+    "32": "leave",
+    "33": "leave",
+    "34": "leave",
+    "35": "leave",
+    "36": "leave",
+    "37": "leave",
+    "38": "verified_fail",
+    "39": "leave",
+    "40": "leave",
+    "41": "leave",
+    "42": "leave",
+    "43": "leave",
+    "44": "leave",
+    "45": "leave",
+    "46": "leave",
+    "47": "leave",
+    "48": "leave",
+    "49": "leave",
+    "50": "leave",
+    "51": "leave",
+    "52": "leave",
+    "53": "leave",
+    "54": "leave",
+    "55": "leave",
+    "56": "leave"
+   },
+   "score_with_visual": {
+    "P": 28,
+    "E": 30,
+    "W": 85,
+    "P_over_E": 0.9333333333333333,
+    "E_over_W": 0.35294117647058826
+   },
+   "score_adjudicated": {
+    "P": 36,
+    "E": 38,
+    "W": 85,
+    "P_over_E": 0.9473684210526315,
+    "E_over_W": 0.4470588235294118
+   },
+   "members": {
+    "C1": {
+     "items": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      57,
+      58,
+      59,
+      60
+     ],
+     "verdicts_adjudicated": {
+      "1": "pass",
+      "2": "pass",
+      "3": "pass",
+      "4": "pass",
+      "5": "pass",
+      "6": "pass",
+      "7": "pass",
+      "57": "pass",
+      "58": "pass",
+      "59": "pass",
+      "60": "pass"
+     }
+    },
+    "C2": {
+     "items": [
+      8,
+      9,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26
+     ],
+     "verdicts_adjudicated": {
+      "8": "pass",
+      "9": "pass",
+      "11": "pass",
+      "12": "pass",
+      "13": "pass",
+      "14": "pass",
+      "15": "pass",
+      "16": "pass",
+      "17": "pass",
+      "18": "pass",
+      "19": "pass",
+      "20": "pass",
+      "21": "pass",
+      "22": "pass",
+      "23": "pass",
+      "24": "pass",
+      "25": "pass",
+      "26": "pass"
+     }
+    },
+    "C3": {
+     "items": [
+      27,
+      28,
+      29,
+      30,
+      31,
+      32,
+      33,
+      34,
+      35,
+      36,
+      37,
+      38,
+      39,
+      40,
+      41,
+      42,
+      43,
+      44,
+      45,
+      46,
+      47,
+      48,
+      49,
+      50,
+      51,
+      52,
+      53,
+      54,
+      55,
+      56
+     ],
+     "verdicts_adjudicated": {
+      "27": "fail",
+      "28": "cannot_assess",
+      "29": "cannot_assess",
+      "30": "cannot_assess",
+      "31": "cannot_assess",
+      "32": "cannot_assess",
+      "33": "cannot_assess",
+      "34": "cannot_assess",
+      "35": "cannot_assess",
+      "36": "cannot_assess",
+      "37": "cannot_assess",
+      "38": "fail",
+      "39": "cannot_assess",
+      "40": "cannot_assess",
+      "41": "cannot_assess",
+      "42": "cannot_assess",
+      "43": "cannot_assess",
+      "44": "cannot_assess",
+      "45": "cannot_assess",
+      "46": "cannot_assess",
+      "47": "cannot_assess",
+      "48": "cannot_assess",
+      "49": "cannot_assess",
+      "50": "cannot_assess",
+      "51": "cannot_assess",
+      "52": "cannot_assess",
+      "53": "cannot_assess",
+      "54": "cannot_assess",
+      "55": "cannot_assess",
+      "56": "cannot_assess"
+     }
+    }
+   }
+  },
+  {
+   "task_id": "c357f0e2-963d-4eb7-a6fa-3078fe55b3ba",
+   "model": "anthropic/claude-opus-5-5",
+   "run_uuid": "AbudpM6dPVjwu2NSnwrZ6D",
+   "pass": "pass-20261102T121530287546Z-1e75",
+   "graded": {
+    "C1": "pass",
+    "C2": "pass",
+    "C3": "fail"
+   },
+   "with_visual": {
+    "C1": "pass",
+    "C2": "pass",
+    "C3": "fail"
+   },
+   "adjudicated": {
+    "C1": "pass",
+    "C2": "pass",
+    "C3": "pass"
+   },
+   "preregistered_with_visual": null,
+   "preregistered_adjudicated": null,
+   "overall": {
+    "graded": "fail",
+    "with_visual": "fail",
+    "adjudicated": "pass"
+   },
+   "adds_policy_not_binding": null,
+   "adjudications_applied": {
+    "34": "confirmed_fail",
+    "60": "grader_false_fail"
+   },
+   "score_with_visual": {
+    "P": 92,
+    "E": 95,
+    "W": 101,
+    "P_over_E": 0.968421052631579,
+    "E_over_W": 0.9405940594059405
+   },
+   "score_adjudicated": {
+    "P": 93,
+    "E": 95,
+    "W": 101,
+    "P_over_E": 0.9789473684210527,
+    "E_over_W": 0.9405940594059405
+   },
+   "members": {
+    "C1": {
+     "items": [
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11
+     ],
+     "verdicts_adjudicated": {
+      "2": "pass",
+      "3": "pass",
+      "4": "pass",
+      "5": "pass",
+      "6": "pass",
+      "7": "pass",
+      "8": "pass",
+      "9": "pass",
+      "10": "pass",
+      "11": "pass"
+     }
+    },
+    "C2": {
+     "items": [
+      12,
+      49,
+      50,
+      51,
+      52,
+      53,
+      54,
+      55,
+      56,
+      57,
+      58
+     ],
+     "verdicts_adjudicated": {
+      "12": "pass",
+      "49": "pass",
+      "50": "pass",
+      "51": "pass",
+      "52": "pass",
+      "53": "pass",
+      "54": "pass",
+      "55": "pass",
+      "56": "pass",
+      "57": "pass",
+      "58": "pass"
+     }
+    },
+    "C3": {
+     "items": [
+      13,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      31,
+      35,
+      36,
+      37,
+      45,
+      46,
+      47,
+      48,
+      59,
+      60,
+      61,
+      62,
+      63
+     ],
+     "verdicts_adjudicated": {
+      "13": "pass",
+      "15": "pass",
+      "16": "pass",
+      "17": "pass",
+      "18": "pass",
+      "19": "pass",
+      "20": "pass",
+      "21": "pass",
+      "31": "pass",
+      "35": "pass",
+      "36": "pass",
+      "37": "pass",
+      "45": "pass",
+      "46": "pass",
+      "47": "pass",
+      "48": "pass",
+      "59": "pass",
+      "60": "pass",
+      "61": "pass",
+      "62": "pass",
+      "63": "pass"
+     }
+    }
+   }
+  },
+  {
+   "task_id": "c357f0e2-963d-4eb7-a6fa-3078fe55b3ba",
+   "model": "openai/gpt-6.1-sol",
+   "run_uuid": "4FAJ3AmGzujC6FZ67Krt9B",
+   "pass": "pass-20261102T122438506232Z-7829",
+   "graded": {
+    "C1": "pass",
+    "C2": "fail",
+    "C3": "fail"
+   },
+   "with_visual": {
+    "C1": "pass",
+    "C2": "fail",
+    "C3": "fail"
+   },
+   "adjudicated": {
+    "C1": "pass",
+    "C2": "fail",
+    "C3": "fail"
+   },
+   "preregistered_with_visual": null,
+   "preregistered_adjudicated": null,
+   "overall": {
+    "graded": "fail",
+    "with_visual": "fail",
+    "adjudicated": "fail"
+   },
+   "adds_policy_not_binding": null,
+   "adjudications_applied": {
+    "12": "confirmed_fail",
+    "15": "confirmed_fail",
+    "50": "confirmed_fail",
+    "66": "confirmed_fail"
+   },
+   "score_with_visual": {
+    "P": 89,
+    "E": 96,
+    "W": 101,
+    "P_over_E": 0.9270833333333334,
+    "E_over_W": 0.9504950495049505
+   },
+   "score_adjudicated": {
+    "P": 89,
+    "E": 96,
+    "W": 101,
+    "P_over_E": 0.9270833333333334,
+    "E_over_W": 0.9504950495049505
+   },
+   "members": {
+    "C1": {
+     "items": [
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11
+     ],
+     "verdicts_adjudicated": {
+      "2": "pass",
+      "3": "pass",
+      "4": "pass",
+      "5": "pass",
+      "6": "pass",
+      "7": "pass",
+      "8": "pass",
+      "9": "pass",
+      "10": "pass",
+      "11": "pass"
+     }
+    },
+    "C2": {
+     "items": [
+      12,
+      49,
+      50,
+      51,
+      52,
+      53,
+      54,
+      55,
+      56,
+      57,
+      58
+     ],
+     "verdicts_adjudicated": {
+      "12": "fail",
+      "49": "pass",
+      "50": "fail",
+      "51": "pass",
+      "52": "pass",
+      "53": "pass",
+      "54": "pass",
+      "55": "pass",
+      "56": "pass",
+      "57": "pass",
+      "58": "pass"
+     }
+    },
+    "C3": {
+     "items": [
+      13,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      31,
+      35,
+      36,
+      37,
+      45,
+      46,
+      47,
+      48,
+      59,
+      60,
+      61,
+      62,
+      63
+     ],
+     "verdicts_adjudicated": {
+      "13": "pass",
+      "15": "fail",
+      "16": "pass",
+      "17": "pass",
+      "18": "pass",
+      "19": "pass",
+      "20": "pass",
+      "21": "pass",
+      "31": "pass",
+      "35": "pass",
+      "36": "pass",
+      "37": "pass",
+      "45": "pass",
+      "46": "pass",
+      "47": "pass",
+      "48": "pass",
+      "59": "pass",
+      "60": "pass",
+      "61": "pass",
+      "62": "pass",
+      "63": "pass"
+     }
+    }
+   }
+  },
+  {
+   "task_id": "a45bc83b-22f9-4def-8d89-9c5661b2b86f",
+   "model": "anthropic/claude-opus-5-5",
+   "run_uuid": "BVeKQk8ZWp6j2uxp9hsuGf",
+   "pass": "pass-20261102T124516281243Z-a9a6",
+   "graded": {
+    "C1": "pass",
+    "C2": "pass",
+    "C3": "not_confirmed"
+   },
+   "with_visual": {
+    "C1": "pass",
+    "C2": "pass",
+    "C3": "pass"
+   },
+   "adjudicated": {
+    "C1": "pass",
+    "C2": "pass",
+    "C3": "pass"
+   },
+   "preregistered_with_visual": null,
+   "preregistered_adjudicated": null,
+   "overall": {
+    "graded": "not_confirmed",
+    "with_visual": "pass",
+    "adjudicated": "pass"
+   },
+   "adds_policy_not_binding": null,
+   "adjudications_applied": {
+    "64": "confirmed_fail",
+    "68": "confirmed_fail"
+   },
+   "score_with_visual": {
+    "P": 73,
+    "E": 80,
+    "W": 87,
+    "P_over_E": 0.9125,
+    "E_over_W": 0.9195402298850575
+   },
+   "score_adjudicated": {
+    "P": 73,
+    "E": 80,
+    "W": 87,
+    "P_over_E": 0.9125,
+    "E_over_W": 0.9195402298850575
+   },
+   "members": {
+    "C1": {
+     "items": [
+      1,
+      2,
+      3,
+      5
+     ],
+     "verdicts_adjudicated": {
+      "1": "pass",
+      "2": "pass",
+      "3": "pass",
+      "5": "pass"
+     }
+    },
+    "C2": {
+     "items": [
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      49
+     ],
+     "verdicts_adjudicated": {
+      "6": "pass",
+      "7": "pass",
+      "8": "pass",
+      "9": "pass",
+      "10": "pass",
+      "11": "pass",
+      "12": "pass",
+      "13": "pass",
+      "49": "pass"
+     }
+    },
+    "C3": {
+     "items": [
+      4,
+      26,
+      27,
+      28,
+      29,
+      30
+     ],
+     "verdicts_adjudicated": {
+      "4": "pass",
+      "26": "pass",
+      "27": "pass",
+      "28": "pass",
+      "29": "pass",
+      "30": "pass"
+     }
+    }
+   }
+  },
+  {
+   "task_id": "a45bc83b-22f9-4def-8d89-9c5661b2b86f",
+   "model": "openai/gpt-6.1-sol",
+   "run_uuid": "NHSUKRMDDbYoJoGyWnpjcN",
+   "pass": "pass-20261102T124517129297Z-bcc4",
+   "graded": {
+    "C1": "pass",
+    "C2": "pass",
+    "C3": "not_confirmed"
+   },
+   "with_visual": {
+    "C1": "pass",
+    "C2": "pass",
+    "C3": "pass"
+   },
+   "adjudicated": {
+    "C1": "pass",
+    "C2": "pass",
+    "C3": "pass"
+   },
+   "preregistered_with_visual": null,
+   "preregistered_adjudicated": null,
+   "overall": {
+    "graded": "not_confirmed",
+    "with_visual": "pass",
+    "adjudicated": "pass"
+   },
+   "adds_policy_not_binding": null,
+   "adjudications_applied": {
+    "60": "confirmed_fail",
+    "66": "grader_false_fail"
+   },
+   "score_with_visual": {
+    "P": 75,
+    "E": 81,
+    "W": 87,
+    "P_over_E": 0.9259259259259259,
+    "E_over_W": 0.9310344827586207
+   },
+   "score_adjudicated": {
+    "P": 76,
+    "E": 81,
+    "W": 87,
+    "P_over_E": 0.9382716049382716,
+    "E_over_W": 0.9310344827586207
+   },
+   "members": {
+    "C1": {
+     "items": [
+      1,
+      2,
+      3,
+      5
+     ],
+     "verdicts_adjudicated": {
+      "1": "pass",
+      "2": "pass",
+      "3": "pass",
+      "5": "pass"
+     }
+    },
+    "C2": {
+     "items": [
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      49
+     ],
+     "verdicts_adjudicated": {
+      "6": "pass",
+      "7": "pass",
+      "8": "pass",
+      "9": "pass",
+      "10": "pass",
+      "11": "pass",
+      "12": "pass",
+      "13": "pass",
+      "49": "pass"
+     }
+    },
+    "C3": {
+     "items": [
+      4,
+      26,
+      27,
+      28,
+      29,
+      30
+     ],
+     "verdicts_adjudicated": {
+      "4": "pass",
+      "26": "pass",
+      "27": "pass",
+      "28": "pass",
+      "29": "pass",
+      "30": "pass"
+     }
+    }
+   }
+  }
+ ]
+}

@@ -1,0 +1,554 @@
+{
+ "version": 2,
+ "label": "formal",
+ "ceiling_usd": "150.000000",
+ "created_at": "2026-11-02T09:57:12+00:00",
+ "ledger_id": "52045786f2284380dd04816cd38402f1",
+ "entries": [
+  {
+   "type": "reservation",
+   "unit_id": "b5d2e6f1-62a2-433a-bcdd-95b260cdd860:anthropic/claude-opus-5-5:20261102T095712Z",
+   "kind": "sample",
+   "estimated_usd": "8.000000",
+   "at": "2026-11-02T09:57:12+00:00",
+   "meta": {
+    "model": "anthropic/claude-opus-5-5",
+    "task": "formal_b5d2e6f1"
+   },
+   "claim": true
+  },
+  {
+   "type": "settlement",
+   "unit_id": "b5d2e6f1-62a2-433a-bcdd-95b260cdd860:anthropic/claude-opus-5-5:20261102T095712Z",
+   "kind": "sample",
+   "cost_usd": "1.493437",
+   "breakdown": {
+    "input": "0.000216",
+    "output": "0.768960",
+    "cache_read": "0.190589",
+    "cache_write": "0.533672"
+   },
+   "retry_estimate_usd": "0.000000",
+   "per_model": {
+    "anthropic/claude-opus-5-5": {
+     "input": "0.000216",
+     "output": "0.768960",
+     "cache_read": "0.190589",
+     "cache_write": "0.533672",
+     "total": "1.493437",
+     "calls": "26",
+     "flags": [],
+     "tiers": {
+      "standard": 26
+     }
+    }
+   },
+   "raw_usage": {
+    "anthropic/claude-opus-5-5": {
+     "input_tokens": 54,
+     "output_tokens": 38448,
+     "cache_read_tokens": 952942,
+     "cache_write_tokens": 66709
+    }
+   },
+   "raw_calls": {
+    "anthropic/claude-opus-5-5": [
+     {
+      "input_tokens": 4,
+      "output_tokens": 88,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 1816,
+      "total_cost": 0.010856
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 191,
+      "cache_read_tokens": 1816,
+      "cache_write_tokens": 287,
+      "total_cost": 0.0056262000000000005
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 7456,
+      "cache_read_tokens": 2103,
+      "cache_write_tokens": 1160,
+      "total_cost": 0.1553486
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 605,
+      "cache_read_tokens": 3263,
+      "cache_write_tokens": 8465,
+      "total_cost": 0.055085600000000005
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 546,
+      "cache_read_tokens": 11728,
+      "cache_write_tokens": 1317,
+      "total_cost": 0.019858599999999997
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 400,
+      "cache_read_tokens": 13045,
+      "cache_write_tokens": 1658,
+      "total_cost": 0.018907
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 237,
+      "cache_read_tokens": 14703,
+      "cache_write_tokens": 2504,
+      "total_cost": 0.0202086
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 8568,
+      "cache_read_tokens": 17207,
+      "cache_write_tokens": 2567,
+      "total_cost": 0.18764440000000002
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 8445,
+      "cache_read_tokens": 19774,
+      "cache_write_tokens": 8824,
+      "total_cost": 0.2169828
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 721,
+      "cache_read_tokens": 28598,
+      "cache_write_tokens": 8453,
+      "total_cost": 0.06241259999999999
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 320,
+      "cache_read_tokens": 37051,
+      "cache_write_tokens": 2175,
+      "total_cost": 0.0246932
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 3495,
+      "cache_read_tokens": 39226,
+      "cache_write_tokens": 1140,
+      "total_cost": 0.08345319999999999
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 177,
+      "cache_read_tokens": 40366,
+      "cache_write_tokens": 3612,
+      "total_cost": 0.029681199999999998
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 291,
+      "cache_read_tokens": 43978,
+      "cache_write_tokens": 379,
+      "total_cost": 0.0165186
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 810,
+      "cache_read_tokens": 44357,
+      "cache_write_tokens": 4871,
+      "total_cost": 0.0494344
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 492,
+      "cache_read_tokens": 49228,
+      "cache_write_tokens": 1020,
+      "total_cost": 0.0247936
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 880,
+      "cache_read_tokens": 50248,
+      "cache_write_tokens": 3049,
+      "total_cost": 0.0429026
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 152,
+      "cache_read_tokens": 53297,
+      "cache_write_tokens": 957,
+      "total_cost": 0.0184924
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 1369,
+      "cache_read_tokens": 54254,
+      "cache_write_tokens": 1301,
+      "total_cost": 0.04474380000000001
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 136,
+      "cache_read_tokens": 55555,
+      "cache_write_tokens": 1419,
+      "total_cost": 0.020934
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 131,
+      "cache_read_tokens": 56974,
+      "cache_write_tokens": 3252,
+      "total_cost": 0.030282800000000006
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 911,
+      "cache_read_tokens": 60226,
+      "cache_write_tokens": 1674,
+      "total_cost": 0.0386432
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 60,
+      "cache_read_tokens": 61900,
+      "cache_write_tokens": 1117,
+      "total_cost": 0.019173
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 510,
+      "cache_read_tokens": 63017,
+      "cache_write_tokens": 1604,
+      "total_cost": 0.030831400000000002
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 291,
+      "cache_read_tokens": 64621,
+      "cache_write_tokens": 1786,
+      "total_cost": 0.0276822
+     },
+     {
+      "input_tokens": 2,
+      "output_tokens": 1166,
+      "cache_read_tokens": 66407,
+      "cache_write_tokens": 302,
+      "total_cost": 0.038119400000000005
+     }
+    ]
+   },
+   "usage_scope": {
+    "same_sample": true,
+    "sample_uuid": "Mae4tizWVH2BiinB5zKQV2",
+    "samples_in_log": 1,
+    "model_calls": 26,
+    "calls_without_usage": 0,
+    "aggregate_source": "EvalSample.model_usage",
+    "calls_source": "EvalSample.events[model].output.usage"
+   },
+   "usage_reconciliation": {
+    "anthropic/claude-opus-5-5": {
+     "aggregated": {
+      "input": 54,
+      "output": 38448,
+      "cache_read": 952942,
+      "cache_write": 66709
+     },
+     "per_call": {
+      "input": 54,
+      "output": 38448,
+      "cache_read": 952942,
+      "cache_write": 66709
+     },
+     "difference": {
+      "input": 0,
+      "output": 0,
+      "cache_read": 0,
+      "cache_write": 0
+     },
+     "conflict": false,
+     "calls": 26,
+     "conservative": {
+      "input_tokens": 54,
+      "output_tokens": 38448,
+      "cache_read_tokens": 952942,
+      "cache_write_tokens": 66709
+     }
+    }
+   },
+   "inspect_total_cost_usd": "1.293309",
+   "estimated": false,
+   "estimate_basis": [],
+   "inferred": null,
+   "manual_review_required": false,
+   "flags": [],
+   "note": "inspect status success",
+   "reserved_usd": "8.000000",
+   "at": "2026-11-02T10:04:00+00:00"
+  },
+  {
+   "type": "reservation",
+   "unit_id": "b5d2e6f1-62a2-433a-bcdd-95b260cdd860:openai/gpt-6.1-sol:20261102T100404Z",
+   "kind": "sample",
+   "estimated_usd": "5.000000",
+   "at": "2026-11-02T10:04:04+00:00",
+   "meta": {
+    "model": "openai/gpt-6.1-sol",
+    "task": "formal_b5d2e6f1"
+   },
+   "claim": true
+  },
+  {
+   "type": "settlement",
+   "unit_id": "b5d2e6f1-62a2-433a-bcdd-95b260cdd860:openai/gpt-6.1-sol:20261102T100404Z",
+   "kind": "sample",
+   "cost_usd": "0.302156",
+   "breakdown": {
+    "input": "0.001850",
+    "output": "0.160590",
+    "cache_read": "0.034479",
+    "cache_write": "0.105237"
+   },
+   "retry_estimate_usd": "0.000000",
+   "per_model": {
+    "openai/gpt-6.1-sol": {
+     "input": "0.001850",
+     "output": "0.160590",
+     "cache_read": "0.034479",
+     "cache_write": "0.105237",
+     "total": "0.302156",
+     "calls": "23",
+     "flags": [
+      "cache writes priced at the ledger rate from candidate facts rate (2.5 USD/MTok); the usage record does not split cache-write retention tiers"
+     ],
+     "tiers": {
+      "standard": 23
+     }
+    }
+   },
+   "raw_usage": {
+    "openai/gpt-6.1-sol": {
+     "input_tokens": 925,
+     "output_tokens": 16059,
+     "cache_read_tokens": 344778,
+     "cache_write_tokens": 42093
+    }
+   },
+   "raw_calls": {
+    "openai/gpt-6.1-sol": [
+     {
+      "input_tokens": 859,
+      "output_tokens": 38,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "total_cost": 0.002098
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 123,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 1026,
+      "total_cost": 0.0038009999999999997
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 387,
+      "cache_read_tokens": 1026,
+      "cache_write_tokens": 1276,
+      "total_cost": 0.007168600000000001
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 164,
+      "cache_read_tokens": 2302,
+      "cache_write_tokens": 457,
+      "total_cost": 0.0030187
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 291,
+      "cache_read_tokens": 2759,
+      "cache_write_tokens": 1567,
+      "total_cost": 0.007109399999999999
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 600,
+      "cache_read_tokens": 4326,
+      "cache_write_tokens": 1345,
+      "total_cost": 0.0098011
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 137,
+      "cache_read_tokens": 5671,
+      "cache_write_tokens": 851,
+      "total_cost": 0.0040706
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 2901,
+      "cache_read_tokens": 6522,
+      "cache_write_tokens": 158,
+      "total_cost": 0.030063199999999998
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 595,
+      "cache_read_tokens": 6680,
+      "cache_write_tokens": 2914,
+      "total_cost": 0.013909
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 132,
+      "cache_read_tokens": 9594,
+      "cache_write_tokens": 1642,
+      "total_cost": 0.0063904
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 200,
+      "cache_read_tokens": 11236,
+      "cache_write_tokens": 394,
+      "total_cost": 0.0041145999999999995
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 96,
+      "cache_read_tokens": 11630,
+      "cache_write_tokens": 660,
+      "total_cost": 0.0037790000000000002
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 5568,
+      "cache_read_tokens": 12290,
+      "cache_write_tokens": 310,
+      "total_cost": 0.05769
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 508,
+      "cache_read_tokens": 12600,
+      "cache_write_tokens": 5661,
+      "total_cost": 0.0204985
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 349,
+      "cache_read_tokens": 18261,
+      "cache_write_tokens": 1556,
+      "total_cost": 0.0092121
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 652,
+      "cache_read_tokens": 19817,
+      "cache_write_tokens": 4806,
+      "total_cost": 0.020522699999999998
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 70,
+      "cache_read_tokens": 24623,
+      "cache_write_tokens": 745,
+      "total_cost": 0.0050308
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 78,
+      "cache_read_tokens": 25368,
+      "cache_write_tokens": 5502,
+      "total_cost": 0.0170778
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 324,
+      "cache_read_tokens": 30870,
+      "cache_write_tokens": 2795,
+      "total_cost": 0.013320499999999999
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 868,
+      "cache_read_tokens": 33665,
+      "cache_write_tokens": 349,
+      "total_cost": 0.012925
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 1414,
+      "cache_read_tokens": 34014,
+      "cache_write_tokens": 961,
+      "total_cost": 0.0199499
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 112,
+      "cache_read_tokens": 34975,
+      "cache_write_tokens": 1574,
+      "total_cost": 0.0085585
+     },
+     {
+      "input_tokens": 3,
+      "output_tokens": 452,
+      "cache_read_tokens": 36549,
+      "cache_write_tokens": 5544,
+      "total_cost": 0.0220409
+     }
+    ]
+   },
+   "usage_scope": {
+    "same_sample": true,
+    "sample_uuid": "d5sypgfTdCCwfsFV9jdzLd",
+    "samples_in_log": 1,
+    "model_calls": 23,
+    "calls_without_usage": 0,
+    "aggregate_source": "EvalSample.model_usage",
+    "calls_source": "EvalSample.events[model].output.usage"
+   },
+   "usage_reconciliation": {
+    "openai/gpt-6.1-sol": {
+     "aggregated": {
+      "input": 925,
+      "output": 16059,
+      "cache_read": 344778,
+      "cache_write": 42093
+     },
+     "per_call": {
+      "input": 925,
+      "output": 16059,
+      "cache_read": 344778,
+      "cache_write": 42093
+     },
+     "difference": {
+      "input": 0,
+      "output": 0,
+      "cache_read": 0,
+      "cache_write": 0
+     },
+     "conflict": false,
+     "calls": 23,
+     "conservative": {
+      "input_tokens": 925,
+      "output_tokens": 16059,
+      "cache_read_tokens": 344778,
+      "cache_write_tokens": 42093
+     }
+    }
+   },
+   "inspect_total_cost_usd": "0.302150",
+   "estimated": false,
+   "estimate_basis": [],
+   "inferred": null,
+   "manual_review_required": false,
+   "flags": [
+    "openai/gpt-6.1-sol: cache writes priced at the ledger rate from candidate facts rate (2.5 USD/MTok); the usage record does not split cache-write retention tiers"
+   ],
+   "note": "inspect status success",
+   "reserved_usd": "5.000000",
+   "at": "2026-11-02T10:09:02+00:00"
+  }
+ ]
+}
